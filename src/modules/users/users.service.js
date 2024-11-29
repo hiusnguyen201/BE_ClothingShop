@@ -4,6 +4,10 @@ export default { create, findAll, findOne, update, remove };
 
 async function create(data) {
   const { avatar = "", name, phone, birthday, gender } = data;
+  
+  if (!name) {
+    throw new Error();
+  }
 
   const newUser = await User.create({
     avatar: avatar,
@@ -69,14 +73,19 @@ async function findAll(data) {
       totalPages,
       totalItems,
       isNext: page < totalPages,
-      isPrevious: page > 1 ,
+      isPrevious: page > 1,
       isFirst: page > 1 && page <= totalPages,
-      isLast: page >= 1 && page < totalPages 
+      isLast: page >= 1 && page < totalPages
     }
   }
 }
 
 async function findOne(id) {
+
+  if (!id) {
+    throw new Error();
+  }
+
   const user = await User.findById(id);
 
   if (!user) {
@@ -88,15 +97,23 @@ async function findOne(id) {
 
 async function update(id, data) {
   const { avatar, name, phone, birthday, gender } = data;
+
+  if (!id) {
+    throw new Error();
+  }
+
   const user = await User.findByIdAndUpdate(id, { avatar, name, phone, birthday, gender }, { new: true });
 
   if (!user) {
-    throw new Error();
   }
   return user;
 }
 
 async function remove(id) {
+
+  if (!id) {
+    throw new Error();
+  }
   const user = await User.findByIdAndDelete(id);
 
   if (!user) {
