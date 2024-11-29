@@ -1,5 +1,5 @@
 import HttpStatus from "http-status-codes";
-import usersService from "#src/users/users.service.js";
+import usersService from "#src/modules/users/users.service";
 
 export const create = (req, res, next) => {
   const data = usersService.create();

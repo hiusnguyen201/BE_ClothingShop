@@ -9,8 +9,8 @@ moment.tz(config.timezone).format();
 // var cookieParser = require("cookie-parser");
 // console.log(moment(new Date()).format("DD/MM/YYYY HH:mm:ss a"));
 
-import routerV1 from "#src/routes/v1/index.js";
-import config from "#src/config.js";
+import routerV1 from "#src/routes/v1/index";
+import config from "#src/config";
 
 const app = express();
 
@@ -18,8 +18,8 @@ const app = express();
 app.use(cors());
 
 // view engine setup
-app.set("views", path.join(config.dirname, "src/views"));
-app.set("view engine", "ejs");
+// app.set("views", path.join(config.dirname, "src/views"));
+// app.set("view engine", "ejs");
 
 app.use(logger("dev"));
 app.use(express.json());
@@ -53,7 +53,13 @@ app.use(function (err, req, res, next) {
 
   // render the error page
   res.status(err.status || 500);
-  res.render("error");
+  // res.render("error");
+  res.json({
+    status: err.status || 500,
+    ...(req.app.get("env") === "development"
+      ? { message: res.locals.message, error: res.locals.error }
+      : {}),
+  });
 });
 
 export default app;

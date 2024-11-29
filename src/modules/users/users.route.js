@@ -7,7 +7,7 @@ import {
   findOne,
   update,
   remove,
-} from "#src/users/users.controller.js";
+} from "#src/modules/users/users.controller";
 
 router.route("/").get(findAll).post(create);
 

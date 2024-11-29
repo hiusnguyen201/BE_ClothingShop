@@ -1,3 +1,5 @@
+import { User } from "#src/modules/users/schemas/user.schema";
+
 export default { create, findAll, findOne, update, remove };
 
 function create() {

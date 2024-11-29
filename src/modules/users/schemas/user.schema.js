@@ -1,0 +1,44 @@
+import mongoose from "mongoose";
+import { GENDER } from "#src/constants";
+const { Schema, Types } = mongoose;
+
+const userSchema = new Schema(
+  {
+    _id: {
+      type: String,
+      required: true,
+      default: new Types.ObjectId(),
+    },
+    avatar: {
+      type: String,
+      length: 300,
+    },
+    name: {
+      type: String,
+      required: true,
+      length: 100,
+      index: true,
+    },
+    phone: {
+      type: String,
+      length: 15,
+    },
+    birthday: {
+      type: Date,
+      default: null,
+    },
+    gender: {
+      type: String,
+      enum: [GENDER.MALE, GENDER.FEMALE, GENDER.OTHER],
+      default: null,
+    },
+
+    // Foreign Key
+    role: { type: Schema.Types.ObjectId, ref: "Role" },
+    permissions: [{ type: Schema.Types.ObjectId, ref: "Permission" }],
+  },
+  { versionKey: false, timestamps: true, _id: true, id: false }
+);
+
+const User = mongoose.model("User", userSchema);
+export { User };
