@@ -1,9 +1,13 @@
 import { User } from "#src/modules/users/schemas/user.schema";
+import { NotFoundException } from "#src/http-exception";
 
 export default { create, findAll, findOne, update, remove };
 
-function create() {
-  return "hello";
+async function create(data) {
+  const user = await User.create({
+    _id: 1,
+  });
+  return user;
 }
 
 function findAll() {

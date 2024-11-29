@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { PERMISSION_STATUS, ALLOWED_METHOD } from "#src/constants";
+import { PERMISSION_STATUS, ALLOW_METHODS } from "#src/constants";
 const { Schema, Types } = mongoose;
 
 const permissionSchema = new Schema(
@@ -33,7 +33,7 @@ const permissionSchema = new Schema(
       type: String,
       length: 10,
       required: true,
-      enum: ALLOWED_METHOD,
+      enum: ALLOW_METHODS,
     },
     status: {
       type: String,

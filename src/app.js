@@ -11,11 +11,16 @@ moment.tz(config.timezone).format();
 
 import routerV1 from "#src/routes/v1/index";
 import config from "#src/config";
+import { handleError, notFound } from "#src/middlewares/error.middleware";
+import { limiter } from "#src/middlewares/rate-limit.middleware";
 
 const app = express();
 
 // Cors
 app.use(cors());
+
+// Rate limit
+app.use(limiter);
 
 // view engine setup
 // app.set("views", path.join(config.dirname, "src/views"));
@@ -40,26 +45,10 @@ mongoose
 // Api version 1
 app.use("/api/v1", routerV1);
 
-// catch 404 and forward to error handler
-app.use(function (req, res, next) {
-  next(createError(404));
-});
+// Catch 404
+app.use(notFound);
 
-// error handler
-app.use(function (err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get("env") === "development" ? err : {};
-
-  // render the error page
-  res.status(err.status || 500);
-  // res.render("error");
-  res.json({
-    status: err.status || 500,
-    ...(req.app.get("env") === "development"
-      ? { message: res.locals.message, error: res.locals.error }
-      : {}),
-  });
-});
+// Handler Error
+app.use(handleError);
 
 export default app;
