@@ -32,10 +32,6 @@ const userSchema = new Schema(
       enum: [GENDER.MALE, GENDER.FEMALE, GENDER.OTHER],
       default: null,
     },
-
-    // Foreign Key
-    role: { type: Schema.Types.ObjectId, ref: "Role" },
-    permissions: [{ type: Schema.Types.ObjectId, ref: "Permission" }],
   },
   { versionKey: false, timestamps: true, _id: true, id: false }
 );
