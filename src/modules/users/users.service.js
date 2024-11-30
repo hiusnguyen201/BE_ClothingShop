@@ -58,22 +58,19 @@ async function findAll(data) {
   const totalItems = await User.countDocuments(filters);
   const totalPages = Math.ceil(totalItems / itemPerPage);
 
-  if (page < 0) {
+  if (page <= 0 || !page) {
     page = 1;
-  } else if (page > totalPages) {
+  } else if (page > totalPages && totalPages >= 1) {
     page = totalPages;
   }
 
   const offSet = (page - 1) * itemPerPage;
 
-  const users = await User.find(filters)
-    .skip(offSet)
-    .limit(itemPerPage)
-    .sort(sort);
+  const users = await User.find(filters).skip(offSet).limit(itemPerPage);
 
   return {
-    users,
-    pagination: {
+    list: users,
+    meta: {
       offSet,
       itemPerPage,
       currentPage: page,

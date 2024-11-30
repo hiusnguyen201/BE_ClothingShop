@@ -19,7 +19,10 @@ export const handleError = (err, req, res, next) => {
   }
 
   // clear uploaded files
-  UploadUtils.clearUploadFile([req.file, ...req.files]);
+  UploadUtils.clearUploadFile([
+    req?.file,
+    ...(Array.isArray(req.files) ? req.files : []),
+  ]);
 
   res.set("Content-Type", "application/json");
   return res.status(status).json(response);
