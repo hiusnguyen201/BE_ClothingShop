@@ -1,5 +1,6 @@
 import HttpStatus from "http-status-codes";
 import usersService from "#src/modules/users/users.service";
+import { UploadUtils } from "#src/utils/upload.util";
 
 export const create = async (req, res, next) => {
   try {
