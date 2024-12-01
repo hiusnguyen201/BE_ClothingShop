@@ -1,14 +1,9 @@
 import mongoose from "mongoose";
 import { ROLE_STATUS } from "#src/constants";
-const { Schema, Types } = mongoose;
+const { Schema } = mongoose;
 
 const roleSchema = new Schema(
   {
-    _id: {
-      type: String,
-      required: true,
-      default: new Types.ObjectId(),
-    },
     icon: {
       type: String,
       length: 300,
@@ -33,7 +28,7 @@ const roleSchema = new Schema(
     // Foreign Key
     permissions: [{ type: Schema.Types.ObjectId, ref: "Permission" }],
   },
-  { versionKey: false, timestamps: true, _id: false, id: false }
+  { versionKey: false, timestamps: true, _id: true, id: false }
 );
 
 const Role = mongoose.model("Role", roleSchema);
