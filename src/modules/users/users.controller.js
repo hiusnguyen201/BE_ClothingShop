@@ -1,22 +1,23 @@
 import HttpStatus from "http-status-codes";
 import usersService from "#src/modules/users/users.service";
+import { UploadUtils } from "#src/utils/upload.util";
 
 export const create = async (req, res, next) => {
   try {
-    // const data = await usersService.create(req.body);
+    const data = await usersService.create(req.body);
     return res.json({
       statusCode: HttpStatus.CREATED,
       message: "Create",
-      // data,
+      data,
     });
   } catch (err) {
     next(err);
   }
 };
 
-export const findAll = (req, res, next) => {
+export const findAll = async (req, res, next) => {
   try {
-    const data = usersService.findAll();
+    const data = await usersService.findAll(req.query);
     return res.json({
       statusCode: HttpStatus.OK,
       message: "Find all",
@@ -27,9 +28,9 @@ export const findAll = (req, res, next) => {
   }
 };
 
-export const findOne = (req, res, next) => {
+export const findOne = async (req, res, next) => {
   try {
-    const data = usersService.findOne();
+    const data = await usersService.findOne(req.params.identify);
     return res.json({
       statusCode: HttpStatus.OK,
       message: "Find one",
@@ -40,22 +41,22 @@ export const findOne = (req, res, next) => {
   }
 };
 
-export const update = (req, res, next) => {
+export const update = async (req, res, next) => {
   try {
-    const data = usersService.update();
+    const data = await usersService.update(req.params.identify, req.body);
     return res.json({
       statusCode: HttpStatus.OK,
       message: "Update",
-      data: "Update",
+      data: data,
     });
   } catch (err) {
     next(err);
   }
 };
 
-export const remove = (req, res, next) => {
+export const remove = async (req, res, next) => {
   try {
-    const data = usersService.remove();
+    const data = await usersService.remove(req.params.identify);
     return res.json({
       statusCode: HttpStatus.OK,
       message: "Remove",

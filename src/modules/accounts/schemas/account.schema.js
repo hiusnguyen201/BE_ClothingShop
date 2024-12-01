@@ -1,15 +1,11 @@
 import mongoose from "mongoose";
 import { USER_IDENTIFY_STATUS } from "#src/constants";
+import { Types } from "mongoose"
 const { Schema } = mongoose;
 
-const userIdentifySchema = new Schema(
+const accountSchema = new Schema(
   {
     // Primary Key
-    user_id: {
-      type: String,
-      required: true,
-      unique: true,
-    },
     email: {
       type: String,
       required: true,
@@ -44,9 +40,14 @@ const userIdentifySchema = new Schema(
       type: String,
       default: null,
     },
+
+    // Foreign Key
+    user: { type: Schema.Types.ObjectId, ref: "User", unique: true },
+    role: { type: Schema.Types.ObjectId, ref: "Role" },
+    permissions: [{ type: Schema.Types.ObjectId, ref: "Permission" }],
   },
-  { versionKey: false, timestamps: true, _id: false, id: false }
+  { versionKey: false, timestamps: true, _id: true, id: false }
 );
 
-const UserIdentify = mongoose.model("UserIdentify", userIdentifySchema);
-export { UserIdentify };
+const Account = mongoose.model("Account", accountSchema);
+export { Account };
