@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 const { Schema, Types } = mongoose;
 
-const accountOtpSchema = new Schema(
+const userOtpSchema = new Schema(
   {
     _id: {
       type: String,
@@ -19,10 +19,10 @@ const accountOtpSchema = new Schema(
     },
 
     // Foreign Key
-    account: { type: Schema.Types.ObjectId, ref: "Account" },
+    user: { type: Schema.Types.ObjectId, ref: "User" },
   },
   { versionKey: false, timestamps: true, _id: false, id: false }
 );
 
-const AccountOtp = mongoose.model("AccountOtp", accountOtpSchema);
-export { AccountOtp };
+const UserOtp = mongoose.model("UserOtp", userOtpSchema);
+export { UserOtp };
