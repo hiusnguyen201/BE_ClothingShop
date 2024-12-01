@@ -18,9 +18,9 @@ export const handleError = (err, req, res, next) => {
     console.log({ ...response, stack: err.stack });
   }
 
-  // clear uploaded files
+  //  Clear file
   UploadUtils.clearUploadFile([
-    req?.file,
+    req.file,
     ...(Array.isArray(req.files) ? req.files : []),
   ]);
 

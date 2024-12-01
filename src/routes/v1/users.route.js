@@ -15,13 +15,15 @@ import {
 } from "#src/middlewares/validate-request.middleware";
 import { UploadUtils } from "#src/utils/upload.util";
 import { ALLOW_IMAGE_MIME_TYPES } from "#src/constants";
-const upload = UploadUtils.config(ALLOW_IMAGE_MIME_TYPES, 1);
+const upload = UploadUtils.config({
+  allowedMimeTypes: ALLOW_IMAGE_MIME_TYPES,
+});
 
 router
   .route("/")
   .get(findAll)
   .post(
-    validateSchema(createUserDto),
+    // validateSchema(createUserDto),
     validateFile(upload.single("image")),
     create
   );

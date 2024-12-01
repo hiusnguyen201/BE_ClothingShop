@@ -4,11 +4,11 @@ import { UploadUtils } from "#src/utils/upload.util";
 
 export const create = async (req, res, next) => {
   try {
-    const data = await usersService.create(req.body);
+    // const data = await usersService.create(req.body);
     return res.json({
       statusCode: HttpStatus.CREATED,
       message: "Create",
-      data,
+      // data,
     });
   } catch (err) {
     next(err);
