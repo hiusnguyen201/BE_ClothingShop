@@ -4,11 +4,6 @@ const { Schema, Types } = mongoose;
 
 const userSchema = new Schema(
   {
-    _id: {
-      type: String,
-      required: true,
-      default: new Types.ObjectId(),
-    },
     avatar: {
       type: String,
       length: 300,
