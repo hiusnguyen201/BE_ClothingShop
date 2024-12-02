@@ -1,21 +1,10 @@
-import {
-  BadRequestException,
-  UnauthorizedException,
-} from "#src/http-exception";
+import { UnauthorizedException } from "#src/http-exception";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import {
-  createCustomer,
-  findUser,
-} from "#src/modules/users/users.service";
+import { createCustomer } from "#src/modules/users/users.service";
 import config from "#src/config";
 
 export async function registerService(data, file) {
-  const existUser = await findUser(data.email, "email");
-  if (existUser) {
-    throw new BadRequestException("Email already exist");
-  }
-
   const salt = 10;
   const hashedPassword = await bcrypt.hash(data.password, salt);
   const user = await createCustomer({

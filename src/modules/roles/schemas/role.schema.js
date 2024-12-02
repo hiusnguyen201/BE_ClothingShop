@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
-import { ROLE_STATUS } from "#src/constants";
+import { ROLE_STATUS } from "#src/core/constant";
 const { Schema } = mongoose;
+
+const ROLE_MODEL = "roles";
 
 const roleSchema = new Schema(
   {
@@ -28,8 +30,14 @@ const roleSchema = new Schema(
     // Foreign Key
     permissions: [{ type: Schema.Types.ObjectId, ref: "Permission" }],
   },
-  { versionKey: false, timestamps: true, _id: true, id: false }
+  {
+    versionKey: false,
+    timestamps: true,
+    _id: true,
+    id: false,
+    collection: ROLE_MODEL,
+  }
 );
 
-const Role = mongoose.model("Role", roleSchema);
-export { Role };
+const RoleModel = mongoose.model("Role", roleSchema);
+export { RoleModel };

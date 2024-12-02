@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 const { Schema } = mongoose;
 
+const USER_OTP_MODEL = "user_otps";
+
 const userOtpSchema = new Schema(
   {
     otp: {
@@ -16,8 +18,14 @@ const userOtpSchema = new Schema(
     // Foreign Key
     user: { type: Schema.Types.ObjectId, ref: "User" },
   },
-  { versionKey: false, timestamps: true, _id: true, id: false }
+  {
+    versionKey: false,
+    timestamps: true,
+    _id: true,
+    id: false,
+    collection: USER_OTP_MODEL,
+  }
 );
 
-const UserOtp = mongoose.model("UserOtp", userOtpSchema);
-export { UserOtp };
+const UserOtpModel = mongoose.model("UserOtp", userOtpSchema);
+export { UserOtpModel };
