@@ -1,42 +1,41 @@
-import { User } from "#src/modules/users/schemas/user.schema";
-import { NotFoundException } from "#src/http-exception";
+import { UserModel } from "#src/modules/users/schemas/UserModel.schema";
 import { isValidObjectId } from "mongoose";
-import { REGEX_PATTERNS, USER_TYPES } from "#src/constants";
+import { REGEX_PATTERNS, USER_TYPES } from "#src/core/constant";
 
-export async function createUser(data, file) {
-  const newUser = await User.create({
+export async function createUser(data) {
+  const newUser = await UserModel.create({
     ...data,
     type: USER_TYPES.USER,
   });
 
-  if (file) {
+  if (data?.file) {
     // Save avatar
   }
 
   return newUser;
 }
 
-export async function createCustomer(data, file) {
-  const newCustomer = await User.create({
+export async function createCustomer(data) {
+  const newCustomer = await UserModel.create({
     ...data,
     type: USER_TYPES.CUSTOMER,
   });
 
-  if (file) {
+  if (data?.file) {
     // Save avatar
   }
 
   return newCustomer;
 }
 
-export async function findAllUsers(data) {
+export async function findAllUsers(query, SELECTED_FIELD = "-password") {
   let {
     keyword,
-    sortBy = "name-atoz",
+    // sortBy = "name-atoz",
     status,
     itemPerPage = 10,
     page = 1,
-  } = data;
+  } = query;
 
   const filterOptions = {
     $or: [
@@ -46,20 +45,20 @@ export async function findAllUsers(data) {
     [status && "status"]: status,
   };
 
-  let sort = {};
-  switch (sortBy) {
-    case "name-atoz":
-      sort.name = 1;
-      break;
-    case "name-ztoa":
-      sort.name = -1;
-      break;
-    default:
-      sort.name = 1;
-      break;
-  }
+  // let sort = {};
+  // switch (sortBy) {
+  //   case "name-atoz":
+  //     sort.name = 1;
+  //     break;
+  //   case "name-ztoa":
+  //     sort.name = -1;
+  //     break;
+  //   default:
+  //     sort.name = 1;
+  //     break;
+  // }
 
-  const totalItems = await User.countDocuments(filters);
+  const totalItems = await UserModel.countDocuments(filters);
   const totalPages = Math.ceil(totalItems / itemPerPage);
 
   if (page <= 0 || !page) {
@@ -70,9 +69,10 @@ export async function findAllUsers(data) {
 
   const offSet = (page - 1) * itemPerPage;
 
-  const users = await User.find(filterOptions)
+  const users = await UserModel.find(filterOptions)
     .skip(offSet)
-    .limit(itemPerPage);
+    .limit(itemPerPage)
+    .select(SELECTED_FIELD);
 
   return {
     list: users,
@@ -90,42 +90,39 @@ export async function findAllUsers(data) {
   };
 }
 
-export async function findUser(identify, SELECTED_FIELD) {
+export async function findUserById(id, SELECTED_FIELD = "-password") {
   const filter = {};
 
-  if (isValidObjectId(identify)) {
-    filter._id = identify;
-  } else if (REGEX_PATTERNS.EMAIL.test(identify)) {
-    filter.email = identify;
+  if (isValidObjectId(id)) {
+    filter._id = id;
+  } else if (REGEX_PATTERNS.EMAIL.test(id)) {
+    filter.email = id;
   } else {
     return null;
   }
 
-  return await User.findOne(filter).select(SELECTED_FIELD);
+  return await UserModel.findOne(filter).select(SELECTED_FIELD);
 }
 
-export async function updateUser(id, data) {
-  const { avatar, name, phone, birthday, gender } = data;
-
-  const user = await User.findByIdAndUpdate(
+export async function updateUserById(id, data) {
+  const user = await UserModel.findByIdAndUpdate(
     id,
-    { avatar, name, phone, birthday, gender },
+    { ...data },
     { new: true }
   );
 
-  if (!user) {
-    throw new NotFoundException("User not found");
+  if (data?.file) {
+    // Save avatar
   }
 
   return user;
 }
 
-export async function removeUser(id) {
-  const user = await User.findByIdAndDelete(id);
+export async function removeUserById(id) {
+  return await UserModel.findByIdAndDelete(id);
+}
 
-  if (!user) {
-    throw new NotFoundException("User not found");
-  }
-
-  return user;
+export async function checkExistedUserById(id) {
+  const existUser = await findUserById(id, "_id");
+  return Boolean(existUser);
 }

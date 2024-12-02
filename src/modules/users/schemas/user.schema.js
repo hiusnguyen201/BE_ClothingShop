@@ -1,18 +1,26 @@
 import mongoose from "mongoose";
-import { GENDER, USER_IDENTIFY_STATUS, USER_TYPES } from "#src/constants";
+import {
+  GENDER,
+  USER_IDENTIFY_STATUS,
+  USER_TYPES,
+} from "#src/core/constant";
 const { Schema } = mongoose;
+
+const USER_MODEL = "users";
 
 const userSchema = new Schema(
   {
     type: {
       type: String,
       length: 50,
+      required: true,
       enum: [USER_TYPES.CUSTOMER, USER_TYPES.EMPLOYEE],
       default: USER_TYPES.CUSTOMER,
     },
     // Info
     avatar: {
       type: String,
+      required: false,
       length: 300,
     },
     name: {
@@ -23,6 +31,7 @@ const userSchema = new Schema(
     },
     phone: {
       type: String,
+      required: false,
       length: 15,
     },
     birthday: {
@@ -31,6 +40,7 @@ const userSchema = new Schema(
     },
     gender: {
       type: String,
+      required: false,
       enum: [GENDER.MALE, GENDER.FEMALE, GENDER.OTHER],
       default: null,
     },
@@ -44,6 +54,7 @@ const userSchema = new Schema(
     },
     password: {
       type: String,
+      required: false,
       length: 100,
     },
     status: {
@@ -60,14 +71,17 @@ const userSchema = new Schema(
     },
     activeCode: {
       type: String,
+      required: false,
       default: null,
     },
     googleId: {
       type: String,
+      required: false,
       default: null,
     },
     facebookId: {
       type: String,
+      required: false,
       default: null,
     },
 
@@ -75,8 +89,14 @@ const userSchema = new Schema(
     role: { type: Schema.Types.ObjectId, ref: "Role" },
     permissions: [{ type: Schema.Types.ObjectId, ref: "Permission" }],
   },
-  { versionKey: false, timestamps: true, _id: true, id: false }
+  {
+    versionKey: false,
+    timestamps: true,
+    _id: true,
+    id: false,
+    collection: USER_MODEL,
+  }
 );
 
-const User = mongoose.model("User", userSchema);
-export { User };
+const UserModel = mongoose.model("User", userSchema);
+export { UserModel };
