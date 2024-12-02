@@ -24,8 +24,8 @@ router
   .get("/get-user-by-id/:id", getUserByIdController)
   .post(
     "/create-user",
+    validateFile(upload.single("avatar")),
     validateSchema(createUserDto),
-    validateFile(upload.single("image")),
     createUserController
   )
   .patch("/update-user-by-id/:id", updateUserByIdController)

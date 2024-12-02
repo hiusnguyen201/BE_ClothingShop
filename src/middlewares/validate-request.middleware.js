@@ -1,7 +1,7 @@
 import {
   BadRequestException,
   PayloadTooLargeException,
-} from "#src/http-exception";
+} from "#src/core/exception/http-exception";
 
 /**
  * Ref: https://joi.dev/api - any.validate(value, [options])

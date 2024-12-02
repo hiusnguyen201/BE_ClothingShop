@@ -1,4 +1,4 @@
-import { NotFoundException } from "#src/http-exception";
+import { NotFoundException } from "#src/core/exception/http-exception";
 import HttpStatus from "http-status-codes";
 import moment from "moment-timezone";
 import { UploadUtils } from "#src/utils/upload.util";

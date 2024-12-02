@@ -1,6 +1,13 @@
-import { UserModel } from "#src/modules/users/schemas/UserModel.schema";
 import { isValidObjectId } from "mongoose";
+import bcrypt from "bcrypt";
+import { UserModel } from "#src/modules/users/schemas/user.schema";
 import { REGEX_PATTERNS, USER_TYPES } from "#src/core/constant";
+import {
+  cropImagePathByVersion,
+  uploadImageBuffer,
+} from "#src/modules/cloudinary/cloudinary.service";
+
+const SELECTED_FIELDS = "_id avatar name email status birthday gender";
 
 export async function createUser(data) {
   const newUser = await UserModel.create({
@@ -9,54 +16,38 @@ export async function createUser(data) {
   });
 
   if (data?.file) {
-    // Save avatar
+    await updateUserAvatarById(newUser._id, data.file);
   }
 
-  return newUser;
+  return await findUserById(user._id);
 }
 
 export async function createCustomer(data) {
+  const salt = 10;
+  const hashedPassword = await bcrypt.hash(data.password, salt);
   const newCustomer = await UserModel.create({
     ...data,
     type: USER_TYPES.CUSTOMER,
+    password: hashedPassword,
   });
 
   if (data?.file) {
-    // Save avatar
+    await updateUserAvatarById(newCustomer._id, data.file);
   }
 
-  return newCustomer;
+  return await findUserById(newCustomer._id);
 }
 
-export async function findAllUsers(query, SELECTED_FIELD = "-password") {
-  let {
-    keyword,
-    // sortBy = "name-atoz",
-    status,
-    itemPerPage = 10,
-    page = 1,
-  } = query;
+export async function findAllUsers(query, selectFields = SELECTED_FIELDS) {
+  let { keyword, status, itemPerPage = 10, page = 1 } = query;
 
   const filterOptions = {
     $or: [
-      { name: { $regex: keyword, $options: "i" } }, // Option "i" - Search lowercase and uppercase
+      { name: { $regex: keyword, $options: "i" } },
       { email: { $regex: keyword, $options: "i" } },
     ],
     [status && "status"]: status,
   };
-
-  // let sort = {};
-  // switch (sortBy) {
-  //   case "name-atoz":
-  //     sort.name = 1;
-  //     break;
-  //   case "name-ztoa":
-  //     sort.name = -1;
-  //     break;
-  //   default:
-  //     sort.name = 1;
-  //     break;
-  // }
 
   const totalItems = await UserModel.countDocuments(filters);
   const totalPages = Math.ceil(totalItems / itemPerPage);
@@ -72,7 +63,7 @@ export async function findAllUsers(query, SELECTED_FIELD = "-password") {
   const users = await UserModel.find(filterOptions)
     .skip(offSet)
     .limit(itemPerPage)
-    .select(SELECTED_FIELD);
+    .select(selectFields);
 
   return {
     list: users,
@@ -90,7 +81,7 @@ export async function findAllUsers(query, SELECTED_FIELD = "-password") {
   };
 }
 
-export async function findUserById(id, SELECTED_FIELD = "-password") {
+export async function findUserById(id, selectFields = SELECTED_FIELDS) {
   const filter = {};
 
   if (isValidObjectId(id)) {
@@ -101,7 +92,7 @@ export async function findUserById(id, SELECTED_FIELD = "-password") {
     return null;
   }
 
-  return await UserModel.findOne(filter).select(SELECTED_FIELD);
+  return await UserModel.findOne(filter).select(selectFields);
 }
 
 export async function updateUserById(id, data) {
@@ -109,20 +100,41 @@ export async function updateUserById(id, data) {
     id,
     { ...data },
     { new: true }
-  );
+  ).select(SELECTED_FIELDS);
 
   if (data?.file) {
-    // Save avatar
+    await updateUserAvatarById(user._id, data.file);
   }
 
   return user;
 }
 
 export async function removeUserById(id) {
-  return await UserModel.findByIdAndDelete(id);
+  return await UserModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
 }
 
 export async function checkExistedUserById(id) {
   const existUser = await findUserById(id, "_id");
   return Boolean(existUser);
+}
+
+export async function updateUserAvatarById(id, file) {
+  const folderName = "avatars";
+  const result = await uploadImageBuffer({
+    file,
+    folderName,
+  });
+
+  const cropImagePath = cropImagePathByVersion({
+    url: result.url,
+    version: result.version,
+  });
+
+  return await UserModel.findByIdAndUpdate(
+    id,
+    {
+      avatar: cropImagePath,
+    },
+    { new: true }
+  ).select(SELECTED_FIELDS);
 }

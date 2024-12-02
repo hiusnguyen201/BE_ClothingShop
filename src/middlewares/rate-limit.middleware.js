@@ -1,5 +1,5 @@
 import { rateLimit } from "express-rate-limit";
-import { TooManyRequestException } from "#src/http-exception";
+import { TooManyRequestException } from "#src/core/exception/http-exception";
 
 export const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
