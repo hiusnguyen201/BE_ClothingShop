@@ -1,14 +1,14 @@
 import HttpStatus from "http-status-codes";
-import usersService from "#src/modules/users/users.service";
+import * as usersService from "#src/modules/users/users.service";
 import { UploadUtils } from "#src/utils/upload.util";
 
 export const create = async (req, res, next) => {
   try {
-    // const data = await usersService.create(req.body);
+    const data = await usersService.createUser(req.body, req.file);
     return res.json({
       statusCode: HttpStatus.CREATED,
       message: "Create",
-      // data,
+      data,
     });
   } catch (err) {
     next(err);
@@ -17,7 +17,7 @@ export const create = async (req, res, next) => {
 
 export const findAll = async (req, res, next) => {
   try {
-    const data = await usersService.findAll(req.query);
+    const data = await usersService.findAllUsers(req.query);
     return res.json({
       statusCode: HttpStatus.OK,
       message: "Find all",
@@ -30,7 +30,7 @@ export const findAll = async (req, res, next) => {
 
 export const findOne = async (req, res, next) => {
   try {
-    const data = await usersService.findOne(req.params.identify);
+    const data = await usersService.findUser(req.params.id);
     return res.json({
       statusCode: HttpStatus.OK,
       message: "Find one",
@@ -43,11 +43,11 @@ export const findOne = async (req, res, next) => {
 
 export const update = async (req, res, next) => {
   try {
-    const data = await usersService.update(req.params.identify, req.body);
+    const data = await usersService.updateUser(req.params.id, req.body);
     return res.json({
       statusCode: HttpStatus.OK,
       message: "Update",
-      data: data,
+      data,
     });
   } catch (err) {
     next(err);
@@ -56,7 +56,7 @@ export const update = async (req, res, next) => {
 
 export const remove = async (req, res, next) => {
   try {
-    const data = await usersService.remove(req.params.identify);
+    const data = await usersService.removeUser(req.params.id);
     return res.json({
       statusCode: HttpStatus.OK,
       message: "Remove",
