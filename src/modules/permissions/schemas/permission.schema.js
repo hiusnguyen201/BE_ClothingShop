@@ -1,14 +1,11 @@
 import mongoose from "mongoose";
-import { PERMISSION_STATUS, ALLOW_METHODS } from "#src/constants";
-const { Schema, Types } = mongoose;
+import { PERMISSION_STATUS, ALLOW_METHODS } from "#src/core/constant";
+const { Schema } = mongoose;
+
+const PERMISSION_MODEL = "permissions";
 
 const permissionSchema = new Schema(
   {
-    _id: {
-      type: String,
-      required: true,
-      default: new Types.ObjectId(),
-    },
     name: {
       type: String,
       length: 50,
@@ -50,8 +47,14 @@ const permissionSchema = new Schema(
     roles: [{ type: Schema.Types.ObjectId, ref: "Role" }],
     users: [{ type: Schema.Types.ObjectId, ref: "User" }],
   },
-  { versionKey: false, timestamps: true, _id: false, id: false }
+  {
+    versionKey: false,
+    timestamps: true,
+    _id: true,
+    id: false,
+    collection: PERMISSION_MODEL,
+  }
 );
 
-const Permission = mongoose.model("Permission", permissionSchema);
-export { Permission };
+const PermissionModel = mongoose.model("Permission", permissionSchema);
+export { PermissionModel };

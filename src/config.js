@@ -13,7 +13,9 @@ const config = {
 
   mongoUri: env.MONGO_URI || "mongodb://localhost:27017/clothes-store", // example: mongodb://localhost:27017/your-db,
 
-  jwtSecret: env.JWT_SECRET,
+  jwtSecret:
+    env.JWT_SECRET ||
+    "fJDtwC9Gp2x81z7bXRjWmO6xGkx4rUOV99h15fWcKmHacLkAH5stLqky3Lo5Ju8t",
   jwtExpiresIn: env.JWT_EXPIRES_IN || "7d",
 
   mailer: {
@@ -29,9 +31,9 @@ const config = {
   },
 
   cloudinary: {
-    cloudName: env.CLOUD_NAME,
-    apiKey: env.CLOUD_API_KEY,
-    apiSecret: env.CLOUD_API_SECRET,
+    cloudName: env.CLOUDINARY_NAME,
+    apiKey: env.CLOUDINARY_API_KEY,
+    apiSecret: env.CLOUDINARY_API_SECRET,
   },
 };
 

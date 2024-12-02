@@ -11,14 +11,20 @@ if (!fs.existsSync(ROOT_UPLOAD_PATH)) {
 }
 
 export class UploadUtils {
-  static config(allowedMimeTypes = [], maxFiles = 1) {
-    const storage = multer.diskStorage({
-      destination: ROOT_UPLOAD_PATH,
-      filename: function (req, file, cb) {
-        const uniquePrefix = moment().valueOf() + "_" + uuidv4();
-        cb(null, uniquePrefix);
-      },
-    });
+  static config({ isBuffer = true, allowedMimeTypes = [], maxFiles = 1 }) {
+    let storage = null;
+
+    if (isBuffer) {
+      storage = multer.memoryStorage();
+    } else {
+      storage = multer.diskStorage({
+        destination: ROOT_UPLOAD_PATH,
+        filename: function (req, file, cb) {
+          const uniquePrefix = moment().valueOf() + "_" + uuidv4();
+          cb(null, uniquePrefix);
+        },
+      });
+    }
 
     const uploadOptions = {
       storage: storage,

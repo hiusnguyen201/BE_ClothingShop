@@ -1,4 +1,4 @@
-import { NotFoundException } from "#src/http-exception";
+import { NotFoundException } from "#src/core/exception/http-exception";
 import HttpStatus from "http-status-codes";
 import moment from "moment-timezone";
 import { UploadUtils } from "#src/utils/upload.util";
@@ -18,9 +18,9 @@ export const handleError = (err, req, res, next) => {
     console.log({ ...response, stack: err.stack });
   }
 
-  // clear uploaded files
+  //  Clear file
   UploadUtils.clearUploadFile([
-    req?.file,
+    req.file,
     ...(Array.isArray(req.files) ? req.files : []),
   ]);
 

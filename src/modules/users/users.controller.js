@@ -1,13 +1,19 @@
 import HttpStatus from "http-status-codes";
-import usersService from "#src/modules/users/users.service";
-import { UploadUtils } from "#src/utils/upload.util";
+import {
+  createUser,
+  findAllUsers,
+  findUserById,
+  removeUserById,
+  updateUserById,
+  checkExistedUserById,
+} from "#src/modules/users/users.service";
 
-export const create = async (req, res, next) => {
+export const createUserController = async (req, res, next) => {
   try {
-    const data = await usersService.create(req.body);
+    const data = await createUser({ ...req.body, file: req.file });
     return res.json({
       statusCode: HttpStatus.CREATED,
-      message: "Create",
+      message: "Create user successfully",
       data,
     });
   } catch (err) {
@@ -15,12 +21,12 @@ export const create = async (req, res, next) => {
   }
 };
 
-export const findAll = async (req, res, next) => {
+export const getAllUsersController = async (req, res, next) => {
   try {
-    const data = await usersService.findAll(req.query);
+    const data = await findAllUsers(req.query);
     return res.json({
       statusCode: HttpStatus.OK,
-      message: "Find all",
+      message: "Get all users successfully",
       data,
     });
   } catch (err) {
@@ -28,12 +34,16 @@ export const findAll = async (req, res, next) => {
   }
 };
 
-export const findOne = async (req, res, next) => {
+export const getUserByIdController = async (req, res, next) => {
   try {
-    const data = await usersService.findOne(req.params.identify);
+    const data = await findUserById(req.params.id);
+    if (!data) {
+      throw new NotFoundException("User not found");
+    }
+
     return res.json({
       statusCode: HttpStatus.OK,
-      message: "Find one",
+      message: "Get one user successfully",
       data,
     });
   } catch (err) {
@@ -41,25 +51,40 @@ export const findOne = async (req, res, next) => {
   }
 };
 
-export const update = async (req, res, next) => {
+export const updateUserByIdController = async (req, res, next) => {
   try {
-    const data = await usersService.update(req.params.identify, req.body);
+    const { id } = req.params;
+    const checkExistedUser = await checkExistedUserById(id, "_id");
+    if (!checkExistedUser) {
+      throw new NotFoundException("User not found");
+    }
+
+    const data = await updateUserById(id, {
+      ...req.body,
+      file: req.file,
+    });
     return res.json({
       statusCode: HttpStatus.OK,
-      message: "Update",
-      data: data,
+      message: "Update user successfully",
+      data,
     });
   } catch (err) {
     next(err);
   }
 };
 
-export const remove = async (req, res, next) => {
+export const removeUserByIdController = async (req, res, next) => {
   try {
-    const data = await usersService.remove(req.params.identify);
+    const { id } = req.params;
+    const checkExistedUser = await checkExistedUserById(id, "_id");
+    if (!checkExistedUser) {
+      throw new NotFoundException("User not found");
+    }
+
+    const data = await removeUserById(id);
     return res.json({
       statusCode: HttpStatus.OK,
-      message: "Remove",
+      message: "Remove user successfully",
       data,
     });
   } catch (err) {

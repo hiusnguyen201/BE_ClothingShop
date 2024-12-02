@@ -1,61 +1,55 @@
-import { User } from "#src/modules/users/schemas/user.schema";
-import { NotFoundException } from "#src/http-exception";
+import { isValidObjectId } from "mongoose";
+import bcrypt from "bcrypt";
+import { UserModel } from "#src/modules/users/schemas/user.schema";
+import { REGEX_PATTERNS, USER_TYPES } from "#src/core/constant";
+import {
+  cropImagePathByVersion,
+  uploadImageBuffer,
+} from "#src/modules/cloudinary/cloudinary.service";
 
-export default { create, findAll, findOne, update, remove };
+const SELECTED_FIELDS = "_id avatar name email status birthday gender";
 
-async function create(data) {
-  const { avatar = "", name, phone, birthday, gender } = data;
+export async function createUser(data) {
+  const newUser = await UserModel.create({
+    ...data,
+    type: USER_TYPES.USER,
+  });
 
-  if (!name) {
-    throw new Error();
+  if (data?.file) {
+    await updateUserAvatarById(newUser._id, data.file);
   }
 
-  const newUser = await User.create({
-    avatar: avatar,
-    name: name,
-    phone: phone,
-    birthday: birthday,
-    gender: gender,
-  });
-  return newUser;
+  return await findUserById(user._id);
 }
 
-async function findAll(data) {
-  let {
-    keyword,
-    sortBy = "name-atoz",
-    status,
-    itemPerPage = 10,
-    page = 1,
-  } = data;
+export async function createCustomer(data) {
+  const salt = 10;
+  const hashedPassword = await bcrypt.hash(data.password, salt);
+  const newCustomer = await UserModel.create({
+    ...data,
+    type: USER_TYPES.CUSTOMER,
+    password: hashedPassword,
+  });
 
-  let filters = {};
-
-  if (keyword) {
-    const regEx = new RegExp(keyword, "i");
-    filters = {
-      $or: [{ name: regEx }, { email: regEx }],
-    };
+  if (data?.file) {
+    await updateUserAvatarById(newCustomer._id, data.file);
   }
 
-  if (status) {
-    filters.status = { $in: status };
-  }
+  return await findUserById(newCustomer._id);
+}
 
-  let sort = {};
+export async function findAllUsers(query, selectFields = SELECTED_FIELDS) {
+  let { keyword, status, itemPerPage = 10, page = 1 } = query;
 
-  switch (sortBy) {
-    case "name-atoz":
-      sort.name = 1;
-      break;
-    case "name-ztoa":
-      sort.name = -1;
-      break;
-    default:
-      sort.name = 1;
-      break;
-  }
-  const totalItems = await User.countDocuments(filters);
+  const filterOptions = {
+    $or: [
+      { name: { $regex: keyword, $options: "i" } },
+      { email: { $regex: keyword, $options: "i" } },
+    ],
+    [status && "status"]: status,
+  };
+
+  const totalItems = await UserModel.countDocuments(filters);
   const totalPages = Math.ceil(totalItems / itemPerPage);
 
   if (page <= 0 || !page) {
@@ -66,7 +60,10 @@ async function findAll(data) {
 
   const offSet = (page - 1) * itemPerPage;
 
-  const users = await User.find(filters).skip(offSet).limit(itemPerPage);
+  const users = await UserModel.find(filterOptions)
+    .skip(offSet)
+    .limit(itemPerPage)
+    .select(selectFields);
 
   return {
     list: users,
@@ -84,47 +81,60 @@ async function findAll(data) {
   };
 }
 
-async function findOne(id) {
-  if (!id) {
-    throw new Error();
+export async function findUserById(id, selectFields = SELECTED_FIELDS) {
+  const filter = {};
+
+  if (isValidObjectId(id)) {
+    filter._id = id;
+  } else if (REGEX_PATTERNS.EMAIL.test(id)) {
+    filter.email = id;
+  } else {
+    return null;
   }
 
-  const user = await User.findById(id);
-
-  if (!user) {
-    throw new Error();
-  }
-
-  return user;
+  return await UserModel.findOne(filter).select(selectFields);
 }
 
-async function update(id, data) {
-  const { avatar, name, phone, birthday, gender } = data;
-
-  if (!id) {
-    throw new Error();
-  }
-
-  const user = await User.findByIdAndUpdate(
+export async function updateUserById(id, data) {
+  const user = await UserModel.findByIdAndUpdate(
     id,
-    { avatar, name, phone, birthday, gender },
+    { ...data },
     { new: true }
-  );
+  ).select(SELECTED_FIELDS);
 
-  if (!user) {
+  if (data?.file) {
+    await updateUserAvatarById(user._id, data.file);
   }
+
   return user;
 }
 
-async function remove(id) {
-  if (!id) {
-    throw new Error();
-  }
-  const user = await User.findByIdAndDelete(id);
+export async function removeUserById(id) {
+  return await UserModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
+}
 
-  if (!user) {
-    throw new Error();
-  }
+export async function checkExistedUserById(id) {
+  const existUser = await findUserById(id, "_id");
+  return Boolean(existUser);
+}
 
-  return "Deleted";
+export async function updateUserAvatarById(id, file) {
+  const folderName = "avatars";
+  const result = await uploadImageBuffer({
+    file,
+    folderName,
+  });
+
+  const cropImagePath = cropImagePathByVersion({
+    url: result.url,
+    version: result.version,
+  });
+
+  return await UserModel.findByIdAndUpdate(
+    id,
+    {
+      avatar: cropImagePath,
+    },
+    { new: true }
+  ).select(SELECTED_FIELDS);
 }

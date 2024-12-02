@@ -1,74 +1,42 @@
-import { BadRequestException } from "#src/http-exception"
-import { Account } from "#src/modules/accounts/schemas/account.schema"
-import bcrypt from "bcrypt"
-import jwt from "jsonwebtoken"
-import usersService from "#src/modules/users/users.service"
-import { getAccountByEmail } from '#src/modules/accounts/account.service'
+import jwt from "jsonwebtoken";
+import { UnauthorizedException } from "#src/core/exception/http-exception";
+import {
+  createCustomer,
+  findUserById,
+} from "#src/modules/users/users.service";
+import config from "#src/config";
 
+export async function register(data) {
+  const user = await createCustomer(data);
 
-async function registerService(data) {
-  const { email, password, name, phone } = data
+  const accessToken = jwt.sign({ userId: user._id }, config.jwtSecret, {
+    expiresIn: config.jwtExpiresIn,
+  });
 
-  const isAccount = await Account.findOne({ email })
-
-  if (isAccount) {
-    throw new BadRequestException("Email already exist")
-  }
-  const user = await usersService.create({ name, phone })
-
-  const hashedPassword = await bcrypt.hash(password, 10)
-
-  const account = await Account.create({
-    name,
-    phone,
-    email,
-    password: hashedPassword,
-    user: user._id,
-  })
-
-
-  const accessToken = jwt.sign(
-    { AccountId: account._id },
-    process.env.ACCESS_TOKEN_SECRET,
-    {
-      expiresIn: "72h"
-    }
-  )
   return {
-    account: { email: account.email, name: user.name, phone: user.phone },
+    user,
     accessToken,
-  }
+  };
 }
 
-async function loginService(data) {
-
-  // const account = await Account.findOne({ email }).populate('user')
-
-  // if (!account) {
-  //   throw new BadRequestException("Invalid Credentials")
-  // }
-  const { email, password } = data
-  const account = await getAccountByEmail(email)
-
-  console.log('account1', account)
-  if (!account) {
-    throw new BadRequestException("User not found")
-  }
-  const isPasswordValid = await bcrypt.compare(password, account.password)
-  if (!isPasswordValid) {
-    throw new BadRequestException("Invalid Credentials")
+export async function authenticate(data) {
+  const { email, password } = data;
+  const user = await findUserById(email, "_id password");
+  if (!user) {
+    throw new UnauthorizedException("Invalid Credentials");
   }
 
-  const accessToken = jwt.sign(
-    { accountId: account._id },
-    process.env.ACCESS_TOKEN_SECRET,
-    {
-      expiresIn: "72h"
-    }
-  )
+  const isMatchPassword = await bcrypt.compare(password, user.password);
+  if (!isMatchPassword) {
+    throw new UnauthorizedException("Invalid Credentials");
+  }
+
+  const accessToken = jwt.sign({ userId: user._id }, config.jwtSecret, {
+    expiresIn: config.jwtExpiresIn,
+  });
+
   return {
-    account: { name: account.user.name, email: account.email },
-    accessToken
-  }
+    user,
+    accessToken,
+  };
 }
-export { registerService, loginService }
