@@ -1,26 +1,35 @@
 import { User } from "#src/modules/users/schemas/user.schema";
 import { NotFoundException } from "#src/http-exception";
+import { isValidObjectId } from "mongoose";
+import { REGEX_PATTERNS, USER_TYPES } from "#src/constants";
 
-export default { create, findAll, findOne, update, remove };
+export async function createUser(data, file) {
+  const newUser = await User.create({
+    ...data,
+    type: USER_TYPES.USER,
+  });
 
-async function create(data) {
-  const { avatar = "", name, phone, birthday, gender } = data;
-
-  if (!name) {
-    throw new Error();
+  if (file) {
+    // Save avatar
   }
 
-  const newUser = await User.create({
-    avatar: avatar,
-    name: name,
-    phone: phone,
-    birthday: birthday,
-    gender: gender,
-  });
   return newUser;
 }
 
-async function findAll(data) {
+export async function createCustomer(data, file) {
+  const newCustomer = await User.create({
+    ...data,
+    type: USER_TYPES.CUSTOMER,
+  });
+
+  if (file) {
+    // Save avatar
+  }
+
+  return newCustomer;
+}
+
+export async function findAllUsers(data) {
   let {
     keyword,
     sortBy = "name-atoz",
@@ -29,21 +38,15 @@ async function findAll(data) {
     page = 1,
   } = data;
 
-  let filters = {};
-
-  if (keyword) {
-    const regEx = new RegExp(keyword, "i");
-    filters = {
-      $or: [{ name: regEx }, { email: regEx }],
-    };
-  }
-
-  if (status) {
-    filters.status = { $in: status };
-  }
+  const filterOptions = {
+    $or: [
+      { name: { $regex: keyword, $options: "i" } }, // Option "i" - Search lowercase and uppercase
+      { email: { $regex: keyword, $options: "i" } },
+    ],
+    [status && "status"]: status,
+  };
 
   let sort = {};
-
   switch (sortBy) {
     case "name-atoz":
       sort.name = 1;
@@ -55,6 +58,7 @@ async function findAll(data) {
       sort.name = 1;
       break;
   }
+
   const totalItems = await User.countDocuments(filters);
   const totalPages = Math.ceil(totalItems / itemPerPage);
 
@@ -66,7 +70,9 @@ async function findAll(data) {
 
   const offSet = (page - 1) * itemPerPage;
 
-  const users = await User.find(filters).skip(offSet).limit(itemPerPage);
+  const users = await User.find(filterOptions)
+    .skip(offSet)
+    .limit(itemPerPage);
 
   return {
     list: users,
@@ -84,26 +90,22 @@ async function findAll(data) {
   };
 }
 
-async function findOne(id) {
-  if (!id) {
-    throw new Error();
+export async function findUser(identify, SELECTED_FIELD) {
+  const filter = {};
+
+  if (isValidObjectId(identify)) {
+    filter._id = identify;
+  } else if (REGEX_PATTERNS.EMAIL.test(identify)) {
+    filter.email = identify;
+  } else {
+    return null;
   }
 
-  const user = await User.findById(id);
-
-  if (!user) {
-    throw new Error();
-  }
-
-  return user;
+  return await User.findOne(filter).select(SELECTED_FIELD);
 }
 
-async function update(id, data) {
+export async function updateUser(id, data) {
   const { avatar, name, phone, birthday, gender } = data;
-
-  if (!id) {
-    throw new Error();
-  }
 
   const user = await User.findByIdAndUpdate(
     id,
@@ -112,19 +114,18 @@ async function update(id, data) {
   );
 
   if (!user) {
+    throw new NotFoundException("User not found");
   }
+
   return user;
 }
 
-async function remove(id) {
-  if (!id) {
-    throw new Error();
-  }
+export async function removeUser(id) {
   const user = await User.findByIdAndDelete(id);
 
   if (!user) {
-    throw new Error();
+    throw new NotFoundException("User not found");
   }
 
-  return "Deleted";
+  return user;
 }

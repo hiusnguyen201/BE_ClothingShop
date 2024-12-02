@@ -23,11 +23,11 @@ router
   .route("/")
   .get(findAll)
   .post(
-    // validateSchema(createUserDto),
+    validateSchema(createUserDto),
     validateFile(upload.single("image")),
     create
   );
 
-router.route("/:identify").get(findOne).patch(update).delete(remove);
+router.route("/:id").get(findOne).patch(update).delete(remove);
 
 export default router;

@@ -42,3 +42,12 @@ export const ALLOW_IMAGE_MIME_TYPES = [
   "image/vnd.microsoft.icon", // .ico       - Icon format
   "image/x-icon", // same above
 ];
+
+export const USER_TYPES = {
+  CUSTOMER: "Customer",
+  USER: "User",
+};
+
+export const REGEX_PATTERNS = {
+  EMAIL: /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g,
+};

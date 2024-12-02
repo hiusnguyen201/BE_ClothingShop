@@ -1,9 +1,15 @@
 import mongoose from "mongoose";
-import { GENDER, USER_IDENTIFY_STATUS } from "#src/constants";
+import { GENDER, USER_IDENTIFY_STATUS, USER_TYPES } from "#src/constants";
 const { Schema } = mongoose;
 
 const userSchema = new Schema(
   {
+    type: {
+      type: String,
+      length: 50,
+      enum: [USER_TYPES.CUSTOMER, USER_TYPES.EMPLOYEE],
+      default: USER_TYPES.CUSTOMER,
+    },
     // Info
     avatar: {
       type: String,
