@@ -10,13 +10,13 @@ import {
 const SELECTED_FIELDS = "_id avatar name email status birthday gender";
 
 export async function createUser(data) {
-  const newUser = await UserModel.create({
+  const user = await UserModel.create({
     ...data,
     type: USER_TYPES.USER,
   });
 
   if (data?.file) {
-    await updateUserAvatarById(newUser._id, data.file);
+    await updateUserAvatarById(user._id, data.file);
   }
 
   return await findUserById(user._id);
@@ -39,7 +39,7 @@ export async function createCustomer(data) {
 }
 
 export async function findAllUsers(query, selectFields = SELECTED_FIELDS) {
-  let { keyword, status, itemPerPage = 10, page = 1 } = query;
+  let { keyword = "", status, itemPerPage = 10, page = 1 } = query;
 
   const filterOptions = {
     $or: [
@@ -49,7 +49,7 @@ export async function findAllUsers(query, selectFields = SELECTED_FIELDS) {
     [status && "status"]: status,
   };
 
-  const totalItems = await UserModel.countDocuments(filters);
+  const totalItems = await UserModel.countDocuments(filterOptions);
   const totalPages = Math.ceil(totalItems / itemPerPage);
 
   if (page <= 0 || !page) {

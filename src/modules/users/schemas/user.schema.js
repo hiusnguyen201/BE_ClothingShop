@@ -14,7 +14,7 @@ const userSchema = new Schema(
       type: String,
       length: 50,
       required: true,
-      enum: [USER_TYPES.CUSTOMER, USER_TYPES.EMPLOYEE],
+      enum: [USER_TYPES.CUSTOMER, USER_TYPES.EMPLOYEE, USER_TYPES.USER],
       default: USER_TYPES.CUSTOMER,
     },
     // Info
