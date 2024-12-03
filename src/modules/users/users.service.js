@@ -1,4 +1,4 @@
-import { UserModel } from "#src/modules/users/schemas/UserModel.schema";
+import { UserModel } from "#src/modules/users/schemas/user.schema";
 import { isValidObjectId } from "mongoose";
 import { REGEX_PATTERNS, USER_TYPES } from "#src/core/constant";
 

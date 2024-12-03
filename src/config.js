@@ -18,11 +18,13 @@ const config = {
     "fJDtwC9Gp2x81z7bXRjWmO6xGkx4rUOV99h15fWcKmHacLkAH5stLqky3Lo5Ju8t",
   jwtExpiresIn: env.JWT_EXPIRES_IN || "7d",
 
-  mailer: {
-    host: env.MAILER_HOST || "smtp.gmail.com",
-    port: env.MAILER_PORT || 465,
-    user: env.MAILER_AUTH_USER,
-    pass: env.MAILER_AUTH_PASS,
+  mailtrap: {
+    host: env.MAILTRAP_HOST || "smtp.gmail.com",
+    port: env.MAILTRAP_PORT || 465,
+    user: env.MAILTRAP_AUTH_USER,
+    pass: env.MAILTRAP_AUTH_PASS,
+    clientUrl: env.CLIENT_URL,
+    token: env.MAILTRAP_TOKEN
   },
 
   google: {

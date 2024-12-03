@@ -84,6 +84,8 @@ const userSchema = new Schema(
       required: false,
       default: null,
     },
+    resetPasswordToken: String,
+    resetPasswordExpiresAt: Date,
 
     // Foreign key
     role: { type: Schema.Types.ObjectId, ref: "Role" },
@@ -96,6 +98,7 @@ const userSchema = new Schema(
     id: false,
     collection: USER_MODEL,
   }
+
 );
 
 const UserModel = mongoose.model("User", userSchema);
