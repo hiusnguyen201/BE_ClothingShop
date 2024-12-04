@@ -28,7 +28,9 @@ router
     validateSchema(createUserDto),
     createUserController
   )
-  .patch("/update-user-by-id/:id", updateUserByIdController)
+  .patch("/update-user-by-id/:id",
+    validateFile(upload.single("avatar")),
+    validateSchema(createUserDto), updateUserByIdController)
   .delete("/remove-user-by-id/:id", removeUserByIdController);
 
 export default router;

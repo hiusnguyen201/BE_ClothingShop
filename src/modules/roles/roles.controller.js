@@ -11,8 +11,6 @@ import {
 
 export const createRoleController = async (req, res, next) => {
   try {
-    console.log(req.body);
-    
     const data = await createRole({ ...req.body, file: req.file });
     return res.json({
       statusCode: HttpStatus.CREATED,

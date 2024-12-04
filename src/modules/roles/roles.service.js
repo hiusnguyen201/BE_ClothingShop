@@ -1,6 +1,5 @@
 import { isValidObjectId } from "mongoose";
 import { RoleModel } from "#src/modules/roles/schemas/role.schema";
-import { ROLE_STATUS } from "#src/core/constant";
 import {
   cropImagePathByVersion,
   uploadImageBuffer,
@@ -11,11 +10,9 @@ const SELECTED_FIELDS = "_id icon name description status";
 export async function createRole(data) {  
   const role = await RoleModel.create({
     ...data,
-    status: ROLE_STATUS.INACTIVE,
   });
-
   if (data?.file) {
-    await updateRoleAvatarById(role._id, data.file);
+    await updateRoleIconById(role._id, data.file);
   }
 
   return await findRoleById(role._id);
@@ -69,7 +66,7 @@ export async function findRoleById(id, selectFields = SELECTED_FIELDS) {
 
   if (isValidObjectId(id)) {
     filter._id = id;
-  } else if (typeof(id) === "string") {
+  } else if (id) {
     filter.name = id;
   } else {
     return null;
@@ -86,7 +83,7 @@ export async function updateRoleById(id, data) {
   ).select(SELECTED_FIELDS);
 
   if (data?.file) {
-    await updateRoleAvatarById(role._id, data.file);
+    await updateRoleIconById(role._id, data.file);
   }
 
   return role;
@@ -101,22 +98,17 @@ export async function checkExistedRoleById(id) {
   return Boolean(existRole);
 }
 
-export async function updateRoleAvatarById(id, file) {
-  const folderName = "roles";
+export async function updateRoleIconById(id, file) {
+  const folderName = "icons";
   const result = await uploadImageBuffer({
     file,
     folderName,
   });
 
-  const cropImagePath = cropImagePathByVersion({
-    url: result.url,
-    version: result.version,
-  });
-
   return await RoleModel.findByIdAndUpdate(
     id,
     {
-      icon: cropImagePath,
+      icon: result.url,
     },
     { new: true }
   ).select(SELECTED_FIELDS);
