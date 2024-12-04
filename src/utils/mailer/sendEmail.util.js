@@ -1,5 +1,5 @@
 import config from "#src/config";
-import { PASSWORD_RESET_REQUEST_TEMPLATE, PASSWORD_RESET_SUCCESS_TEMPLATE } from "./emailTemplates.js";
+import { PASSWORD_RESET_REQUEST_TEMPLATE, PASSWORD_RESET_SUCCESS_TEMPLATE } from "./email-template.js";
 import { mailtrapClient, sender } from "./mailtrap.config.js";
 
 export const sendResetPasswordReqest = async (email, resetURL) => {
@@ -10,7 +10,7 @@ export const sendResetPasswordReqest = async (email, resetURL) => {
       to: recipient,
       subject: "Reset Your Password",
       html: PASSWORD_RESET_REQUEST_TEMPLATE.replace("{resetURL}", resetURL),
-      category: "Password Reset"
+      category: "Send Request Password Reset"
     })
   } catch (error) {
     console.log('err', error)

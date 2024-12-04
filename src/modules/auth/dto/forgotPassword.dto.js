@@ -2,6 +2,7 @@ import Joi from "joi";
 
 export const forgotPasswordDto = Joi.object({
   email: Joi.string().required().email(),
+  url: Joi.string().required()
 });
 export const resetPasswordDto = Joi.object({
   password: Joi.string().required().min(3).max(30),

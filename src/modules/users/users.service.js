@@ -104,6 +104,14 @@ export async function findUserById(id, SELECTED_FIELD = "-password") {
   return await UserModel.findOne(filter).select(SELECTED_FIELD);
 }
 
+export async function findUserByResetPasswordToken(token) {
+  const user = await UserModel.findOne({
+    resetPasswordToken: token,
+    resetPasswordExpiresAt: { $gt: Date.now() }
+  })
+  return user
+}
+
 export async function updateUserById(id, data) {
   const user = await UserModel.findByIdAndUpdate(
     id,

@@ -41,7 +41,7 @@ export const loginController = async (req, res, next) => {
 
 export const forgotPasswordController = async (req, res, next) => {
   try {
-    const data = await forgotPasswordService(req.body, req.params)
+    const data = await forgotPasswordService(req.body, req.params, req.originalUrl)
     return res.json({
       statusCode: HttpStatus.OK,
       message: "Required Forgot Password Success"
@@ -53,7 +53,7 @@ export const forgotPasswordController = async (req, res, next) => {
 
 export const resetPasswordController = async (req, res, next) => {
   try {
-    const data = await resetPasswordService(req.body, req.params)
+    const data = await resetPasswordService(req.body, req.params.token)
     return res.json({
       statusCode: HttpStatus.OK,
       message: 'Reset Password'

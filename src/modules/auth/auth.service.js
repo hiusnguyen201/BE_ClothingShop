@@ -1,7 +1,7 @@
 import { BadRequestException, UnauthorizedException } from "#src/core/exception/http-exception";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { createCustomer, findUserById } from "#src/modules/users/users.service";
+import { createCustomer, findUserById, findUserByResetPasswordToken } from "#src/modules/users/users.service";
 import config from "#src/config";
 import { sendResetPasswordReqest, sendResetPasswordSuccess } from "#src/utils/mailer/sendEmail.util";
 import { UserModel } from "#src/modules/users/schemas/user.schema"
@@ -30,7 +30,6 @@ export async function registerService(data, file) {
 
 export async function loginService(data) {
   const { email, password } = data;
-  console.log(data);
 
   const user = await findUserById(email, "password name email");
   if (!user) {
@@ -54,7 +53,7 @@ export async function loginService(data) {
 
 export async function forgotPasswordService(data) {
   const { email } = data
-  const user = await findUserById(email);
+  const user = await findUserById(email)
   if (!user) {
     throw new UnauthorizedException("Invalid Credentials");
   }
@@ -69,18 +68,16 @@ export async function forgotPasswordService(data) {
   user.resetPasswordExpiresAt = resetTokenExpiresAt
   await user.save()
 
-  const resetURL = `${config.mailtrap.clientUrl}/api/auth/reset-password/${resetToken}`
+  const resetURL = `${data.url}/${resetToken}`
 
   await sendResetPasswordReqest(user.email, resetURL)
 
 }
 
-export async function resetPasswordService(data) {
-  const { token, password } = data
-  const user = await UserModel.findOne({
-    reserPasswordToken: token,
-    resetPasswordExpiresAt: { $gt: Date.now() }
-  })
+export async function resetPasswordService(data, token) {
+  console.log('token', token)
+  const { password } = data
+  const user = await findUserByResetPasswordToken(token)
 
   if (!user) {
     throw new UnauthorizedException("Invalid Credentials");
