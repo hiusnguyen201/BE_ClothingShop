@@ -8,6 +8,7 @@ import {
 } from "#src/modules/cloudinary/cloudinary.service";
 
 const SELECTED_FIELDS = "_id avatar name email status birthday gender";
+const FOLDER_AVATARS = 'avatars';
 
 export async function createUser(data) {
   const user = await UserModel.create({
@@ -103,6 +104,7 @@ export async function updateUserById(id, data) {
   ).select(SELECTED_FIELDS);
 
   if (data?.file) {
+    await removeImages(FOLDER_ICONS + `/${id}`);
     await updateUserAvatarById(user._id, data.file);
   }
 
@@ -119,7 +121,7 @@ export async function checkExistedUserById(id) {
 }
 
 export async function updateUserAvatarById(id, file) {
-  const folderName = "avatars";
+  const folderName = `${FOLDER_AVATARS}/${id}`;
   const result = await uploadImageBuffer({
     file,
     folderName,

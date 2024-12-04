@@ -1,13 +1,14 @@
 import { isValidObjectId } from "mongoose";
 import { RoleModel } from "#src/modules/roles/schemas/role.schema";
 import {
-  cropImagePathByVersion,
+  removeImages,
   uploadImageBuffer,
 } from "#src/modules/cloudinary/cloudinary.service";
 
 const SELECTED_FIELDS = "_id icon name description status";
+const FOLDER_ICONS = 'icons';
 
-export async function createRole(data) {  
+export async function createRole(data) {
   const role = await RoleModel.create({
     ...data,
   });
@@ -75,7 +76,7 @@ export async function findRoleById(id, selectFields = SELECTED_FIELDS) {
   return await RoleModel.findOne(filter).select(selectFields);
 }
 
-export async function updateRoleById(id, data) {  
+export async function updateRoleById(id, data) {
   const role = await RoleModel.findByIdAndUpdate(
     id,
     { ...data },
@@ -83,6 +84,7 @@ export async function updateRoleById(id, data) {
   ).select(SELECTED_FIELDS);
 
   if (data?.file) {
+    await removeImages(FOLDER_ICONS + `/${id}`);
     await updateRoleIconById(role._id, data.file);
   }
 
@@ -99,7 +101,7 @@ export async function checkExistedRoleById(id) {
 }
 
 export async function updateRoleIconById(id, file) {
-  const folderName = "icons";
+  const folderName = `${FOLDER_ICONS}/${id}`;
   const result = await uploadImageBuffer({
     file,
     folderName,
