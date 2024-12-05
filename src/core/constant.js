@@ -4,7 +4,7 @@ export const GENDER = {
   OTHER: "Other",
 };
 
-export const USER_IDENTIFY_STATUS = {
+export const USER_STATUS = {
   ACTIVE: "Active",
   INACTIVE: "Inactive",
   BANNED: "Banned",
