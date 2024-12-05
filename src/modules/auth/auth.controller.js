@@ -4,7 +4,8 @@ import {
   loginService,
   registerService,
   forgotPasswordService,
-  resetPasswordService
+  resetPasswordService,
+  verifiEmailService
 } from "#src/modules/auth/auth.service";
 import { checkExistedUserById } from "#src/modules/users/users.service";
 
@@ -15,7 +16,7 @@ export const registerController = async (req, res, next) => {
       throw new BadRequestException("Email already exist");
     }
 
-    const data = await registerService(req.body, req.file);
+    const data = await registerService(req.body, req.file, res);
     return res.json({
       statusCode: HttpStatus.CREATED,
       message: "Register successfully",
@@ -38,6 +39,19 @@ export const loginController = async (req, res, next) => {
     next(err);
   }
 };
+
+export const verifiEmailController = async (req, res, next) => {
+  try {
+    const data = await verifiEmailService(req.body);
+    return res.json({
+      statusCode: HttpStatus.OK,
+      message: "Verifi Email Successfully",
+      data,
+    });
+  } catch (err) {
+    next(err)
+  }
+}
 
 export const forgotPasswordController = async (req, res, next) => {
   try {

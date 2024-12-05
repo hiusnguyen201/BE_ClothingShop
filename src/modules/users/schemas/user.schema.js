@@ -69,10 +69,10 @@ const userSchema = new Schema(
       ],
       default: USER_IDENTIFY_STATUS.INACTIVE,
     },
-    activeCode: {
-      type: String,
+    isVerified: {
+      type: Boolean,
       required: false,
-      default: null,
+      default: false,
     },
     googleId: {
       type: String,
@@ -84,6 +84,9 @@ const userSchema = new Schema(
       required: false,
       default: null,
     },
+
+    verificationToken: String,
+    verificationTokenExpiresAt: Date,
     resetPasswordToken: String,
     resetPasswordExpiresAt: Date,
 

@@ -112,6 +112,14 @@ export async function findUserByResetPasswordToken(token) {
   return user
 }
 
+export async function findUserByCodeVerifiEmail(code) {
+  const user = await UserModel.findOne({
+    verificationToken: code,
+    verificationTokenExpiresAt: { $gt: Date.now() }
+  })
+  return user
+}
+
 export async function updateUserById(id, data) {
   const user = await UserModel.findByIdAndUpdate(
     id,
