@@ -4,23 +4,29 @@ import {
   removeImages,
   uploadImageBuffer,
 } from "#src/modules/cloudinary/cloudinary.service";
+import { findPermissionById } from "#src/modules/permissions/permissions.service.js";
 
 const SELECTED_FIELDS = "_id icon name description status permissions";
 const FOLDER_ICONS = 'icons';
 
 export async function createRole(data) {
+
   const role = await RoleModel.create({
     ...data,
   });
+
   if (data?.file) {
     await updateRoleIconById(role._id, data.file);
+  }
+  if (data?.permissions) {
+    await updateRolePermissionById(role._id, data.permissions)
   }
 
   return await findRoleById(role._id);
 }
 
 export async function findAllRoles(query, selectFields = SELECTED_FIELDS) {
-  let { keyword = "", status, permissions, itemPerPage = 10, page = 1 } = query;
+  let { keyword = "", status, itemPerPage = 10, page = 1 } = query;
 
   const filterOptions = {
     $or: [
@@ -28,7 +34,6 @@ export async function findAllRoles(query, selectFields = SELECTED_FIELDS) {
       { description: { $regex: keyword, $options: "i" } },
     ],
     [status && "status"]: status,
-    [permissions && "permissions"]: permissions,
   };
 
   const totalItems = await RoleModel.countDocuments(filterOptions);
@@ -89,7 +94,11 @@ export async function updateRoleById(id, data) {
     await updateRoleIconById(role._id, data.file);
   }
 
-  return role;
+  if (data?.permissions) {
+    await updateRolePermissionById(role._id, data.permissions)
+  }
+
+  return await findRoleById(role._id);
 }
 
 export async function removeRoleById(id) {
@@ -112,6 +121,23 @@ export async function updateRoleIconById(id, file) {
     id,
     {
       icon: result.url,
+    },
+    { new: true }
+  ).select(SELECTED_FIELDS);
+}
+
+export async function updateRolePermissionById(id, data) {
+  const permissions = [];
+  for (const permissionId of data) {
+    const result = await findPermissionById(permissionId);
+    if (result) {
+      permissions.push(result._id);
+    }
+  }
+  return await RoleModel.findByIdAndUpdate(
+    id,
+    {
+      permissions,
     },
     { new: true }
   ).select(SELECTED_FIELDS);
