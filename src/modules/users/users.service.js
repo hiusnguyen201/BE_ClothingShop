@@ -1,6 +1,7 @@
 import { UserModel } from "#src/modules/users/schemas/user.schema";
 import { isValidObjectId } from "mongoose";
 import { REGEX_PATTERNS, USER_TYPES } from "#src/core/constant";
+import moment from "moment-timezone";
 
 export async function createUser(data) {
   const newUser = await UserModel.create({
@@ -29,13 +30,7 @@ export async function createCustomer(data) {
 }
 
 export async function findAllUsers(query, SELECTED_FIELD = "-password") {
-  let {
-    keyword,
-    // sortBy = "name-atoz",
-    status,
-    itemPerPage = 10,
-    page = 1,
-  } = query;
+  let { keyword, status, itemPerPage = 10, page = 1 } = query;
 
   const filterOptions = {
     $or: [
@@ -44,19 +39,6 @@ export async function findAllUsers(query, SELECTED_FIELD = "-password") {
     ],
     [status && "status"]: status,
   };
-
-  // let sort = {};
-  // switch (sortBy) {
-  //   case "name-atoz":
-  //     sort.name = 1;
-  //     break;
-  //   case "name-ztoa":
-  //     sort.name = -1;
-  //     break;
-  //   default:
-  //     sort.name = 1;
-  //     break;
-  // }
 
   const totalItems = await UserModel.countDocuments(filters);
   const totalPages = Math.ceil(totalItems / itemPerPage);
@@ -107,13 +89,17 @@ export async function findUserById(id, SELECTED_FIELD = "-password") {
 export async function findUserByResetPasswordToken(token) {
   const user = await UserModel.findOne({
     resetPasswordToken: token,
-    resetPasswordExpiresAt: { $gt: Date.now() }
-  })
-  return user
+    resetPasswordExpiresAt: { $gt: moment().valueOf() },
+  });
+  return user;
 }
 
-
 export async function updateUserById(id, data) {
+  const checkExistedUser = await checkExistedUserById(id, "_id");
+  if (!checkExistedUser) {
+    throw new NotFoundException("User not found");
+  }
+
   const user = await UserModel.findByIdAndUpdate(
     id,
     { ...data },
@@ -128,6 +114,11 @@ export async function updateUserById(id, data) {
 }
 
 export async function removeUserById(id) {
+  const checkExistedUser = await checkExistedUserById(id, "_id");
+  if (!checkExistedUser) {
+    throw new NotFoundException("User not found");
+  }
+
   return await UserModel.findByIdAndDelete(id);
 }
 

@@ -1,4 +1,4 @@
-export const VERIFICATION_EMAIL_TEMPLATE = `
+export const VERIFICATION_OTP_TEMPLATE = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,7 +14,7 @@ export const VERIFICATION_EMAIL_TEMPLATE = `
     <p>Hello,</p>
     <p>Thank you for signing up! Your verification code is:</p>
     <div style="text-align: center; margin: 30px 0;">
-      <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #4CAF50;">{verificationToken}</span>
+      <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #4CAF50;">{otpCode}</span>
     </div>
     <p>Enter this code on the verification page to complete your registration.</p>
     <p>This code will expire in 15 minutes for security reasons.</p>

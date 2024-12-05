@@ -5,7 +5,6 @@ import {
   findUserById,
   removeUserById,
   updateUserById,
-  checkExistedUserById,
 } from "#src/modules/users/users.service";
 
 export const createUserController = async (req, res, next) => {
@@ -53,13 +52,7 @@ export const getUserByIdController = async (req, res, next) => {
 
 export const updateUserByIdController = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const checkExistedUser = await checkExistedUserById(id, "_id");
-    if (!checkExistedUser) {
-      throw new NotFoundException("User not found");
-    }
-
-    const data = await updateUserById(id, {
+    const data = await updateUserById(req.param.id, {
       ...req.body,
       file: req.file,
     });
@@ -75,13 +68,7 @@ export const updateUserByIdController = async (req, res, next) => {
 
 export const removeUserByIdController = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const checkExistedUser = await checkExistedUserById(id, "_id");
-    if (!checkExistedUser) {
-      throw new NotFoundException("User not found");
-    }
-
-    const data = await removeUserById(id);
+    const data = await removeUserById(req.params.id);
     return res.json({
       statusCode: HttpStatus.OK,
       message: "Remove user successfully",

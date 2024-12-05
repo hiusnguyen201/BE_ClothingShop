@@ -1,4 +1,4 @@
-import { MailtrapClient } from "mailtrap"
+import { MailtrapClient } from "mailtrap";
 import config from "#src/config";
 
 export const mailtrapClient = new MailtrapClient({
@@ -9,4 +9,3 @@ export const sender = {
   email: "hello@demomailtrap.com",
   name: "Vương bùi",
 };
-

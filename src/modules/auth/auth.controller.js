@@ -1,22 +1,15 @@
 import HttpStatus from "http-status-codes";
-import { BadRequestException } from "#src/core/exception/http-exception"
 import {
   loginService,
   registerService,
   forgotPasswordService,
   resetPasswordService,
   verifyOtpService,
-  sendOtpViaEmailService
+  sendOtpViaEmailService,
 } from "#src/modules/auth/auth.service";
-import { checkExistedUserById } from "#src/modules/users/users.service";
 
 export const registerController = async (req, res, next) => {
   try {
-    const existedUser = await checkExistedUserById(req.body.email);
-    if (existedUser) {
-      throw new BadRequestException("Email already exist");
-    }
-
     const data = await registerService(req.body, req.file, res);
     return res.json({
       statusCode: HttpStatus.CREATED,
@@ -50,43 +43,47 @@ export const sendOtpViaEmailController = async (req, res, next) => {
       data,
     });
   } catch (err) {
-    next(err)
+    next(err);
   }
-}
+};
 
 export const verifyOtpController = async (req, res, next) => {
   try {
     const data = await verifyOtpService(req.body);
     return res.json({
       statusCode: HttpStatus.OK,
-      message: "Verifi Email Successfully",
+      message: "Verify otp successfully",
       data,
     });
   } catch (err) {
-    next(err)
+    next(err);
   }
-}
+};
 
 export const forgotPasswordController = async (req, res, next) => {
   try {
-    const data = await forgotPasswordService(req.body, req.params, req.originalUrl)
+    const data = await forgotPasswordService(
+      req.body,
+      req.params,
+      req.originalUrl
+    );
     return res.json({
       statusCode: HttpStatus.OK,
-      message: "Required Forgot Password Success"
-    })
+      message: "Required Forgot Password Success",
+    });
   } catch (err) {
-    next(err)
+    next(err);
   }
-}
+};
 
 export const resetPasswordController = async (req, res, next) => {
   try {
-    const data = await resetPasswordService(req.body, req.params.token)
+    const data = await resetPasswordService(req.body, req.params.token);
     return res.json({
       statusCode: HttpStatus.OK,
-      message: 'Reset Password'
-    })
+      message: "Reset Password",
+    });
   } catch (err) {
-    next(err)
+    next(err);
   }
-}
+};
