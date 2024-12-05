@@ -5,7 +5,7 @@ import {
   uploadImageBuffer,
 } from "#src/modules/cloudinary/cloudinary.service";
 
-const SELECTED_FIELDS = "_id icon name description status";
+const SELECTED_FIELDS = "_id icon name description status permissions";
 const FOLDER_ICONS = 'icons';
 
 export async function createRole(data) {
@@ -20,7 +20,7 @@ export async function createRole(data) {
 }
 
 export async function findAllRoles(query, selectFields = SELECTED_FIELDS) {
-  let { keyword = "", status, itemPerPage = 10, page = 1 } = query;
+  let { keyword = "", status, permissions, itemPerPage = 10, page = 1 } = query;
 
   const filterOptions = {
     $or: [
@@ -28,6 +28,7 @@ export async function findAllRoles(query, selectFields = SELECTED_FIELDS) {
       { description: { $regex: keyword, $options: "i" } },
     ],
     [status && "status"]: status,
+    [permissions && "permissions"]: permissions,
   };
 
   const totalItems = await RoleModel.countDocuments(filterOptions);

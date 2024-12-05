@@ -1,5 +1,5 @@
 import HttpStatus from "http-status-codes";
-import { NotFoundException } from "#src/core/exception/http-exception";
+import { NotFoundException, BadRequestException } from "#src/core/exception/http-exception";
 import {
   createRole,
   findAllRoles,
@@ -8,9 +8,16 @@ import {
   updateRoleById,
   checkExistedRoleById,
 } from "#src/modules/roles/roles.service";
+import { isValidObjectId } from "mongoose";
 
 export const createRoleController = async (req, res, next) => {
   try {
+    req.body.permissions.forEach(permission => {
+      if (!isValidObjectId(permission)) {
+        throw new BadRequestException(`Invalid ObjectId ${permission}`);
+      }
+    });
+
     const data = await createRole({ ...req.body, file: req.file });
     return res.json({
       statusCode: HttpStatus.CREATED,
@@ -52,13 +59,19 @@ export const getRoleByIdController = async (req, res, next) => {
   }
 };
 
-export const updateRoleByIdController = async (req, res, next) => {  
+export const updateRoleByIdController = async (req, res, next) => {
   try {
     const { id } = req.params;
     const checkExistedRole = await checkExistedRoleById(id, "_id");
     if (!checkExistedRole) {
       throw new NotFoundException("Role not found");
     }
+
+    req.body.permissions.forEach(permission => {
+      if (!isValidObjectId(permission)) {
+        throw new BadRequestException(`Invalid ObjectId ${permission}`);
+      }
+    });
 
     const data = await updateRoleById(id, {
       ...req.body,
