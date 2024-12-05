@@ -1,17 +1,16 @@
-import { BadRequestException, UnauthorizedException } from "#src/core/exception/http-exception";
+import { BadRequestException, NotFoundException, UnauthorizedException } from "#src/core/exception/http-exception";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import {
   createCustomer,
   findUserById,
   findUserByResetPasswordToken,
-  findUserByCodeVerifiEmail
 } from "#src/modules/users/users.service";
 import config from "#src/config";
-import { sendVerificationEmail, sendResetPasswordReqest, sendResetPasswordSuccess, sendWelcomeEmail } from "#src/utils/mailer/sendEmail.util";
-import { genarateVerificationToken } from "#src/utils/token/generate-verification-token.util"
-import { generateTokenAndSetCookie } from "#src/utils/token/generate-token-and-set-cookie.util"
-import { UserModel } from "#src/modules/users/schemas/user.schema"
+import { sendOtpViaEmail, sendResetPasswordReqest, sendResetPasswordSuccess, sendWelcomeEmail } from "#src/utils/mailer/sendEmail.util";
+import { generateTokenAndSetCookie } from "#src/utils/token/generate-token-and-set-cookie.util";
+import { USER_TYPES } from "#src/core/constant";
+import { createUserOtpByUserId, findUserOtpByOtpAndUserId } from "#src/modules/user-otps/user-otp.service";
 
 export async function registerService(data, file) {
   const salt = 10;
@@ -46,45 +45,65 @@ export async function loginService(data) {
     throw new UnauthorizedException("Invalid Credentials");
   }
 
-  if (user.isVerified === true) {
-    throw new BadRequestException('user verified')
-  }
 
-  // if (user.type === 'Customer') {
-  //   return
-  // }
-  const createVerificationToken = genarateVerificationToken(data);
-  const verificationTokenExpiresAt = Date.now() + 1 * 60 * 60 * 1000; //24h
-  user.verificationToken = createVerificationToken;
-  user.verificationTokenExpiresAt = verificationTokenExpiresAt;
-  await user.save()
+  if (!user.isVerified || user.type === USER_TYPES.USER) {
+    return {
+      isAuthenticated: false,
+      user: { name: user.name, email: user.email },
+      accessToken: null,
+      is2FactorRequired: true
+    };
+  }
 
   //get Token
   const accessToken = generateTokenAndSetCookie(user._id);
 
-  await sendVerificationEmail(user.email, createVerificationToken);
   return {
-    isAuthenticated: user.isVerified,
+    isAuthenticated: true,
     user: { name: user.name, email: user.email },
     accessToken,
-    is2FactorRequired: user.isVerified
+    is2FactorRequired: false
   };
 }
 
-export async function verifiEmailService(data) {
+export async function sendOtpViaEmailService(data) {
+  const { email } = data
+  const user = await findUserById(email);
+  if (!user) {
+    throw new NotFoundException("User not found");
+  }
+  const userOtp = await createUserOtpByUserId(user._id);
+  await sendOtpViaEmail(user.email, userOtp.otp);
+}
 
-  const user = await findUserByCodeVerifiEmail(data.code)
+export async function verifyOtpService(data) {
+  const { email, otp } = data
+  const user = await findUserById(email);
 
   if (!user) {
-    throw new BadRequestException('Invalid or expired vetification code')
+    throw new NotFoundException("User not found");
   }
 
-  user.isVerified = true
-  user.verificationToken = undefined
-  user.verificationTokenExpiresAt = undefined
-  await user.save()
+  const userOtp = findUserOtpByOtpAndUserId(otp, user._id)
 
-  await sendWelcomeEmail(user.email, user.name)
+  if (!userOtp) {
+    throw new UnauthorizedException('Invalid or expired vetification code')
+  }
+
+  if (!user.isVerified) {
+    user.isVerified = true
+    await user.save()
+    await sendWelcomeEmail(user.email, user.name)
+  }
+
+  //get Token
+  const accessToken = generateTokenAndSetCookie(user._id)
+
+  return {
+    isAuthenticated: true,
+    user: { name: user.name, email: user.email },
+    accessToken
+  };
 }
 
 
@@ -92,7 +111,7 @@ export async function forgotPasswordService(data) {
   const { email } = data
   const user = await findUserById(email)
   if (!user) {
-    throw new UnauthorizedException("Invalid Credentials");
+    throw new NotFoundException("User not found");
   }
 
   const resetToken = jwt.sign(
@@ -116,7 +135,7 @@ export async function resetPasswordService(data, token) {
   const user = await findUserByResetPasswordToken(token)
 
   if (!user) {
-    throw new UnauthorizedException("Invalid Credentials");
+    throw new NotFoundException("User not found");
   }
 
   const hashedPassword = await bcrypt.hash(password, 10)

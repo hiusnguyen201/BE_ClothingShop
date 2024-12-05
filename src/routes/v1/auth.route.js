@@ -6,43 +6,44 @@ import {
   loginController,
   forgotPasswordController,
   resetPasswordController,
-  verifiEmailController
+  verifyOtpController,
+  sendOtpViaEmailController
 } from "#src/modules/auth/auth.controller";
 import { validateSchema } from "#src/middlewares/validate-request.middleware";
 import { registerDto } from "#src/modules/auth/dto/register.dto";
 import { loginDto } from "#src/modules/auth/dto/login.dto";
-import { verifiEmailDto } from "#src/modules/auth/dto/code-verifi-email.dto";
+import { verifyOtpDto } from "#src/modules/auth/dto/code-verify-email.dto";
 import { forgotPasswordDto, resetPasswordDto } from "#src/modules/auth/dto/forgotPassword.dto";
-
+import { sendOtpViaEmailDto } from "#src/modules/auth/dto/send-otp-via-email.dto";
 router
   .post(
     "/register",
     validateSchema(registerDto),
-    //đi vào 1 hàm trong controller
     registerController
   )
   .post(
     "/login",
     validateSchema(loginDto),
-    //đi vào 1 hàm trong controller
     loginController
   )
   .post(
-    "/verifi-email",
-    validateSchema(verifiEmailDto),
-    //đi vào 1 hàm trong controller
-    verifiEmailController
+    "/send-otp-via-email",
+    validateSchema(sendOtpViaEmailDto),
+    sendOtpViaEmailController
+  )
+  .post(
+    "/verify-otp",
+    validateSchema(verifyOtpDto),
+    verifyOtpController
   )
   .post(
     "/forgot-password",
     validateSchema(forgotPasswordDto),
-    //đi vào 1 hàm trong controller
     forgotPasswordController
   )
   .post(
     "/reset-password/:token",
     validateSchema(resetPasswordDto),
-    //đi vào 1 hàm trong controller
     resetPasswordController
   )
 

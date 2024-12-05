@@ -5,7 +5,8 @@ import {
   registerService,
   forgotPasswordService,
   resetPasswordService,
-  verifiEmailService
+  verifyOtpService,
+  sendOtpViaEmailService
 } from "#src/modules/auth/auth.service";
 import { checkExistedUserById } from "#src/modules/users/users.service";
 
@@ -40,9 +41,22 @@ export const loginController = async (req, res, next) => {
   }
 };
 
-export const verifiEmailController = async (req, res, next) => {
+export const sendOtpViaEmailController = async (req, res, next) => {
   try {
-    const data = await verifiEmailService(req.body);
+    const data = await sendOtpViaEmailService(req.body);
+    return res.json({
+      statusCode: HttpStatus.OK,
+      message: "Verify Email Successfully",
+      data,
+    });
+  } catch (err) {
+    next(err)
+  }
+}
+
+export const verifyOtpController = async (req, res, next) => {
+  try {
+    const data = await verifyOtpService(req.body);
     return res.json({
       statusCode: HttpStatus.OK,
       message: "Verifi Email Successfully",
