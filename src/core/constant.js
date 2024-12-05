@@ -43,6 +43,12 @@ export const ALLOW_IMAGE_MIME_TYPES = [
   "image/x-icon", // same above
 ];
 
+export const ALLOW_IMAGE_ICON_MIME_TYPES = [
+  "image/svg+xml", // .svg       - Scalable Vector Graphics (SVG)
+  "image/vnd.microsoft.icon", // .ico       - Icon format
+  "image/x-icon", // same above
+];
+
 export const USER_TYPES = {
   CUSTOMER: "Customer",
   USER: "User",

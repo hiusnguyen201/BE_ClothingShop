@@ -14,8 +14,9 @@ import {
     validateFile,
 } from "#src/middlewares/validate-request.middleware";
 import { UploadUtils } from "#src/utils/upload.util";
+import { ALLOW_IMAGE_ICON_MIME_TYPES } from "#src/core/constant";
 const upload = UploadUtils.config({
-    allowedMimeTypes: "image/svg+xml",
+    allowedMimeTypes: ALLOW_IMAGE_ICON_MIME_TYPES,
 });
 
 router
