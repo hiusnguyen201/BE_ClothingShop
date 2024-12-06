@@ -13,6 +13,7 @@ import {
 } from "#src/core/exception/http-exception";
 
 const SELECTED_FIELDS = "_id avatar name email status birthday gender";
+const FOLDER_AVATARS = "avatars";
 
 /**
  * Create user
@@ -176,13 +177,14 @@ export async function updateUserByIdService(id, data) {
     }
   }
 
+  if (file) {
+    await removeImages(FOLDER_ICONS + `/${id}`);
+    await updateAvatarByIdService(existUser._id, file);
+  }
+
   const user = await UserModel.findByIdAndUpdate(id, data, {
     new: true,
   }).select(SELECTED_FIELDS);
-
-  if (file) {
-    await updateAvatarByIdService(user._id, file);
-  }
 
   return user;
 }
@@ -208,7 +210,7 @@ export async function removeUserByIdService(id) {
  * @returns
  */
 export async function updateAvatarByIdService(id, file) {
-  const folderName = "avatars";
+  const folderName = `${FOLDER_AVATARS}/${id}`;
   const result = await uploadImageBufferService({
     file,
     folderName,

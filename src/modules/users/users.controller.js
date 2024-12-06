@@ -1,4 +1,5 @@
 import HttpStatus from "http-status-codes";
+import { NotFoundException } from "#src/core/exception/http-exception";
 import {
   createUserService,
   findAllUsersService,
