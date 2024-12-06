@@ -1,7 +1,7 @@
 import { v2 as cloudinary } from "cloudinary";
-import config from "#src/config";
-import moment from "moment-timezone";
 import { v4 as uuidv4 } from "uuid";
+import moment from "moment-timezone";
+import config from "#src/config";
 
 cloudinary.config({
   api_key: config.cloudinary.apiKey,
@@ -9,7 +9,7 @@ cloudinary.config({
   cloud_name: config.cloudinary.cloudName,
 });
 
-export async function uploadImageBuffer({ file, folderName }) {
+export async function uploadImageBufferService({ file, folderName }) {
   const base64 = Buffer.from(file.buffer).toString("base64");
   const url = "data:" + file.mimetype + ";base64," + base64;
 
@@ -27,7 +27,7 @@ export async function uploadImageBuffer({ file, folderName }) {
  * @param {*} param
  * @returns {string}
  */
-export function cropImagePathByVersion({
+export function cropImagePathByVersionService({
   width = 500,
   height = 500,
   crop = "fit",
@@ -41,4 +41,14 @@ export function cropImagePathByVersion({
     `w_${width},h_${height},c_${crop}`,
     ...segments.slice(versionIndex),
   ].join("/");
+}
+
+export const removeImages = async (folder) => {
+  const response = await cloudinary.api.delete_resources_by_prefix(folder);
+
+  if (response.result === "not found") {
+    throw new Error("Delete failed")
+  }
+
+  return "Removed"
 }

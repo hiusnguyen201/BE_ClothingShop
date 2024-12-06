@@ -4,7 +4,7 @@ export const GENDER = {
   OTHER: "Other",
 };
 
-export const USER_IDENTIFY_STATUS = {
+export const USER_STATUS = {
   ACTIVE: "Active",
   INACTIVE: "Inactive",
   BANNED: "Banned",
@@ -41,6 +41,12 @@ export const ALLOW_IMAGE_MIME_TYPES = [
   "image/svg+xml", // .svg       - Scalable Vector Graphics (SVG)
   "image/vnd.microsoft.icon", // .ico       - Icon format
   "image/x-icon", // same above
+];
+
+export const ALLOW_ICON_MIME_TYPES = [
+  "image/svg+xml",
+  "image/vnd.microsoft.icon",
+  "image/x-icon",
 ];
 
 export const USER_TYPES = {

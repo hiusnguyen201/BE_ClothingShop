@@ -1,9 +1,5 @@
 import mongoose from "mongoose";
-import {
-  GENDER,
-  USER_IDENTIFY_STATUS,
-  USER_TYPES,
-} from "#src/core/constant";
+import { GENDER, USER_STATUS, USER_TYPES } from "#src/core/constant";
 const { Schema } = mongoose;
 
 const USER_MODEL = "users";
@@ -14,7 +10,7 @@ const userSchema = new Schema(
       type: String,
       length: 50,
       required: true,
-      enum: [USER_TYPES.CUSTOMER, USER_TYPES.EMPLOYEE],
+      enum: [USER_TYPES.CUSTOMER, USER_TYPES.USER],
       default: USER_TYPES.CUSTOMER,
     },
     // Info
@@ -62,17 +58,17 @@ const userSchema = new Schema(
       length: 50,
       required: true,
       enum: [
-        USER_IDENTIFY_STATUS.ACTIVE,
-        USER_IDENTIFY_STATUS.INACTIVE,
-        USER_IDENTIFY_STATUS.DELETED,
-        USER_IDENTIFY_STATUS.BANNED,
+        USER_STATUS.ACTIVE,
+        USER_STATUS.INACTIVE,
+        USER_STATUS.DELETED,
+        USER_STATUS.BANNED,
       ],
-      default: USER_IDENTIFY_STATUS.INACTIVE,
+      default: USER_STATUS.INACTIVE,
     },
-    activeCode: {
-      type: String,
+    isVerified: {
+      type: Boolean,
       required: false,
-      default: null,
+      default: false,
     },
     googleId: {
       type: String,
@@ -81,6 +77,16 @@ const userSchema = new Schema(
     },
     facebookId: {
       type: String,
+      required: false,
+      default: null,
+    },
+    resetPasswordToken: {
+      type: String,
+      required: false,
+      default: null,
+    },
+    resetPasswordExpiresAt: {
+      type: Date,
       required: false,
       default: null,
     },
