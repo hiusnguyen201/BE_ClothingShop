@@ -37,6 +37,9 @@ export async function createRoleService(data) {
   if (file) {
     await updateRoleIconByIdService(role._id, file);
   }
+  if (data?.permissions) {
+    await updateRolePermissionById(role._id, data.permissions);
+  }
 
   return await findRoleById(role._id);
 }
@@ -137,7 +140,11 @@ export async function updateRoleByIdService(id, data) {
     await updateRoleIconByIdService(role._id, file);
   }
 
-  return role;
+  if (data?.permissions) {
+    await updateRolePermissionById(role._id, data.permissions);
+  }
+
+  return await findRoleById(role._id);
 }
 
 export async function removeRoleByIdService(id) {
