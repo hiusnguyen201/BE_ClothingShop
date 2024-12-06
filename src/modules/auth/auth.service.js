@@ -7,7 +7,7 @@ import {
   findUserByResetPasswordToken,
 } from "#src/modules/users/users.service";
 import config from "#src/config";
-import { sendOtpViaEmail, sendResetPasswordRequest, sendResetPasswordSuccess, sendWelcomeEmail } from "#src/utils/mailer/sendEmail.util";
+import { sendOtpViaEmail, sendResetPasswordRequest, sendResetPasswordSuccess, sendWelcomeEmail } from "#src/utils/nodemailer/sendEmail.util";
 import { generateTokenAndSetCookie } from "#src/utils/token/generate-token-and-set-cookie.util";
 import { USER_TYPES } from "#src/core/constant";
 import { createUserOtpByUserId, findUserOtpByOtpAndUserId } from "#src/modules/user-otps/user-otp.service";

@@ -1,5 +1,5 @@
-import { VERIFICATION_EMAIL_TEMPLATE, PASSWORD_RESET_REQUEST_TEMPLATE, PASSWORD_RESET_SUCCESS_TEMPLATE, SEND_EMAIL_WELCOME_TEMPLATE } from "./email-template.js";
-import { createTransporter } from "./mailer.config.js";
+import { VERIFICATION_EMAIL_TEMPLATE, PASSWORD_RESET_REQUEST_TEMPLATE, PASSWORD_RESET_SUCCESS_TEMPLATE, SEND_EMAIL_WELCOME_TEMPLATE } from "./send-email-template-html.js";
+import { createTransporter } from "./nodemailer.config.js";
 import config from "#src/config"
 
 export const sendOtpViaEmail = async (email, createVerificationToken) => {
