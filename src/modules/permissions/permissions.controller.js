@@ -1,17 +1,16 @@
 import HttpStatus from "http-status-codes";
 import { NotFoundException } from "#src/core/exception/http-exception";
 import {
-  createPermission,
-  findAllPermissions,
-  findPermissionById,
-  updatePermissionById,
-  removePermissionById,
-  checkExistedPermissionById,
+  createPermissionService,
+  findAllPermissionsService,
+  findPermissionByIdService,
+  removePermissionByIdService,
+  updatePermissionByIdService,
 } from "#src/modules/permissions/permissions.service.js";
 
 export const createPermissionController = async (req, res, next) => {
   try {
-    const data = await createPermission(req.body);
+    const data = await createPermissionService(req.body);
     return res.json({
       statusCode: HttpStatus.CREATED,
       message: "Create permission successfully",
@@ -24,7 +23,7 @@ export const createPermissionController = async (req, res, next) => {
 
 export const getAllPermissionsController = async (req, res, next) => {
   try {
-    const data = await findAllPermissions(req.query);
+    const data = await findAllPermissionsService(req.query);
     return res.json({
       statusCode: HttpStatus.OK,
       message: "Get all permissions successfully",
@@ -37,7 +36,7 @@ export const getAllPermissionsController = async (req, res, next) => {
 
 export const getPermissionByIdController = async (req, res, next) => {
   try {
-    const data = await findPermissionById(req.params.id);
+    const data = await findPermissionByIdService(req.params.id);
     if (!data) {
       throw new NotFoundException("Permission not found");
     }
@@ -52,18 +51,12 @@ export const getPermissionByIdController = async (req, res, next) => {
   }
 };
 
-export const updatePermissionByIdController = async (req, res, next) => {  
+export const updatePermissionByIdController = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const checkExistedPermission = await checkExistedPermissionById(id, "_id");
-    if (!checkExistedPermission) {
-      throw new NotFoundException("Permission not found");
-    }
-
-    const data = await updatePermissionById(id, {
-      ...req.body,
-      file: req.file,
-    });
+    const data = await updatePermissionByIdService(
+      req.params.id,
+      req.body
+    );
     return res.json({
       statusCode: HttpStatus.OK,
       message: "Update permission successfully",
@@ -76,13 +69,7 @@ export const updatePermissionByIdController = async (req, res, next) => {
 
 export const removePermissionByIdController = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const checkExistedPermission = await checkExistedPermissionById(id, "_id");
-    if (!checkExistedPermission) {
-      throw new NotFoundException("Permission not found");
-    }
-
-    const data = await removePermissionById(id);
+    const data = await removePermissionByIdService(req.params.id);
     return res.json({
       statusCode: HttpStatus.OK,
       message: "Remove permission successfully",

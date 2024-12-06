@@ -4,23 +4,48 @@ import {
   removeImages,
   uploadImageBuffer,
 } from "#src/modules/cloudinary/cloudinary.service";
+import {
+  BadRequestException,
+  NotFoundException,
+} from "#src/core/exception/http-exception";
+import { findPermissionByIdService } from "#src/modules/permissions/permissions.service.js";
 
 const SELECTED_FIELDS = "_id icon name description status permissions";
-const FOLDER_ICONS = 'icons';
+const FOLDER_ICONS = "icons";
 
-export async function createRole(data) {
-  const role = await RoleModel.create({
-    ...data,
-  });
-  if (data?.file) {
-    await updateRoleIconById(role._id, data.file);
+export async function createRoleService(data) {
+  const { name, file, permissions } = data;
+  const isExistName = await checkExistNameService(name);
+  if (!isExistName) {
+    throw new BadRequestException("Role not found");
+  }
+
+  const role = await RoleModel.create(data);
+
+  if (permissions && permissions.length > 0) {
+    Promise.all(
+      permissions.map(async (item) => {
+        const existPermission = await findPermissionByIdService(item);
+        if (existPermission) {
+          role.permissions.push(existPermission);
+        }
+      })
+    );
+    await role.save();
+  }
+
+  if (file) {
+    await updateRoleIconByIdService(role._id, file);
   }
 
   return await findRoleById(role._id);
 }
 
-export async function findAllRoles(query, selectFields = SELECTED_FIELDS) {
-  let { keyword = "", status, permissions, itemPerPage = 10, page = 1 } = query;
+export async function findAllRolesService(
+  query,
+  selectFields = SELECTED_FIELDS
+) {
+  let { keyword = "", status, itemPerPage = 10, page = 1 } = query;
 
   const filterOptions = {
     $or: [
@@ -28,7 +53,6 @@ export async function findAllRoles(query, selectFields = SELECTED_FIELDS) {
       { description: { $regex: keyword, $options: "i" } },
     ],
     [status && "status"]: status,
-    [permissions && "permissions"]: permissions,
   };
 
   const totalItems = await RoleModel.countDocuments(filterOptions);
@@ -63,45 +87,69 @@ export async function findAllRoles(query, selectFields = SELECTED_FIELDS) {
   };
 }
 
-export async function findRoleById(id, selectFields = SELECTED_FIELDS) {
+export async function findRoleByIdService(
+  id,
+  selectFields = SELECTED_FIELDS
+) {
   const filter = {};
 
   if (isValidObjectId(id)) {
     filter._id = id;
-  } else if (id) {
-    filter.name = id;
   } else {
-    return null;
+    filter.name = id;
   }
 
   return await RoleModel.findOne(filter).select(selectFields);
 }
 
-export async function updateRoleById(id, data) {
-  const role = await RoleModel.findByIdAndUpdate(
-    id,
-    { ...data },
-    { new: true }
-  ).select(SELECTED_FIELDS);
+export async function updateRoleByIdService(id, data) {
+  const { name, file, permissions } = data;
+  if (name) {
+    const isExistName = await checkExistNameService(name);
+    if (!isExistName) {
+      throw new BadRequestException("Role not found");
+    }
+  }
 
-  if (data?.file) {
+  const existRole = await findRoleByIdService(id, "_id");
+  if (!existRole) {
+    throw new NotFoundException("Role not found");
+  }
+
+  const role = await RoleModel.findByIdAndUpdate(id, data, {
+    new: true,
+  }).select(SELECTED_FIELDS);
+
+  if (permissions && permissions.length > 0) {
+    Promise.all(
+      permissions.map(async (item) => {
+        const existPermission = await findPermissionByIdService(item);
+        if (existPermission) {
+          role.permissions.push(existPermission);
+        }
+      })
+    );
+    await role.save();
+  }
+
+  if (file) {
     await removeImages(FOLDER_ICONS + `/${id}`);
-    await updateRoleIconById(role._id, data.file);
+    await updateRoleIconByIdService(role._id, file);
   }
 
   return role;
 }
 
-export async function removeRoleById(id) {
+export async function removeRoleByIdService(id) {
+  const existRole = await findRoleByIdService(id, "_id");
+  if (!existRole) {
+    throw new NotFoundException("Role not found");
+  }
+
   return await RoleModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
 }
 
-export async function checkExistedRoleById(id) {
-  const existRole = await findRoleById(id, "_id");
-  return Boolean(existRole);
-}
-
-export async function updateRoleIconById(id, file) {
+export async function updateRoleIconByIdService(id, file) {
   const folderName = `${FOLDER_ICONS}/${id}`;
   const result = await uploadImageBuffer({
     file,
@@ -115,4 +163,12 @@ export async function updateRoleIconById(id, file) {
     },
     { new: true }
   ).select(SELECTED_FIELDS);
+}
+
+export async function checkExistNameService(name, skipId) {
+  const existRole = await RoleModel.findOne({
+    name,
+    _id: { $ne: skipId },
+  }).select("name");
+  return Boolean(existRole);
 }

@@ -8,7 +8,7 @@ import {
 } from "#src/modules/cloudinary/cloudinary.service";
 
 const SELECTED_FIELDS = "_id avatar name email status birthday gender";
-const FOLDER_AVATARS = 'avatars';
+const FOLDER_AVATARS = "avatars";
 
 export async function createUser(data) {
   const user = await UserModel.create({

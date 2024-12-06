@@ -1,24 +1,16 @@
 import HttpStatus from "http-status-codes";
-import { NotFoundException, BadRequestException } from "#src/core/exception/http-exception";
+import { NotFoundException } from "#src/core/exception/http-exception";
 import {
-  createRole,
-  findAllRoles,
-  findRoleById,
-  removeRoleById,
-  updateRoleById,
-  checkExistedRoleById,
+  createRoleService,
+  findAllRolesService,
+  findRoleByIdService,
+  removeRoleByIdService,
+  updateRoleByIdService,
 } from "#src/modules/roles/roles.service";
-import { isValidObjectId } from "mongoose";
 
 export const createRoleController = async (req, res, next) => {
   try {
-    req.body.permissions.forEach(permission => {
-      if (!isValidObjectId(permission)) {
-        throw new BadRequestException(`Invalid ObjectId ${permission}`);
-      }
-    });
-
-    const data = await createRole({ ...req.body, file: req.file });
+    const data = await createRoleService({ ...req.body, file: req.file });
     return res.json({
       statusCode: HttpStatus.CREATED,
       message: "Create role successfully",
@@ -31,7 +23,7 @@ export const createRoleController = async (req, res, next) => {
 
 export const getAllRolesController = async (req, res, next) => {
   try {
-    const data = await findAllRoles(req.query);
+    const data = await findAllRolesService(req.query);
     return res.json({
       statusCode: HttpStatus.OK,
       message: "Get all roles successfully",
@@ -44,7 +36,7 @@ export const getAllRolesController = async (req, res, next) => {
 
 export const getRoleByIdController = async (req, res, next) => {
   try {
-    const data = await findRoleById(req.params.id);
+    const data = await findRoleByIdService(req.params.id);
     if (!data) {
       throw new NotFoundException("Role not found");
     }
@@ -61,19 +53,7 @@ export const getRoleByIdController = async (req, res, next) => {
 
 export const updateRoleByIdController = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const checkExistedRole = await checkExistedRoleById(id, "_id");
-    if (!checkExistedRole) {
-      throw new NotFoundException("Role not found");
-    }
-
-    req.body.permissions.forEach(permission => {
-      if (!isValidObjectId(permission)) {
-        throw new BadRequestException(`Invalid ObjectId ${permission}`);
-      }
-    });
-
-    const data = await updateRoleById(id, {
+    const data = await updateRoleByIdService(req.params.id, {
       ...req.body,
       file: req.file,
     });
@@ -89,13 +69,7 @@ export const updateRoleByIdController = async (req, res, next) => {
 
 export const removeRoleByIdController = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const checkExistedRole = await checkExistedRoleById(id, "_id");
-    if (!checkExistedRole) {
-      throw new NotFoundException("Role not found");
-    }
-
-    const data = await removeRoleById(id);
+    const data = await removeRoleByIdService(req.params.id);
     return res.json({
       statusCode: HttpStatus.OK,
       message: "Remove role successfully",
