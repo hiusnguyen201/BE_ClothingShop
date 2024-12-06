@@ -20,11 +20,11 @@ const config = {
 
   otpExpiresMinutes: 5,
   resetTokenExpiresMinutes: 30,
-
-  mailtrap: {
-    token: env.MAILTRAP_TOKEN,
-    senderEmail: env.MAILTRAP_SENDER_EMAIL,
-    senderName: env.MAILTRAP_SENDER_NAME,
+  mailer: {
+    host: env.MAILER_HOST || "smtp.gmail.com",
+    port: env.MAILER_PORT || 465,
+    user: env.MAILER_AUTH_USER,
+    pass: env.MAILER_AUTH_PASS,
   },
 
   google: {
