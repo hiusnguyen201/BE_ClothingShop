@@ -1,17 +1,16 @@
 import HttpStatus from "http-status-codes";
 import { NotFoundException } from "#src/core/exception/http-exception";
 import {
-  createUser,
-  findAllUsers,
-  findUserById,
-  removeUserById,
-  updateUserById,
-  checkExistedUserById,
+  createUserService,
+  findAllUsersService,
+  findUserByIdService,
+  removeUserByIdService,
+  updateUserByIdService,
 } from "#src/modules/users/users.service";
 
 export const createUserController = async (req, res, next) => {
   try {
-    const data = await createUser({ ...req.body, file: req.file });
+    const data = await createUserService({ ...req.body, file: req.file });
     return res.json({
       statusCode: HttpStatus.CREATED,
       message: "Create user successfully",
@@ -24,7 +23,7 @@ export const createUserController = async (req, res, next) => {
 
 export const getAllUsersController = async (req, res, next) => {
   try {
-    const data = await findAllUsers(req.query);
+    const data = await findAllUsersService(req.query);
     return res.json({
       statusCode: HttpStatus.OK,
       message: "Get all users successfully",
@@ -37,7 +36,7 @@ export const getAllUsersController = async (req, res, next) => {
 
 export const getUserByIdController = async (req, res, next) => {
   try {
-    const data = await findUserById(req.params.id);
+    const data = await findUserByIdService(req.params.id);
     if (!data) {
       throw new NotFoundException("User not found");
     }
@@ -54,13 +53,7 @@ export const getUserByIdController = async (req, res, next) => {
 
 export const updateUserByIdController = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const checkExistedUser = await checkExistedUserById(id, "_id");
-    if (!checkExistedUser) {
-      throw new NotFoundException("User not found");
-    }
-
-    const data = await updateUserById(id, {
+    const data = await updateUserByIdService(req.params.id, {
       ...req.body,
       file: req.file,
     });
@@ -76,13 +69,7 @@ export const updateUserByIdController = async (req, res, next) => {
 
 export const removeUserByIdController = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const checkExistedUser = await checkExistedUserById(id, "_id");
-    if (!checkExistedUser) {
-      throw new NotFoundException("User not found");
-    }
-
-    const data = await removeUserById(id);
+    const data = await removeUserByIdService(req.params.id);
     return res.json({
       statusCode: HttpStatus.OK,
       message: "Remove user successfully",

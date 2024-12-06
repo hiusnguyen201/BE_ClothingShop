@@ -9,6 +9,7 @@ import {
   removeUserByIdController,
 } from "#src/modules/users/users.controller";
 import { createUserDto } from "#src/modules/users/dto/create-user.dto";
+import { updateUserDto } from "#src/modules/users/dto/update-user.dto";
 import {
   validateSchema,
   validateFile,
@@ -28,9 +29,12 @@ router
     validateSchema(createUserDto),
     createUserController
   )
-  .patch("/update-user-by-id/:id",
+  .patch(
+    "/update-user-by-id/:id",
     validateFile(upload.single("avatar")),
-    validateSchema(createUserDto), updateUserByIdController)
+    validateSchema(updateUserDto),
+    updateUserByIdController
+  )
   .delete("/remove-user-by-id/:id", removeUserByIdController);
 
 export default router;
