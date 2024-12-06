@@ -7,13 +7,13 @@ const SELECTED_FIELDS =
 
 export async function createPermissionService(data) {
   const { name } = data;
-  const isExistName = checkExistPermissionNameService(name);
+  const isExistName =await checkExistPermissionNameService(name);
   if (isExistName) {
     throw new BadRequestException("Permission name is exist");
   }
 
   const permission = await PermissionModel.create(data);
-  return permission;
+  return await findPermissionByIdService(permission._id);
 }
 
 export async function findAllPermissionsService(
@@ -81,7 +81,7 @@ export async function findPermissionByIdService(
 
 export async function updatePermissionByIdService(id, data) {
   const { name } = data;
-  const isExistName = checkExistPermissionNameService(name);
+  const isExistName = await checkExistPermissionNameService(name);
   if (isExistName) {
     throw new BadRequestException("Permission name is exist");
   }

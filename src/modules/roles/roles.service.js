@@ -2,7 +2,7 @@ import { isValidObjectId } from "mongoose";
 import { RoleModel } from "#src/modules/roles/schemas/role.schema";
 import {
   removeImages,
-  uploadImageBuffer,
+  uploadImageBufferService,
 } from "#src/modules/cloudinary/cloudinary.service";
 import {
   BadRequestException,
@@ -15,33 +15,26 @@ const FOLDER_ICONS = "icons";
 
 export async function createRoleService(data) {
   const { name, file, permissions } = data;
+
   const isExistName = await checkExistNameService(name);
-  if (!isExistName) {
+  if (isExistName) {
     throw new BadRequestException("Role not found");
   }
 
   const role = await RoleModel.create(data);
 
   if (permissions && permissions.length > 0) {
-    Promise.all(
-      permissions.map(async (item) => {
-        const existPermission = await findPermissionByIdService(item);
-        if (existPermission) {
-          role.permissions.push(existPermission);
-        }
-      })
-    );
+    const result = await Promise.all(permissions.map(async (item) => {
+      return await findPermissionByIdService(item);
+    }));
+    role.permissions = result.filter(Boolean);
     await role.save();
   }
 
   if (file) {
     await updateRoleIconByIdService(role._id, file);
   }
-  if (data?.permissions) {
-    await updateRolePermissionById(role._id, data.permissions);
-  }
-
-  return await findRoleById(role._id);
+  return await findRoleByIdService(role._id);
 }
 
 export async function findAllRolesService(
@@ -109,8 +102,8 @@ export async function updateRoleByIdService(id, data) {
   const { name, file, permissions } = data;
   if (name) {
     const isExistName = await checkExistNameService(name);
-    if (!isExistName) {
-      throw new BadRequestException("Role not found");
+    if (isExistName) {
+      throw new BadRequestException("Role name is exist");
     }
   }
 
@@ -124,14 +117,10 @@ export async function updateRoleByIdService(id, data) {
   }).select(SELECTED_FIELDS);
 
   if (permissions && permissions.length > 0) {
-    Promise.all(
-      permissions.map(async (item) => {
-        const existPermission = await findPermissionByIdService(item);
-        if (existPermission) {
-          role.permissions.push(existPermission);
-        }
-      })
-    );
+    const result = await Promise.all(permissions.map(async (item) => {
+      return await findPermissionByIdService(item);
+    }));
+    role.permissions = result.filter(Boolean);
     await role.save();
   }
 
@@ -139,12 +128,9 @@ export async function updateRoleByIdService(id, data) {
     await removeImages(FOLDER_ICONS + `/${id}`);
     await updateRoleIconByIdService(role._id, file);
   }
+  
 
-  if (data?.permissions) {
-    await updateRolePermissionById(role._id, data.permissions);
-  }
-
-  return await findRoleById(role._id);
+  return await findRoleByIdService(role._id);
 }
 
 export async function removeRoleByIdService(id) {
@@ -158,7 +144,7 @@ export async function removeRoleByIdService(id) {
 
 export async function updateRoleIconByIdService(id, file) {
   const folderName = `${FOLDER_ICONS}/${id}`;
-  const result = await uploadImageBuffer({
+  const result = await uploadImageBufferService({
     file,
     folderName,
   });

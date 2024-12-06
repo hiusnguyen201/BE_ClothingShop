@@ -179,7 +179,7 @@ export async function updateUserByIdService(id, data) {
 
   if (file) {
     await removeImages(FOLDER_ICONS + `/${id}`);
-    await updateAvatarByIdService(user._id, file);
+    await updateAvatarByIdService(existUser._id, file);
   }
 
   const user = await UserModel.findByIdAndUpdate(id, data, {

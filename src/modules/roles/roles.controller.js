@@ -52,7 +52,7 @@ export const getRoleByIdController = async (req, res, next) => {
 };
 
 export const updateRoleByIdController = async (req, res, next) => {
-  try {
+  try {    
     const data = await updateRoleByIdService(req.params.id, {
       ...req.body,
       file: req.file,
