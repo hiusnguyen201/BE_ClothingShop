@@ -24,9 +24,11 @@ export async function createRoleService(data) {
   const role = await RoleModel.create(data);
 
   if (permissions && permissions.length > 0) {
-    const result = await Promise.all(permissions.map(async (item) => {
-      return await findPermissionByIdService(item);
-    }));
+    const result = await Promise.all(
+      permissions.map(async (item) => {
+        return await findPermissionByIdService(item);
+      })
+    );
     role.permissions = result.filter(Boolean);
     await role.save();
   }
@@ -117,9 +119,11 @@ export async function updateRoleByIdService(id, data) {
   }).select(SELECTED_FIELDS);
 
   if (permissions && permissions.length > 0) {
-    const result = await Promise.all(permissions.map(async (item) => {
-      return await findPermissionByIdService(item);
-    }));
+    const result = await Promise.all(
+      permissions.map(async (item) => {
+        return await findPermissionByIdService(item);
+      })
+    );
     role.permissions = result.filter(Boolean);
     await role.save();
   }
@@ -128,7 +132,6 @@ export async function updateRoleByIdService(id, data) {
     await removeImages(FOLDER_ICONS + `/${id}`);
     await updateRoleIconByIdService(role._id, file);
   }
-  
 
   return await findRoleByIdService(role._id);
 }

@@ -13,7 +13,7 @@ import {
   sendResetPasswordRequestService,
   sendResetPasswordSuccessService,
   sendWelcomeEmailService,
-} from "#src/modules/mailtrap/send-email.service";
+} from "#src/modules/mailer/mailer.service";
 import { generateToken } from "#src/utils/jwt.util";
 import { USER_TYPES } from "#src/core/constant";
 import {
@@ -86,7 +86,7 @@ export async function verifyOtpService(data) {
     throw new NotFoundException("User not found");
   }
 
-  const userOtp = findUserOtpByOtpAndUserIdService(otp, user._id);
+  const userOtp = await findUserOtpByOtpAndUserIdService(otp, user._id);
   if (!userOtp) {
     throw new UnauthorizedException("Invalid or expired otp");
   }
@@ -121,7 +121,6 @@ export async function forgotPasswordService(data) {
   await user.save();
 
   const resetURL = `${callbackUrl}/${resetToken}`;
-
   await sendResetPasswordRequestService(user.email, resetURL);
 }
 
