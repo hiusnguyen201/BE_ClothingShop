@@ -59,7 +59,7 @@ export const verifyOtpController = async (req, res, next) => {
     const data = await verifyOtpService(req.body);
     return res.json({
       statusCode: HttpStatus.OK,
-      message: "Verifi Email Successfully",
+      message: "Verify Email Successfully",
       data,
     });
   } catch (err) {

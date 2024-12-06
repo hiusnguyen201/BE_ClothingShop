@@ -1,68 +1,55 @@
-import { VERIFICATION_EMAIL_TEMPLATE, PASSWORD_RESET_REQUEST_TEMPLATE, PASSWORD_RESET_SUCCESS_TEMPLATE } from "./email-template.js";
-import { mailtrapClient, sender } from "./mailtrap.config.js";
+import { VERIFICATION_EMAIL_TEMPLATE, PASSWORD_RESET_REQUEST_TEMPLATE, PASSWORD_RESET_SUCCESS_TEMPLATE, SEND_EMAIL_WELCOME_TEMPLATE } from "./email-template.js";
+import { createTransporter } from "./mailer.config.js";
+import config from "#src/config"
 
 export const sendOtpViaEmail = async (email, createVerificationToken) => {
-  const recipient = [{ email }]
-  try {
-    const response = await mailtrapClient.send({
-      from: sender,
-      to: recipient,
-      subject: "Verify Your Email",
-      html: VERIFICATION_EMAIL_TEMPLATE.replace("{verificationToken}", createVerificationToken)
-    })
-  } catch (error) {
-    console.log(error)
-  }
+  const transporter = createTransporter();
+
+  const response = {
+    from: config.mailer.MAILER_AUTH_USER,
+    to: email,
+    subject: "Verify Your Email",
+    category: "Password Reset",
+    html: VERIFICATION_EMAIL_TEMPLATE.replace("{verificationToken}", createVerificationToken)
+  };
+  await transporter.sendMail(response);
 }
 
 export const sendWelcomeEmail = async (email, name) => {
-  //template_uuid: "5774f412-edea-413a-b499-5b960bda7b24",
-  const recipient = [{ email }];
-  try {
-    const response = await mailtrapClient.send({
-      from: sender,
-      to: recipient,
-      template_uuid: "5774f412-edea-413a-b499-5b960bda7b24",
-      template_variables: {
-        "name": name,
-        "company_info_name": "Test_Company_info_name",
-        "company_info_address": "Test_Company_info_address",
-        "company_info_city": "Test_Company_info_city",
-        "company_info_zip_code": "Test_Company_info_zip_code",
-        "company_info_country": "Test_Company_info_country"
-      }
-    })
-  } catch (err) {
-    console.log(err)
-  }
+  const transporter = createTransporter();
+
+  const response = {
+    from: config.mailer.MAILER_AUTH_USER,
+    to: email,
+    html: SEND_EMAIL_WELCOME_TEMPLATE.replace("{name}", name),
+    subject: "Verify Otp Successfuly",
+    category: "Verify Otp Successfuly"
+  };
+  await transporter.sendMail(response);
 }
 
-export const sendResetPasswordReqest = async (email, resetURL) => {
-  const recipient = [{ email }];
-  try {
-    const response = await mailtrapClient.send({
-      from: sender,
-      to: recipient,
-      subject: "Reset Your Password",
-      html: PASSWORD_RESET_REQUEST_TEMPLATE.replace("{resetURL}", resetURL),
-      category: "Send Request Password Reset"
-    })
-  } catch (error) {
-    console.log('err', error)
-  }
+export const sendResetPasswordRequest = async (email, resetURL) => {
+  const transporter = createTransporter();
+
+  const response = {
+    from: config.mailer.MAILER_AUTH_USER,
+    to: email,
+    html: PASSWORD_RESET_REQUEST_TEMPLATE.replace("{resetURL}", resetURL),
+    subject: "Send Request Reset Password",
+    category: "Password Reset"
+  };
+  await transporter.sendMail(response);
 }
 
 export const sendResetPasswordSuccess = async (email) => {
-  const recipient = [{ email }];
-  try {
-    const response = await mailtrapClient.send({
-      from: sender,
-      to: recipient,
-      subject: "Password Reset Successful",
-      html: PASSWORD_RESET_SUCCESS_TEMPLATE,
-      category: "Password Reset"
-    })
-  } catch (error) {
-    console.log('err', error)
-  }
+  const transporter = createTransporter();
+
+  const response = {
+    from: config.mailer.MAILER_AUTH_USER,
+    to: email,
+    html: PASSWORD_RESET_SUCCESS_TEMPLATE,
+    subject: "Password Reset Successful",
+    category: "Password Reset"
+  };
+  await transporter.sendMail(response);
 }

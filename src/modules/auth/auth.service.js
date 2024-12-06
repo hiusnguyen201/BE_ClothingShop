@@ -7,7 +7,7 @@ import {
   findUserByResetPasswordToken,
 } from "#src/modules/users/users.service";
 import config from "#src/config";
-import { sendOtpViaEmail, sendResetPasswordReqest, sendResetPasswordSuccess, sendWelcomeEmail } from "#src/utils/mailer/sendEmail.util";
+import { sendOtpViaEmail, sendResetPasswordRequest, sendResetPasswordSuccess, sendWelcomeEmail } from "#src/utils/mailer/sendEmail.util";
 import { generateTokenAndSetCookie } from "#src/utils/token/generate-token-and-set-cookie.util";
 import { USER_TYPES } from "#src/core/constant";
 import { createUserOtpByUserId, findUserOtpByOtpAndUserId } from "#src/modules/user-otps/user-otp.service";
@@ -84,9 +84,8 @@ export async function verifyOtpService(data) {
     throw new NotFoundException("User not found");
   }
 
-  const userOtp = findUserOtpByOtpAndUserId(otp, user._id)
-
-  if (!userOtp) {
+  const userOtp = await findUserOtpByOtpAndUserId(otp, user._id)
+  if (!userOtp || data.otp !== userOtp.otp) {
     throw new UnauthorizedException('Invalid or expired vetification code')
   }
 
@@ -125,9 +124,7 @@ export async function forgotPasswordService(data) {
   await user.save()
 
   const resetURL = `${data.url}/${resetToken}`
-
-  await sendResetPasswordReqest(user.email, resetURL)
-
+  await sendResetPasswordRequest(user.email, resetURL)
 }
 
 export async function resetPasswordService(data, token) {
