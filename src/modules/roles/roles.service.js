@@ -46,10 +46,7 @@ export async function findAllRolesService(
   let { keyword = "", status, itemPerPage = 10, page = 1 } = query;
 
   const filterOptions = {
-    $or: [
-      { name: { $regex: keyword, $options: "i" } },
-      { description: { $regex: keyword, $options: "i" } },
-    ],
+    $or: [{ name: { $regex: keyword, $options: "i" } }],
     [status && "status"]: status,
   };
 

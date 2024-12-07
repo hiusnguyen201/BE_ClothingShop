@@ -12,7 +12,7 @@ export const registerController = async (req, res, next) => {
   try {
     const data = await registerService({ ...req.body, file: req.file });
     return res.json({
-      statusCode: HttpStatus.CREATED,
+      statusCode: HttpStatus.OK,
       message: "Register successfully",
       data,
     });

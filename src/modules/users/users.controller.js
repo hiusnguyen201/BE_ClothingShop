@@ -23,11 +23,12 @@ export const createUserController = async (req, res, next) => {
 
 export const getAllUsersController = async (req, res, next) => {
   try {
-    const data = await findAllUsersService(req.query);
+    const { list, meta } = await findAllUsersService(req.query);
     return res.json({
       statusCode: HttpStatus.OK,
       message: "Get all users successfully",
-      data,
+      data: list,
+      meta,
     });
   } catch (err) {
     next(err);
