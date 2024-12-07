@@ -1,0 +1,2564 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Clothes Store Api",
+    "version": "1.0.0"
+  },
+  "host": "localhost:3000",
+  "basePath": "/api/v1",
+  "schemes": ["http"],
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "consumes": ["multipart/form-data"],
+        "operationId": "Register",
+        "summary": "Register",
+        "parameters": [
+          {
+            "name": "avatar",
+            "in": "formData",
+            "description": "Avatar of customer",
+            "type": "file"
+          },
+          {
+            "name": "name",
+            "in": "formData",
+            "description": "Name of customer",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "email",
+            "in": "formData",
+            "description": "Email of customer",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "birthday",
+            "in": "formData",
+            "description": "Birthday of customer",
+            "type": "string",
+            "required": true,
+            "format": "date-time"
+          },
+          {
+            "name": "gender",
+            "in": "formData",
+            "description": "Gender of customer",
+            "required": true,
+            "type": "string",
+            "enum": ["Male", "Female", "Other"]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Register successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 200
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Register successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "isAuthenticated": {
+                      "type": "boolean"
+                    },
+                    "accessToken": {
+                      "type": "string"
+                    },
+                    "is2FactorRequired": {
+                      "type": "boolean"
+                    },
+                    "user": {
+                      "$ref": "#/definitions/UserModel"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 400
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Bad Request"
+                },
+                "message": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "consumes": ["multipart/form-data"],
+        "operationId": "Login",
+        "summary": "Login",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "formData",
+            "required": true,
+            "description": "Email of user",
+            "type": "string"
+          },
+          {
+            "name": "password",
+            "in": "formData",
+            "description": "Password of user",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Login successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 200
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Login successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "isAuthenticated": {
+                      "type": "boolean"
+                    },
+                    "accessToken": {
+                      "type": "string"
+                    },
+                    "is2FactorRequired": {
+                      "type": "boolean"
+                    },
+                    "user": {
+                      "$ref": "#/definitions/UserModel"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid Credentials",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 401
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Unauthorized"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/send-otp-via-email": {
+      "post": {
+        "tags": ["Auth"],
+        "consumes": ["multipart/form-data"],
+        "operationId": "SendOtpViaEmail",
+        "summary": "Send otp via email",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "formData",
+            "required": true,
+            "description": "Email of user",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Send otp via email successfully"
+          },
+          "404": {
+            "description": "User not found",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 404
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Not found"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "User not found"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/verify-otp": {
+      "post": {
+        "tags": ["Auth"],
+        "consumes": ["multipart/form-data"],
+        "operationId": "VerifyOtp",
+        "summary": "Verify otp",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "formData",
+            "required": true,
+            "description": "Email of user",
+            "type": "string"
+          },
+          {
+            "name": "otp",
+            "in": "formData",
+            "required": true,
+            "description": "Otp code",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Verify otp successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 200
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Verify otp successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "isAuthenticated": {
+                      "type": "boolean"
+                    },
+                    "accessToken": {
+                      "type": "string"
+                    },
+                    "user": {
+                      "$ref": "#/definitions/UserModel"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired otp",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 401
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Unauthorized"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Invalid or expired otp"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 404
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Not found"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "User not found"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/forgot-password": {
+      "post": {
+        "tags": ["Auth"],
+        "consumes": ["multipart/form-data"],
+        "operationId": "ForgotPassword",
+        "summary": "Forgot password",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "formData",
+            "required": true,
+            "description": "Email of user",
+            "type": "string"
+          },
+          {
+            "name": "callbackUrl",
+            "in": "formData",
+            "required": true,
+            "description": "Callback url to redirect to Front-end page",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Required Forgot Password Success"
+          },
+          "404": {
+            "description": "User not found",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 404
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Not found"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "User not found"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/reset-password/{token}": {
+      "post": {
+        "tags": ["Auth"],
+        "consumes": ["multipart/form-data"],
+        "operationId": "ResetPassword",
+        "summary": "Reset password",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "description": "Token reset password",
+            "type": "string"
+          },
+          {
+            "name": "password",
+            "in": "formData",
+            "required": true,
+            "description": "New password",
+            "type": "string"
+          },
+          {
+            "name": "confirmPassword",
+            "in": "formData",
+            "required": true,
+            "description": "Confirm password",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Required Forgot Password Success"
+          },
+          "404": {
+            "description": "User not found",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 404
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Not found"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "User not found"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/get-users": {
+      "get": {
+        "tags": ["Users"],
+        "operationId": "GetUsers",
+        "summary": "Get list users",
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "Keyword to search name or email",
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Status of user",
+            "type": "string",
+            "enum": ["Active", "Inactive", "Banned", "Deleted"]
+          },
+          {
+            "name": "itemPerPage",
+            "in": "query",
+            "description": "Limit of page to paginate",
+            "type": "number",
+            "enum": [10, 20, 30, 40, 50]
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Current page",
+            "type": "number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get all users successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 200
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Get all users successfully"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/UserModel"
+                  }
+                },
+                "meta": {
+                  "type": "object",
+                  "properties": {
+                    "offSet": {
+                      "type": "number"
+                    },
+                    "itemPerPage": {
+                      "type": "number"
+                    },
+                    "currentPage": {
+                      "type": "number"
+                    },
+                    "totalPages": {
+                      "type": "number"
+                    },
+                    "totalItems": {
+                      "type": "number"
+                    },
+                    "isNext": {
+                      "type": "number"
+                    },
+                    "isPrevious": {
+                      "type": "number"
+                    },
+                    "isFirst": {
+                      "type": "number"
+                    },
+                    "isLast": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/get-user-by-id/{id}": {
+      "get": {
+        "tags": ["Users"],
+        "operationId": "GetUserById",
+        "summary": "Get one user by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Id of user",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get one user successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 200
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Get one user successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "$ref": "#/definitions/UserModel"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 404
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Not found"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "User not found"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/create-user": {
+      "post": {
+        "tags": ["Users"],
+        "consumes": ["multipart/form-data"],
+        "operationId": "CreateUser",
+        "summary": "Create user",
+        "parameters": [
+          {
+            "name": "avatar",
+            "in": "formData",
+            "description": "Avatar of user",
+            "type": "file"
+          },
+          {
+            "name": "name",
+            "in": "formData",
+            "description": "Name of user",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "email",
+            "in": "formData",
+            "description": "Email of user",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "birthday",
+            "in": "formData",
+            "description": "Birthday of user",
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "gender",
+            "in": "formData",
+            "description": "Gender of user",
+            "type": "string",
+            "enum": ["Male", "Female", "Other"]
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Create user successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 201
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Create user successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "$ref": "#/definitions/UserModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 400
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Bad Request"
+                },
+                "message": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "File Too Large",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 413
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Content Too Large"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Payload Too Large"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/update-user-by-id/{id}": {
+      "patch": {
+        "tags": ["Users"],
+        "consumes": ["multipart/form-data"],
+        "operationId": "UpdateUserById",
+        "summary": "Update user by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Id of user",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "avatar",
+            "in": "formData",
+            "description": "Avatar of user",
+            "type": "file"
+          },
+          {
+            "name": "name",
+            "in": "formData",
+            "description": "Name of user",
+            "type": "string"
+          },
+          {
+            "name": "email",
+            "in": "formData",
+            "description": "Email of user",
+            "type": "string"
+          },
+          {
+            "name": "birthday",
+            "in": "formData",
+            "description": "Birthday of user",
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "gender",
+            "in": "formData",
+            "description": "Gender of user",
+            "type": "string",
+            "enum": ["Male", "Female", "Other"]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Update user successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 200
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Update user successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "$ref": "#/definitions/UserModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 400
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Bad Request"
+                },
+                "message": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 404
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Not found"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "User not found"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "File Too Large",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 413
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Content Too Large"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Payload Too Large"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/remove-user-by-id/{id}": {
+      "delete": {
+        "tags": ["Users"],
+        "operationId": "RemoveUserById",
+        "summary": "Remove user by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Id of user",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Remove user successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 200
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Remove user successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "$ref": "#/definitions/UserModel"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 404
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Not found"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "User not found"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/roles/get-roles": {
+      "get": {
+        "tags": ["Roles"],
+        "operationId": "GetRoles",
+        "summary": "Get list roles",
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "Keyword to search name",
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Status of role",
+            "type": "string",
+            "enum": ["Active", "Inactive", "Deleted"]
+          },
+          {
+            "name": "itemPerPage",
+            "in": "query",
+            "description": "Limit of page to paginate",
+            "type": "number",
+            "enum": [10, 20, 30, 40, 50]
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Current page",
+            "type": "number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get all roles successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 200
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Get all roles successfully"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/RoleModel"
+                  }
+                },
+                "meta": {
+                  "type": "object",
+                  "properties": {
+                    "offSet": {
+                      "type": "number"
+                    },
+                    "itemPerPage": {
+                      "type": "number"
+                    },
+                    "currentPage": {
+                      "type": "number"
+                    },
+                    "totalPages": {
+                      "type": "number"
+                    },
+                    "totalItems": {
+                      "type": "number"
+                    },
+                    "isNext": {
+                      "type": "number"
+                    },
+                    "isPrevious": {
+                      "type": "number"
+                    },
+                    "isFirst": {
+                      "type": "number"
+                    },
+                    "isLast": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/roles/get-role-by-id/{id}": {
+      "get": {
+        "tags": ["Roles"],
+        "operationId": "GetRoleById",
+        "summary": "Get one role by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Id of role",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get one role successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 200
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Get one role successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "$ref": "#/definitions/RoleModel"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Role not found",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 404
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Not found"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Role not found"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/roles/create-role": {
+      "post": {
+        "tags": ["Roles"],
+        "consumes": ["multipart/form-data"],
+        "operationId": "CreateRole",
+        "summary": "Create role",
+        "parameters": [
+          {
+            "name": "icon",
+            "in": "formData",
+            "description": "Icon of role",
+            "type": "file"
+          },
+          {
+            "name": "name",
+            "in": "formData",
+            "description": "Name of role",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "in": "formData",
+            "description": "Description of role",
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "in": "formData",
+            "description": "Status of role",
+            "required": true,
+            "type": "string",
+            "enum": ["Active", "Inactive", "Deleted"]
+          },
+          {
+            "name": "permissions",
+            "in": "formData",
+            "description": "Permissions of role",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Create role successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 201
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Create role successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "$ref": "#/definitions/RoleModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 400
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Bad Request"
+                },
+                "message": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "File Too Large",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 413
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Content Too Large"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Payload Too Large"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/roles/update-role-by-id/{id}": {
+      "patch": {
+        "tags": ["Roles"],
+        "consumes": ["multipart/form-data"],
+        "operationId": "UpdateRoleById",
+        "summary": "Update role by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Id of role",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "icon",
+            "in": "formData",
+            "description": "Icon of role",
+            "type": "file"
+          },
+          {
+            "name": "name",
+            "in": "formData",
+            "description": "Name of role",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "in": "formData",
+            "description": "Description of role",
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "in": "formData",
+            "description": "Status of role",
+            "type": "string",
+            "enum": ["Active", "Inactive", "Deleted"]
+          },
+          {
+            "name": "permissions",
+            "in": "formData",
+            "description": "Permissions of role",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Update role successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 200
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Update role successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "$ref": "#/definitions/RoleModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 400
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Bad Request"
+                },
+                "message": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Role not found",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 404
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Not found"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Role not found"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "File Too Large",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 413
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Content Too Large"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Payload Too Large"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/roles/remove-role-by-id/{id}": {
+      "delete": {
+        "tags": ["Roles"],
+        "operationId": "RemoveRoleById",
+        "summary": "Remove role by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Id of role",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Remove role successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 200
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Remove role successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "$ref": "#/definitions/RoleModel"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Role not found",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 404
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Not found"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Role not found"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/permissions/get-permissions": {
+      "get": {
+        "tags": ["Permissions"],
+        "operationId": "GetPermissions",
+        "summary": "Get list permissions",
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "Keyword to search name or module or endpoint",
+            "type": "string"
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "description": "Method of permission",
+            "type": "string",
+            "enum": ["Active", "Inactive", "Deleted"]
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Status of role",
+            "type": "string",
+            "enum": ["Active", "Inactive", "Deleted"]
+          },
+          {
+            "name": "itemPerPage",
+            "in": "query",
+            "description": "Limit of page to paginate",
+            "type": "number",
+            "enum": [10, 20, 30, 40, 50]
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Current page",
+            "type": "number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get all permissions successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 200
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Get all permissions successfully"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/PermissionModel"
+                  }
+                },
+                "meta": {
+                  "type": "object",
+                  "properties": {
+                    "offSet": {
+                      "type": "number"
+                    },
+                    "itemPerPage": {
+                      "type": "number"
+                    },
+                    "currentPage": {
+                      "type": "number"
+                    },
+                    "totalPages": {
+                      "type": "number"
+                    },
+                    "totalItems": {
+                      "type": "number"
+                    },
+                    "isNext": {
+                      "type": "number"
+                    },
+                    "isPrevious": {
+                      "type": "number"
+                    },
+                    "isFirst": {
+                      "type": "number"
+                    },
+                    "isLast": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/permissions/get-permission-by-id/{id}": {
+      "get": {
+        "tags": ["Permissions"],
+        "operationId": "GetPermissionById",
+        "summary": "Get one permission by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Id of permission",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get one permission successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 200
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Get one permission successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "$ref": "#/definitions/PermissionModel"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Permission not found",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 404
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Not found"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Permission not found"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/permissions/create-permission": {
+      "post": {
+        "tags": ["Permissions"],
+        "consumes": ["multipart/form-data"],
+        "operationId": "CreatePermission",
+        "summary": "Create permission",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "formData",
+            "description": "Name of permission",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "in": "formData",
+            "description": "Description of permission",
+            "type": "string"
+          },
+          {
+            "name": "module",
+            "in": "formData",
+            "description": "Module of permission",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "endpoint",
+            "in": "formData",
+            "description": "Endpoint of permission",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "method",
+            "in": "formData",
+            "description": "Method of permission",
+            "required": true,
+            "type": "string",
+            "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"]
+          },
+          {
+            "name": "status",
+            "in": "formData",
+            "description": "Status of permission",
+            "required": true,
+            "type": "string",
+            "enum": ["Active", "Inactive", "Deleted"]
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Create permission successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 201
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Create permission successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "$ref": "#/definitions/PermissionModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 400
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Bad Request"
+                },
+                "message": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/permissions/update-permission-by-id/{id}": {
+      "patch": {
+        "tags": ["Permissions"],
+        "consumes": ["multipart/form-data"],
+        "operationId": "UpdatePermissionById",
+        "summary": "Update permission by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Id of permission",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "in": "formData",
+            "description": "Name of permission",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "in": "formData",
+            "description": "Description of permission",
+            "type": "string"
+          },
+          {
+            "name": "module",
+            "in": "formData",
+            "description": "Module of permission",
+            "type": "string"
+          },
+          {
+            "name": "endpoint",
+            "in": "formData",
+            "description": "Endpoint of permission",
+            "type": "string"
+          },
+          {
+            "name": "method",
+            "in": "formData",
+            "description": "Method of permission",
+            "type": "string",
+            "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"]
+          },
+          {
+            "name": "status",
+            "in": "formData",
+            "description": "Status of permission",
+            "type": "string",
+            "enum": ["Active", "Inactive", "Deleted"]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Update permission successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 200
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Update permission successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "$ref": "#/definitions/PermissionModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 400
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Bad Request"
+                },
+                "message": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Permission not found",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 404
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Not found"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Permission not found"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/permissions/remove-permission-by-id/{id}": {
+      "delete": {
+        "tags": ["Permissions"],
+        "operationId": "RemovePermissionById",
+        "summary": "Remove permission by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Id of permission",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Remove permission successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 200
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Remove permission successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "$ref": "#/definitions/PermissionModel"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Permission not found",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 404
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Not found"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Permission not found"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "UserModel": {
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "birthday": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "gender": {
+          "type": "string",
+          "enum": ["Male", "Female", "Other"]
+        },
+        "email": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Active", "Inactive", "Deleted", "Banned"]
+        },
+        "isVerified": {
+          "type": "boolean"
+        },
+        "googleId": {
+          "type": "string"
+        },
+        "facebookId": {
+          "type": "string"
+        },
+        "resetPasswordExpiresAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "role": {
+          "type": "object",
+          "$ref": "#/definitions/RoleModel"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PermissionModel"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "RoleModel": {
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Active", "Inactive", "Deleted"]
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PermissionModel"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "PermissionModel": {
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "module": {
+          "type": "string"
+        },
+        "endpoint": {
+          "type": "string"
+        },
+        "method": {
+          "type": "string",
+          "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Active", "Inactive", "Deleted"]
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RoleModel"
+          }
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UserModel"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "UserOtpModel": {
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "otp": {
+          "type": "string"
+        },
+        "expireDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "user": {
+          "type": "object",
+          "$ref": "#/definitions/UserModel"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

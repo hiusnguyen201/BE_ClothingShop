@@ -28,9 +28,9 @@ export async function registerService(data) {
 
   return {
     isAuthenticated: false,
-    user: { name: user.name, email: user.email },
     accessToken: null,
     is2FactorRequired: true,
+    user: { name: user.name, email: user.email },
   };
 }
 
@@ -54,18 +54,18 @@ export async function authenticateService(data) {
   if (!user.isVerified || user.type === USER_TYPES.USER) {
     return {
       isAuthenticated: false,
-      user: { name: user.name, email: user.email },
       accessToken: null,
       is2FactorRequired: true,
+      user: { name: user.name, email: user.email },
     };
   }
 
   const accessToken = generateToken({ userId: user._id });
   return {
     isAuthenticated: true,
-    user: { name: user.name, email: user.email },
     accessToken,
     is2FactorRequired: false,
+    user: { name: user.name, email: user.email },
   };
 }
 
@@ -100,8 +100,8 @@ export async function verifyOtpService(data) {
   const accessToken = generateToken({ userId: user._id });
   return {
     isAuthenticated: true,
-    user: { name: user.name, email: user.email },
     accessToken,
+    user: { name: user.name, email: user.email },
   };
 }
 

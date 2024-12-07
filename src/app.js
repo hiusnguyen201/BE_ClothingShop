@@ -2,17 +2,19 @@ import express from "express";
 import mongoose from "mongoose";
 import path from "path";
 import logger from "morgan";
+import fs from "fs";
 import cors from "cors";
 import moment from "moment-timezone";
 moment.tz(config.timezone).format();
+import swaggerUi from "swagger-ui-express";
 // var createError = require("http-errors");
 // var cookieParser = require("cookie-parser");
-// console.log(moment(new Date()).format("DD/MM/YYYY HH:mm:ss a"));
 
 import routerV1 from "#src/routes/v1/index";
 import config from "#src/config";
 import { handleError, notFound } from "#src/middlewares/error.middleware";
 import { limiter } from "#src/middlewares/rate-limit.middleware";
+import swaggerDocument from "./swagger.json" assert { type: "json" };
 
 const app = express();
 
@@ -41,6 +43,9 @@ mongoose
   .catch((err) => {
     console.error("Connect to MongoDB failed", err);
   });
+
+// Api Docs
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Api version 1
 app.use("/api/v1", routerV1);

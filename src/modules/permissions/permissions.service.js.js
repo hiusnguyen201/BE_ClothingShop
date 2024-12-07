@@ -7,7 +7,7 @@ const SELECTED_FIELDS =
 
 export async function createPermissionService(data) {
   const { name } = data;
-  const isExistName =await checkExistPermissionNameService(name);
+  const isExistName = await checkExistPermissionNameService(name);
   if (isExistName) {
     throw new BadRequestException("Permission name is exist");
   }

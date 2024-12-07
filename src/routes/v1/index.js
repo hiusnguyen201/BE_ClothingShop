@@ -3,12 +3,15 @@ const router = express.Router();
 
 import usersRouter from "#src/routes/v1/users.route";
 import authRouter from "#src/routes/v1/auth.route";
-import roleRouter from "#src/routes/v1/role.route";
+import rolesRouter from "#src/routes/v1/roles.route";
 import permissionsRouter from "#src/routes/v1/permissions.route";
 
 router.use("/users", usersRouter);
+
 router.use("/auth", authRouter);
-router.use("/roles", roleRouter);
+
+router.use("/roles", rolesRouter);
+
 router.use("/permissions", permissionsRouter);
 
 export default router;
