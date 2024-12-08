@@ -1,6 +1,7 @@
 import express from "express";
+import http from "http";
 import mongoose from "mongoose";
-import path from "path";
+import path, { dirname } from "path";
 import logger from "morgan";
 import fs from "fs";
 import cors from "cors";
@@ -14,7 +15,6 @@ import routerV1 from "#src/routes/v1/index";
 import config from "#src/config";
 import { handleError, notFound } from "#src/middlewares/error.middleware";
 import { limiter } from "#src/middlewares/rate-limit.middleware";
-import swaggerDocument from "./swagger.json" assert { type: "json" };
 
 const app = express();
 
@@ -23,6 +23,9 @@ app.use(cors());
 
 // Rate limit
 app.use(limiter);
+
+// Trust proxy
+app.set("trust proxy", true);
 
 // view engine setup
 // app.set("views", path.join(config.dirname, "src/views"));
@@ -44,8 +47,19 @@ mongoose
     console.error("Connect to MongoDB failed", err);
   });
 
+const swaggerFile = fs
+  .readFileSync(path.join(process.cwd(), "/src/views/swagger.json"))
+  .toString();
+
 // Api Docs
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(JSON.parse(swaggerFile), {
+    customCssUrl:
+      "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.18.2/swagger-ui.min.css",
+  })
+);
 
 // Api version 1
 app.use("/api/v1", routerV1);
@@ -55,5 +69,12 @@ app.use(notFound);
 
 // Handler Error
 app.use(handleError);
+
+const serverHost = "localhost" || "127.0.0.1";
+const serverPort = config.port;
+const serverApi = http.createServer(app);
+serverApi.listen(serverPort, () => {
+  console.log(`Server running at http://${serverHost}:${serverPort}`);
+});
 
 export default app;

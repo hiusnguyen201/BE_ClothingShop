@@ -4,9 +4,9 @@
     "title": "Clothes Store Api",
     "version": "1.0.0"
   },
-  "host": "localhost:3000",
+  "host": "server-clothes-store.vercel.app",
   "basePath": "/api/v1",
-  "schemes": ["http"],
+  "schemes": ["https"],
   "consumes": ["application/json"],
   "produces": ["application/json"],
   "paths": {

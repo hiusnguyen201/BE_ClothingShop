@@ -8,4 +8,5 @@ export const limiter = rateLimit({
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
   // store: ... , // Redis, Memcached, etc. See below.
   handler: (req, res, next) => next(new TooManyRequestException()),
+  validate: { trustProxy: false },
 });
