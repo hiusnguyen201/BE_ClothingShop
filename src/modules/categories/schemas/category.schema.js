@@ -30,7 +30,7 @@ const categorySchema = new Schema(
     },
 
     // Foreign key
-    subCategories: [{ type: Schema.Types.ObjectId, ref: "SubCategory" }],
+    parentCategory: { type: Schema.Types.ObjectId, ref: "Category" },
   },
   {
     versionKey: false,
