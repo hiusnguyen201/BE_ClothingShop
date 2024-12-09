@@ -11,6 +11,18 @@ export const USER_STATUS = {
   DELETED: "Deleted",
 };
 
+export const CATEGORY_STATUS = {
+  PUBLIC: "Public",
+  HIDDEN: "Hidden",
+  DELETED: "Deleted",
+};
+
+export const SUB_CATEGORY_STATUS = {
+  PUBLIC: "Public",
+  HIDDEN: "Hidden",
+  DELETED: "Deleted",
+};
+
 export const ROLE_STATUS = {
   ACTIVE: "Active",
   INACTIVE: "Inactive",
