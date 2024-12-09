@@ -1,0 +1,141 @@
+import { isValidObjectId } from "mongoose";
+import { CategoryModel } from "#src/modules/categories/schemas/category.schema";
+import {
+  removeImages,
+  uploadImageBufferService,
+} from "#src/modules/cloudinary/cloudinary.service";
+import {
+  NotFoundException,
+} from "#src/core/exception/http-exception";
+
+const SELECTED_FIELDS = "_id icon name slug status parentCategory isHidden";
+const FOLDER_ICONS = "/categories/icons";
+
+export async function createCategoryService(data) {
+  const { file, parentCategory } = data;
+
+  if (parentCategory) {
+    const existParentCategory = await findCategoryByIdService(parentCategory);
+    if (!existParentCategory) {
+      throw new NotFoundException("Category not found");
+    }
+  }
+
+  const category = await CategoryModel.create(data);
+
+  if (file) {
+    await updateCategoryIconByIdService(category._id, file);
+  }
+  return await findCategoryByIdService(category._id);
+}
+
+export async function findAllCategoriesService(
+  query,
+  selectFields = SELECTED_FIELDS
+) {
+  let { keyword = "", status, itemPerPage = 10, page = 1 } = query;
+
+  const filterOptions = {
+    $or: [{ name: { $regex: keyword, $options: "i" } }],
+    [status && "status"]: status,
+  };
+
+  const totalItems = await CategoryModel.countDocuments(filterOptions);
+  const totalPages = Math.ceil(totalItems / itemPerPage);
+
+  if (page <= 0 || !page) {
+    page = 1;
+  } else if (page > totalPages && totalPages >= 1) {
+    page = totalPages;
+  }
+
+  const offSet = (page - 1) * itemPerPage;
+
+  const categories = await CategoryModel.find(filterOptions)
+    .skip(offSet)
+    .limit(itemPerPage)
+    .select(selectFields);
+
+  return {
+    list: categories,
+    meta: {
+      offSet,
+      itemPerPage,
+      currentPage: page,
+      totalPages,
+      totalItems,
+      isNext: page < totalPages,
+      isPrevious: page > 1,
+      isFirst: page > 1 && page <= totalPages,
+      isLast: page >= 1 && page < totalPages,
+    },
+  };
+}
+
+export async function findCategoryByIdService(
+  id,
+  selectFields = SELECTED_FIELDS
+) {
+  const filter = {};
+
+  if (isValidObjectId(id)) {
+    filter._id = id;
+  } else {
+    filter.name = id;
+  }
+
+  return await CategoryModel.findOne(filter).select(selectFields);
+}
+
+export async function updateCategoryByIdService(id, data) {
+  const { file, parentCategory } = data;
+
+  if (parentCategory) {
+    const existParentCategory = await findCategoryByIdService(parentCategory);
+    if (!existParentCategory) {
+      throw new NotFoundException("Category not found");
+    }
+  }
+
+  const existCategory = await findCategoryByIdService(id, "_id");
+  if (!existCategory) {
+    throw new NotFoundException("Category not found");
+  }
+
+  const category = await CategoryModel.findByIdAndUpdate(id, data, {
+    new: true,
+  }).select(SELECTED_FIELDS);
+
+
+  if (file) {
+    await removeImages(FOLDER_ICONS + `/${id}`);
+    await updateCategoryIconByIdService(category._id, file);
+  }
+
+  return await findCategoryByIdService(category._id);
+}
+
+export async function removeCategoryByIdService(id) {
+  const existCategory = await findCategoryByIdService(id, "_id");
+  if (!existCategory) {
+    throw new NotFoundException("Category not found");
+  }
+
+  return await CategoryModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
+}
+
+async function updateCategoryIconByIdService(id, file) {
+  const folderName = `${FOLDER_ICONS}/${id}`;
+  const result = await uploadImageBufferService({
+    file,
+    folderName,
+  });
+
+  return await CategoryModel.findByIdAndUpdate(
+    id,
+    {
+      icon: result.url,
+    },
+    { new: true }
+  ).select(SELECTED_FIELDS);
+}

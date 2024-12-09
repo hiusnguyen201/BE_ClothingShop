@@ -6,6 +6,10 @@ const CATEGORY_MODEL = "categories";
 
 const categorySchema = new Schema(
   {
+    icon: {
+      type: String,
+      length: 300,
+    },
     name: {
       type: String,
       required: true,
@@ -27,6 +31,10 @@ const categorySchema = new Schema(
         CATEGORY_STATUS.DELETED,
       ],
       default: CATEGORY_STATUS.HIDDEN,
+    },
+    isHidden: {
+      type: Boolean,
+      default: true
     },
 
     // Foreign key
