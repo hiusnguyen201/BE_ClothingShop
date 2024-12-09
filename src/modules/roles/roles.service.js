@@ -13,6 +13,11 @@ import { findPermissionByIdService } from "#src/modules/permissions/permissions.
 const SELECTED_FIELDS = "_id icon name description status permissions";
 const FOLDER_ICONS = "icons";
 
+/**
+ * Create role
+ * @param {*} data
+ * @returns
+ */
 export async function createRoleService(data) {
   const { name, file, permissions } = data;
 
@@ -39,6 +44,12 @@ export async function createRoleService(data) {
   return await findRoleByIdService(role._id);
 }
 
+/**
+ * Find all roles
+ * @param {*} query
+ * @param {*} selectFields
+ * @returns
+ */
 export async function findAllRolesService(
   query,
   selectFields = SELECTED_FIELDS
@@ -82,6 +93,12 @@ export async function findAllRolesService(
   };
 }
 
+/**
+ * Find one role by id
+ * @param {*} id
+ * @param {*} selectFields
+ * @returns
+ */
 export async function findRoleByIdService(
   id,
   selectFields = SELECTED_FIELDS
@@ -97,6 +114,12 @@ export async function findRoleByIdService(
   return await RoleModel.findOne(filter).select(selectFields);
 }
 
+/**
+ * Update role by id
+ * @param {*} id
+ * @param {*} data
+ * @returns
+ */
 export async function updateRoleByIdService(id, data) {
   const { name, file, permissions } = data;
   if (name) {
@@ -133,6 +156,11 @@ export async function updateRoleByIdService(id, data) {
   return await findRoleByIdService(role._id);
 }
 
+/**
+ * Remove role by id
+ * @param {*} id
+ * @returns
+ */
 export async function removeRoleByIdService(id) {
   const existRole = await findRoleByIdService(id, "_id");
   if (!existRole) {
@@ -142,6 +170,12 @@ export async function removeRoleByIdService(id) {
   return await RoleModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
 }
 
+/**
+ * Update avatar by id
+ * @param {*} id
+ * @param {*} file
+ * @returns
+ */
 export async function updateRoleIconByIdService(id, file) {
   const folderName = `${FOLDER_ICONS}/${id}`;
   const result = await uploadImageBufferService({
@@ -158,6 +192,12 @@ export async function updateRoleIconByIdService(id, file) {
   ).select(SELECTED_FIELDS);
 }
 
+/**
+ * Check role name existed
+ * @param {*} name
+ * @param {*} skipId
+ * @returns
+ */
 export async function checkExistNameService(name, skipId) {
   const existRole = await RoleModel.findOne({
     name,

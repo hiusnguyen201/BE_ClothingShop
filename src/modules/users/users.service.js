@@ -209,7 +209,7 @@ export async function removeUserByIdService(id) {
  * @param {*} file
  * @returns
  */
-export async function updateAvatarByIdService(id, file) {
+async function updateAvatarByIdService(id, file) {
   const folderName = `${FOLDER_AVATARS}/${id}`;
   const result = await uploadImageBufferService({
     file,

@@ -5,6 +5,11 @@ import { BadRequestException } from "#src/core/exception/http-exception";
 const SELECTED_FIELDS =
   "_id name description module endpoint method status";
 
+/**
+ * Create permission
+ * @param {*} data
+ * @returns
+ */
 export async function createPermissionService(data) {
   const { name } = data;
   const isExistName = await checkExistPermissionNameService(name);
@@ -16,6 +21,12 @@ export async function createPermissionService(data) {
   return await findPermissionByIdService(permission._id);
 }
 
+/**
+ * Find all permissions
+ * @param {*} query
+ * @param {*} selectFields
+ * @returns
+ */
 export async function findAllPermissionsService(
   query,
   selectFields = SELECTED_FIELDS
@@ -64,6 +75,12 @@ export async function findAllPermissionsService(
   };
 }
 
+/**
+ * Find one permission by id
+ * @param {*} id
+ * @param {*} selectFields
+ * @returns
+ */
 export async function findPermissionByIdService(
   id,
   selectFields = SELECTED_FIELDS
@@ -79,6 +96,12 @@ export async function findPermissionByIdService(
   return await PermissionModel.findOne(filter).select(selectFields);
 }
 
+/**
+ * Update permission by id
+ * @param {*} id
+ * @param {*} data
+ * @returns
+ */
 export async function updatePermissionByIdService(id, data) {
   const { name } = data;
   const isExistName = await checkExistPermissionNameService(name);
@@ -93,13 +116,24 @@ export async function updatePermissionByIdService(id, data) {
   return permission;
 }
 
+/**
+ * Remove permission by id
+ * @param {*} id
+ * @returns
+ */
 export async function removePermissionByIdService(id) {
   return await PermissionModel.findByIdAndDelete(id).select(
     SELECTED_FIELDS
   );
 }
 
-export async function checkExistPermissionNameService(name, skipId) {
+/**
+ * Check permission name existed
+ * @param {*} name
+ * @param {*} skipId
+ * @returns
+ */
+async function checkExistPermissionNameService(name, skipId) {
   const existRole = await PermissionModel.findOne({
     name,
     _id: { $ne: skipId },

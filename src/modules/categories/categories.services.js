@@ -11,6 +11,12 @@ import {
 const SELECTED_FIELDS = "_id icon name slug status parentCategory isHidden";
 const FOLDER_ICONS = "/categories/icons";
 
+
+/**
+ * Create category
+ * @param {*} data
+ * @returns
+ */
 export async function createCategoryService(data) {
   const { file, parentCategory } = data;
 
@@ -29,6 +35,13 @@ export async function createCategoryService(data) {
   return await findCategoryByIdService(category._id);
 }
 
+
+/**
+ * Find all categories
+ * @param {*} query
+ * @param {*} selectFields
+ * @returns
+ */
 export async function findAllCategoriesService(
   query,
   selectFields = SELECTED_FIELDS
@@ -72,6 +85,12 @@ export async function findAllCategoriesService(
   };
 }
 
+/**
+ * Find one category by id
+ * @param {*} id
+ * @param {*} selectFields
+ * @returns
+ */
 export async function findCategoryByIdService(
   id,
   selectFields = SELECTED_FIELDS
@@ -87,6 +106,13 @@ export async function findCategoryByIdService(
   return await CategoryModel.findOne(filter).select(selectFields);
 }
 
+
+/**
+ * Update category by id
+ * @param {*} id
+ * @param {*} data
+ * @returns
+ */
 export async function updateCategoryByIdService(id, data) {
   const { file, parentCategory } = data;
 
@@ -115,6 +141,11 @@ export async function updateCategoryByIdService(id, data) {
   return await findCategoryByIdService(category._id);
 }
 
+/**
+ * Remove category by id
+ * @param {*} id
+ * @returns
+ */
 export async function removeCategoryByIdService(id) {
   const existCategory = await findCategoryByIdService(id, "_id");
   if (!existCategory) {
@@ -124,6 +155,12 @@ export async function removeCategoryByIdService(id) {
   return await CategoryModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
 }
 
+/**
+ * Update avatar by id
+ * @param {*} id
+ * @param {*} file
+ * @returns
+ */
 async function updateCategoryIconByIdService(id, file) {
   const folderName = `${FOLDER_ICONS}/${id}`;
   const result = await uploadImageBufferService({
