@@ -19,7 +19,7 @@ const getEmailTemplateToString = (fileName) => {
       path.join(
         config.dirname,
         "public/email-templates",
-        `${fileName}.html`
+        `${fileName}`
       )
     )
     .toString();
@@ -76,3 +76,18 @@ export const sendResetPasswordSuccessService = async (email) => {
     html,
   });
 };
+
+
+export const sendPasswordService = async (email, password) => {
+  const html = getEmailTemplateToString(
+    "send-password.html"
+  ).replace("{password}", password);
+
+  await transporter.sendMail({
+    from: config.mailer.MAILER_AUTH_USER,
+    to: email,
+    subject: "Send Password Successfully",
+    html,
+  });
+};
+

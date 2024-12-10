@@ -4,10 +4,10 @@ import {
   UnauthorizedException,
 } from "#src/core/exception/http-exception";
 import {
-  createCustomerService,
   findUserByIdService,
   findUserByResetPasswordTokenService,
 } from "#src/modules/users/users.service";
+import { createCustomerService } from "#src/modules/customers/customers.service"
 import {
   sendOtpCodeService,
   sendResetPasswordRequestService,

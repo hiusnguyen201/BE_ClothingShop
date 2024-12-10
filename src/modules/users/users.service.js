@@ -11,6 +11,8 @@ import {
   BadRequestException,
   NotFoundException,
 } from "#src/core/exception/http-exception";
+import { randomStr } from "#src/utils/string.util";
+import { sendPasswordService } from "#src/modules/mailer/mailer.service";
 
 const SELECTED_FIELDS = "_id avatar name email status birthday gender";
 const FOLDER_AVATARS = "avatars";
@@ -26,43 +28,19 @@ export async function createUserService(data) {
   if (isExistEmail) {
     throw new BadRequestException("Email already exist");
   }
-
+  const password = randomStr(32)
+  const hashedPassword = makeHash(password)
   const newUser = await UserModel.create({
     ...data,
+    password: hashedPassword,
     type: USER_TYPES.USER,
   });
-
+  sendPasswordService(email, password)
   if (file) {
     await updateAvatarByIdService(newUser._id, file);
   }
 
   return await findUserByIdService(newUser._id);
-}
-
-/**
- * Create customer
- * @param {*} data
- * @returns
- */
-export async function createCustomerService(data) {
-  const { password, file, email } = data;
-  const isExistEmail = await checkExistEmailService(email);
-  if (isExistEmail) {
-    throw new BadRequestException("Email already exist");
-  }
-
-  const hashedPassword = makeHash(password);
-  const newCustomer = await UserModel.create({
-    ...data,
-    type: USER_TYPES.CUSTOMER,
-    password: hashedPassword,
-  });
-
-  if (file) {
-    await updateAvatarByIdService(newCustomer._id, file);
-  }
-
-  return await findUserById(newCustomer._id);
 }
 
 /**
@@ -83,6 +61,7 @@ export async function findAllUsersService(
       { email: { $regex: keyword, $options: "i" } },
     ],
     [status && "status"]: status,
+    type: USER_TYPES.USER
   };
 
   const totalItems = await UserModel.countDocuments(filterOptions);
@@ -127,7 +106,7 @@ export async function findUserByIdService(
   id,
   selectFields = SELECTED_FIELDS
 ) {
-  const filter = {};
+  const filter = { type: USER_TYPES.USER };
 
   if (isValidObjectId(id)) {
     filter._id = id;
@@ -138,19 +117,6 @@ export async function findUserByIdService(
   }
 
   return await UserModel.findOne(filter).select(selectFields);
-}
-
-/**
- * Find one user by reset password token
- * @param {*} token
- * @returns
- */
-export async function findUserByResetPasswordTokenService(token) {
-  const user = await UserModel.findOne({
-    resetPasswordToken: token,
-    resetPasswordExpiresAt: { $gt: moment().valueOf() },
-  });
-  return user;
 }
 
 /**
@@ -201,6 +167,19 @@ export async function removeUserByIdService(id) {
   }
 
   return await UserModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
+}
+
+/**
+ * Find one user by reset password token
+ * @param {*} token
+ * @returns
+ */
+export async function findUserByResetPasswordTokenService(token) {
+  const user = await UserModel.findOne({
+    resetPasswordToken: token,
+    resetPasswordExpiresAt: { $gt: moment().valueOf() },
+  });
+  return user;
 }
 
 /**
