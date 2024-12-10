@@ -23,12 +23,11 @@ export const createRoleController = async (req, res, next) => {
 
 export const getAllRolesController = async (req, res, next) => {
   try {
-    const { list, meta } = await findAllRolesService(req.query);
+    const data = await findAllRolesService(req.query);
     return res.json({
       statusCode: HttpStatus.OK,
       message: "Get all roles successfully",
-      data: list,
-      meta,
+      data,
     });
   } catch (err) {
     next(err);

@@ -23,12 +23,11 @@ export const createPermissionController = async (req, res, next) => {
 
 export const getAllPermissionsController = async (req, res, next) => {
   try {
-    const { list, meta } = await findAllPermissionsService(req.query);
+    const data = await findAllPermissionsService(req.query);
     return res.json({
       statusCode: HttpStatus.OK,
       message: "Get all permissions successfully",
-      data: list,
-      meta,
+      data,
     });
   } catch (err) {
     next(err);
