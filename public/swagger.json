@@ -625,7 +625,7 @@
             "enum": ["Active", "Inactive", "Banned", "Deleted"]
           },
           {
-            "name": "itemPerPage",
+            "name": "limit",
             "in": "query",
             "description": "Limit of page to paginate",
             "type": "number",
@@ -653,40 +653,45 @@
                   "default": "Get all users successfully"
                 },
                 "data": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/definitions/UserModel"
-                  }
-                },
-                "meta": {
                   "type": "object",
                   "properties": {
-                    "offSet": {
-                      "type": "number"
+                    "list": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/UserModel"
+                      }
                     },
-                    "itemPerPage": {
-                      "type": "number"
-                    },
-                    "currentPage": {
-                      "type": "number"
-                    },
-                    "totalPages": {
-                      "type": "number"
-                    },
-                    "totalItems": {
-                      "type": "number"
-                    },
-                    "isNext": {
-                      "type": "number"
-                    },
-                    "isPrevious": {
-                      "type": "number"
-                    },
-                    "isFirst": {
-                      "type": "number"
-                    },
-                    "isLast": {
-                      "type": "number"
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "offSet": {
+                          "type": "number"
+                        },
+                        "limit": {
+                          "type": "number"
+                        },
+                        "page": {
+                          "type": "number"
+                        },
+                        "totalPage": {
+                          "type": "number"
+                        },
+                        "totalCount": {
+                          "type": "number"
+                        },
+                        "isNext": {
+                          "type": "boolean"
+                        },
+                        "isPrevious": {
+                          "type": "boolean"
+                        },
+                        "isFirst": {
+                          "type": "boolean"
+                        },
+                        "isLast": {
+                          "type": "boolean"
+                        }
+                      }
                     }
                   }
                 }
@@ -1225,7 +1230,7 @@
             "enum": ["Active", "Inactive", "Deleted"]
           },
           {
-            "name": "itemPerPage",
+            "name": "limit",
             "in": "query",
             "description": "Limit of page to paginate",
             "type": "number",
@@ -1253,40 +1258,45 @@
                   "default": "Get all roles successfully"
                 },
                 "data": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/definitions/RoleModel"
-                  }
-                },
-                "meta": {
                   "type": "object",
                   "properties": {
-                    "offSet": {
-                      "type": "number"
+                    "list": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/RoleModel"
+                      }
                     },
-                    "itemPerPage": {
-                      "type": "number"
-                    },
-                    "currentPage": {
-                      "type": "number"
-                    },
-                    "totalPages": {
-                      "type": "number"
-                    },
-                    "totalItems": {
-                      "type": "number"
-                    },
-                    "isNext": {
-                      "type": "number"
-                    },
-                    "isPrevious": {
-                      "type": "number"
-                    },
-                    "isFirst": {
-                      "type": "number"
-                    },
-                    "isLast": {
-                      "type": "number"
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "offSet": {
+                          "type": "number"
+                        },
+                        "limit": {
+                          "type": "number"
+                        },
+                        "page": {
+                          "type": "number"
+                        },
+                        "totalPage": {
+                          "type": "number"
+                        },
+                        "totalCount": {
+                          "type": "number"
+                        },
+                        "isNext": {
+                          "type": "boolean"
+                        },
+                        "isPrevious": {
+                          "type": "boolean"
+                        },
+                        "isFirst": {
+                          "type": "boolean"
+                        },
+                        "isLast": {
+                          "type": "boolean"
+                        }
+                      }
                     }
                   }
                 }
@@ -1836,7 +1846,7 @@
             "enum": ["Active", "Inactive", "Deleted"]
           },
           {
-            "name": "itemPerPage",
+            "name": "limit",
             "in": "query",
             "description": "Limit of page to paginate",
             "type": "number",
@@ -1864,40 +1874,45 @@
                   "default": "Get all permissions successfully"
                 },
                 "data": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/definitions/PermissionModel"
-                  }
-                },
-                "meta": {
                   "type": "object",
                   "properties": {
-                    "offSet": {
-                      "type": "number"
+                    "list": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/PermissionModel"
+                      }
                     },
-                    "itemPerPage": {
-                      "type": "number"
-                    },
-                    "currentPage": {
-                      "type": "number"
-                    },
-                    "totalPages": {
-                      "type": "number"
-                    },
-                    "totalItems": {
-                      "type": "number"
-                    },
-                    "isNext": {
-                      "type": "number"
-                    },
-                    "isPrevious": {
-                      "type": "number"
-                    },
-                    "isFirst": {
-                      "type": "number"
-                    },
-                    "isLast": {
-                      "type": "number"
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "offSet": {
+                          "type": "number"
+                        },
+                        "limit": {
+                          "type": "number"
+                        },
+                        "page": {
+                          "type": "number"
+                        },
+                        "totalPage": {
+                          "type": "number"
+                        },
+                        "totalCount": {
+                          "type": "number"
+                        },
+                        "isNext": {
+                          "type": "boolean"
+                        },
+                        "isPrevious": {
+                          "type": "boolean"
+                        },
+                        "isFirst": {
+                          "type": "boolean"
+                        },
+                        "isLast": {
+                          "type": "boolean"
+                        }
+                      }
                     }
                   }
                 }
@@ -2410,25 +2425,9 @@
         "email": {
           "type": "string"
         },
-        "password": {
-          "type": "string"
-        },
         "status": {
           "type": "string",
           "enum": ["Active", "Inactive", "Deleted", "Banned"]
-        },
-        "isVerified": {
-          "type": "boolean"
-        },
-        "googleId": {
-          "type": "string"
-        },
-        "facebookId": {
-          "type": "string"
-        },
-        "resetPasswordExpiresAt": {
-          "type": "string",
-          "format": "date-time"
         },
         "role": {
           "type": "object",
@@ -2522,33 +2521,6 @@
           "items": {
             "$ref": "#/definitions/UserModel"
           }
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time"
-        }
-      }
-    },
-    "UserOtpModel": {
-      "type": "object",
-      "properties": {
-        "_id": {
-          "type": "string"
-        },
-        "otp": {
-          "type": "string"
-        },
-        "expireDate": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "user": {
-          "type": "object",
-          "$ref": "#/definitions/UserModel"
         },
         "createdAt": {
           "type": "string",
