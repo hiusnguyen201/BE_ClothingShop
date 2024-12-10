@@ -6,9 +6,14 @@ import {
   BadRequestException,
   NotFoundException,
 } from "#src/core/exception/http-exception";
-import { updateAvatarByIdService, checkExistEmailService } from "#src/modules/users/users.service";
+import {
+  updateUserAvatarByIdService,
+  checkExistEmailService,
+} from "#src/modules/users/users.service";
+import { calculatePagination } from "#src/utils/pagination.util";
 
-const SELECTED_FIELDS = "_id avatar name email status birthday gender type";
+const SELECTED_FIELDS =
+  "_id avatar name email status birthday gender type";
 
 /**
  * Create customer
@@ -30,8 +35,9 @@ export async function createCustomerService(data) {
   });
 
   if (file) {
-    await updateAvatarByIdService(newCustomer._id, file);
+    updateUserAvatarByIdService(newCustomer._id, file);
   }
+
   return await findCustomerByIdService(newCustomer._id);
 }
 
@@ -45,7 +51,7 @@ export async function findAllCustomersService(
   query,
   selectFields = SELECTED_FIELDS
 ) {
-  let { keyword = "", status, itemPerPage = 10, page = 1 } = query;
+  let { keyword = "", status, limit = 10, page = 1 } = query;
 
   const filterOptions = {
     $or: [
@@ -53,36 +59,19 @@ export async function findAllCustomersService(
       { email: { $regex: keyword, $options: "i" } },
     ],
     [status && "status"]: status,
-    type: USER_TYPES.CUSTOMER
+    type: USER_TYPES.CUSTOMER,
   };
 
-  const totalItems = await UserModel.countDocuments(filterOptions);
-  const totalPages = Math.ceil(totalItems / itemPerPage);
+  const totalCount = await UserModel.countDocuments(filterOptions);
+  const metaData = calculatePagination(page, limit, totalCount);
 
-  if (page <= 0 || !page) {
-    page = 1;
-  } else if (page > totalPages && totalPages >= 1) {
-    page = totalPages;
-  }
-
-  const offSet = (page - 1) * itemPerPage;
   const customers = await UserModel.find(filterOptions)
-    .skip(offSet)
-    .limit(itemPerPage)
+    .skip(metaData.offset)
+    .limit(metaData.limit)
     .select(selectFields);
   return {
     list: customers,
-    meta: {
-      offSet,
-      itemPerPage,
-      currentPage: page,
-      totalPages,
-      totalItems,
-      isNext: page < totalPages,
-      isPrevious: page > 1,
-      isFirst: page > 1 && page <= totalPages,
-      isLast: page >= 1 && page < totalPages,
-    },
+    meta: metaData,
   };
 }
 
@@ -96,6 +85,7 @@ export async function findCustomerByIdService(
   id,
   selectFields = SELECTED_FIELDS
 ) {
+  if (!id) return null;
   const filter = { type: USER_TYPES.CUSTOMER };
 
   if (isValidObjectId(id)) {
@@ -105,6 +95,7 @@ export async function findCustomerByIdService(
   } else {
     return null;
   }
+
   return await UserModel.findOne(filter).select(selectFields);
 }
 
@@ -123,19 +114,16 @@ export async function updateCustomerByIdService(id, data) {
 
   // Check exist email
   if (email) {
-    const isExistEmail = await checkExistEmailService(
-      email,
-      existCustomer._id
-    );
+    const isExistEmail = await checkExistEmailService(email, id);
     if (isExistEmail) {
       throw new BadRequestException("Email already exist");
     }
   }
 
   if (file) {
-    await removeImages(FOLDER_ICONS + `/${id}`);
-    await updateAvatarByIdService(existCustomer._id, file);
+    updateUserAvatarByIdService(id, file);
   }
+
   const customer = await UserModel.findByIdAndUpdate(id, data, {
     new: true,
   }).select(SELECTED_FIELDS);

@@ -2,6 +2,7 @@ import moment from "moment-timezone";
 import { UserOtpModel } from "#src/modules/user-otps/schemas/user-otp.schema";
 import { generateOtp } from "#src/utils/string.util";
 import config from "#src/config";
+
 export async function createUserOtpByUserIdService(userId) {
   const newUserOtp = await UserOtpModel.create({
     otp: generateOtp(),

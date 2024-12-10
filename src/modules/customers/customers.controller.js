@@ -4,20 +4,23 @@ import {
   findAllCustomersService,
   findCustomerByIdService,
   updateCustomerByIdService,
-  removeCustomerByIdService
+  removeCustomerByIdService,
 } from "#src/modules/customers/customers.service";
 import { NotFoundException } from "#src/core/exception/http-exception";
 
 export const createCustomerController = async (req, res, next) => {
   try {
-    const data = await createCustomerService({ ...req.body, file: req.file })
+    const data = await createCustomerService({
+      ...req.body,
+      file: req.file,
+    });
     return res.json({
       statusCode: HttpStatus.CREATED,
-      message: "Create Customer successfully",
+      message: "Create customer successfully",
       data,
-    })
+    });
   } catch (err) {
-    next(err)
+    next(err);
   }
 };
 
@@ -26,11 +29,11 @@ export const getAllCustomersController = async (req, res, next) => {
     const data = await findAllCustomersService(req.query);
     return res.json({
       statusCode: HttpStatus.OK,
-      message: "Get All Customers Successfully",
-      data
+      message: "Get all customers successfully",
+      data,
     });
   } catch (err) {
-    next(err)
+    next(err);
   }
 };
 
@@ -38,15 +41,15 @@ export const getCustomerByIdController = async (req, res, next) => {
   try {
     const data = await findCustomerByIdService(req.params.id);
     if (!data) {
-      throw new NotFoundException("User not found");
+      throw new NotFoundException("Customer not found");
     }
     return res.json({
       statusCode: HttpStatus.OK,
-      message: "Get Customer Successfully",
-      data
+      message: "Get customer successfully",
+      data,
     });
   } catch (err) {
-    next(err)
+    next(err);
   }
 };
 
@@ -58,7 +61,7 @@ export const updateCustomerByIdController = async (req, res, next) => {
     });
     return res.json({
       statusCode: HttpStatus.OK,
-      message: "Update Customer successfully",
+      message: "Update customer successfully",
       data,
     });
   } catch (err) {
@@ -66,13 +69,12 @@ export const updateCustomerByIdController = async (req, res, next) => {
   }
 };
 
-
 export const removeCustomerByIdController = async (req, res, next) => {
   try {
     const data = await removeCustomerByIdService(req.params.id);
     return res.json({
       statusCode: HttpStatus.OK,
-      message: "Remove Customer Successfully",
+      message: "Remove customer successfully",
       data,
     });
   } catch (err) {

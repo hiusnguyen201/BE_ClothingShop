@@ -1,12 +1,13 @@
 import express from "express";
 import http from "http";
 import mongoose from "mongoose";
-import path, { dirname } from "path";
+import path from "path";
 import logger from "morgan";
 import fs from "fs";
 import cors from "cors";
 import moment from "moment-timezone";
 moment.tz(config.timezone).format();
+import favicon from "serve-favicon";
 import swaggerUi from "swagger-ui-express";
 // var createError = require("http-errors");
 // var cookieParser = require("cookie-parser");
@@ -48,8 +49,11 @@ mongoose
   });
 
 const swaggerFile = fs
-  .readFileSync(path.join(process.cwd(), "/src/views/swagger.json"))
+  .readFileSync(path.join(process.cwd(), "/public/swagger.json"))
   .toString();
+
+// Favicon
+app.use(favicon(path.join(process.cwd(), "/public/favicon.ico")));
 
 // Api Docs
 app.use(

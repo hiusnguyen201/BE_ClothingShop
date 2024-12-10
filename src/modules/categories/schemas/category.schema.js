@@ -28,6 +28,10 @@ const categorySchema = new Schema(
       ],
       default: CATEGORY_STATUS.HIDDEN,
     },
+    isHidden: {
+      type: Boolean,
+      default: true,
+    },
 
     // Foreign key
     parentCategory: { type: Schema.Types.ObjectId, ref: "Category" },

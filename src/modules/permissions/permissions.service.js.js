@@ -1,6 +1,7 @@
 import { isValidObjectId } from "mongoose";
 import { PermissionModel } from "#src/modules/permissions/schemas/permission.schema";
 import { BadRequestException } from "#src/core/exception/http-exception";
+import { calculatePagination } from "#src/utils/pagination.util";
 
 const SELECTED_FIELDS =
   "_id name description module endpoint method status";
@@ -20,7 +21,7 @@ export async function findAllPermissionsService(
   query,
   selectFields = SELECTED_FIELDS
 ) {
-  let { keyword = "", method, status, itemPerPage = 10, page = 1 } = query;
+  let { keyword = "", method, status, limit = 10, page = 1 } = query;
 
   const filterOptions = {
     $or: [
@@ -32,35 +33,17 @@ export async function findAllPermissionsService(
     [status && "status"]: status,
   };
 
-  const totalItems = await PermissionModel.countDocuments(filterOptions);
-  const totalPages = Math.ceil(totalItems / itemPerPage);
-
-  if (page <= 0 || !page) {
-    page = 1;
-  } else if (page > totalPages && totalPages >= 1) {
-    page = totalPages;
-  }
-
-  const offSet = (page - 1) * itemPerPage;
+  const totalCount = await PermissionModel.countDocuments(filterOptions);
+  const metaData = calculatePagination(page, limit, totalCount);
 
   const permissions = await PermissionModel.find(filterOptions)
-    .skip(offSet)
-    .limit(itemPerPage)
+    .skip(metaData.offset)
+    .limit(metaData.limit)
     .select(selectFields);
 
   return {
     list: permissions,
-    meta: {
-      offSet,
-      itemPerPage,
-      currentPage: page,
-      totalPages,
-      totalItems,
-      isNext: page < totalPages,
-      isPrevious: page > 1,
-      isFirst: page > 1 && page <= totalPages,
-      isLast: page >= 1 && page < totalPages,
-    },
+    meta: metaData,
   };
 }
 
@@ -68,6 +51,7 @@ export async function findPermissionByIdService(
   id,
   selectFields = SELECTED_FIELDS
 ) {
+  if (!id) return null;
   const filter = {};
 
   if (isValidObjectId(id)) {

@@ -13,6 +13,7 @@ import {
 } from "#src/core/exception/http-exception";
 import { randomStr } from "#src/utils/string.util";
 import { sendPasswordService } from "#src/modules/mailer/mailer.service";
+import { calculatePagination } from "#src/utils/pagination.util";
 
 const SELECTED_FIELDS = "_id avatar name email status birthday gender";
 const FOLDER_AVATARS = "avatars";
@@ -28,16 +29,19 @@ export async function createUserService(data) {
   if (isExistEmail) {
     throw new BadRequestException("Email already exist");
   }
-  const password = randomStr(32)
-  const hashedPassword = makeHash(password)
+
+  const password = randomStr(32);
+  const hashedPassword = makeHash(password);
   const newUser = await UserModel.create({
     ...data,
     password: hashedPassword,
     type: USER_TYPES.USER,
   });
-  sendPasswordService(email, password)
+
+  sendPasswordService(email, password);
+
   if (file) {
-    await updateAvatarByIdService(newUser._id, file);
+    updateUserAvatarByIdService(newUser._id, file);
   }
 
   return await findUserByIdService(newUser._id);
@@ -53,7 +57,7 @@ export async function findAllUsersService(
   query,
   selectFields = SELECTED_FIELDS
 ) {
-  let { keyword = "", status, itemPerPage = 10, page = 1 } = query;
+  let { keyword = "", status, limit = 10, page = 1 } = query;
 
   const filterOptions = {
     $or: [
@@ -61,38 +65,20 @@ export async function findAllUsersService(
       { email: { $regex: keyword, $options: "i" } },
     ],
     [status && "status"]: status,
-    type: USER_TYPES.USER
+    type: USER_TYPES.USER,
   };
 
-  const totalItems = await UserModel.countDocuments(filterOptions);
-  const totalPages = Math.ceil(totalItems / itemPerPage);
-
-  if (page <= 0 || !page) {
-    page = 1;
-  } else if (page > totalPages && totalPages >= 1) {
-    page = totalPages;
-  }
-
-  const offSet = (page - 1) * itemPerPage;
+  const totalCount = await UserModel.countDocuments(filterOptions);
+  const metaData = calculatePagination(page, limit, totalCount);
 
   const users = await UserModel.find(filterOptions)
-    .skip(offSet)
-    .limit(itemPerPage)
+    .skip(metaData.offset)
+    .limit(metaData.limit)
     .select(selectFields);
 
   return {
     list: users,
-    meta: {
-      offSet,
-      itemPerPage,
-      currentPage: page,
-      totalPages,
-      totalItems,
-      isNext: page < totalPages,
-      isPrevious: page > 1,
-      isFirst: page > 1 && page <= totalPages,
-      isLast: page >= 1 && page < totalPages,
-    },
+    meta: metaData,
   };
 }
 
@@ -106,6 +92,7 @@ export async function findUserByIdService(
   id,
   selectFields = SELECTED_FIELDS
 ) {
+  if (!id) return null;
   const filter = { type: USER_TYPES.USER };
 
   if (isValidObjectId(id)) {
@@ -132,7 +119,6 @@ export async function updateUserByIdService(id, data) {
     throw new NotFoundException("User not found");
   }
 
-  // Check exist email
   if (email) {
     const isExistEmail = await checkExistEmailService(
       email,
@@ -144,8 +130,7 @@ export async function updateUserByIdService(id, data) {
   }
 
   if (file) {
-    await removeImages(FOLDER_ICONS + `/${id}`);
-    await updateAvatarByIdService(existUser._id, file);
+    updateUserAvatarByIdService(existUser._id, file);
   }
 
   const user = await UserModel.findByIdAndUpdate(id, data, {
@@ -170,25 +155,12 @@ export async function removeUserByIdService(id) {
 }
 
 /**
- * Find one user by reset password token
- * @param {*} token
- * @returns
- */
-export async function findUserByResetPasswordTokenService(token) {
-  const user = await UserModel.findOne({
-    resetPasswordToken: token,
-    resetPasswordExpiresAt: { $gt: moment().valueOf() },
-  });
-  return user;
-}
-
-/**
  * Update avatar by id
  * @param {*} id
  * @param {*} file
  * @returns
  */
-export async function updateAvatarByIdService(id, file) {
+export async function updateUserAvatarByIdService(id, file) {
   const folderName = `${FOLDER_AVATARS}/${id}`;
   const result = await uploadImageBufferService({
     file,
@@ -220,4 +192,17 @@ export async function checkExistEmailService(email, skipId) {
     email,
     _id: { $ne: skipId },
   }).select("_id email");
+}
+
+/**
+ * Find one user by reset password token
+ * @param {*} token
+ * @returns
+ */
+export async function findUserByResetPasswordTokenService(token) {
+  const user = await UserModel.findOne({
+    resetPasswordToken: token,
+    resetPasswordExpiresAt: { $gt: moment().valueOf() },
+  });
+  return user;
 }
