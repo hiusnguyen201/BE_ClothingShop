@@ -7,6 +7,7 @@ import {
 import {
   NotFoundException,
 } from "#src/core/exception/http-exception";
+import { slugify } from "#src/utils/slugify";
 
 const SELECTED_FIELDS = "_id icon name slug status parentCategory isHidden";
 const FOLDER_ICONS = "/categories/icons";
@@ -101,12 +102,11 @@ export async function findCategoryByIdService(
   const filter = {};
 
   if (isValidObjectId(id)) {
-    filter._id = id;    
-    return await CategoryModel.findById(id);
+    filter._id = id;
   } else {
     filter.name = id;
   }
-
+  
   return await CategoryModel.findOne(filter).select(selectFields);
 }
 
@@ -127,18 +127,18 @@ export async function updateCategoryByIdService(id, data) {
     }
   }
 
-  const existCategory = await findCategoryByIdService(id, "_id");
+  const existCategory = await findCategoryByIdService(id);
   if (!existCategory) {
     throw new NotFoundException("Category not found");
-  }  
+  }
+  
+  if (file) {
+    if (existCategory.icon) await removeImages(existCategory.icon);
+    data.icon = await updateCategoryIconByIdService(existCategory._id, file);
+  }
 
   if (name) {
     data.slug = slugify(name);
-  }
-
-  if (file) {
-    if (existCategory.icon) await removeImages(existCategory.icon);
-    await updateCategoryIconByIdService(existCategory._id, file);
   }
 
   const category = await CategoryModel.findByIdAndUpdate(id, data, {
@@ -175,20 +175,5 @@ async function updateCategoryIconByIdService(id, file) {
     folderName,
   });
 
-  return await CategoryModel.findByIdAndUpdate(
-    id,
-    {
-      icon: result.public_id,
-    },
-    { new: true }
-  ).select(SELECTED_FIELDS);
-}
-
-function slugify(str) {
-  str = str.replace(/^\s+|\s+$/g, ''); // trim leading/trailing white space
-  str = str.toLowerCase(); // convert string to lowercase
-  str = str.replace(/[^a-z0-9 -]/g, '') // remove any non-alphanumeric characters
-    .replace(/\s+/g, '-') // replace spaces with hyphens
-    .replace(/-+/g, '-'); // remove consecutive hyphens
-  return str;
+  return result.public_id;
 }

@@ -46,7 +46,7 @@ export function cropImagePathByVersionService({
 export const removeImages = async (public_id) => {
   const response = await cloudinary.uploader.destroy(public_id);
   if (response.result === "not found") {
-    throw new Error("Delete failed")
+    return "Not found"
   }
 
   return "Removed"
