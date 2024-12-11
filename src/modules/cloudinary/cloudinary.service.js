@@ -43,9 +43,8 @@ export function cropImagePathByVersionService({
   ].join("/");
 }
 
-export const removeImages = async (folder) => {
-  const response = await cloudinary.api.delete_resources_by_prefix(folder);
-
+export const removeImages = async (public_id) => {
+  const response = await cloudinary.uploader.destroy(public_id);
   if (response.result === "not found") {
     throw new Error("Delete failed")
   }
