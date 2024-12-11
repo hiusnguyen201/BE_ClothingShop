@@ -1,11 +1,11 @@
-import moment from "moment-timezone";
 import {
   NotFoundException,
   UnauthorizedException,
 } from "#src/core/exception/http-exception";
 import {
+  changePasswordByIdService,
   findUserByIdService,
-  findUserByResetPasswordTokenService,
+  updateVerifiedByIdService,
 } from "#src/modules/users/users.service";
 import { createCustomerService } from "#src/modules/customers/customers.service";
 import {
@@ -17,12 +17,20 @@ import {
 import { generateToken } from "#src/utils/jwt.util";
 import { USER_TYPES } from "#src/core/constant";
 import {
-  createUserOtpByUserIdService,
+  createUserOtpService,
   findUserOtpByOtpAndUserIdService,
 } from "#src/modules/user-otps/user-otps.service";
-import { compareHash, makeHash } from "#src/utils/bcrypt.util";
-import config from "#src/config";
+import { compareHash } from "#src/utils/bcrypt.util";
+import {
+  createResetPasswordService,
+  findResetPasswordByTokenService,
+} from "#src/modules/reset-password/reset-password.service";
 
+/**
+ * Register customer
+ * @param {*} data
+ * @returns
+ */
 export async function registerService(data) {
   const user = await createCustomerService(data);
 
@@ -34,6 +42,11 @@ export async function registerService(data) {
   };
 }
 
+/**
+ * Authenticate user
+ * @param {*} data
+ * @returns
+ */
 export async function authenticateService(data) {
   const { email, password } = data;
 
@@ -69,6 +82,10 @@ export async function authenticateService(data) {
   };
 }
 
+/**
+ * Send otp via email
+ * @param {*} data
+ */
 export async function sendOtpViaEmailService(data) {
   const { email } = data;
   const user = await findUserByIdService(email);
@@ -76,15 +93,20 @@ export async function sendOtpViaEmailService(data) {
     throw new NotFoundException("User not found");
   }
 
-  const userOtp = await createUserOtpByUserIdService(user._id);
-  sendOtpCodeService(user.email, userOtp.otp);
+  const userOtp = await createUserOtpService(user);
+  await sendOtpCodeService(user.email, userOtp.otp);
 }
 
+/**
+ * Verify otp
+ * @param {*} data
+ * @returns
+ */
 export async function verifyOtpService(data) {
   const { email, otp } = data;
   const user = await findUserByIdService(email);
   if (!user) {
-    throw new NotFoundException("User not found");
+    throw new UnauthorizedException("Invalid Credentials");
   }
 
   const userOtp = await findUserOtpByOtpAndUserIdService(otp, user._id);
@@ -92,9 +114,9 @@ export async function verifyOtpService(data) {
     throw new UnauthorizedException("Invalid or expired otp");
   }
 
+  // Done verify otp
   if (!user.isVerified) {
-    user.isVerified = true;
-    await user.save();
+    await updateVerifiedByIdService(user._id);
     sendWelcomeEmailService(user.email, user.name);
   }
 
@@ -106,6 +128,10 @@ export async function verifyOtpService(data) {
   };
 }
 
+/**
+ * Request reset password
+ * @param {*} data
+ */
 export async function forgotPasswordService(data) {
   const { email, callbackUrl } = data;
   const user = await findUserByIdService(email);
@@ -113,32 +139,27 @@ export async function forgotPasswordService(data) {
     throw new NotFoundException("User not found");
   }
 
-  const resetToken = generateToken({ userId: user._id });
-  const resetTokenExpiresAt =
-    moment().valueOf() + 60 * 1000 * config.resetTokenExpiresMinutes;
+  const resetPassword = await createResetPasswordService(user._id);
 
-  user.resetPasswordToken = resetToken;
-  user.resetPasswordExpiresAt = resetTokenExpiresAt;
-  await user.save();
-
-  const resetURL = `${callbackUrl}/${resetToken}`;
-  sendResetPasswordRequestService(user.email, resetURL);
+  const resetURL = `${callbackUrl}/${resetPassword.token}`;
+  await sendResetPasswordRequestService(email, resetURL);
 }
 
-export async function resetPasswordService(data, token) {
+/**
+ * Reset password user
+ * @param {*} data
+ * @param {*} token
+ */
+export async function resetPasswordByTokenService(token, data) {
   const { password } = data;
-  const user = await findUserByResetPasswordTokenService(token);
-  if (!user) {
-    throw new NotFoundException("User not found");
+  const resetPassword = await findResetPasswordByTokenService(token);
+  if (!resetPassword) {
+    throw new UnauthorizedException("Invalid or expired token");
   }
 
-  const hashedPassword = makeHash(password);
-
-  user.password = hashedPassword;
-  user.resetPasswordToken = undefined;
-  user.resetPasswordExpiresAt = undefined;
-
-  await user.save();
-
-  sendResetPasswordSuccessService(user.email);
+  const updatedUser = await changePasswordByIdService(
+    resetPassword.user,
+    password
+  );
+  sendResetPasswordSuccessService(updatedUser.email);
 }

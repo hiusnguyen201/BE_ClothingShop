@@ -91,6 +91,15 @@ export class InternalServerErrorException extends HttpException {
 }
 
 /**
+ * The HTTP response status code will be 502.
+ */
+export class BadGatewayException extends HttpException {
+  constructor(message) {
+    super(message, HttpStatus.BAD_GATEWAY);
+  }
+}
+
+/**
  * The HTTP response status code will be 503.
  */
 export class ServiceUnavailableException extends HttpException {

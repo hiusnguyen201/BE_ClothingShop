@@ -2,7 +2,7 @@ import HttpStatus from "http-status-codes";
 import {
   registerService,
   forgotPasswordService,
-  resetPasswordService,
+  resetPasswordByTokenService,
   verifyOtpService,
   sendOtpViaEmailService,
   authenticateService,
@@ -73,7 +73,7 @@ export const forgotPasswordController = async (req, res, next) => {
 
 export const resetPasswordController = async (req, res, next) => {
   try {
-    await resetPasswordService(req.body, req.params.token);
+    await resetPasswordByTokenService(req.params.token, req.body);
     return res.json({
       statusCode: HttpStatus.NO_CONTENT,
       message: "Reset password successfully",

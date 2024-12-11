@@ -4,8 +4,6 @@ dotenv.config();
 const env = process.env;
 
 const config = {
-  dirname: process.cwd(),
-
   timezone: "Asia/Ho_Chi_Minh",
 
   nodeEnv: env.NODE_ENV,

@@ -6,11 +6,12 @@ import {
   BadRequestException,
   NotFoundException,
 } from "#src/core/exception/http-exception";
-import {
-  updateUserAvatarByIdService,
-  checkExistEmailService,
-} from "#src/modules/users/users.service";
+import { checkExistEmailService } from "#src/modules/users/users.service";
 import { calculatePagination } from "#src/utils/pagination.util";
+import {
+  removeImageByPublicIdService,
+  uploadImageBufferService,
+} from "#src/modules/cloudinary/cloudinary.service";
 
 const SELECTED_FIELDS =
   "_id avatar name email status birthday gender type";
@@ -27,6 +28,14 @@ export async function createCustomerService(data) {
     throw new BadRequestException("Email already exist");
   }
 
+  if (file) {
+    const result = await uploadImageBufferService({
+      file,
+      folderName: "customer-avatars",
+    });
+    data.avatar = result.public_id;
+  }
+
   const hashedPassword = makeHash(password);
   const newCustomer = await UserModel.create({
     ...data,
@@ -34,15 +43,11 @@ export async function createCustomerService(data) {
     password: hashedPassword,
   });
 
-  if (file) {
-    updateUserAvatarByIdService(newCustomer._id, file);
-  }
-
   return await findCustomerByIdService(newCustomer._id);
 }
 
 /**
- * Find all users
+ * Find all customers
  * @param {*} query
  * @param {*} selectFields
  * @returns
@@ -68,7 +73,9 @@ export async function findAllCustomersService(
   const customers = await UserModel.find(filterOptions)
     .skip(metaData.offset)
     .limit(metaData.limit)
-    .select(selectFields);
+    .select(selectFields)
+    .sort({ createdAt: -1 });
+
   return {
     list: customers,
     meta: metaData,
@@ -76,7 +83,7 @@ export async function findAllCustomersService(
 }
 
 /**
- * Find one user by id
+ * Find customer by id
  * @param {*} id
  * @param {*} selectFields
  * @returns
@@ -85,7 +92,6 @@ export async function findCustomerByIdService(
   id,
   selectFields = SELECTED_FIELDS
 ) {
-  if (!id) return null;
   const filter = { type: USER_TYPES.CUSTOMER };
 
   if (isValidObjectId(id)) {
@@ -100,19 +106,18 @@ export async function findCustomerByIdService(
 }
 
 /**
- * Update info user by id
+ * Update customer by id
  * @param {*} id
  * @param {*} data
  * @returns
  */
 export async function updateCustomerByIdService(id, data) {
   const { file, email } = data;
-  const existCustomer = await findCustomerByIdService(id, "_id");
+  const existCustomer = await findCustomerByIdService(id, "_id avatar");
   if (!existCustomer) {
     throw new NotFoundException("Customer not found");
   }
 
-  // Check exist email
   if (email) {
     const isExistEmail = await checkExistEmailService(email, id);
     if (isExistEmail) {
@@ -121,18 +126,23 @@ export async function updateCustomerByIdService(id, data) {
   }
 
   if (file) {
-    updateUserAvatarByIdService(id, file);
+    if (existCustomer.avatar) {
+      removeImageByPublicIdService(existCustomer.avatar);
+    }
+    const result = await uploadImageBufferService({
+      file,
+      folderName: "customer-avatars",
+    });
+    data.avatar = result.public_id;
   }
 
-  const customer = await UserModel.findByIdAndUpdate(id, data, {
+  return await UserModel.findByIdAndUpdate(id, data, {
     new: true,
   }).select(SELECTED_FIELDS);
-
-  return customer;
 }
 
 /**
- * Remove user by id
+ * Remove customer by id
  * @param {*} id
  * @returns
  */

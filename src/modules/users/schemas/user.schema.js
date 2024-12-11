@@ -80,20 +80,10 @@ const userSchema = new Schema(
       required: false,
       default: null,
     },
-    resetPasswordToken: {
-      type: String,
-      required: false,
-      default: null,
-    },
-    resetPasswordExpiresAt: {
-      type: Date,
-      required: false,
-      default: null,
-    },
 
     // Foreign key
     role: { type: Schema.Types.ObjectId, ref: "Role" },
-    permissions: [{ type: Schema.Types.ObjectId, ref: "Permission" }],
+    // permissions: [{ type: Schema.Types.ObjectId, ref: "Permission" }],
   },
   {
     versionKey: false,
