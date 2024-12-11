@@ -9,13 +9,13 @@ cloudinary.config({
   cloud_name: config.cloudinary.cloudName,
 });
 
-export async function uploadImageBufferService({ file, folderName }) {
+export async function uploadImageBufferService({ file, folderName, public_id = moment().valueOf() + "_" + uuidv4()}) {
   const base64 = Buffer.from(file.buffer).toString("base64");
   const url = "data:" + file.mimetype + ";base64," + base64;
 
   const result = await cloudinary.uploader.upload(url, {
     folder: folderName,
-    public_id: moment().valueOf() + "_" + uuidv4(),
+    public_id,
     resource_type: "image",
   });
 

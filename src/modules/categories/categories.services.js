@@ -7,10 +7,10 @@ import {
 import {
   NotFoundException,
 } from "#src/core/exception/http-exception";
-import { slugify } from "#src/utils/slugify";
+import { slugify } from "#src/utils/slugify.util";
 
 const SELECTED_FIELDS = "_id icon name slug status parentCategory isHidden";
-const FOLDER_ICONS = "/categories/icons";
+const CATEGORIES_FOLDER = "categories";
 
 
 /**
@@ -24,7 +24,7 @@ export async function createCategoryService(data) {
   if (parentCategory) {
     const existParentCategory = await findCategoryByIdService(parentCategory);
     if (!existParentCategory) {
-      throw new NotFoundException("Category not found");
+      throw new NotFoundException("Parent category not found");
     }
   }
 
@@ -34,7 +34,8 @@ export async function createCategoryService(data) {
   });
 
   if (file) {
-    await updateCategoryIconByIdService(category._id, file);
+    category.icon = await updateCategoryIconByIdService(category._id, file);
+    await category.save();
   }
   return await findCategoryByIdService(category._id);
 }
@@ -106,7 +107,7 @@ export async function findCategoryByIdService(
   } else {
     filter.name = id;
   }
-  
+
   return await CategoryModel.findOne(filter).select(selectFields);
 }
 
@@ -123,7 +124,7 @@ export async function updateCategoryByIdService(id, data) {
   if (parentCategory) {
     const existParentCategory = await findCategoryByIdService(parentCategory);
     if (!existParentCategory) {
-      throw new NotFoundException("Category not found");
+      throw new NotFoundException("Parent category not found");
     }
   }
 
@@ -131,7 +132,7 @@ export async function updateCategoryByIdService(id, data) {
   if (!existCategory) {
     throw new NotFoundException("Category not found");
   }
-  
+
   if (file) {
     if (existCategory.icon) await removeImages(existCategory.icon);
     data.icon = await updateCategoryIconByIdService(existCategory._id, file);
@@ -169,10 +170,12 @@ export async function removeCategoryByIdService(id) {
  * @returns
  */
 async function updateCategoryIconByIdService(id, file) {
-  const folderName = `${FOLDER_ICONS}/${id}`;
+  const folderName = `${CATEGORIES_FOLDER}/${id}`;
+
   const result = await uploadImageBufferService({
     file,
     folderName,
+    public_id: "icon"
   });
 
   return result.public_id;
