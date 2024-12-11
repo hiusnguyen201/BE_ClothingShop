@@ -34,7 +34,7 @@ const categorySchema = new Schema(
     },
     isHidden: {
       type: Boolean,
-      default: true
+      default: true,
     },
 
     // Foreign key

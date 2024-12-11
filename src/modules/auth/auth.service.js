@@ -4,10 +4,10 @@ import {
   UnauthorizedException,
 } from "#src/core/exception/http-exception";
 import {
-  createCustomerService,
   findUserByIdService,
   findUserByResetPasswordTokenService,
 } from "#src/modules/users/users.service";
+import { createCustomerService } from "#src/modules/customers/customers.service";
 import {
   sendOtpCodeService,
   sendResetPasswordRequestService,
@@ -75,8 +75,9 @@ export async function sendOtpViaEmailService(data) {
   if (!user) {
     throw new NotFoundException("User not found");
   }
+
   const userOtp = await createUserOtpByUserIdService(user._id);
-  await sendOtpCodeService(user.email, userOtp.otp);
+  sendOtpCodeService(user.email, userOtp.otp);
 }
 
 export async function verifyOtpService(data) {
@@ -94,7 +95,7 @@ export async function verifyOtpService(data) {
   if (!user.isVerified) {
     user.isVerified = true;
     await user.save();
-    await sendWelcomeEmailService(user.email, user.name);
+    sendWelcomeEmailService(user.email, user.name);
   }
 
   const accessToken = generateToken({ userId: user._id });
@@ -121,7 +122,7 @@ export async function forgotPasswordService(data) {
   await user.save();
 
   const resetURL = `${callbackUrl}/${resetToken}`;
-  await sendResetPasswordRequestService(user.email, resetURL);
+  sendResetPasswordRequestService(user.email, resetURL);
 }
 
 export async function resetPasswordService(data, token) {
@@ -139,5 +140,5 @@ export async function resetPasswordService(data, token) {
 
   await user.save();
 
-  await sendResetPasswordSuccessService(user.email);
+  sendResetPasswordSuccessService(user.email);
 }
