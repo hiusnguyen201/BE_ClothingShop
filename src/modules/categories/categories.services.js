@@ -1,17 +1,17 @@
 import { isValidObjectId } from "mongoose";
 import { CategoryModel } from "#src/modules/categories/schemas/category.schema";
 import {
-  removeImages,
+  removeImageByPublicIdService,
   uploadImageBufferService,
 } from "#src/modules/cloudinary/cloudinary.service";
 import {
+  BadRequestException,
   NotFoundException,
 } from "#src/core/exception/http-exception";
 import { slugify } from "#src/utils/slugify.util";
+import { calculatePagination } from "#src/utils/pagination.util";
 
 const SELECTED_FIELDS = "_id icon name slug status parentCategory isHidden";
-const CATEGORIES_FOLDER = "categories";
-
 
 /**
  * Create category
@@ -28,16 +28,24 @@ export async function createCategoryService(data) {
     }
   }
 
+  const isExistName = await checkExistCategoryNameService(name);
+  if (isExistName) {
+    throw new BadRequestException("Category name is exist");
+  }
+
+  if (file) {
+    const result = await uploadImageBufferService({
+      file,
+      folderName: "categories-icon",
+    });
+    data.icon = result.public_id;
+  }
+
   const category = await CategoryModel.create({
     ...data,
     slug: slugify(name)
   });
-
-  if (file) {
-    category.icon = await updateCategoryIconByIdService(category._id, file);
-    await category.save();
-  }
-  return await findCategoryByIdService(category._id);
+  return category;
 }
 
 
@@ -51,42 +59,25 @@ export async function findAllCategoriesService(
   query,
   selectFields = SELECTED_FIELDS
 ) {
-  let { keyword = "", status, itemPerPage = 10, page = 1 } = query;
+  let { keyword = "", status, limit = 10, page = 1 } = query;
 
   const filterOptions = {
     $or: [{ name: { $regex: keyword, $options: "i" } }],
     [status && "status"]: status,
   };
 
-  const totalItems = await CategoryModel.countDocuments(filterOptions);
-  const totalPages = Math.ceil(totalItems / itemPerPage);
-
-  if (page <= 0 || !page) {
-    page = 1;
-  } else if (page > totalPages && totalPages >= 1) {
-    page = totalPages;
-  }
-
-  const offSet = (page - 1) * itemPerPage;
+  const totalCount = await CategoryModel.countDocuments(filterOptions);
+  const metaData = calculatePagination(page, limit, totalCount);
 
   const categories = await CategoryModel.find(filterOptions)
-    .skip(offSet)
-    .limit(itemPerPage)
-    .select(selectFields);
+    .skip(metaData.offset)
+    .limit(metaData.limit)
+    .select(selectFields)
+    .sort({ createdAt: -1 });
 
   return {
     list: categories,
-    meta: {
-      offSet,
-      itemPerPage,
-      currentPage: page,
-      totalPages,
-      totalItems,
-      isNext: page < totalPages,
-      isPrevious: page > 1,
-      isFirst: page > 1 && page <= totalPages,
-      isLast: page >= 1 && page < totalPages,
-    },
+    meta: metaData,
   };
 }
 
@@ -133,9 +124,22 @@ export async function updateCategoryByIdService(id, data) {
     throw new NotFoundException("Category not found");
   }
 
+  if (name && existCategory.name !== name) {
+    const isExistName = await checkExistCategoryNameService(name);
+    if (isExistName) {
+      throw new BadRequestException("Category name is exist");
+    }
+  }
+
   if (file) {
-    if (existCategory.icon) await removeImages(existCategory.icon);
-    data.icon = await updateCategoryIconByIdService(existCategory._id, file);
+    if (existCategory.avatar) {
+      removeImageByPublicIdService(existCategory.icon);
+    }
+    const result = await uploadImageBufferService({
+      file,
+      folderName: "categories-icon",
+    });
+    data.icon = result.public_id;
   }
 
   if (name) {
@@ -164,19 +168,15 @@ export async function removeCategoryByIdService(id) {
 }
 
 /**
- * Update avatar by id
- * @param {*} id
- * @param {*} file
+ * Check exist permission name
+ * @param {*} name
+ * @param {*} skipId
  * @returns
  */
-async function updateCategoryIconByIdService(id, file) {
-  const folderName = `${CATEGORIES_FOLDER}/${id}`;
-
-  const result = await uploadImageBufferService({
-    file,
-    folderName,
-    public_id: "icon"
-  });
-
-  return result.public_id;
+async function checkExistCategoryNameService(name, skipId) {
+  const existCategory = await CategoryModel.findOne({
+    name,
+    _id: { $ne: skipId },
+  }).select("_id");
+  return Boolean(existCategory);
 }

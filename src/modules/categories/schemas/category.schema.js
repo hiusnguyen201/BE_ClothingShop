@@ -15,6 +15,7 @@ const categorySchema = new Schema(
       required: true,
       length: 120,
       index: true,
+      unique: true,
     },
     slug: {
       type: String,
