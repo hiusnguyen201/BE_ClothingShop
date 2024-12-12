@@ -68,4 +68,8 @@ export const USER_TYPES = {
 
 export const REGEX_PATTERNS = {
   EMAIL: /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g,
+  SLUG: /^[a-z0-9]+(?:[-_][a-z0-9]+)*$/,
+  WHITESPACE: /\s+/g,
+  PHONE_VIETNAM: /(84|0[3|5|7|8|9])+([0-9]{8})\b/g,
+  ENDPOINT: /^\/[a-zA-Z0-9\-]+(?:\/:[a-zA-Z0-9\-]+)*$/g,
 };

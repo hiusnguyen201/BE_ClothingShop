@@ -21,11 +21,11 @@ export async function createResetPasswordService(userId) {
 }
 
 /**
- * Find reset password by token
+ * Get reset password by token
  * @param {*} token
  * @returns
  */
-export async function findResetPasswordByTokenService(token) {
+export async function getResetPasswordByTokenService(token) {
   return await ResetPassword.findOne({
     token: token,
     expiresAt: { $gte: moment().valueOf() },

@@ -55,6 +55,15 @@ export class MethodNotAllowedException extends HttpException {
 }
 
 /**
+ * The HTTP response status code will be 409.
+ */
+export class ConflictException extends HttpException {
+  constructor(message) {
+    super(message, HttpStatus.CONFLICT);
+  }
+}
+
+/**
  * The HTTP response status code will be 413.
  */
 export class PayloadTooLargeException extends HttpException {

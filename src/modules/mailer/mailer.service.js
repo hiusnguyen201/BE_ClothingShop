@@ -17,7 +17,7 @@ const transporter = nodemailer.createTransport({
 const getEmailTemplateToString = (fileName) => {
   return fs
     .readFileSync(
-      path.join(process.cwd(), "public/email-templates", `${fileName}`)
+      path.join(process.cwd(), "/public/email-templates", `${fileName}`)
     )
     .toString();
 };
@@ -43,9 +43,10 @@ export const sendOtpCodeService = async (email, otpCode) => {
 
 export const sendWelcomeEmailService = async (email, name) => {
   try {
-    const html = getEmailTemplateToString(
-      "send-email-welcome.html"
-    ).replace("{name}", name);
+    const html = getEmailTemplateToString("welcome-user.html").replace(
+      "{name}",
+      name
+    );
 
     await transporter.sendMail({
       from: config.mailer.MAILER_AUTH_USER,

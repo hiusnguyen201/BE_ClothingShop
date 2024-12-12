@@ -9,7 +9,7 @@ const config = {
   nodeEnv: env.NODE_ENV,
   port: env.PORT || 3000,
 
-  mongoUri: env.MONGO_URI || "mongodb://localhost:27017/clothes-store", // example: mongodb://localhost:27017/your-db,
+  mongoUri: env.MONGO_URI,
 
   jwtSecret:
     env.JWT_SECRET ||

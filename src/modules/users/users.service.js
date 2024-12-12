@@ -5,17 +5,11 @@ import {
   uploadImageBufferService,
 } from "#src/modules/cloudinary/cloudinary.service";
 import { REGEX_PATTERNS, USER_TYPES } from "#src/core/constant";
-import { makeHash } from "#src/utils/bcrypt.util";
-import {
-  BadRequestException,
-  NotFoundException,
-} from "#src/core/exception/http-exception";
-import { randomStr } from "#src/utils/string.util";
-import { sendPasswordService } from "#src/modules/mailer/mailer.service";
 import { calculatePagination } from "#src/utils/pagination.util";
+import { makeHash } from "#src/utils/bcrypt.util";
 
 const SELECTED_FIELDS =
-  "_id avatar name email status birthday gender role";
+  "_id avatar name email status birthday gender createdAt updatedAt";
 
 /**
  * Create user
@@ -23,44 +17,27 @@ const SELECTED_FIELDS =
  * @returns
  */
 export async function createUserService(data) {
-  const { file, email } = data;
-  const isExistEmail = await checkExistEmailService(email);
-  if (isExistEmail) {
-    throw new BadRequestException("Email already exist");
-  }
-
-  if (file) {
-    const result = await uploadImageBufferService({
-      file,
-      folderName: "user-avatars",
-    });
-    data.avatar = result.public_id;
-  }
-
-  const password = randomStr(32);
-  const hashedPassword = makeHash(password);
-  const newUser = await UserModel.create({
-    ...data,
-    password: hashedPassword,
-    type: USER_TYPES.USER,
-  });
-
-  sendPasswordService(email, password);
-
-  return await findUserByIdService(newUser._id);
+  data.password = makeHash(data.password);
+  return await UserModel.create(data);
 }
 
 /**
- * Find all users
+ * Get all users
  * @param {*} query
  * @param {*} selectFields
  * @returns
  */
-export async function findAllUsersService(
+export async function getAllUsersService(
   query,
   selectFields = SELECTED_FIELDS
 ) {
-  let { keyword = "", status, limit = 10, page = 1 } = query;
+  let {
+    keyword = "",
+    status,
+    limit = 10,
+    page = 1,
+    type = USER_TYPES.CUSTOMER,
+  } = query;
 
   const filterOptions = {
     $or: [
@@ -68,7 +45,7 @@ export async function findAllUsersService(
       { email: { $regex: keyword, $options: "i" } },
     ],
     [status && "status"]: status,
-    type: USER_TYPES.USER,
+    type,
   };
 
   const totalCount = await UserModel.countDocuments(filterOptions);
@@ -81,22 +58,23 @@ export async function findAllUsersService(
     .sort({ createdAt: -1 });
 
   return {
-    list: users,
     meta: metaData,
+    list: users,
   };
 }
 
 /**
- * Find one user by id
+ * Get one user by id
  * @param {*} id
  * @param {*} selectFields
  * @returns
  */
-export async function findUserByIdService(
+export async function getUserByIdService(
   id,
   selectFields = SELECTED_FIELDS
 ) {
-  const filter = { type: USER_TYPES.USER };
+  if (!id) return null;
+  const filter = {};
 
   if (isValidObjectId(id)) {
     filter._id = id;
@@ -110,52 +88,11 @@ export async function findUserByIdService(
 }
 
 /**
- * Update info user by id
- * @param {*} id
- * @param {*} data
- * @returns
- */
-export async function updateUserByIdService(id, data) {
-  const { file, email } = data;
-  const existUser = await findUserByIdService(id, "_id");
-  if (!existUser) {
-    throw new NotFoundException("User not found");
-  }
-
-  if (email) {
-    const isExistEmail = await checkExistEmailService(email, id);
-    if (isExistEmail) {
-      throw new BadRequestException("Email already exist");
-    }
-  }
-
-  if (file) {
-    if (existUser.avatar) {
-      removeImageByPublicIdService(existUser.avatar);
-    }
-    const result = await uploadImageBufferService({
-      file,
-      folderName: "user-avatars",
-    });
-    data.avatar = result.public_id;
-  }
-
-  return await UserModel.findByIdAndUpdate(id, data, {
-    new: true,
-  }).select(SELECTED_FIELDS);
-}
-
-/**
  * Remove user by id
  * @param {*} id
  * @returns
  */
 export async function removeUserByIdService(id) {
-  const existUser = await findUserByIdService(id, "_id");
-  if (!existUser) {
-    throw new NotFoundException("User not found");
-  }
-
   return await UserModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
 }
 
@@ -179,7 +116,7 @@ export async function checkExistEmailService(email, skipId) {
  * @param {*} id
  * @returns
  */
-export async function updateVerifiedByIdService(id) {
+export async function updateUserVerifiedByIdService(id) {
   return await UserModel.findByIdAndUpdate(
     id,
     {
@@ -206,4 +143,40 @@ export async function changePasswordByIdService(id, password) {
     },
     { new: true }
   ).select(SELECTED_FIELDS);
+}
+
+/**
+ * Update avatar by id
+ * @param {*} id
+ * @param {*} file
+ * @returns
+ */
+export async function updateUserAvatarByIdService(
+  id,
+  file,
+  currentAvatar
+) {
+  if (currentAvatar) {
+    removeImageByPublicIdService(currentAvatar);
+  }
+
+  const result = await uploadImageBufferService({
+    file,
+    folderName: "avatars",
+  });
+
+  return await UserModel.findByIdAndUpdate(id, {
+    avatar: result.public_id,
+  }).select(SELECTED_FIELDS);
+}
+
+/**
+ * Update info by id
+ * @param {*} id
+ * @param {*} data
+ */
+export async function updateUserInfoByIdService(id, data) {
+  return await UserModel.findByIdAndUpdate(id, data, {
+    new: true,
+  }).select(SELECTED_FIELDS);
 }
