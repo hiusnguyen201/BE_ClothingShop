@@ -23,7 +23,7 @@ export async function createRoleService(data) {
 
   const isExistName = await checkExistRoleNameService(name);
   if (isExistName) {
-    throw new BadRequestException("Role not found");
+    throw new BadRequestException("Role is existed");
   }
 
   if (file) {
