@@ -16,10 +16,10 @@ const voucherSchema = new Schema(
       length: 150,
     },
     description: {
-      type: Text,
+      type: String,
       required: false,
     },
-    max_uses: {
+    maxUses: {
       type: Number,
       required: true,
     },
@@ -34,6 +34,7 @@ const voucherSchema = new Schema(
     startDate: {
       type: Date,
       required: true,
+      default: Date.now()
     },
     endDate: {
       type: Date,
