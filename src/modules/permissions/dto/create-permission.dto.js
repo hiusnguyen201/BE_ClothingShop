@@ -1,15 +1,40 @@
 import Joi from "joi";
-import { ALLOW_METHODS, PERMISSION_STATUS } from "#src/core/constant";
+import {
+  ALLOW_METHODS,
+  PERMISSION_STATUS,
+  REGEX_PATTERNS,
+} from "#src/core/constant";
+import { replaceMultiSpacesToSingleSpace } from "#src/utils/string.util";
 
 export const createPermissionDto = Joi.object({
-  name: Joi.string().required().min(3).max(50),
-  description: Joi.string().min(3).max(255),
-  module: Joi.string().required().min(3).max(50),
-  endpoint: Joi.string().required().min(3).max(255),
+  name: Joi.string()
+    .required()
+    .min(3)
+    .max(50)
+    .custom((value) => replaceMultiSpacesToSingleSpace(value)),
+  description: Joi.string()
+    .min(3)
+    .max(255)
+    .custom((value) => replaceMultiSpacesToSingleSpace(value)),
+  module: Joi.string()
+    .required()
+    .min(3)
+    .max(50)
+    .custom((value) => replaceMultiSpacesToSingleSpace(value)),
+  endpoint: Joi.string()
+    .required()
+    .min(3)
+    .max(255)
+    .custom((value, helper) => {
+      if (REGEX_PATTERNS.ENDPOINT.test(value)) {
+        return value;
+      }
+      return helper.message("Invalid endpoint");
+    }),
   method: Joi.string()
     .required()
     .valid(...ALLOW_METHODS),
   status: Joi.string()
     .required()
-    .valid(...Object.values(PERMISSION_STATUS)),
+    .valid(...[PERMISSION_STATUS.ACTIVE, PERMISSION_STATUS.INACTIVE]),
 });

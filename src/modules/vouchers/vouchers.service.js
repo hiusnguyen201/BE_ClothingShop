@@ -3,14 +3,8 @@ import {
   removeImageByPublicIdService,
   uploadImageBufferService,
 } from "#src/modules/cloudinary/cloudinary.service";
-import { REGEX_PATTERNS, USER_TYPES } from "#src/core/constant";
-import {
-  BadRequestException,
-  NotFoundException,
-} from "#src/core/exception/http-exception";
 import { calculatePagination } from "#src/utils/pagination.util";
 import { VoucherModel } from "#src/modules/vouchers/schemas/voucher.schema";
-import { randomVocherCode } from "#src/utils/string.util";
 
 const SELECTED_FIELDS =
   "_id code name maxUses discount startDate endDate uses isFixed";
@@ -21,24 +15,7 @@ const SELECTED_FIELDS =
  * @returns
  */
 export async function createVoucherService(data) {
-  const { code, file } = data;
-  const isExistVoucher = await checkExistVoucherCodeService(code);
-  if (isExistVoucher) {
-    throw new BadRequestException("Voucher already exist");
-  }
-
-  if (file) {
-    const result = await uploadImageBufferService({
-      file,
-      folderName: "voucher-image",
-    });
-    data.image = result.public_id;
-  }
-  const newVoucher = await VoucherModel.create({
-    ...data,
-    code: code,
-  });
-  return await findVoucherByIdService(newVoucher._id);
+  return await VoucherModel.create(data);
 }
 
 /**
@@ -47,7 +24,7 @@ export async function createVoucherService(data) {
  * @param {*} selectFields
  * @returns
  */
-export async function findAllVouchersService(
+export async function getAllVouchersService(
   query,
   selectFields = SELECTED_FIELDS
 ) {
@@ -88,7 +65,7 @@ export async function findAllVouchersService(
  * @param {*} selectFields
  * @returns
  */
-export async function findVoucherByIdService(
+export async function getVoucherByIdService(
   id,
   selectFields = SELECTED_FIELDS
 ) {
@@ -111,28 +88,6 @@ export async function findVoucherByIdService(
  * @returns
  */
 export async function updateVoucherByIdService(id, data) {
-  const { maxUses, file } = data;
-
-  const existVoucher = await findVoucherByIdService(id, "_id uses");
-  if (!existVoucher) {
-    throw new NotFoundException("Voucher not found");
-  }
-
-  if (maxUses < existVoucher.uses) {
-    throw new BadRequestException(
-      `maxUses must be greater than the number of ${existVoucher.uses} `
-    );
-  }
-  if (file) {
-    if (existVoucher.image) {
-      removeImageByPublicIdService(existVoucher.avatar);
-    }
-    const result = await uploadImageBufferService({
-      file,
-      folderName: "voucher-image",
-    });
-    data.image = result.public_id;
-  }
   return await VoucherModel.findByIdAndUpdate(id, data, {
     new: true,
   }).select(SELECTED_FIELDS);
@@ -144,11 +99,6 @@ export async function updateVoucherByIdService(id, data) {
  * @returns
  */
 export async function removeVoucherByIdService(id) {
-  const existVoucher = await findVoucherByIdService(id, "_id");
-  if (!existVoucher) {
-    throw new NotFoundException("Voucher not found");
-  }
-
   return await VoucherModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
 }
 
@@ -179,4 +129,25 @@ export async function updateIsFixedByIdService(id) {
     },
     { new: true }
   ).select(SELECTED_FIELDS);
+}
+
+/**
+ * Update avatar by id
+ * @param {*} id
+ * @param {*} file
+ * @returns
+ */
+export async function updateVoucherImageByIdService(id, file, currentImage) {
+  if (currentImage) {
+    removeImageByPublicIdService(currentImage);
+  }
+
+  const result = await uploadImageBufferService({
+    file,
+    folderName: "image-voucher",
+  });
+
+  return await VoucherModel.findByIdAndUpdate(id, {
+    image: result.public_id,
+  }).select(SELECTED_FIELDS);
 }
