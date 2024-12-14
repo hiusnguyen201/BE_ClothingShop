@@ -8,7 +8,7 @@ import { calculatePagination } from "#src/utils/pagination.util";
 import { REGEX_PATTERNS } from "#src/core/constant";
 
 const SELECTED_FIELDS =
-  "_id icon name slug status parentCategory isHidden createdAt updatedAt";
+  "_id name slug parent isHide createdAt updatedAt";
 
 /**
  * Create category
@@ -29,13 +29,15 @@ export async function getAllCategoriesService(
   query,
   selectFields = SELECTED_FIELDS
 ) {
-  let { keyword = "", status, limit = 10, page = 1 } = query;
+  let { keyword = "", isHide, parent, limit = 10, page = 1 } = query;
 
   const filterOptions = {
     $or: [{ name: { $regex: keyword, $options: "i" } }],
-    [status && "status"]: status,
+    [isHide && "isHide"]: isHide,
+    [parent && "parent"]: parent,
   };
 
+  
   const totalCount = await CategoryModel.countDocuments(filterOptions);
   const metaData = calculatePagination(page, limit, totalCount);
 
@@ -138,3 +140,19 @@ export async function checkExistCategoryNameService(name, skipId) {
   }).select("_id");
   return Boolean(existCategory);
 }
+
+// /**
+//  * Set isHide
+//  * @param {*} id
+//  * @param {*} type
+//  * @returns
+//  */
+// export async function setIsHideService(id, type) {
+//   return await CategoryModel.findByIdAndUpdate(
+//     id,
+//     {
+//       isHide: type,
+//     },
+//     { new: true }
+//   ).select(SELECTED_FIELDS);
+// }

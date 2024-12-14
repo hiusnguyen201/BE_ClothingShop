@@ -6,7 +6,10 @@ import {
     getAllCategoriesController,
     getCategoryByIdController,
     updateCategoryByIdController,
-    removeCategoryByIdController
+    removeCategoryByIdController,
+    isExistCategoryNameController,
+    showCategoryByIdController,
+    hideCategoryByIdController
 } from "#src/modules/categories/categories.controller";
 import { createCategoryDto } from "#src/modules/categories/dto/create-category.dto";
 import { updateCategoryDto } from "#src/modules/categories/dto/update-category.dto";
@@ -35,6 +38,9 @@ router
         validateSchema(updateCategoryDto),
         updateCategoryByIdController
     )
-    .delete("/remove-category-by-id/:id", removeCategoryByIdController);
+    .delete("/remove-category-by-id/:id", removeCategoryByIdController)
+    .post("/is-exist-category-name", isExistCategoryNameController)
+    .patch("/show-category-by-id/:id", showCategoryByIdController)
+    .delete("/hide-category-by-id/:id", hideCategoryByIdController)
 
 export default router;

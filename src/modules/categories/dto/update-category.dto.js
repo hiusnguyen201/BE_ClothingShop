@@ -7,8 +7,8 @@ export const updateCategoryDto = Joi.object({
     .min(3)
     .max(120)
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
-  status: Joi.string().valid(
-    ...[CATEGORY_STATUS.PUBLIC, CATEGORY_STATUS.HIDDEN]
-  ),
-  parentCategory: Joi.string(),
+  // status: Joi.string().valid(
+  //   ...[CATEGORY_STATUS.PUBLIC, CATEGORY_STATUS.HIDDEN]
+  // ),
+  parent: Joi.string(),
 }).min(1);
