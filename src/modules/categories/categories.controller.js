@@ -101,14 +101,6 @@ export const updateCategoryByIdController = async (req, res, next) => {
       throw new NotFoundException("Category not found");
     }
 
-    // Check category is root
-    req.query.parent = existCategory._id;
-    const childCategories = await getAllCategoriesService(req.query, "_id");
-
-    if (childCategories.list.length > 0) {
-      throw new ConflictException("This category is root");
-    }
-
     const { name, parent } = req.body;
     if (name) {
       const isExistName = await checkExistCategoryNameService(
@@ -122,6 +114,14 @@ export const updateCategoryByIdController = async (req, res, next) => {
     }
 
     if (parent) {
+      // Check category is root
+      req.query.parent = existCategory._id;
+      const childCategories = await getAllCategoriesService(req.query, "_id");
+
+      if (childCategories.list.length > 0) {
+        throw new ConflictException("This category is root");
+      }
+      
       const existParent = await getCategoryByIdService(
         parent
       );
