@@ -10,11 +10,10 @@ import {
   updateCategoryInfoByIdService,
   removeCategoryByIdService,
   checkExistCategoryNameService,
-  // updateCategoryIconByIdService,
+  updateCategoryIconByIdService,
   // setIsHideService,
-} from "#src/modules/categories/categories.services";
+} from "#src/modules/categories/categories.service";
 import { makeSlug } from "#src/utils/string.util";
-import { CATEGORY_STATUS } from "#src/core/constant";
 
 export const createCategoryController = async (req, res, next) => {
   try {
@@ -38,7 +37,7 @@ export const createCategoryController = async (req, res, next) => {
       }
 
       if (existParent.parent) {
-        throw new ConflictException("Parent category is child");
+        throw new ConflictException("This category is child");
       }
 
     }
@@ -48,14 +47,17 @@ export const createCategoryController = async (req, res, next) => {
       slug: makeSlug(name),
     });
 
-    // if (req.file) {
-    //   return await updateCategoryIconByIdService(newCategory.id, req.file);
-    // }
+    // Update Icon
+    if (req.file) {
+      await updateCategoryIconByIdService(newCategory._id, req.file);
+    }
+
+    const formatterCategory = await getCategoryByIdService(newCategory._id);
 
     return res.json({
       statusCode: HttpStatus.CREATED,
       message: "Create category successfully",
-      data: newCategory,
+      data: formatterCategory,
     });
   } catch (err) {
     next(err);
@@ -121,7 +123,7 @@ export const updateCategoryByIdController = async (req, res, next) => {
       if (childCategories.list.length > 0) {
         throw new ConflictException("This category is root");
       }
-      
+
       const existParent = await getCategoryByIdService(
         parent
       );
@@ -144,13 +146,13 @@ export const updateCategoryByIdController = async (req, res, next) => {
       // [status && "isHidden"]: status === CATEGORY_STATUS.HIDDEN,
     });
 
-    // if (req.file) {
-    //   updatedCategory = await updateCategoryIconByIdService(
-    //     id,
-    //     req.file,
-    //     updatedCategory?.icon
-    //   );
-    // }
+    if (req.file) {
+      updatedCategory = await updateCategoryIconByIdService(
+        id,
+        req.file,
+        updatedCategory?.icon
+      );
+    }
 
     return res.json({
       statusCode: HttpStatus.OK,

@@ -8,7 +8,7 @@ import { calculatePagination } from "#src/utils/pagination.util";
 import { REGEX_PATTERNS } from "#src/core/constant";
 
 const SELECTED_FIELDS =
-  "_id name slug parent isHide createdAt updatedAt";
+  "_id icon name slug parent isHide createdAt updatedAt";
 
 /**
  * Create category

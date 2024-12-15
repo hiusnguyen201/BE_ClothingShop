@@ -39,7 +39,11 @@ router
         updateCategoryByIdController
     )
     .delete("/remove-category-by-id/:id", removeCategoryByIdController)
-    .post("/is-exist-category-name", isExistCategoryNameController)
+    .post(
+        "/is-exist-category-name",
+        validateSchema(updateCategoryDto),
+        isExistCategoryNameController
+    )
     .patch("/show-category-by-id/:id", showCategoryByIdController)
     .delete("/hide-category-by-id/:id", hideCategoryByIdController)
 
