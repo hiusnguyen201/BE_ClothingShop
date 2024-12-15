@@ -84,6 +84,8 @@ const userSchema = new Schema(
     // Foreign key
     role: { type: Schema.Types.ObjectId, ref: "Role" },
     // permissions: [{ type: Schema.Types.ObjectId, ref: "Permission" }],
+
+    vouchers: [{ type: Schema.Types.ObjectId, ref: "Voucher" }],
   },
   {
     versionKey: false,

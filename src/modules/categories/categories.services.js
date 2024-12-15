@@ -93,11 +93,7 @@ export async function updateCategoryInfoByIdService(id, data) {
  * @param {*} file
  * @returns
  */
-export async function updateCategoryIconByIdService(
-  id,
-  file,
-  currentIcon
-) {
+export async function updateCategoryIconByIdService(id, file, currentIcon) {
   if (currentIcon) {
     removeImageByPublicIdService(currentIcon);
   }

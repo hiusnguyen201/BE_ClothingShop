@@ -6,8 +6,8 @@ import {
   getAllVouchersController,
   getVoucherByIdController,
   updateVoucherByIdController,
-  removeVoucherByIdController
-} from "#src/modules/vouchers/vouchers.controller"
+  removeVoucherByIdController,
+} from "#src/modules/vouchers/vouchers.controller";
 
 import {
   validateSchema,
@@ -15,8 +15,8 @@ import {
 } from "#src/middlewares/validate-request.middleware";
 import { UploadUtils } from "#src/utils/upload.util";
 import { ALLOW_IMAGE_MIME_TYPES } from "#src/core/constant";
-import { createVoucherDto } from "#src/modules/vouchers/dto/create-vouchers.dto";
-import { updateVoucherDto } from "#src/modules/vouchers/dto/update-vouchers.dto";
+import { createVoucherDto } from "#src/modules/vouchers/dto/create-voucher.dto";
+import { updateVoucherDto } from "#src/modules/vouchers/dto/update-voucher.dto";
 const upload = UploadUtils.config({
   allowedMimeTypes: ALLOW_IMAGE_MIME_TYPES,
 });

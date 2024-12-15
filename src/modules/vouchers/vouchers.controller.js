@@ -1,5 +1,9 @@
 import HttpStatus from "http-status-codes";
-import { NotFoundException } from "#src/core/exception/http-exception";
+import {
+  BadGatewayException,
+  ConflictException,
+  NotFoundException,
+} from "#src/core/exception/http-exception";
 
 import {
   createVoucherService,
@@ -16,21 +20,21 @@ export const createVoucherController = async (req, res, next) => {
     const { code } = req.body;
     const isExistVoucher = await checkExistVoucherCodeService(code);
     if (isExistVoucher) {
-      throw new BadRequestException("Voucher already exist");
+      throw new NotFoundException("Voucher code already exist");
     }
 
-    const newVoucher = await createVoucherService({ ...req.body });
+    const newVoucher = await createVoucherService(req.body);
 
     if (req.file) {
       await updateVoucherImageByIdService(newVoucher._id, req.file);
     }
 
-    const formatterVouches = await getVoucherByIdService(newVoucher._id);
+    const formatterVoucher = await getVoucherByIdService(newVoucher._id);
 
     return res.json({
       statusCode: HttpStatus.CREATED,
       message: "Create voucher successfully",
-      data: formatterVouches,
+      data: formatterVoucher,
     });
   } catch (err) {
     next(err);
@@ -42,7 +46,7 @@ export const getAllVouchersController = async (req, res, next) => {
     const data = await getAllVouchersService(req.query);
     return res.json({
       statusCode: HttpStatus.CREATED,
-      message: "Get all voucher successfully",
+      message: "Get all vouchers successfully",
       data,
     });
   } catch (err) {
@@ -54,7 +58,7 @@ export const getVoucherByIdController = async (req, res, next) => {
     const { id } = req.params;
     const existVoucher = await getVoucherByIdService(id);
     if (!existVoucher) {
-      throw new NotFoundException("User not found");
+      throw new ConflictException("Voucher code already exist");
     }
 
     return res.json({
@@ -72,7 +76,7 @@ export const updateVoucherByIdController = async (req, res, next) => {
     const { id } = req.params;
     const existVoucher = await getVoucherByIdService(id, "_id uses");
     if (!existVoucher) {
-      throw new NotFoundException("Voucher not found");
+      throw new ConflictException("Voucher code already exist");
     }
 
     const { maxUses } = req.body;
@@ -87,7 +91,7 @@ export const updateVoucherByIdController = async (req, res, next) => {
       updatedVoucher = await updateVoucherImageByIdService(
         id,
         req.file,
-        updatedfile?.image
+        updatedVoucher?.image
       );
     }
     return res.json({
@@ -105,7 +109,7 @@ export const removeVoucherByIdController = async (req, res, next) => {
     const { id } = req.params;
     const existVoucher = await getVoucherByIdService(id, "_id");
     if (!existVoucher) {
-      throw new NotFoundException("Voucher not found");
+      throw new ConflictException("Voucher code already exist");
     }
     const removeVoucher = await removeVoucherByIdService(id);
     return res.json({

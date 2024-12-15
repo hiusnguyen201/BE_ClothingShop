@@ -36,6 +36,7 @@ export const createUserController = async (req, res, next) => {
     const newUser = await createUserService({
       ...req.body,
       type: USER_TYPES.USER,
+      password,
     });
 
     // Send password to mail for user

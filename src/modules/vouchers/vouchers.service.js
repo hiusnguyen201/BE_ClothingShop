@@ -117,21 +117,6 @@ export async function checkExistVoucherCodeService(code, skipId) {
 }
 
 /**
- * Update verified by id
- * @param {*} id
- * @returns
- */
-export async function updateIsFixedByIdService(id) {
-  return await VoucherModel.findByIdAndUpdate(
-    id,
-    {
-      isFixed: true,
-    },
-    { new: true }
-  ).select(SELECTED_FIELDS);
-}
-
-/**
  * Update avatar by id
  * @param {*} id
  * @param {*} file
@@ -150,4 +135,20 @@ export async function updateVoucherImageByIdService(id, file, currentImage) {
   return await VoucherModel.findByIdAndUpdate(id, {
     image: result.public_id,
   }).select(SELECTED_FIELDS);
+}
+
+/**
+ * Get one user by id
+ * @param {*} id
+ * @param {*} selectFields
+ * @returns
+ */
+export async function getVoucherByCodeService(
+  code,
+  selectFields = SELECTED_FIELDS
+) {
+  if (!code) return null;
+  const filter = { code };
+
+  return await VoucherModel.findOne(filter).select(selectFields);
 }

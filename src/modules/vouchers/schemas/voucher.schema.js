@@ -31,10 +31,22 @@ const voucherSchema = new Schema(
       type: Boolean,
       required: true,
     },
+    isPublic: {
+      type: Boolean,
+      required: true,
+    },
+    maxDiscount: {
+      type: Number,
+      require: true,
+    },
+    minPrice: {
+      type: Number,
+      require: true,
+    },
     startDate: {
       type: Date,
       required: true,
-      default: Date.now()
+      default: Date.now(),
     },
     endDate: {
       type: Date,

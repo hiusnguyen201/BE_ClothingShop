@@ -2,6 +2,7 @@ import HttpStatus from "http-status-codes";
 import {
   NotFoundException,
   ConflictException,
+  BadGatewayException,
 } from "#src/core/exception/http-exception";
 import {
   updateUserAvatarByIdService,
@@ -15,6 +16,11 @@ import {
 import { USER_TYPES } from "#src/core/constant";
 import { randomStr } from "#src/utils/string.util";
 import { sendPasswordService } from "#src/modules/mailer/mailer.service";
+import {
+  addVoucherToCustomerService,
+  getAllVouchersByCustomerService,
+} from "#src/modules/customers/customers.service";
+import { getVoucherByCodeService } from "#src/modules/vouchers/vouchers.service";
 
 export const createCustomerController = async (req, res, next) => {
   try {
@@ -131,6 +137,47 @@ export const removeCustomerByIdController = async (req, res, next) => {
       statusCode: HttpStatus.OK,
       message: "Remove customer successfully",
       data: removedCustomer,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const claimVoucherByCodeController = async (req, res, next) => {
+  try {
+    const { voucherCode } = req.body;
+    const userId = "675daed04cc3d82f1ef5d20b";
+
+    const voucher = await getVoucherByCodeService(voucherCode);
+    if (!voucher) {
+      throw new NotFoundException("Voucher not found");
+    }
+
+    const user = await getUserByIdService(userId, "vouchers");
+
+    if (user.vouchers.includes(voucher._id)) {
+      throw new ConflictException("Voucher already claim");
+    }
+
+    await addVoucherToCustomerService(userId, voucher._id);
+
+    return res.json({
+      statusCode: HttpStatus.NO_CONTENT,
+      message: "Claim voucher by code successfully",
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getAllVoucherFromCustomerController = async (req, res, next) => {
+  try {
+    const userId = "675daed04cc3d82f1ef5d20b";
+    const data = await getAllVouchersByCustomerService(userId, req.query);
+    return res.json({
+      statusCode: HttpStatus.OK,
+      message: "Get customer successfully",
+      data,
     });
   } catch (err) {
     next(err);
