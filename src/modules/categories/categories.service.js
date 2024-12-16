@@ -37,7 +37,6 @@ export async function getAllCategoriesService(
     [parent && "parent"]: parent,
   };
 
-  
   const totalCount = await CategoryModel.countDocuments(filterOptions);
   const metaData = calculatePagination(page, limit, totalCount);
 
@@ -74,7 +73,7 @@ export async function getCategoryByIdService(
     filter.name = id;
   }
 
-  return await CategoryModel.findOne(filter).select(selectFields);
+  return await CategoryModel.findOne(filter).select(selectFields).populate("parent");
 }
 
 /**
@@ -141,18 +140,62 @@ export async function checkExistCategoryNameService(name, skipId) {
   return Boolean(existCategory);
 }
 
-// /**
-//  * Set isHide
-//  * @param {*} id
-//  * @param {*} type
-//  * @returns
-//  */
-// export async function setIsHideService(id, type) {
-//   return await CategoryModel.findByIdAndUpdate(
-//     id,
-//     {
-//       isHide: type,
-//     },
-//     { new: true }
-//   ).select(SELECTED_FIELDS);
-// }
+/**
+ * Show category
+ * @param {*} id
+ * @returns
+ */
+export async function showCategoryService(id) {
+  await CategoryModel.findByIdAndUpdate(
+    id,
+    {
+      isHide: false,
+    },
+    { new: true }
+  ).select(SELECTED_FIELDS);
+  return;
+}
+
+/**
+ * Hide category
+ * @param {*} id
+ * @returns
+ */
+export async function hideCategoryService(id) {
+  await CategoryModel.findByIdAndUpdate(
+    id,
+    {
+      isHide: true,
+    },
+    { new: true }
+  ).select(SELECTED_FIELDS);
+  return;
+}
+
+export async function getMaxLevelToRoot(id) {
+  let level = 1;
+  let currentCategory = await CategoryModel.findById(id);
+
+  while (currentCategory && currentCategory.parent) {
+    level++;
+    currentCategory = await CategoryModel.findById(currentCategory.parent)
+  }
+
+  return level;
+}
+
+export async function getMaxLevelToLeaf(id) {
+  const children = await CategoryModel.find({ parent: id });
+
+  if (children.length === 0) {
+    return 1;
+  }  
+
+  let maxChildLevel = 0;
+  for (const child of children) {
+    const childLevel = await getMaxLevelToLeaf(child._id);
+    maxChildLevel = Math.max(maxChildLevel, childLevel);
+  }
+
+  return maxChildLevel + 1;
+}

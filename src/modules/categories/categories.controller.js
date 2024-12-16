@@ -11,7 +11,10 @@ import {
   removeCategoryByIdService,
   checkExistCategoryNameService,
   updateCategoryIconByIdService,
-  // setIsHideService,
+  showCategoryService,
+  hideCategoryService,
+  getMaxLevelToRoot,
+  getMaxLevelToLeaf,
 } from "#src/modules/categories/categories.service";
 import { makeSlug } from "#src/utils/string.util";
 
@@ -36,8 +39,10 @@ export const createCategoryController = async (req, res, next) => {
         throw new ConflictException("Parent category is hide");
       }
 
-      if (existParent.parent) {
-        throw new ConflictException("This category is child");
+      const level = await getMaxLevelToRoot(existParent._id);
+
+      if (level >= 3) {
+        throw new ConflictException("Parent category is reach limit");
       }
 
     }
@@ -116,14 +121,6 @@ export const updateCategoryByIdController = async (req, res, next) => {
     }
 
     if (parent) {
-      // Check category is root
-      req.query.parent = existCategory._id;
-      const childCategories = await getAllCategoriesService(req.query, "_id");
-
-      if (childCategories.list.length > 0) {
-        throw new ConflictException("This category is root");
-      }
-
       const existParent = await getCategoryByIdService(
         parent
       );
@@ -135,8 +132,14 @@ export const updateCategoryByIdController = async (req, res, next) => {
         throw new ConflictException("Parent category is hide");
       }
 
-      if (existParent.parent) {
-        throw new ConflictException("Parent category is chlid");
+      const parentLevel = await getMaxLevelToRoot(existParent._id);
+      
+      const currentCategoryLevel = await getMaxLevelToLeaf(existCategory._id);
+      
+      const sumLevel = parentLevel + currentCategoryLevel
+
+      if (sumLevel > 3) {
+        throw new ConflictException("Parent category is reach limit");
       }
 
     }
@@ -207,12 +210,11 @@ export const showCategoryByIdController = async (req, res, next) => {
       throw new NotFoundException("Category not found");
     }
 
-    const category = await updateCategoryInfoByIdService(id, { isHide: false });
+    await showCategoryService(id);
 
     return res.json({
       statusCode: HttpStatus.NO_CONTENT,
-      message: "Set category successfully",
-      data: category,
+      message: "Show category successfully",
     });
 
   } catch (err) {
@@ -228,12 +230,11 @@ export const hideCategoryByIdController = async (req, res, next) => {
       throw new NotFoundException("Category not found");
     }
 
-    const category = await updateCategoryInfoByIdService(id, { isHide: true });
+    await hideCategoryService(id);
 
     return res.json({
       statusCode: HttpStatus.NO_CONTENT,
-      message: "Set category successfully",
-      data: category,
+      message: "Hide category successfully",
     });
 
   } catch (err) {
