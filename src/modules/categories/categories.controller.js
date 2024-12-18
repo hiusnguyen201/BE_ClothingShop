@@ -10,11 +10,11 @@ import {
   updateCategoryInfoByIdService,
   removeCategoryByIdService,
   checkExistCategoryNameService,
-  updateCategoryIconByIdService,
+  updateCategoryImageByIdService,
   showCategoryService,
   hideCategoryService,
-  getMaxLevelToRoot,
-  getMaxLevelToLeaf,
+  findCategoryChildrenService,
+  updateCategoryLevelService,
 } from "#src/modules/categories/categories.service";
 import { makeSlug } from "#src/utils/string.util";
 
@@ -39,11 +39,11 @@ export const createCategoryController = async (req, res, next) => {
         throw new ConflictException("Parent category is hide");
       }
 
-      const level = await getMaxLevelToRoot(existParent._id);
-
-      if (level >= 3) {
+      const newCategoryLevel = existParent.level + 1;
+      if (existParent.level >= 3) {
         throw new ConflictException("Parent category is reach limit");
       }
+      req.body.level = newCategoryLevel
 
     }
 
@@ -52,9 +52,9 @@ export const createCategoryController = async (req, res, next) => {
       slug: makeSlug(name),
     });
 
-    // Update Icon
+    // Update Image
     if (req.file) {
-      await updateCategoryIconByIdService(newCategory._id, req.file);
+      await updateCategoryImageByIdService(newCategory._id, req.file);
     }
 
     const formatterCategory = await getCategoryByIdService(newCategory._id);
@@ -108,7 +108,7 @@ export const updateCategoryByIdController = async (req, res, next) => {
       throw new NotFoundException("Category not found");
     }
 
-    const { name, parent } = req.body;
+    const { name } = req.body;
     if (name) {
       const isExistName = await checkExistCategoryNameService(
         name,
@@ -120,40 +120,15 @@ export const updateCategoryByIdController = async (req, res, next) => {
       req.body.slug = makeSlug(name);
     }
 
-    if (parent) {
-      const existParent = await getCategoryByIdService(
-        parent
-      );
-      if (!existParent) {
-        throw new NotFoundException("Parent category not found");
-      }
-
-      if (existParent.isHide) {
-        throw new ConflictException("Parent category is hide");
-      }
-
-      const parentLevel = await getMaxLevelToRoot(existParent._id);
-      
-      const currentCategoryLevel = await getMaxLevelToLeaf(existCategory._id);
-      
-      const sumLevel = parentLevel + currentCategoryLevel
-
-      if (sumLevel > 3) {
-        throw new ConflictException("Parent category is reach limit");
-      }
-
-    }
-
     let updatedCategory = await updateCategoryInfoByIdService(id, {
       ...req.body,
-      // [status && "isHidden"]: status === CATEGORY_STATUS.HIDDEN,
     });
 
     if (req.file) {
-      updatedCategory = await updateCategoryIconByIdService(
+      updatedCategory = await updateCategoryImageByIdService(
         id,
         req.file,
-        updatedCategory?.icon
+        updatedCategory?.image
       );
     }
 

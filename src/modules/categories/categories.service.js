@@ -8,7 +8,7 @@ import { calculatePagination } from "#src/utils/pagination.util";
 import { REGEX_PATTERNS } from "#src/core/constant";
 
 const SELECTED_FIELDS =
-  "_id icon name slug parent isHide createdAt updatedAt";
+  "_id image name slug parent isHide level createdAt updatedAt";
 
 /**
  * Create category
@@ -89,29 +89,29 @@ export async function updateCategoryInfoByIdService(id, data) {
 }
 
 /**
- * Update icon category by id
+ * Update image category by id
  * @param {*} id
  * @param {*} file
  * @returns
  */
-export async function updateCategoryIconByIdService(
+export async function updateCategoryImageByIdService(
   id,
   file,
-  currentIcon
+  currentImage
 ) {
-  if (currentIcon) {
-    removeImageByPublicIdService(currentIcon);
+  if (currentImage) {
+    removeImageByPublicIdService(currentImage);
   }
 
   const result = await uploadImageBufferService({
     file,
-    folderName: "categories-icon",
+    folderName: "categories-image",
   });
 
   return await CategoryModel.findByIdAndUpdate(
     id,
     {
-      icon: result.public_id,
+      image: result.public_id,
     },
     { new: true }
   ).select(SELECTED_FIELDS);
@@ -170,32 +170,4 @@ export async function hideCategoryService(id) {
     { new: true }
   ).select(SELECTED_FIELDS);
   return;
-}
-
-export async function getMaxLevelToRoot(id) {
-  let level = 1;
-  let currentCategory = await CategoryModel.findById(id);
-
-  while (currentCategory && currentCategory.parent) {
-    level++;
-    currentCategory = await CategoryModel.findById(currentCategory.parent)
-  }
-
-  return level;
-}
-
-export async function getMaxLevelToLeaf(id) {
-  const children = await CategoryModel.find({ parent: id });
-
-  if (children.length === 0) {
-    return 1;
-  }  
-
-  let maxChildLevel = 0;
-  for (const child of children) {
-    const childLevel = await getMaxLevelToLeaf(child._id);
-    maxChildLevel = Math.max(maxChildLevel, childLevel);
-  }
-
-  return maxChildLevel + 1;
 }

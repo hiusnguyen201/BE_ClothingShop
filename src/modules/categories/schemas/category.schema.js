@@ -5,7 +5,7 @@ const CATEGORY_MODEL = "categories";
 
 const categorySchema = new Schema(
   {
-    icon: {
+    image: {
       type: String,
       length: 300,
     },
@@ -13,7 +13,6 @@ const categorySchema = new Schema(
       type: String,
       required: true,
       length: 120,
-      index: true,
       unique: true,
     },
     slug: {
@@ -24,6 +23,10 @@ const categorySchema = new Schema(
     isHide: {
       type: Boolean,
       default: true,
+    },
+    level: {
+      type: Number,
+      default: 1
     },
 
     // Foreign key

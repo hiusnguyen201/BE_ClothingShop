@@ -6,5 +6,4 @@ export const updateCategoryDto = Joi.object({
     .min(3)
     .max(120)
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
-  parent: Joi.string(),
 }).min(1);
