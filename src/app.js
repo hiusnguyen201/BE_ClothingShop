@@ -1,14 +1,10 @@
 import express from "express";
 import http from "http";
 import mongoose from "mongoose";
-import path from "path";
 import logger from "morgan";
-import fs from "fs";
 import cors from "cors";
 import moment from "moment-timezone";
-moment.tz(config.timezone).format();
-import favicon from "serve-favicon";
-import swaggerUi from "swagger-ui-express";
+import httpStatus from "http-status-codes";
 // var createError = require("http-errors");
 // var cookieParser = require("cookie-parser");
 
@@ -16,7 +12,9 @@ import routerV1 from "#src/routes/v1/index";
 import config from "#src/config";
 import { handleError, notFound } from "#src/middlewares/error.middleware";
 import { limiter } from "#src/middlewares/rate-limit.middleware";
+import { swaggerUiSetup } from "#src/middlewares/swagger.middleware";
 
+moment.tz(config.timezone).format();
 const app = express();
 
 // Cors
@@ -29,14 +27,14 @@ app.use(limiter);
 app.set("trust proxy", true);
 
 // view engine setup
-// app.set("views", path.join(config.dirname, "src/views"));
+// app.set("views", path.join(process.cwd(), "src/views"));
 // app.set("view engine", "ejs");
 
 app.use(logger("dev"));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "5mb" }));
+app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 // app.use(cookieParser());
-// app.use(express.static(path.join(config.dirname, "/public")));
+// app.use(express.static(path.join(process.cwd(), "/public")));
 
 // Connect MongoDb
 mongoose
@@ -48,22 +46,13 @@ mongoose
     console.error("Connect to MongoDB failed", err);
   });
 
-const swaggerFile = fs
-  .readFileSync(path.join(process.cwd(), "/public/swagger.json"))
-  .toString();
-
-// Favicon
-app.use(favicon(path.join(process.cwd(), "/public/favicon.ico")));
+// Ignore favicon request
+app.get("/favicon.ico", (_, res) =>
+  res.status(httpStatus.NO_CONTENT).end()
+);
 
 // Api Docs
-app.use(
-  "/api-docs",
-  swaggerUi.serve,
-  swaggerUi.setup(JSON.parse(swaggerFile), {
-    customCssUrl:
-      "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.18.2/swagger-ui.min.css",
-  })
-);
+app.use("/api-docs", swaggerUiSetup);
 
 // Api version 1
 app.use("/api/v1", routerV1);

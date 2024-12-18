@@ -6,11 +6,16 @@ const CATEGORY_MODEL = "categories";
 
 const categorySchema = new Schema(
   {
+    icon: {
+      type: String,
+      length: 300,
+    },
     name: {
       type: String,
       required: true,
       length: 120,
       index: true,
+      unique: true,
     },
     slug: {
       type: String,

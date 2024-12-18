@@ -1,44 +1,33 @@
 import { isValidObjectId } from "mongoose";
 import { RoleModel } from "#src/modules/roles/schemas/role.schema";
-import { uploadImageBufferService } from "#src/modules/cloudinary/cloudinary.service";
 import {
-  BadRequestException,
-  NotFoundException,
-} from "#src/core/exception/http-exception";
-import { findPermissionByIdService } from "#src/modules/permissions/permissions.service.js";
+  removeImageByPublicIdService,
+  uploadImageBufferService,
+} from "#src/modules/cloudinary/cloudinary.service";
+import { getPermissionByIdService } from "#src/modules/permissions/permissions.service.js";
 import { calculatePagination } from "#src/utils/pagination.util";
+import { makeSlug } from "#src/utils/string.util";
+import { REGEX_PATTERNS } from "#src/core/constant";
 
-const SELECTED_FIELDS = "_id icon name description status permissions";
-const FOLDER_ICONS = "icons";
+const SELECTED_FIELDS =
+  "_id icon name slug description status createdAt updatedAt";
 
+/**
+ * Create role
+ * @param {*} data
+ * @returns
+ */
 export async function createRoleService(data) {
-  const { name, file, permissions } = data;
-
-  const isExistName = await checkExistNameService(name);
-  if (isExistName) {
-    throw new BadRequestException("Role not found");
-  }
-
-  const role = await RoleModel.create(data);
-
-  if (permissions && permissions.length > 0) {
-    const result = await Promise.all(
-      permissions.map(async (item) => {
-        return await findPermissionByIdService(item);
-      })
-    );
-    role.permissions = result.filter(Boolean);
-    await role.save();
-  }
-
-  if (file) {
-    updateRoleIconByIdService(role._id, file);
-  }
-
-  return await findRoleByIdService(role._id);
+  return await RoleModel.create(data);
 }
 
-export async function findAllRolesService(
+/**
+ * Get all roles
+ * @param {*} query
+ * @param {*} selectFields
+ * @returns
+ */
+export async function getAllRolesService(
   query,
   selectFields = SELECTED_FIELDS
 ) {
@@ -55,15 +44,22 @@ export async function findAllRolesService(
   const roles = await RoleModel.find(filterOptions)
     .skip(metaData.offset)
     .limit(metaData.limit)
-    .select(selectFields);
+    .select(selectFields)
+    .sort({ createdAt: -1 });
 
   return {
-    list: roles,
     meta: metaData,
+    list: roles,
   };
 }
 
-export async function findRoleByIdService(
+/**
+ * Get role by id
+ * @param {*} id
+ * @param {*} selectFields
+ * @returns
+ */
+export async function getRoleByIdService(
   id,
   selectFields = SELECTED_FIELDS
 ) {
@@ -72,6 +68,8 @@ export async function findRoleByIdService(
 
   if (isValidObjectId(id)) {
     filter._id = id;
+  } else if (REGEX_PATTERNS.SLUG.test(id)) {
+    filter.slug = id;
   } else {
     filter.name = id;
   }
@@ -79,70 +77,88 @@ export async function findRoleByIdService(
   return await RoleModel.findOne(filter).select(selectFields);
 }
 
-export async function updateRoleByIdService(id, data) {
-  const { name, file, permissions } = data;
-  const existRole = await findRoleByIdService(id, "_id");
-  if (!existRole) {
-    throw new NotFoundException("Role not found");
-  }
-
-  if (name) {
-    const isExistName = await checkExistNameService(name);
-    if (isExistName) {
-      throw new BadRequestException("Role name is exist");
-    }
-  }
-
-  const role = await RoleModel.findByIdAndUpdate(id, data, {
-    new: true,
-  }).select(SELECTED_FIELDS);
-
-  if (permissions && permissions.length > 0) {
-    const result = await Promise.all(
-      permissions.map(async (item) => {
-        return await findPermissionByIdService(item);
-      })
-    );
-    role.permissions = result.filter(Boolean);
-    await role.save();
-  }
-
-  if (file) {
-    updateRoleIconByIdService(role._id, file);
-  }
-
-  return await findRoleByIdService(role._id);
-}
-
+/**
+ * Remove role by id
+ * @param {*} id
+ * @returns
+ */
 export async function removeRoleByIdService(id) {
-  const existRole = await findRoleByIdService(id, "_id");
-  if (!existRole) {
-    throw new NotFoundException("Role not found");
-  }
-
   return await RoleModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
 }
 
-export async function updateRoleIconByIdService(id, file) {
-  const folderName = `${FOLDER_ICONS}/${id}`;
+/**
+ * Check exist role name
+ * @param {*} name
+ * @param {*} skipId
+ * @returns
+ */
+export async function checkExistRoleNameService(name, skipId) {
+  const existRole = await RoleModel.findOne({
+    $or: [{ name }, { slug: makeSlug(name) }],
+    _id: { $ne: skipId },
+  }).select("_id");
+
+  return Boolean(existRole);
+}
+
+/**
+ * Update info by id
+ * @param {*} id
+ * @param {*} data
+ * @returns
+ */
+export async function updateRoleInfoByIdService(id, data) {
+  return await RoleModel.findByIdAndUpdate(id, data, {
+    new: true,
+  }).select(SELECTED_FIELDS);
+}
+
+/**
+ * Update icon by id
+ * @param {*} id
+ * @param {*} file
+ * @returns
+ */
+export async function updateRoleIconByIdService(id, file, currentIcon) {
+  if (currentIcon) {
+    removeImageByPublicIdService(currentIcon);
+  }
+
   const result = await uploadImageBufferService({
     file,
-    folderName,
+    folderName: "role-icons",
   });
 
   return await RoleModel.findByIdAndUpdate(
     id,
     {
-      icon: result.url,
+      icon: result.public_id,
     },
     { new: true }
   ).select(SELECTED_FIELDS);
 }
 
-export async function checkExistNameService(name, skipId) {
-  const existRole = await RoleModel.findOne({
-    name,
-    _id: { $ne: skipId },
-  }).select("name");
-  return Boolean(existRole);
+/**
+ * Update permissions by id
+ * @param {*} id
+ * @param {*} permissions
+ * @returns
+ */
+export async function updateRolePermissionsByIdService(
+  id,
+  permissions = []
+) {
+  const result = await Promise.all(
+    permissions.map(async (item) => {
+      return await getPermissionByIdService(item);
+    })
+  );
+
+  return await RoleModel.findByIdAndUpdate(
+    id,
+    {
+      permissions: result.filter(Boolean),
+    },
+    { new: true }
+  ).select(SELECTED_FIELDS);
 }

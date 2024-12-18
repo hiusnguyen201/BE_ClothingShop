@@ -4,14 +4,12 @@ dotenv.config();
 const env = process.env;
 
 const config = {
-  dirname: process.cwd(),
-
   timezone: "Asia/Ho_Chi_Minh",
 
   nodeEnv: env.NODE_ENV,
   port: env.PORT || 3000,
 
-  mongoUri: env.MONGO_URI || "mongodb://localhost:27017/clothes-store", // example: mongodb://localhost:27017/your-db,
+  mongoUri: env.MONGO_URI,
 
   jwtSecret:
     env.JWT_SECRET ||
