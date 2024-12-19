@@ -1,6 +1,5 @@
 import HttpStatus from "http-status-codes";
 import {
-  BadGatewayException,
   ConflictException,
   NotFoundException,
 } from "#src/core/exception/http-exception";
@@ -120,4 +119,17 @@ export const removeVoucherByIdController = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+};
+
+export const isExistVoucherCodeController = async (req, res, next) => {
+  const { code } = req.body;
+  const isExistCode = await checkExistVoucherCodeService(code);
+
+  return res.json({
+    statusCode: HttpStatus.OK,
+    message: isExistCode
+      ? "Voucher code exists"
+      : "Voucher code does not exist",
+    data: isExistCode,
+  });
 };

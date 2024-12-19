@@ -37,11 +37,15 @@ const voucherSchema = new Schema(
     },
     maxDiscount: {
       type: Number,
-      require: true,
+      required: true,
+    },
+    hasMaxDiscount: {
+      type: Boolean,
+      required: true,
     },
     minPrice: {
       type: Number,
-      require: true,
+      required: true,
     },
     startDate: {
       type: Date,

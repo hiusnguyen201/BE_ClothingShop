@@ -7,6 +7,7 @@ import {
   getVoucherByIdController,
   updateVoucherByIdController,
   removeVoucherByIdController,
+  isExistVoucherCodeController,
 } from "#src/modules/vouchers/vouchers.controller";
 
 import {
@@ -17,6 +18,7 @@ import { UploadUtils } from "#src/utils/upload.util";
 import { ALLOW_IMAGE_MIME_TYPES } from "#src/core/constant";
 import { createVoucherDto } from "#src/modules/vouchers/dto/create-voucher.dto";
 import { updateVoucherDto } from "#src/modules/vouchers/dto/update-voucher.dto";
+import { isExistVoucherCodeDto } from "#src/modules/vouchers/dto/is-exist-voucher-code.dto";
 const upload = UploadUtils.config({
   allowedMimeTypes: ALLOW_IMAGE_MIME_TYPES,
 });
@@ -36,6 +38,10 @@ router
     validateSchema(updateVoucherDto),
     updateVoucherByIdController
   )
-  .delete("/remove-voucher-by-id/:id", removeVoucherByIdController);
-
+  .delete("/remove-voucher-by-id/:id", removeVoucherByIdController)
+  .post(
+    "/is-exist-voucher-code",
+    validateSchema(isExistVoucherCodeDto),
+    isExistVoucherCodeController
+  );
 export default router;

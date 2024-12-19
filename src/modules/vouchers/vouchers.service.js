@@ -7,7 +7,7 @@ import { calculatePagination } from "#src/utils/pagination.util";
 import { VoucherModel } from "#src/modules/vouchers/schemas/voucher.schema";
 
 const SELECTED_FIELDS =
-  "_id code name maxUses discount startDate endDate uses isFixed";
+  "_id code name maxUses minPrice discount startDate endDate uses isFixed";
 
 /**
  * Create voucher
