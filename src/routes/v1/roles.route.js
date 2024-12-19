@@ -46,7 +46,6 @@ router
     isExistRoleNameController
   )
   .patch("/activate-role-by-id/:id", activateRoleByIdController)
-  .delete("/deactivate-role-by-id/:id", deactivateRoleByIdController);
-
+  .patch("/deactivate-role-by-id/:id", deactivateRoleByIdController);
 
 export default router;

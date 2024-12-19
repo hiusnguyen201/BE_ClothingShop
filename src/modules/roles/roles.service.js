@@ -31,11 +31,10 @@ export async function getAllRolesService(
   query,
   selectFields = SELECTED_FIELDS
 ) {
-  let { keyword = "", status, limit = 10, page = 1 } = query;
+  let { keyword = "", limit = 10, page = 1 } = query;
 
   const filterOptions = {
     $or: [{ name: { $regex: keyword, $options: "i" } }],
-    [status && "status"]: status,
   };
 
   const totalCount = await RoleModel.countDocuments(filterOptions);
@@ -168,7 +167,7 @@ export async function updateRolePermissionsByIdService(
  * @param {*} id
  * @returns
  */
-export async function activateRoleService(id) {
+export async function activateRoleByIdService(id) {
   await RoleModel.findByIdAndUpdate(
     id,
     {
@@ -184,7 +183,7 @@ export async function activateRoleService(id) {
  * @param {*} id
  * @returns
  */
-export async function deactivateRoleService(id) {
+export async function deactivateRoleByIdService(id) {
   await RoleModel.findByIdAndUpdate(
     id,
     {

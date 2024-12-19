@@ -11,5 +11,6 @@ export const createRoleDto = Joi.object({
     .min(3)
     .max(255)
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
+  isActive: Joi.boolean().required(),
   permissions: Joi.array().items(Joi.string()),
 });

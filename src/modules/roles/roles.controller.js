@@ -2,6 +2,7 @@ import HttpStatus from "http-status-codes";
 import {
   ConflictException,
   NotFoundException,
+  PreconditionFailedException,
 } from "#src/core/exception/http-exception";
 import {
   createRoleService,
@@ -12,8 +13,8 @@ import {
   updateRoleIconByIdService,
   updateRoleInfoByIdService,
   checkExistRoleNameService,
-  activateRoleService,
-  deactivateRoleService,
+  activateRoleByIdService,
+  deactivateRoleByIdService,
 } from "#src/modules/roles/roles.service";
 import { makeSlug } from "#src/utils/string.util";
 
@@ -137,8 +138,9 @@ export const removeRoleByIdController = async (req, res, next) => {
     if (!existRole) {
       throw new NotFoundException("Role not found");
     }
+
     if (existRole.isActive) {
-      throw new ConflictException("Role is active");
+      throw new PreconditionFailedException("Role is active");
     }
 
     const data = await removeRoleByIdService(id);
@@ -177,7 +179,7 @@ export const activateRoleByIdController = async (req, res, next) => {
       throw new NotFoundException("Role not found");
     }
 
-    await activateRoleService(id);
+    await activateRoleByIdService(id);
 
     return res.json({
       statusCode: HttpStatus.NO_CONTENT,
@@ -196,7 +198,7 @@ export const deactivateRoleByIdController = async (req, res, next) => {
       throw new NotFoundException("Role not found");
     }
 
-    await deactivateRoleService(id);
+    await deactivateRoleByIdService(id);
 
     return res.json({
       statusCode: HttpStatus.NO_CONTENT,
