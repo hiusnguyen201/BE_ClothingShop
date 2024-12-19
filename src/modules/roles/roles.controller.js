@@ -12,6 +12,8 @@ import {
   updateRoleIconByIdService,
   updateRoleInfoByIdService,
   checkExistRoleNameService,
+  activateRoleService,
+  deactivateRoleService,
 } from "#src/modules/roles/roles.service";
 import { makeSlug } from "#src/utils/string.util";
 
@@ -135,12 +137,70 @@ export const removeRoleByIdController = async (req, res, next) => {
     if (!existRole) {
       throw new NotFoundException("Role not found");
     }
+    if (existRole.isActive) {
+      throw new ConflictException("Role is active");
+    }
 
     const data = await removeRoleByIdService(id);
     return res.json({
       statusCode: HttpStatus.OK,
       message: "Remove role successfully",
       data,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const isExistRoleNameController = async (req, res, next) => {
+  try {
+    const { name } = req.body;
+    const existRoleName = await checkExistRoleNameService(name);
+
+    return res.json({
+      statusCode: HttpStatus.OK,
+      message: existRoleName
+        ? "Role name exists"
+        : "Role name does not exist",
+      data: existRoleName,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const activateRoleByIdController = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const existRole = await getRoleByIdService(id, "_id");
+    if (!existRole) {
+      throw new NotFoundException("Role not found");
+    }
+
+    await activateRoleService(id);
+
+    return res.json({
+      statusCode: HttpStatus.NO_CONTENT,
+      message: "Activate role successfully",
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deactivateRoleByIdController = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const existRole = await getRoleByIdService(id, "_id");
+    if (!existRole) {
+      throw new NotFoundException("Role not found");
+    }
+
+    await deactivateRoleService(id);
+
+    return res.json({
+      statusCode: HttpStatus.NO_CONTENT,
+      message: "Deactivate role successfully",
     });
   } catch (err) {
     next(err);
