@@ -13,6 +13,7 @@ import config from "#src/config";
 import { handleError, notFound } from "#src/middlewares/error.middleware";
 import { limiter } from "#src/middlewares/rate-limit.middleware";
 import { swaggerUiSetup } from "#src/middlewares/swagger.middleware";
+import asyncHandler from "#src/utils/async-handler";
 
 moment.tz(config.timezone).format();
 const app = express();
@@ -55,7 +56,7 @@ app.get("/favicon.ico", (_, res) =>
 app.use("/api-docs", swaggerUiSetup);
 
 // Api version 1
-app.use("/api/v1", routerV1);
+app.use("/api/v1", asyncHandler(routerV1));
 
 // Catch 404
 app.use(notFound);
@@ -63,11 +64,20 @@ app.use(notFound);
 // Handler Error
 app.use(handleError);
 
-const serverHost = "localhost" || "127.0.0.1";
-const serverPort = config.port;
 const serverApi = http.createServer(app);
-serverApi.listen(serverPort, () => {
-  console.log(`Server running at http://${serverHost}:${serverPort}`);
+serverApi.listen(config.port, () => {
+  if (config.nodeEnv === "development") {
+    console.log(`
+    ███████╗███████╗██████╗ ██╗   ██╗███████╗██████╗     ███████╗████████╗ █████╗ ██████╗ ████████╗      
+    ██╔════╝██╔════╝██╔══██╗██║   ██║██╔════╝██╔══██╗    ██╔════╝╚══██╔══╝██╔══██╗██╔══██╗╚══██╔══╝      
+    ███████╗█████╗  ██████╔╝██║   ██║█████╗  ██████╔╝    ███████╗   ██║   ███████║██████╔╝   ██║         
+    ╚════██║██╔══╝  ██╔══██╗╚██╗ ██╔╝██╔══╝  ██╔══██╗    ╚════██║   ██║   ██╔══██║██╔══██╗   ██║         
+    ███████║███████╗██║  ██║ ╚████╔╝ ███████╗██║  ██║    ███████║   ██║   ██║  ██║██║  ██║   ██║██╗██╗██╗
+    ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚══════╝╚═╝  ╚═╝    ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝╚═╝╚═╝╚═╝
+    `);
+  }
+
+  console.log(`Server is running on http://localhost:${config.port}`);
 });
 
 export default app;
