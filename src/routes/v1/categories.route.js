@@ -46,6 +46,6 @@ router
     isExistCategoryNameController
   )
   .patch("/show-category-by-id/:id", showCategoryByIdController)
-  .delete("/hide-category-by-id/:id", hideCategoryByIdController);
+  .patch("/hide-category-by-id/:id", hideCategoryByIdController);
 
 export default router;
