@@ -13,42 +13,40 @@ import {
   updateCategoryImageByIdService,
   showCategoryService,
   hideCategoryService,
-  findCategoryChildrenService,
-  updateCategoryLevelService,
 } from "#src/modules/categories/categories.service";
 import { makeSlug } from "#src/utils/string.util";
 
+const MAX_LEVEL_CHILDREN = 2;
+
 export const createCategoryController = async (req, res, next) => {
   try {
-    const { name, parent } = req.body;
+    let { name, parent, level = 1 } = req.body;
     const isExistName = await checkExistCategoryNameService(name);
     if (isExistName) {
       throw new ConflictException("Category name already exist");
     }
 
     if (parent) {
-      const existParent = await getCategoryByIdService(
-        parent
-      );
+      const existParent = await getCategoryByIdService(parent);
 
       if (!existParent) {
         throw new NotFoundException("Parent category not found");
       }
 
       if (existParent.isHide) {
-        throw new ConflictException("Parent category is hide");
+        throw new ConflictException("Parent category is hidden");
       }
 
       const newCategoryLevel = existParent.level + 1;
-      if (existParent.level >= 3) {
+      if (existParent.level > MAX_LEVEL_CHILDREN) {
         throw new ConflictException("Parent category is reach limit");
       }
-      req.body.level = newCategoryLevel
-
+      level = newCategoryLevel;
     }
 
     const newCategory = await createCategoryService({
       ...req.body,
+      level,
       slug: makeSlug(name),
     });
 
@@ -57,7 +55,9 @@ export const createCategoryController = async (req, res, next) => {
       await updateCategoryImageByIdService(newCategory._id, req.file);
     }
 
-    const formatterCategory = await getCategoryByIdService(newCategory._id);
+    const formatterCategory = await getCategoryByIdService(
+      newCategory._id
+    );
 
     return res.json({
       statusCode: HttpStatus.CREATED,
@@ -120,9 +120,10 @@ export const updateCategoryByIdController = async (req, res, next) => {
       req.body.slug = makeSlug(name);
     }
 
-    let updatedCategory = await updateCategoryInfoByIdService(id, {
-      ...req.body,
-    });
+    let updatedCategory = await updateCategoryInfoByIdService(
+      id,
+      req.body
+    );
 
     if (req.file) {
       updatedCategory = await updateCategoryImageByIdService(
@@ -168,14 +169,15 @@ export const isExistCategoryNameController = async (req, res, next) => {
 
     return res.json({
       statusCode: HttpStatus.OK,
-      message: "Get category successfully",
+      message: isExistName
+        ? "Category name exists"
+        : "Category name does not exist",
       data: isExistName,
     });
-
   } catch (err) {
     next(err);
   }
-}
+};
 
 export const showCategoryByIdController = async (req, res, next) => {
   try {
@@ -191,11 +193,10 @@ export const showCategoryByIdController = async (req, res, next) => {
       statusCode: HttpStatus.NO_CONTENT,
       message: "Show category successfully",
     });
-
   } catch (err) {
     next(err);
   }
-}
+};
 
 export const hideCategoryByIdController = async (req, res, next) => {
   try {
@@ -211,8 +212,7 @@ export const hideCategoryByIdController = async (req, res, next) => {
       statusCode: HttpStatus.NO_CONTENT,
       message: "Hide category successfully",
     });
-
   } catch (err) {
     next(err);
   }
-}
+};

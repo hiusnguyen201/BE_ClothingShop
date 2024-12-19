@@ -6,6 +6,7 @@ import {
 } from "#src/modules/cloudinary/cloudinary.service";
 import { calculatePagination } from "#src/utils/pagination.util";
 import { REGEX_PATTERNS } from "#src/core/constant";
+import { makeSlug } from "#src/utils/string.util";
 
 const SELECTED_FIELDS =
   "_id image name slug parent isHide level createdAt updatedAt";
@@ -29,12 +30,11 @@ export async function getAllCategoriesService(
   query,
   selectFields = SELECTED_FIELDS
 ) {
-  let { keyword = "", isHide, parent, limit = 10, page = 1 } = query;
+  let { keyword = "", isHide = false, limit = 10, page = 1 } = query;
 
   const filterOptions = {
     $or: [{ name: { $regex: keyword, $options: "i" } }],
-    [isHide && "isHide"]: isHide,
-    [parent && "parent"]: parent,
+    isHide,
   };
 
   const totalCount = await CategoryModel.countDocuments(filterOptions);
@@ -73,7 +73,7 @@ export async function getCategoryByIdService(
     filter.name = id;
   }
 
-  return await CategoryModel.findOne(filter).select(selectFields).populate("parent");
+  return await CategoryModel.findOne(filter).select(selectFields);
 }
 
 /**
@@ -134,7 +134,14 @@ export async function removeCategoryByIdService(id) {
  */
 export async function checkExistCategoryNameService(name, skipId) {
   const existCategory = await CategoryModel.findOne({
-    name,
+    $or: [
+      {
+        name,
+      },
+      {
+        slug: makeSlug(name),
+      },
+    ],
     _id: { $ne: skipId },
   }).select("_id");
   return Boolean(existCategory);
