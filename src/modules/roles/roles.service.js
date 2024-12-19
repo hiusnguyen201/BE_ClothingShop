@@ -10,7 +10,7 @@ import { makeSlug } from "#src/utils/string.util";
 import { REGEX_PATTERNS } from "#src/core/constant";
 
 const SELECTED_FIELDS =
-  "_id icon name slug description status createdAt updatedAt";
+  "_id icon name slug description isActive createdAt updatedAt";
 
 /**
  * Create role
@@ -31,11 +31,10 @@ export async function getAllRolesService(
   query,
   selectFields = SELECTED_FIELDS
 ) {
-  let { keyword = "", status, limit = 10, page = 1 } = query;
+  let { keyword = "", limit = 10, page = 1 } = query;
 
   const filterOptions = {
     $or: [{ name: { $regex: keyword, $options: "i" } }],
-    [status && "status"]: status,
   };
 
   const totalCount = await RoleModel.countDocuments(filterOptions);
@@ -161,4 +160,36 @@ export async function updateRolePermissionsByIdService(
     },
     { new: true }
   ).select(SELECTED_FIELDS);
+}
+
+/**
+ * Activate role
+ * @param {*} id
+ * @returns
+ */
+export async function activateRoleByIdService(id) {
+  await RoleModel.findByIdAndUpdate(
+    id,
+    {
+      isActive: true,
+    },
+    { new: true }
+  ).select(SELECTED_FIELDS);
+  return;
+}
+
+/**
+ * Deactivate role
+ * @param {*} id
+ * @returns
+ */
+export async function deactivateRoleByIdService(id) {
+  await RoleModel.findByIdAndUpdate(
+    id,
+    {
+      isActive: false,
+    },
+    { new: true }
+  ).select(SELECTED_FIELDS);
+  return;
 }

@@ -19,9 +19,9 @@ import {
   validateFile,
 } from "#src/middlewares/validate-request.middleware";
 import { UploadUtils } from "#src/utils/upload.util";
-import { ALLOW_ICON_MIME_TYPES } from "#src/core/constant";
+import { ALLOW_IMAGE_MIME_TYPES } from "#src/core/constant";
 const upload = UploadUtils.config({
-  allowedMimeTypes: ALLOW_ICON_MIME_TYPES,
+  allowedMimeTypes: ALLOW_IMAGE_MIME_TYPES,
 });
 
 router
@@ -29,13 +29,13 @@ router
   .get("/get-category-by-id/:id", getCategoryByIdController)
   .post(
     "/create-category",
-    validateFile(upload.single("icon")),
+    validateFile(upload.single("image")),
     validateSchema(createCategoryDto),
     createCategoryController
   )
   .patch(
     "/update-category-by-id/:id",
-    validateFile(upload.single("icon")),
+    validateFile(upload.single("image")),
     validateSchema(updateCategoryDto),
     updateCategoryByIdController
   )

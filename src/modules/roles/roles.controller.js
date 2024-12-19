@@ -2,6 +2,7 @@ import HttpStatus from "http-status-codes";
 import {
   ConflictException,
   NotFoundException,
+  PreconditionFailedException,
 } from "#src/core/exception/http-exception";
 import {
   createRoleService,
@@ -12,6 +13,8 @@ import {
   updateRoleIconByIdService,
   updateRoleInfoByIdService,
   checkExistRoleNameService,
+  activateRoleByIdService,
+  deactivateRoleByIdService,
 } from "#src/modules/roles/roles.service";
 import { makeSlug } from "#src/utils/string.util";
 
@@ -136,11 +139,70 @@ export const removeRoleByIdController = async (req, res, next) => {
       throw new NotFoundException("Role not found");
     }
 
+    if (existRole.isActive) {
+      throw new PreconditionFailedException("Role is active");
+    }
+
     const data = await removeRoleByIdService(id);
     return res.json({
       statusCode: HttpStatus.OK,
       message: "Remove role successfully",
       data,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const isExistRoleNameController = async (req, res, next) => {
+  try {
+    const { name } = req.body;
+    const existRoleName = await checkExistRoleNameService(name);
+
+    return res.json({
+      statusCode: HttpStatus.OK,
+      message: existRoleName
+        ? "Role name exists"
+        : "Role name does not exist",
+      data: existRoleName,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const activateRoleByIdController = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const existRole = await getRoleByIdService(id, "_id");
+    if (!existRole) {
+      throw new NotFoundException("Role not found");
+    }
+
+    await activateRoleByIdService(id);
+
+    return res.json({
+      statusCode: HttpStatus.NO_CONTENT,
+      message: "Activate role successfully",
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deactivateRoleByIdController = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const existRole = await getRoleByIdService(id, "_id");
+    if (!existRole) {
+      throw new NotFoundException("Role not found");
+    }
+
+    await deactivateRoleByIdService(id);
+
+    return res.json({
+      statusCode: HttpStatus.NO_CONTENT,
+      message: "Deactivate role successfully",
     });
   } catch (err) {
     next(err);

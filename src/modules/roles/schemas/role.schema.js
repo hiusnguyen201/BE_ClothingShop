@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import { ROLE_STATUS } from "#src/core/constant";
 const { Schema } = mongoose;
 
 const ROLE_MODEL = "roles";
@@ -26,11 +25,9 @@ const roleSchema = new Schema(
       type: String,
       length: 255,
     },
-    status: {
-      type: String,
-      length: 50,
-      required: true,
-      enum: [ROLE_STATUS.ACTIVE, ROLE_STATUS.INACTIVE, ROLE_STATUS.BANNED],
+    isActive: {
+      type: Boolean,
+      default: false
     },
 
     // Foreign Key
