@@ -7,7 +7,7 @@ const publicFolderPath = path.join(process.cwd(), "/public");
 export const getSwaggerUi = () => {
   return [
     swaggerUi.serve,
-    (_, res) => {
+    (req, res) => {
       const swaggerFileString = fs
         .readFileSync(publicFolderPath + "/swagger.json")
         .toString();

@@ -1,5 +1,4 @@
 import Joi from "joi";
-import { ROLE_STATUS } from "#src/core/constant";
 import { replaceMultiSpacesToSingleSpace } from "#src/utils/string.util";
 
 export const updateRoleDto = Joi.object({
@@ -11,8 +10,6 @@ export const updateRoleDto = Joi.object({
     .min(3)
     .max(255)
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
-  status: Joi.string().valid(
-    ...[ROLE_STATUS.ACTIVE, ROLE_STATUS.INACTIVE]
-  ),
+  isActive: Joi.boolean(),
   permissions: Joi.array().items(Joi.string()),
 }).min(1);

@@ -1,7 +1,6 @@
 import moment from "moment-timezone";
 import { UserOtpModel } from "#src/modules/user-otps/schemas/user-otp.schema";
 import { generateOtp } from "#src/utils/string.util";
-import config from "#src/config";
 
 const SELECTED_FIELDS = "_id otp expireDate user createdAt updatedAt";
 
@@ -13,7 +12,8 @@ const SELECTED_FIELDS = "_id otp expireDate user createdAt updatedAt";
 export async function createUserOtpService(userId) {
   const newUserOtp = await UserOtpModel.create({
     otp: generateOtp(),
-    expireDate: moment().valueOf() + 60 * 1000 * config.otpExpiresMinutes,
+    expireDate:
+      moment().valueOf() + 60 * 1000 * (+process.env.OTP_EXPIRES || 5),
     user: userId,
   });
   return newUserOtp;

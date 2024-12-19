@@ -4,7 +4,6 @@ import {
   removeImageByPublicIdService,
   uploadImageBufferService,
 } from "#src/modules/cloudinary/cloudinary.service";
-import { calculatePagination } from "#src/utils/pagination.util";
 import { REGEX_PATTERNS } from "#src/core/constant";
 import { makeSlug } from "#src/utils/string.util";
 
@@ -17,7 +16,7 @@ const SELECTED_FIELDS =
  * @returns
  */
 export async function createCategoryService(data) {
-  return await CategoryModel.create(data);
+  return CategoryModel.create(data);
 }
 
 /**
@@ -26,30 +25,26 @@ export async function createCategoryService(data) {
  * @param {*} selectFields
  * @returns
  */
-export async function getAllCategoriesService(
-  query,
-  selectFields = SELECTED_FIELDS
-) {
-  let { keyword = "", isHide = false, limit = 10, page = 1 } = query;
-
-  const filterOptions = {
-    $or: [{ name: { $regex: keyword, $options: "i" } }],
-    isHide,
-  };
-
-  const totalCount = await CategoryModel.countDocuments(filterOptions);
-  const metaData = calculatePagination(page, limit, totalCount);
-
-  const categories = await CategoryModel.find(filterOptions)
-    .skip(metaData.offset)
-    .limit(metaData.limit)
+export async function getAllCategoriesService({
+  filters,
+  offset,
+  limit,
+  selectFields = SELECTED_FIELDS,
+}) {
+  return CategoryModel.find(filters)
+    .skip(offset)
+    .limit(limit)
     .select(selectFields)
     .sort({ createdAt: -1 });
+}
 
-  return {
-    meta: metaData,
-    list: categories,
-  };
+/**
+ * Count all categories
+ * @param {*} filters
+ * @returns
+ */
+export async function countAllCategoriesService(filters) {
+  return CategoryModel.countDocuments(filters);
 }
 
 /**
@@ -73,7 +68,7 @@ export async function getCategoryByIdService(
     filter.name = id;
   }
 
-  return await CategoryModel.findOne(filter).select(selectFields);
+  return CategoryModel.findOne(filter).select(selectFields);
 }
 
 /**
@@ -83,7 +78,7 @@ export async function getCategoryByIdService(
  * @returns
  */
 export async function updateCategoryInfoByIdService(id, data) {
-  return await CategoryModel.findByIdAndUpdate(id, data, {
+  return CategoryModel.findByIdAndUpdate(id, data, {
     new: true,
   }).select(SELECTED_FIELDS);
 }
@@ -108,7 +103,7 @@ export async function updateCategoryImageByIdService(
     folderName: "categories-image",
   });
 
-  return await CategoryModel.findByIdAndUpdate(
+  return CategoryModel.findByIdAndUpdate(
     id,
     {
       image: result.public_id,
@@ -123,7 +118,7 @@ export async function updateCategoryImageByIdService(
  * @returns
  */
 export async function removeCategoryByIdService(id) {
-  return await CategoryModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
+  return CategoryModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
 }
 
 /**

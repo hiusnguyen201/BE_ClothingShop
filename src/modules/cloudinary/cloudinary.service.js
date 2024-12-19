@@ -1,12 +1,11 @@
 import { v2 as cloudinary } from "cloudinary";
-import config from "#src/config";
 import moment from "moment-timezone";
 import { v4 as uuidv4 } from "uuid";
 
 cloudinary.config({
-  api_key: config.cloudinary.apiKey,
-  api_secret: config.cloudinary.apiSecret,
-  cloud_name: config.cloudinary.cloudName,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: process.env.CLOUDINARY_NAME,
 });
 
 /**

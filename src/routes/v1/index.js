@@ -5,9 +5,8 @@ import usersRouter from "#src/routes/v1/users.route";
 import authRouter from "#src/routes/v1/auth.route";
 import rolesRouter from "#src/routes/v1/roles.route";
 import permissionsRouter from "#src/routes/v1/permissions.route";
-import customersRouter from "#src/routes/v1/customers.route"
+import customersRouter from "#src/routes/v1/customers.route";
 import categoriesRouter from "#src/routes/v1/categories.route";
-
 
 router.use("/users", usersRouter);
 
