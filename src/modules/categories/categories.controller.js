@@ -14,12 +14,14 @@ import {
   updateCategoryImageByIdService,
   showCategoryService,
   hideCategoryService,
+  countAllCategoriesService,
 } from "#src/modules/categories/categories.service";
 import { makeSlug } from "#src/utils/string.util";
+import { calculatePagination } from "#src/utils/pagination.util";
 
 const MAX_LEVEL_CHILDREN = 2;
 
-export const createCategoryController = async (req, res, next) => {
+export const createCategoryController = async (req, res) => {
   let { name, parent, level = 1 } = req.body;
   const isExistName = await checkExistCategoryNameService(name);
   if (isExistName) {
@@ -64,16 +66,34 @@ export const createCategoryController = async (req, res, next) => {
   });
 };
 
-export const getAllCategoriesController = async (req, res, next) => {
-  const data = await getAllCategoriesService(req.query);
+export const getAllCategoriesController = async (req, res) => {
+  let { keyword = "", isHide = false, limit = 10, page = 1 } = req.query;
+
+  const filterOptions = {
+    $or: [{ name: { $regex: keyword, $options: "i" } }],
+    ...(isHide ? { isHide } : {}),
+  };
+
+  const totalCount = await countAllCategoriesService(filterOptions);
+  const metaData = calculatePagination(page, limit, totalCount);
+
+  const categories = await getAllCategoriesService({
+    filters: filterOptions,
+    offset: metaData.offset,
+    limit: metaData.limit,
+  });
+
   return res.json({
     statusCode: HttpStatus.OK,
     message: "Get all categories successfully",
-    data,
+    data: {
+      meta: metaData,
+      list: categories,
+    },
   });
 };
 
-export const getCategoryByIdController = async (req, res, next) => {
+export const getCategoryByIdController = async (req, res) => {
   const { id } = req.params;
   const existCategory = await getCategoryByIdService(id);
   if (!existCategory) {
@@ -87,7 +107,7 @@ export const getCategoryByIdController = async (req, res, next) => {
   });
 };
 
-export const updateCategoryByIdController = async (req, res, next) => {
+export const updateCategoryByIdController = async (req, res) => {
   const { id } = req.params;
   const existCategory = await getCategoryByIdService(id, "_id");
   if (!existCategory) {
@@ -123,7 +143,7 @@ export const updateCategoryByIdController = async (req, res, next) => {
   });
 };
 
-export const removeCategoryByIdController = async (req, res, next) => {
+export const removeCategoryByIdController = async (req, res) => {
   const { id } = req.params;
   const existCategory = await getCategoryByIdService(id);
   if (!existCategory) {
@@ -142,7 +162,7 @@ export const removeCategoryByIdController = async (req, res, next) => {
   });
 };
 
-export const isExistCategoryNameController = async (req, res, next) => {
+export const isExistCategoryNameController = async (req, res) => {
   const { name } = req.body;
   const isExistName = await checkExistCategoryNameService(name);
 
@@ -155,7 +175,7 @@ export const isExistCategoryNameController = async (req, res, next) => {
   });
 };
 
-export const showCategoryByIdController = async (req, res, next) => {
+export const showCategoryByIdController = async (req, res) => {
   const { id } = req.params;
   const existCategory = await getCategoryByIdService(id, "_id");
   if (!existCategory) {
@@ -170,7 +190,7 @@ export const showCategoryByIdController = async (req, res, next) => {
   });
 };
 
-export const hideCategoryByIdController = async (req, res, next) => {
+export const hideCategoryByIdController = async (req, res) => {
   const { id } = req.params;
   const existCategory = await getCategoryByIdService(id, "_id");
   if (!existCategory) {

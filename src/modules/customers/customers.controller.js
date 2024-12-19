@@ -11,12 +11,14 @@ import {
   getAllUsersService,
   updateUserInfoByIdService,
   removeUserByIdService,
+  countAllUsersService,
 } from "#src/modules/users/users.service";
 import { USER_TYPES } from "#src/core/constant";
 import { randomStr } from "#src/utils/string.util";
 import { sendPasswordService } from "#src/modules/mailer/mailer.service";
+import { calculatePagination } from "#src/utils/pagination.util";
 
-export const createCustomerController = async (req, res, next) => {
+export const createCustomerController = async (req, res) => {
   const { email } = req.body;
   const isExistEmail = await checkExistEmailService(email);
   if (isExistEmail) {
@@ -31,7 +33,7 @@ export const createCustomerController = async (req, res, next) => {
     type: USER_TYPES.CUSTOMER,
   });
 
-  sendPasswordService(email, password);
+  await sendPasswordService(email, password);
 
   if (req.file) {
     await updateUserAvatarByIdService(newCustomer._id, req.file);
@@ -46,19 +48,34 @@ export const createCustomerController = async (req, res, next) => {
   });
 };
 
-export const getAllCustomersController = async (req, res, next) => {
-  const data = await getAllUsersService({
-    ...req.query,
+export const getAllCustomersController = async (req, res) => {
+  let { keyword = "", limit = 10, page = 1 } = req.query;
+
+  const filterOptions = {
+    $or: [
+      { name: { $regex: keyword, $options: "i" } },
+      { email: { $regex: keyword, $options: "i" } },
+    ],
     type: USER_TYPES.CUSTOMER,
+  };
+
+  const totalCount = await countAllUsersService(filterOptions);
+  const metaData = calculatePagination(page, limit, totalCount);
+
+  const customers = await getAllUsersService({
+    filters: filterOptions,
+    offset: metaData.offset,
+    limit: metaData.limit,
   });
+
   return res.json({
     statusCode: HttpStatus.OK,
     message: "Get all customers successfully",
-    data,
+    data: { meta: metaData, list: customers },
   });
 };
 
-export const getCustomerByIdController = async (req, res, next) => {
+export const getCustomerByIdController = async (req, res) => {
   const { id } = req.params;
   const existCustomer = await getUserByIdService(id);
   if (!existCustomer) {
@@ -72,7 +89,7 @@ export const getCustomerByIdController = async (req, res, next) => {
   });
 };
 
-export const updateCustomerByIdController = async (req, res, next) => {
+export const updateCustomerByIdController = async (req, res) => {
   const { id } = req.params;
   const { email } = req.body;
   const existCustomer = await getUserByIdService(id, "_id");
@@ -104,7 +121,7 @@ export const updateCustomerByIdController = async (req, res, next) => {
   });
 };
 
-export const removeCustomerByIdController = async (req, res, next) => {
+export const removeCustomerByIdController = async (req, res) => {
   const { id } = req.params;
   const existCustomer = await getUserByIdService(id, "_id");
   if (!existCustomer) {

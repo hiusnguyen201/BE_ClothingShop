@@ -1,11 +1,8 @@
-import * as dotenv from "dotenv";
-dotenv.config();
+import "dotenv/config";
 
 const env = process.env;
 
 const config = {
-  timezone: "Asia/Ho_Chi_Minh",
-
   nodeEnv: env.NODE_ENV,
   port: env.PORT || 3000,
 

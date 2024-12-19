@@ -7,6 +7,7 @@ import {
   checkExistEmailService,
   updateUserAvatarByIdService,
   updateUserInfoByIdService,
+  countAllUsersService,
 } from "#src/modules/users/users.service";
 import { getRoleByIdService } from "#src/modules/roles/roles.service";
 import { sendPasswordService } from "#src/modules/mailer/mailer.service";
@@ -17,8 +18,9 @@ import {
 import { randomStr } from "#src/utils/string.util";
 import { USER_TYPES } from "#src/core/constant";
 import { makeHash } from "#src/utils/bcrypt.util";
+import { calculatePagination } from "#src/utils/pagination.util";
 
-export const createUserController = async (req, res, next) => {
+export const createUserController = async (req, res) => {
   const { email, role } = req.body;
   const isExistEmail = await checkExistEmailService(email);
   if (isExistEmail) {
@@ -41,7 +43,7 @@ export const createUserController = async (req, res, next) => {
   });
 
   // Send password to mail for user
-  sendPasswordService(email, password);
+  await sendPasswordService(email, password);
 
   // Update avatar
   if (req.file) {
@@ -57,20 +59,34 @@ export const createUserController = async (req, res, next) => {
   });
 };
 
-export const getAllUsersController = async (req, res, next) => {
-  const data = await getAllUsersService({
-    ...req.query,
+export const getAllUsersController = async (req, res) => {
+  let { keyword = "", limit = 10, page = 1 } = req.query;
+
+  const filterOptions = {
+    $or: [
+      { name: { $regex: keyword, $options: "i" } },
+      { email: { $regex: keyword, $options: "i" } },
+    ],
     type: USER_TYPES.USER,
+  };
+
+  const totalCount = await countAllUsersService(filterOptions);
+  const metaData = calculatePagination(page, limit, totalCount);
+
+  const users = await getAllUsersService({
+    filters: filterOptions,
+    offset: metaData.offset,
+    limit: metaData.limit,
   });
 
   return res.json({
     statusCode: HttpStatus.OK,
     message: "Get all users successfully",
-    data,
+    data: { meta: metaData, list: users },
   });
 };
 
-export const getUserByIdController = async (req, res, next) => {
+export const getUserByIdController = async (req, res) => {
   const { id } = req.params;
   const existUser = await getUserByIdService(id);
   if (!existUser) {
@@ -84,7 +100,7 @@ export const getUserByIdController = async (req, res, next) => {
   });
 };
 
-export const updateUserByIdController = async (req, res, next) => {
+export const updateUserByIdController = async (req, res) => {
   const { id } = req.params;
   const existUser = await getUserByIdService(id, "_id");
   if (!existUser) {
@@ -125,7 +141,7 @@ export const updateUserByIdController = async (req, res, next) => {
   });
 };
 
-export const removeUserByIdController = async (req, res, next) => {
+export const removeUserByIdController = async (req, res) => {
   const { id } = req.params;
   const existUser = await getUserByIdService(id);
   if (!existUser) {

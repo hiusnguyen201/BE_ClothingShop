@@ -15,10 +15,12 @@ import {
   checkExistRoleNameService,
   activateRoleByIdService,
   deactivateRoleByIdService,
+  countAllRolesService,
 } from "#src/modules/roles/roles.service";
 import { makeSlug } from "#src/utils/string.util";
+import { calculatePagination } from "#src/utils/pagination.util";
 
-export const createRoleController = async (req, res, next) => {
+export const createRoleController = async (req, res) => {
   const { name, permissions } = req.body;
   const isExistName = await checkExistRoleNameService(name);
   if (isExistName) {
@@ -49,16 +51,31 @@ export const createRoleController = async (req, res, next) => {
   });
 };
 
-export const getAllRolesController = async (req, res, next) => {
-  const data = await getAllRolesService(req.query);
+export const getAllRolesController = async (req, res) => {
+  let { keyword = "", limit = 10, page = 1, isActive } = req.query;
+
+  const filterOptions = {
+    $or: [{ name: { $regex: keyword, $options: "i" } }],
+    ...(isActive ? { isActive } : {}),
+  };
+
+  const totalCount = await countAllRolesService(filterOptions);
+  const metaData = calculatePagination(page, limit, totalCount);
+
+  const roles = await getAllRolesService({
+    filters: filterOptions,
+    offset: metaData.offset,
+    limit: metaData.limit,
+  });
+
   return res.json({
     statusCode: HttpStatus.OK,
     message: "Get all roles successfully",
-    data,
+    data: { meta: metaData, list: roles },
   });
 };
 
-export const getRoleByIdController = async (req, res, next) => {
+export const getRoleByIdController = async (req, res) => {
   const { id } = req.params;
   const existRole = await getRoleByIdService(id);
   if (!existRole) {
@@ -72,7 +89,7 @@ export const getRoleByIdController = async (req, res, next) => {
   });
 };
 
-export const updateRoleByIdController = async (req, res, next) => {
+export const updateRoleByIdController = async (req, res) => {
   const { id } = req.params;
   const existRole = await getRoleByIdService(id, "_id");
   if (!existRole) {
@@ -112,7 +129,7 @@ export const updateRoleByIdController = async (req, res, next) => {
   });
 };
 
-export const removeRoleByIdController = async (req, res, next) => {
+export const removeRoleByIdController = async (req, res) => {
   const { id } = req.params;
   const existRole = await getRoleByIdService(id);
   if (!existRole) {
@@ -131,7 +148,7 @@ export const removeRoleByIdController = async (req, res, next) => {
   });
 };
 
-export const isExistRoleNameController = async (req, res, next) => {
+export const isExistRoleNameController = async (req, res) => {
   const { name } = req.body;
   const existRoleName = await checkExistRoleNameService(name);
 
@@ -144,7 +161,7 @@ export const isExistRoleNameController = async (req, res, next) => {
   });
 };
 
-export const activateRoleByIdController = async (req, res, next) => {
+export const activateRoleByIdController = async (req, res) => {
   const { id } = req.params;
   const existRole = await getRoleByIdService(id, "_id");
   if (!existRole) {
@@ -159,7 +176,7 @@ export const activateRoleByIdController = async (req, res, next) => {
   });
 };
 
-export const deactivateRoleByIdController = async (req, res, next) => {
+export const deactivateRoleByIdController = async (req, res) => {
   const { id } = req.params;
   const existRole = await getRoleByIdService(id, "_id");
   if (!existRole) {

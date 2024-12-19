@@ -6,13 +6,15 @@ import {
   removePermissionByIdService,
   updatePermissionInfoByIdService,
   checkExistPermissionNameService,
+  countAllPermissionsService,
 } from "#src/modules/permissions/permissions.service.js";
 import {
   ConflictException,
   NotFoundException,
 } from "#src/core/exception/http-exception";
+import { calculatePagination } from "#src/utils/pagination.util";
 
-export const createPermissionController = async (req, res, next) => {
+export const createPermissionController = async (req, res) => {
   const { name } = req.body;
   const isExistName = await checkExistPermissionNameService(name);
   if (isExistName) {
@@ -32,16 +34,35 @@ export const createPermissionController = async (req, res, next) => {
   });
 };
 
-export const getAllPermissionsController = async (req, res, next) => {
-  const data = await getAllPermissionsService(req.query);
+export const getAllPermissionsController = async (req, res) => {
+  let { keyword = "", method, limit = 10, page = 1 } = req.query;
+
+  const filterOptions = {
+    $or: [
+      { name: { $regex: keyword, $options: "i" } },
+      { module: { $regex: keyword, $options: "i" } },
+      { endpoint: { $regex: keyword, $options: "i" } },
+    ],
+    ...(method ? { method } : {}),
+  };
+
+  const totalCount = await countAllPermissionsService(filterOptions);
+  const metaData = calculatePagination(page, limit, totalCount);
+
+  const permissions = await getAllPermissionsService({
+    filters: filterOptions,
+    offset: metaData.offset,
+    limit: metaData.limit,
+  });
+
   return res.json({
     statusCode: HttpStatus.OK,
     message: "Get all permissions successfully",
-    data,
+    data: { meta: metaData, list: permissions },
   });
 };
 
-export const getPermissionByIdController = async (req, res, next) => {
+export const getPermissionByIdController = async (req, res) => {
   const { id } = req.params;
   const existPermission = await getPermissionByIdService(id);
   if (!existPermission) {
@@ -55,7 +76,7 @@ export const getPermissionByIdController = async (req, res, next) => {
   });
 };
 
-export const updatePermissionByIdController = async (req, res, next) => {
+export const updatePermissionByIdController = async (req, res) => {
   const { id } = req.params;
   const existPermission = await getPermissionByIdService(id);
   if (!existPermission) {
@@ -80,7 +101,7 @@ export const updatePermissionByIdController = async (req, res, next) => {
   });
 };
 
-export const removePermissionByIdController = async (req, res, next) => {
+export const removePermissionByIdController = async (req, res) => {
   const { id } = req.params;
   const existPermission = await getPermissionByIdService(id);
   if (!existPermission) {

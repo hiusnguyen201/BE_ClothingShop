@@ -5,7 +5,6 @@ import {
   uploadImageBufferService,
 } from "#src/modules/cloudinary/cloudinary.service";
 import { getPermissionByIdService } from "#src/modules/permissions/permissions.service.js";
-import { calculatePagination } from "#src/utils/pagination.util";
 import { makeSlug } from "#src/utils/string.util";
 import { REGEX_PATTERNS } from "#src/core/constant";
 
@@ -18,7 +17,7 @@ const SELECTED_FIELDS =
  * @returns
  */
 export async function createRoleService(data) {
-  return await RoleModel.create(data);
+  return RoleModel.create(data);
 }
 
 /**
@@ -27,29 +26,26 @@ export async function createRoleService(data) {
  * @param {*} selectFields
  * @returns
  */
-export async function getAllRolesService(
-  query,
-  selectFields = SELECTED_FIELDS
-) {
-  let { keyword = "", limit = 10, page = 1 } = query;
-
-  const filterOptions = {
-    $or: [{ name: { $regex: keyword, $options: "i" } }],
-  };
-
-  const totalCount = await RoleModel.countDocuments(filterOptions);
-  const metaData = calculatePagination(page, limit, totalCount);
-
-  const roles = await RoleModel.find(filterOptions)
-    .skip(metaData.offset)
-    .limit(metaData.limit)
+export async function getAllRolesService({
+  filters,
+  offset = 0,
+  limit = 10,
+  selectFields = SELECTED_FIELDS,
+}) {
+  return RoleModel.find(filters)
+    .skip(offset)
+    .limit(limit)
     .select(selectFields)
     .sort({ createdAt: -1 });
+}
 
-  return {
-    meta: metaData,
-    list: roles,
-  };
+/**
+ * Count all roles
+ * @param {*} filters
+ * @returns
+ */
+export async function countAllRolesService(filters) {
+  return RoleModel.countDocuments(filters);
 }
 
 /**
@@ -73,7 +69,7 @@ export async function getRoleByIdService(
     filter.name = id;
   }
 
-  return await RoleModel.findOne(filter).select(selectFields);
+  return RoleModel.findOne(filter).select(selectFields);
 }
 
 /**
@@ -82,7 +78,7 @@ export async function getRoleByIdService(
  * @returns
  */
 export async function removeRoleByIdService(id) {
-  return await RoleModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
+  return RoleModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
 }
 
 /**
@@ -107,7 +103,7 @@ export async function checkExistRoleNameService(name, skipId) {
  * @returns
  */
 export async function updateRoleInfoByIdService(id, data) {
-  return await RoleModel.findByIdAndUpdate(id, data, {
+  return RoleModel.findByIdAndUpdate(id, data, {
     new: true,
   }).select(SELECTED_FIELDS);
 }
@@ -128,7 +124,7 @@ export async function updateRoleIconByIdService(id, file, currentIcon) {
     folderName: "role-icons",
   });
 
-  return await RoleModel.findByIdAndUpdate(
+  return RoleModel.findByIdAndUpdate(
     id,
     {
       icon: result.public_id,
@@ -149,11 +145,11 @@ export async function updateRolePermissionsByIdService(
 ) {
   const result = await Promise.all(
     permissions.map(async (item) => {
-      return await getPermissionByIdService(item);
+      return getPermissionByIdService(item);
     })
   );
 
-  return await RoleModel.findByIdAndUpdate(
+  return RoleModel.findByIdAndUpdate(
     id,
     {
       permissions: result.filter(Boolean),

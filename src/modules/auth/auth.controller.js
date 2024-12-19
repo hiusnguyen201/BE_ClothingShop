@@ -31,7 +31,7 @@ import {
   getResetPasswordByTokenService,
 } from "#src/modules/reset-password/reset-password.service";
 
-export const registerController = async (req, res, next) => {
+export const registerController = async (req, res) => {
   const { password, email } = req.body;
   const isExistEmail = await checkExistEmailService(email);
   if (isExistEmail) {
@@ -65,7 +65,7 @@ export const registerController = async (req, res, next) => {
   });
 };
 
-export const loginController = async (req, res, next) => {
+export const loginController = async (req, res) => {
   const { email, password } = req.body;
 
   const user = await getUserByIdService(
@@ -95,7 +95,7 @@ export const loginController = async (req, res, next) => {
   });
 };
 
-export const sendOtpViaEmailController = async (req, res, next) => {
+export const sendOtpViaEmailController = async (req, res) => {
   const { email } = req.body;
   const user = await getUserByIdService(email);
   if (!user) {
@@ -111,7 +111,7 @@ export const sendOtpViaEmailController = async (req, res, next) => {
   });
 };
 
-export const verifyOtpController = async (req, res, next) => {
+export const verifyOtpController = async (req, res) => {
   const { email, otp } = req.body;
   const user = await getUserByIdService(
     email,
@@ -143,7 +143,7 @@ export const verifyOtpController = async (req, res, next) => {
   });
 };
 
-export const forgotPasswordController = async (req, res, next) => {
+export const forgotPasswordController = async (req, res) => {
   const { email, callbackUrl } = req.body;
   const user = await getUserByIdService(email);
   if (!user) {
@@ -161,7 +161,7 @@ export const forgotPasswordController = async (req, res, next) => {
   });
 };
 
-export const resetPasswordController = async (req, res, next) => {
+export const resetPasswordController = async (req, res) => {
   const { token } = req.params;
   const resetPassword = await getResetPasswordByTokenService(token);
   if (!resetPassword) {
