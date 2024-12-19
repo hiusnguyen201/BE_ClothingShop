@@ -6,7 +6,6 @@ import {
 } from "#src/modules/cloudinary/cloudinary.service";
 import { REGEX_PATTERNS, USER_TYPES } from "#src/core/constant";
 import { calculatePagination } from "#src/utils/pagination.util";
-import { makeHash } from "#src/utils/bcrypt.util";
 
 const SELECTED_FIELDS =
   "_id avatar name email status birthday gender createdAt updatedAt";
@@ -17,7 +16,6 @@ const SELECTED_FIELDS =
  * @returns
  */
 export async function createUserService(data) {
-  data.password = makeHash(data.password);
   return await UserModel.create(data);
 }
 
@@ -33,7 +31,6 @@ export async function getAllUsersService(
 ) {
   let {
     keyword = "",
-    status,
     limit = 10,
     page = 1,
     type = USER_TYPES.CUSTOMER,
@@ -44,7 +41,6 @@ export async function getAllUsersService(
       { name: { $regex: keyword, $options: "i" } },
       { email: { $regex: keyword, $options: "i" } },
     ],
-    [status && "status"]: status,
     type,
   };
 

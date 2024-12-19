@@ -1,5 +1,5 @@
 import HttpStatus from "http-status-codes";
-import { NotFoundException } from "#src/core/exception/http-exception";
+import { ConflictException, NotFoundException } from "#src/core/exception/http-exception";
 import {
   createRoleService,
   getAllRolesService,

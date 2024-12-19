@@ -16,6 +16,7 @@ import {
 } from "#src/core/exception/http-exception";
 import { randomStr } from "#src/utils/string.util";
 import { USER_TYPES } from "#src/core/constant";
+import { makeHash } from "#src/utils/bcrypt.util";
 
 export const createUserController = async (req, res, next) => {
   try {
@@ -33,8 +34,10 @@ export const createUserController = async (req, res, next) => {
     }
 
     const password = randomStr(32);
+    const hashedPassword = makeHash(password);
     const newUser = await createUserService({
       ...req.body,
+      password: hashedPassword,
       type: USER_TYPES.USER,
     });
 
