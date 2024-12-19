@@ -8,4 +8,5 @@ export const createCategoryDto = Joi.object({
     .required()
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
   parent: Joi.string(),
+  isHide: Joi.boolean(),
 });

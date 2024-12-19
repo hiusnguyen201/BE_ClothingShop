@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   PayloadTooLargeException,
+  UnsupportedMediaTypeException,
 } from "#src/core/exception/http-exception";
 
 /**
@@ -33,11 +34,13 @@ export const validateFile = (multerUpload) => {
       }
 
       if (err.code === "LIMIT_FILE_SIZE") {
-        return next(new PayloadTooLargeException());
+        return next(new PayloadTooLargeException("File too large"));
       } else if (err.code === "LIMIT_FILE_COUNT") {
         return next(new BadRequestException("Too many files"));
       } else {
-        return next(new BadRequestException("Invalid file type"));
+        return next(
+          new UnsupportedMediaTypeException("Invalid file type")
+        );
       }
     });
   };

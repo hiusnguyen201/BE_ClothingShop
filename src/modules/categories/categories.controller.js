@@ -2,6 +2,7 @@ import HttpStatus from "http-status-codes";
 import {
   NotFoundException,
   ConflictException,
+  PreconditionFailedException,
 } from "#src/core/exception/http-exception";
 import {
   createCategoryService,
@@ -146,9 +147,13 @@ export const updateCategoryByIdController = async (req, res, next) => {
 export const removeCategoryByIdController = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const existCategory = await getCategoryByIdService(id, "_id");
+    const existCategory = await getCategoryByIdService(id);
     if (!existCategory) {
       throw new NotFoundException("Category not found");
+    }
+
+    if (!existCategory.isHide) {
+      throw new PreconditionFailedException("Category is public");
     }
 
     const removedCategory = await removeCategoryByIdService(id);

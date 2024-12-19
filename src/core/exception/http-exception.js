@@ -64,6 +64,15 @@ export class ConflictException extends HttpException {
 }
 
 /**
+ * The HTTP response status code will be 419.
+ */
+export class PreconditionFailedException extends HttpException {
+  constructor(message) {
+    super(message, HttpStatus.PRECONDITION_FAILED, "Precondition Failed");
+  }
+}
+
+/**
  * The HTTP response status code will be 413.
  */
 export class PayloadTooLargeException extends HttpException {

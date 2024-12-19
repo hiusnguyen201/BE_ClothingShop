@@ -38,6 +38,13 @@
             "type": "string"
           },
           {
+            "name": "password",
+            "in": "formData",
+            "description": "Password of customer",
+            "type": "string",
+            "required": true
+          },
+          {
             "name": "birthday",
             "in": "formData",
             "description": "Birthday of customer",
@@ -100,6 +107,34 @@
                 "error": {
                   "type": "string",
                   "default": "Bad Request"
+                },
+                "message": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 409
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Email already exist"
                 },
                 "message": {
                   "type": "array",
@@ -617,13 +652,7 @@
             "description": "Keyword to search name or email",
             "type": "string"
           },
-          {
-            "name": "status",
-            "in": "query",
-            "description": "Status of user",
-            "type": "string",
-            "enum": ["Active", "Inactive", "Banned", "Deleted"]
-          },
+
           {
             "name": "limit",
             "in": "query",
@@ -655,12 +684,6 @@
                 "data": {
                   "type": "object",
                   "properties": {
-                    "list": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/definitions/UserModel"
-                      }
-                    },
                     "meta": {
                       "type": "object",
                       "properties": {
@@ -691,6 +714,12 @@
                         "isLast": {
                           "type": "boolean"
                         }
+                      }
+                    },
+                    "list": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/UserModel"
                       }
                     }
                   }
@@ -900,6 +929,32 @@
               }
             }
           },
+          "409": {
+            "description": "Conflict",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 409
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Conflict"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Email already exist"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
           "413": {
             "description": "File Too Large",
             "schema": {
@@ -916,6 +971,32 @@
                 "message": {
                   "type": "string",
                   "default": "Payload Too Large"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported media type",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 415
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Unsupported media type"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Invalid file type"
                 },
                 "timestamp": {
                   "type": "number"
@@ -1073,6 +1154,32 @@
               }
             }
           },
+          "409": {
+            "description": "Conflict",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 409
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Conflict"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Email already exist"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
           "413": {
             "description": "File Too Large",
             "schema": {
@@ -1089,6 +1196,32 @@
                 "message": {
                   "type": "string",
                   "default": "Payload Too Large"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported media type",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 415
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Unsupported media type"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Invalid file type"
                 },
                 "timestamp": {
                   "type": "number"
@@ -1223,11 +1356,10 @@
             "type": "string"
           },
           {
-            "name": "status",
+            "name": "isActive",
             "in": "query",
             "description": "Status of role",
-            "type": "string",
-            "enum": ["Active", "Inactive", "Deleted"]
+            "type": "boolean"
           },
           {
             "name": "limit",
@@ -1260,12 +1392,6 @@
                 "data": {
                   "type": "object",
                   "properties": {
-                    "list": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/definitions/RoleModel"
-                      }
-                    },
                     "meta": {
                       "type": "object",
                       "properties": {
@@ -1296,6 +1422,12 @@
                         "isLast": {
                           "type": "boolean"
                         }
+                      }
+                    },
+                    "list": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/RoleModel"
                       }
                     }
                   }
@@ -1441,12 +1573,11 @@
             "type": "string"
           },
           {
-            "name": "status",
+            "name": "isActive",
             "in": "formData",
             "description": "Status of role",
             "required": true,
-            "type": "string",
-            "enum": ["Active", "Inactive", "Deleted"]
+            "type": "boolean"
           },
           {
             "name": "permissions",
@@ -1507,8 +1638,34 @@
               }
             }
           },
+          "409": {
+            "description": "Conflict",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 409
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Conflict"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Role name already exist"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
           "413": {
-            "description": "File Too Large",
+            "description": "File too large",
             "schema": {
               "type": "object",
               "properties": {
@@ -1523,6 +1680,32 @@
                 "message": {
                   "type": "string",
                   "default": "Payload Too Large"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported media type",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 415
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Unsupported media type"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Invalid file type"
                 },
                 "timestamp": {
                   "type": "number"
@@ -1591,11 +1774,10 @@
             "type": "string"
           },
           {
-            "name": "status",
+            "name": "isActive",
             "in": "formData",
             "description": "Status of role",
-            "type": "string",
-            "enum": ["Active", "Inactive", "Deleted"]
+            "type": "boolean"
           },
           {
             "name": "permissions",
@@ -1682,6 +1864,32 @@
               }
             }
           },
+          "409": {
+            "description": "Conflict",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 409
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Conflict"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Role name already exist"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
           "413": {
             "description": "File Too Large",
             "schema": {
@@ -1698,6 +1906,32 @@
                 "message": {
                   "type": "string",
                   "default": "Payload Too Large"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported media type",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 415
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Unsupported media type"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Invalid file type"
                 },
                 "timestamp": {
                   "type": "number"
@@ -1794,6 +2028,32 @@
               }
             }
           },
+          "412": {
+            "description": "Precondition Failed",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 412
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Precondition Failed"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Role is active"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Internal Server Error",
             "schema": {
@@ -1836,14 +2096,13 @@
             "in": "query",
             "description": "Method of permission",
             "type": "string",
-            "enum": ["Active", "Inactive", "Deleted"]
+            "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"]
           },
           {
-            "name": "status",
+            "name": "isActive",
             "in": "query",
-            "description": "Status of role",
-            "type": "string",
-            "enum": ["Active", "Inactive", "Deleted"]
+            "description": "Status of permission",
+            "type": "boolean"
           },
           {
             "name": "limit",
@@ -1876,12 +2135,6 @@
                 "data": {
                   "type": "object",
                   "properties": {
-                    "list": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/definitions/PermissionModel"
-                      }
-                    },
                     "meta": {
                       "type": "object",
                       "properties": {
@@ -1912,6 +2165,12 @@
                         "isLast": {
                           "type": "boolean"
                         }
+                      }
+                    },
+                    "list": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/PermissionModel"
                       }
                     }
                   }
@@ -2073,12 +2332,11 @@
             "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"]
           },
           {
-            "name": "status",
+            "name": "isActive",
             "in": "formData",
             "description": "Status of permission",
             "required": true,
-            "type": "string",
-            "enum": ["Active", "Inactive", "Deleted"]
+            "type": "boolean"
           }
         ],
         "responses": {
@@ -2120,6 +2378,32 @@
                   "items": {
                     "type": "string"
                   }
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 409
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Conflict"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Permission name already exist"
                 },
                 "timestamp": {
                   "type": "number"
@@ -2283,6 +2567,32 @@
               }
             }
           },
+          "409": {
+            "description": "Conflict",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 409
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Conflict"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Permission name already exist"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Internal Server Error",
             "schema": {
@@ -2369,6 +2679,966 @@
               }
             }
           },
+          "412": {
+            "description": "Precondition Failed",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 412
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Precondition Failed"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Permission is active"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories/get-categories": {
+      "get": {
+        "tags": ["Categories"],
+        "operationId": "GetCategories",
+        "summary": "Get list categories",
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "Keyword to search name",
+            "type": "string"
+          },
+          {
+            "name": "isHide",
+            "in": "query",
+            "description": "Status of category",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Limit of page to paginate",
+            "type": "number",
+            "enum": [10, 20, 30, 40, 50]
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Current page",
+            "type": "number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get all categories successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 200
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Get all categories successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "offSet": {
+                          "type": "number"
+                        },
+                        "limit": {
+                          "type": "number"
+                        },
+                        "page": {
+                          "type": "number"
+                        },
+                        "totalPage": {
+                          "type": "number"
+                        },
+                        "totalCount": {
+                          "type": "number"
+                        },
+                        "isNext": {
+                          "type": "boolean"
+                        },
+                        "isPrevious": {
+                          "type": "boolean"
+                        },
+                        "isFirst": {
+                          "type": "boolean"
+                        },
+                        "isLast": {
+                          "type": "boolean"
+                        }
+                      }
+                    },
+                    "list": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/CategoryModel"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories/get-category-by-id/{id}": {
+      "get": {
+        "tags": ["Categories"],
+        "operationId": "GetCategoryById",
+        "summary": "Get one category by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Id of category",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get one category successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 200
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Get one category successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "$ref": "#/definitions/CategoryModel"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Category not found",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 404
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Not found"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Category not found"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories/create-category": {
+      "post": {
+        "tags": ["Categories"],
+        "consumes": ["multipart/form-data"],
+        "operationId": "CreateCategory",
+        "summary": "Create category",
+        "parameters": [
+          {
+            "name": "image",
+            "in": "formData",
+            "description": "Image of category",
+            "required": true,
+            "type": "file"
+          },
+          {
+            "name": "name",
+            "in": "formData",
+            "description": "Name of category",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "isHide",
+            "in": "formData",
+            "description": "Status of category",
+            "required": true,
+            "type": "boolean"
+          },
+          {
+            "name": "parent",
+            "in": "formData",
+            "description": "Id of parent category",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Create category successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 201
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Create category successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "$ref": "#/definitions/CategoryModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 400
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Bad Request"
+                },
+                "message": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 409
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Category name already exist"
+                },
+                "message": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "File Too Large",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 413
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Content Too Large"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Payload Too Large"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported media type",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 415
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Unsupported media type"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Invalid file type"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories/update-category-by-id/{id}": {
+      "patch": {
+        "tags": ["Categories"],
+        "consumes": ["multipart/form-data"],
+        "operationId": "UpdateCategoryById",
+        "summary": "Update category by id",
+        "parameters": [
+          {
+            "name": "image",
+            "in": "formData",
+            "description": "Image of category",
+            "type": "file"
+          },
+          {
+            "name": "name",
+            "in": "formData",
+            "description": "Name of category",
+            "type": "string"
+          },
+          {
+            "name": "isHide",
+            "in": "formData",
+            "description": "Status of category",
+            "type": "boolean"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Update category successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 200
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Update category successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "$ref": "#/definitions/CategoryModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 400
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Bad Request"
+                },
+                "message": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Category not found",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 404
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Not found"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Category not found"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 409
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Conflict"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Category name already exist"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "File Too Large",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 413
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Content Too Large"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Payload Too Large"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported media type",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 415
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Unsupported media type"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Invalid file type"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories/remove-category-by-id/{id}": {
+      "delete": {
+        "tags": ["Categories"],
+        "operationId": "RemoveCategoryById",
+        "summary": "Remove category by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Id of category",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Remove category successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 200
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Remove category successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "$ref": "#/definitions/CategoryModel"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Category not found",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 404
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Not found"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Category not found"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 412
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Precondition Failed"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Category is public"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories/is-exist-category-name": {
+      "post": {
+        "tags": ["Categories"],
+        "operationId": "CheckCategoryNameExist",
+        "summary": "Check category name exist",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "body",
+            "required": true,
+            "description": "Name of category",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Check category name successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 200
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Category name exists | Category name does not exist"
+                },
+                "data": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories/show-category-by-id/{id}": {
+      "patch": {
+        "tags": ["Categories"],
+        "operationId": "ShowCategoryById",
+        "summary": "Show category by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Id of category",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Show category successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 204
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Show category successfully"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Category not found",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 404
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Not found"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Category not found"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories/hide-category-by-id/{id}": {
+      "patch": {
+        "tags": ["Categories"],
+        "operationId": "HideCategoryById",
+        "summary": "Hide category by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Id of category",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Hide category successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 204
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Hide category successfully"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Category not found",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 404
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Not found"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Category not found"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Internal Server Error",
             "schema": {
@@ -2425,10 +3695,6 @@
         "email": {
           "type": "string"
         },
-        "status": {
-          "type": "string",
-          "enum": ["Active", "Inactive", "Deleted", "Banned"]
-        },
         "role": {
           "type": "object",
           "$ref": "#/definitions/RoleModel"
@@ -2461,12 +3727,14 @@
         "name": {
           "type": "string"
         },
+        "slug": {
+          "type": "string"
+        },
         "description": {
           "type": "string"
         },
-        "status": {
-          "type": "string",
-          "enum": ["Active", "Inactive", "Deleted"]
+        "isActive": {
+          "type": "boolean"
         },
         "permissions": {
           "type": "array",
@@ -2493,6 +3761,9 @@
         "name": {
           "type": "string"
         },
+        "slug": {
+          "type": "string"
+        },
         "description": {
           "type": "string"
         },
@@ -2506,9 +3777,8 @@
           "type": "string",
           "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"]
         },
-        "status": {
-          "type": "string",
-          "enum": ["Active", "Inactive", "Deleted"]
+        "isActive": {
+          "type": "boolean"
         },
         "roles": {
           "type": "array",
@@ -2521,6 +3791,40 @@
           "items": {
             "$ref": "#/definitions/UserModel"
           }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "CategoryModel": {
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "image": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "isHide": {
+          "type": "boolean"
+        },
+        "level": {
+          "type": "number"
+        },
+        "parent": {
+          "$ref": "#/definitions/CategoryModel"
         },
         "createdAt": {
           "type": "string",

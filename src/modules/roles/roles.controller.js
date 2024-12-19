@@ -1,5 +1,8 @@
 import HttpStatus from "http-status-codes";
-import { ConflictException, NotFoundException } from "#src/core/exception/http-exception";
+import {
+  ConflictException,
+  NotFoundException,
+} from "#src/core/exception/http-exception";
 import {
   createRoleService,
   getAllRolesService,
@@ -133,7 +136,7 @@ export const removeRoleByIdController = async (req, res, next) => {
       throw new NotFoundException("Role not found");
     }
 
-    const data = await removeRoleByIdService(req.params.id);
+    const data = await removeRoleByIdService(id);
     return res.json({
       statusCode: HttpStatus.OK,
       message: "Remove role successfully",
