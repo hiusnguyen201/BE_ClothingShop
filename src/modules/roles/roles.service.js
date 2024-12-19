@@ -10,7 +10,7 @@ import { makeSlug } from "#src/utils/string.util";
 import { REGEX_PATTERNS } from "#src/core/constant";
 
 const SELECTED_FIELDS =
-  "_id icon name slug description status createdAt updatedAt";
+  "_id icon name slug description isActive createdAt updatedAt";
 
 /**
  * Create role
@@ -161,4 +161,36 @@ export async function updateRolePermissionsByIdService(
     },
     { new: true }
   ).select(SELECTED_FIELDS);
+}
+
+/**
+ * Activate role
+ * @param {*} id
+ * @returns
+ */
+export async function activateRoleService(id) {
+  await RoleModel.findByIdAndUpdate(
+    id,
+    {
+      isActive: true,
+    },
+    { new: true }
+  ).select(SELECTED_FIELDS);
+  return;
+}
+
+/**
+ * Deactivate role
+ * @param {*} id
+ * @returns
+ */
+export async function deactivateRoleService(id) {
+  await RoleModel.findByIdAndUpdate(
+    id,
+    {
+      isActive: false,
+    },
+    { new: true }
+  ).select(SELECTED_FIELDS);
+  return;
 }

@@ -7,6 +7,9 @@ import {
   getRoleByIdController,
   updateRoleByIdController,
   removeRoleByIdController,
+  isExistRoleNameController,
+  activateRoleByIdController,
+  deactivateRoleByIdController,
 } from "#src/modules/roles/roles.controller";
 import { createRoleDto } from "#src/modules/roles/dto/create-role.dto";
 import { updateRoleDto } from "#src/modules/roles/dto/update-role.dto";
@@ -16,6 +19,7 @@ import {
 } from "#src/middlewares/validate-request.middleware";
 import { UploadUtils } from "#src/utils/upload.util";
 import { ALLOW_ICON_MIME_TYPES } from "#src/core/constant";
+import { checkExistRoleNameDto } from "#src/modules/roles/dto/check-exist-role-name.dto";
 const upload = UploadUtils.config({
   allowedMimeTypes: ALLOW_ICON_MIME_TYPES,
 });
@@ -35,6 +39,14 @@ router
     validateSchema(updateRoleDto),
     updateRoleByIdController
   )
-  .delete("/remove-role-by-id/:id", removeRoleByIdController);
+  .delete("/remove-role-by-id/:id", removeRoleByIdController)
+  .post(
+    "/is-exist-role-name",
+    validateSchema(checkExistRoleNameDto),
+    isExistRoleNameController
+  )
+  .patch("/activate-role-by-id/:id", activateRoleByIdController)
+  .delete("/deactivate-role-by-id/:id", deactivateRoleByIdController);
+
 
 export default router;
