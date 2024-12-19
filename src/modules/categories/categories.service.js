@@ -6,9 +6,10 @@ import {
 } from "#src/modules/cloudinary/cloudinary.service";
 import { calculatePagination } from "#src/utils/pagination.util";
 import { REGEX_PATTERNS } from "#src/core/constant";
+import { makeSlug } from "#src/utils/string.util";
 
 const SELECTED_FIELDS =
-  "_id icon name slug status parentCategory isHidden createdAt updatedAt";
+  "_id image name slug parent isHide level createdAt updatedAt";
 
 /**
  * Create category
@@ -29,11 +30,11 @@ export async function getAllCategoriesService(
   query,
   selectFields = SELECTED_FIELDS
 ) {
-  let { keyword = "", status, limit = 10, page = 1 } = query;
+  let { keyword = "", isHide = false, limit = 10, page = 1 } = query;
 
   const filterOptions = {
     $or: [{ name: { $regex: keyword, $options: "i" } }],
-    [status && "status"]: status,
+    isHide,
   };
 
   const totalCount = await CategoryModel.countDocuments(filterOptions);
@@ -88,29 +89,29 @@ export async function updateCategoryInfoByIdService(id, data) {
 }
 
 /**
- * Update icon category by id
+ * Update image category by id
  * @param {*} id
  * @param {*} file
  * @returns
  */
-export async function updateCategoryIconByIdService(
+export async function updateCategoryImageByIdService(
   id,
   file,
-  currentIcon
+  currentImage
 ) {
-  if (currentIcon) {
-    removeImageByPublicIdService(currentIcon);
+  if (currentImage) {
+    removeImageByPublicIdService(currentImage);
   }
 
   const result = await uploadImageBufferService({
     file,
-    folderName: "categories-icon",
+    folderName: "categories-image",
   });
 
   return await CategoryModel.findByIdAndUpdate(
     id,
     {
-      icon: result.public_id,
+      image: result.public_id,
     },
     { new: true }
   ).select(SELECTED_FIELDS);
@@ -133,8 +134,47 @@ export async function removeCategoryByIdService(id) {
  */
 export async function checkExistCategoryNameService(name, skipId) {
   const existCategory = await CategoryModel.findOne({
-    name,
+    $or: [
+      {
+        name,
+      },
+      {
+        slug: makeSlug(name),
+      },
+    ],
     _id: { $ne: skipId },
   }).select("_id");
   return Boolean(existCategory);
+}
+
+/**
+ * Show category
+ * @param {*} id
+ * @returns
+ */
+export async function showCategoryService(id) {
+  await CategoryModel.findByIdAndUpdate(
+    id,
+    {
+      isHide: false,
+    },
+    { new: true }
+  ).select(SELECTED_FIELDS);
+  return;
+}
+
+/**
+ * Hide category
+ * @param {*} id
+ * @returns
+ */
+export async function hideCategoryService(id) {
+  await CategoryModel.findByIdAndUpdate(
+    id,
+    {
+      isHide: true,
+    },
+    { new: true }
+  ).select(SELECTED_FIELDS);
+  return;
 }

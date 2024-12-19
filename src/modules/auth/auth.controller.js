@@ -13,7 +13,7 @@ import {
   ConflictException,
   NotFoundException,
 } from "#src/core/exception/http-exception";
-import { compareHash } from "#src/utils/bcrypt.util";
+import { compareHash, makeHash } from "#src/utils/bcrypt.util";
 import { generateToken } from "#src/utils/jwt.util";
 import { USER_TYPES } from "#src/core/constant";
 import {
@@ -39,6 +39,7 @@ export const registerController = async (req, res, next) => {
       throw new ConflictException("Email already exist");
     }
 
+    const hashedPassword = makeHash(password);
     const newCustomer = await createUserService({
       ...req.body,
       password: hashedPassword,

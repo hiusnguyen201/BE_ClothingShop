@@ -25,8 +25,10 @@ export const createCustomerController = async (req, res, next) => {
     }
 
     const password = randomStr(32);
+    const hashedPassword = makeHash(password);
     const newCustomer = await createUserService({
       ...req.body,
+      password: hashedPassword,
       type: USER_TYPES.CUSTOMER,
     });
 
