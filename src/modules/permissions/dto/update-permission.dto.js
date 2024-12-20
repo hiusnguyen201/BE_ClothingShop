@@ -1,7 +1,6 @@
 import Joi from "joi";
 import {
   ALLOW_METHODS,
-  PERMISSION_STATUS,
   REGEX_PATTERNS,
 } from "#src/core/constant";
 import { replaceMultiSpacesToSingleSpace } from "#src/utils/string.util";
@@ -29,7 +28,5 @@ export const updatePermissionDto = Joi.object({
       return helper.message("Invalid endpoint");
     }),
   method: Joi.string().valid(...ALLOW_METHODS),
-  status: Joi.string().valid(
-    ...[PERMISSION_STATUS.ACTIVE, PERMISSION_STATUS.INACTIVE]
-  ),
+  isActive: Joi.boolean(),
 }).min(1);

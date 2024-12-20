@@ -11,12 +11,6 @@ export const USER_STATUS = {
   DELETED: "Deleted",
 };
 
-export const PERMISSION_STATUS = {
-  ACTIVE: "Active",
-  INACTIVE: "Inactive",
-  DELETED: "Deleted",
-};
-
 export const ALLOW_METHODS = [
   "GET",
   "POST",
