@@ -9,8 +9,6 @@ export default asyncHandler;
 export const wrapAllRoutersWithAsyncHandler = (router) => {
   const originalRouter = express.Router();
 
-  console.log(2);
-
   router.stack.forEach((layer) => {
     if (layer.name === "router") {
       // layer.handle is an instance of express.Router
