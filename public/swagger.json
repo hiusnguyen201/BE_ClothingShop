@@ -3356,6 +3356,13 @@
         "summary": "Update category by id",
         "parameters": [
           {
+            "name": "id",
+            "in": "path",
+            "description": "Id of category",
+            "required": true,
+            "type": "string"
+          },
+          {
             "name": "image",
             "in": "formData",
             "description": "Image of category",
@@ -3888,6 +3895,711 @@
           }
         }
       }
+    },
+    "/vouchers/get-vouchers": {
+      "get": {
+        "tags": ["Vouchers"],
+        "operationId": "GetVouchers",
+        "summary": "Get list vouchers",
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "Keyword to search name",
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Limit of page to paginate",
+            "type": "number",
+            "enum": [10, 20, 30, 40, 50]
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Current page",
+            "type": "number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get all vouchers successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 200
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Get all vouchers successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "offSet": {
+                          "type": "number"
+                        },
+                        "limit": {
+                          "type": "number"
+                        },
+                        "page": {
+                          "type": "number"
+                        },
+                        "totalPage": {
+                          "type": "number"
+                        },
+                        "totalCount": {
+                          "type": "number"
+                        },
+                        "isNext": {
+                          "type": "boolean"
+                        },
+                        "isPrevious": {
+                          "type": "boolean"
+                        },
+                        "isFirst": {
+                          "type": "boolean"
+                        },
+                        "isLast": {
+                          "type": "boolean"
+                        }
+                      }
+                    },
+                    "list": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/VoucherModel"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vouchers/get-voucher-by-id/{id}": {
+      "get": {
+        "tags": ["Vouchers"],
+        "operationId": "GetVoucherById",
+        "summary": "Get one voucher by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Id of voucher",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get one voucher successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 200
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Get one voucher successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "$ref": "#/definitions/VoucherModel"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Voucher not found",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 404
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Not found"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Voucher not found"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vouchers/create-voucher": {
+      "post": {
+        "tags": ["Vouchers"],
+        "consumes": ["application/json"],
+        "operationId": "CreateVoucher",
+        "summary": "Create voucher",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "formData",
+            "description": "Code of voucher",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "in": "formData",
+            "description": "Name of voucher",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "in": "formData",
+            "description": "Description of voucher",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "maxUses",
+            "in": "formData",
+            "description": "Max uses of voucher",
+            "required": true,
+            "type": "number"
+          },
+          {
+            "name": "maxUsesPerUser",
+            "in": "formData",
+            "description": "Max uses per user of voucher",
+            "required": true,
+            "type": "number"
+          },
+          {
+            "name": "startDate",
+            "in": "formData",
+            "description": "Start date of voucher",
+            "required": true,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "endDate",
+            "in": "formData",
+            "description": "Start date of voucher",
+            "required": true,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "discount",
+            "in": "formData",
+            "description": "Discount of voucher",
+            "required": true,
+            "type": "number"
+          },
+          {
+            "name": "minPrice",
+            "in": "formData",
+            "description": "Min price product of voucher",
+            "required": true,
+            "type": "number"
+          },
+          {
+            "name": "isPublic",
+            "in": "formData",
+            "description": "Status of voucher",
+            "required": true,
+            "type": "boolean"
+          },
+          {
+            "name": "isFixed",
+            "in": "formData",
+            "description": "Type of discount of voucher",
+            "required": true,
+            "type": "boolean"
+          },
+          {
+            "name": "hasMaxDiscount",
+            "in": "formData",
+            "description": "Has max discount of voucher",
+            "required": true,
+            "type": "boolean"
+          },
+          {
+            "name": "maxDiscount",
+            "in": "formData",
+            "description": "Max discount of voucher",
+            "required": true,
+            "type": "number"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Create voucher successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 201
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Create voucher successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "$ref": "#/definitions/VoucherModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 400
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Bad Request"
+                },
+                "message": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 409
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Conflict"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Voucher code already exist"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vouchers/update-voucher-by-id/{id}": {
+      "patch": {
+        "tags": ["Vouchers"],
+        "consumes": ["application/json"],
+        "operationId": "UpdateVoucherById",
+        "summary": "Update voucher by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Id of voucher",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "in": "body",
+            "description": "Name of voucher",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isPublic",
+            "in": "body",
+            "description": "Status of voucher",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "description",
+            "in": "body",
+            "description": "Description of voucher",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "body",
+            "description": "End date of voucher",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "maxUses",
+            "in": "body",
+            "description": "Max uses of voucher",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Update voucher successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 200
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Update voucher successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "$ref": "#/definitions/VoucherModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 400
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Bad Request"
+                },
+                "message": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Voucher not found",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 404
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Not found"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Voucher not found"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vouchers/remove-voucher-by-id/{id}": {
+      "delete": {
+        "tags": ["Vouchers"],
+        "operationId": "RemoveVoucherById",
+        "summary": "Remove voucher by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Id of voucher",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Remove voucher successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 200
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Remove voucher successfully"
+                },
+                "data": {
+                  "type": "object",
+                  "$ref": "#/definitions/VoucherModel"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Voucher not found",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 404
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Not found"
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Voucher not found"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vouchers/is-exist-voucher-code": {
+      "post": {
+        "tags": ["Vouchers"],
+        "operationId": "CheckVoucherCodeExist",
+        "summary": "Check voucher code exist",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "body",
+            "required": true,
+            "description": "Code of voucher",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Check voucher code successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 200
+                },
+                "message": {
+                  "type": "string",
+                  "default": "Voucher code exists | Voucher code does not exist"
+                },
+                "data": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "statusCode": {
+                  "type": "number",
+                  "default": 500
+                },
+                "error": {
+                  "type": "string",
+                  "default": "Internal Server Error"
+                },
+                "timestamp": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -4050,6 +4762,66 @@
         },
         "parent": {
           "$ref": "#/definitions/CategoryModel"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "VoucherModel": {
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "maxUses": {
+          "type": "number"
+        },
+        "maxUsesPerUser": {
+          "type": "number"
+        },
+        "discount": {
+          "type": "number"
+        },
+        "isFixed": {
+          "type": "boolean"
+        },
+        "isPublic": {
+          "type": "boolean"
+        },
+        "maxDiscount": {
+          "type": "number"
+        },
+        "hasMaxDiscount": {
+          "type": "boolean"
+        },
+        "minPrice": {
+          "type": "number"
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "uses": {
+          "type": "number"
         },
         "createdAt": {
           "type": "string",
