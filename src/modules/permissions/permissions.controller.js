@@ -7,10 +7,13 @@ import {
   updatePermissionInfoByIdService,
   checkExistPermissionNameService,
   countAllPermissionsService,
+  activatePermissionByIdService,
+  deactivatePermissionByIdService,
 } from "#src/modules/permissions/permissions.service.js";
 import {
   ConflictException,
   NotFoundException,
+  PreconditionFailedException,
 } from "#src/core/exception/http-exception";
 import { calculatePagination } from "#src/utils/pagination.util";
 
@@ -35,7 +38,7 @@ export const createPermissionController = async (req, res) => {
 };
 
 export const getAllPermissionsController = async (req, res) => {
-  let { keyword = "", method, limit = 10, page = 1 } = req.query;
+  let { keyword = "", method, limit = 10, page = 1, isActive } = req.query;
 
   const filterOptions = {
     $or: [
@@ -44,6 +47,7 @@ export const getAllPermissionsController = async (req, res) => {
       { endpoint: { $regex: keyword, $options: "i" } },
     ],
     ...(method ? { method } : {}),
+    ...(isActive ? { isActive } : {}),
   };
 
   const totalCount = await countAllPermissionsService(filterOptions);
@@ -64,29 +68,31 @@ export const getAllPermissionsController = async (req, res) => {
 
 export const getPermissionByIdController = async (req, res) => {
   const { id } = req.params;
-  const existPermission = await getPermissionByIdService(id);
-  if (!existPermission) {
+  const permission = await getPermissionByIdService(id);
+  if (!permission) {
     throw new NotFoundException("Permission not found");
   }
 
   return res.json({
     statusCode: HttpStatus.OK,
     message: "Get one permission successfully",
-    data: existPermission,
+    data: permission,
   });
 };
 
 export const updatePermissionByIdController = async (req, res) => {
   const { id } = req.params;
-  const existPermission = await getPermissionByIdService(id);
+  const existPermission = await getPermissionByIdService(id, "_id");
   if (!existPermission) {
     throw new NotFoundException("Permission not found");
   }
 
   const { name } = req.body;
-  const isExistName = await checkExistPermissionNameService(name, id);
-  if (isExistName) {
-    throw new ConflictException("Permission name is exist");
+  if (name) {
+    const isExistName = await checkExistPermissionNameService(name, id);
+    if (isExistName) {
+      throw new NotFoundException("Permission name is exist");
+    }
   }
 
   const updatedPermission = await updatePermissionInfoByIdService(
@@ -103,9 +109,13 @@ export const updatePermissionByIdController = async (req, res) => {
 
 export const removePermissionByIdController = async (req, res) => {
   const { id } = req.params;
-  const existPermission = await getPermissionByIdService(id);
+  const existPermission = await getPermissionByIdService(id, "_id");
   if (!existPermission) {
     throw new NotFoundException("Permission not found");
+  }
+
+  if (existPermission.isActive) {
+    throw new PreconditionFailedException("Permission is active");
   }
 
   const removedPermission = await removePermissionByIdService(id);
@@ -113,5 +123,48 @@ export const removePermissionByIdController = async (req, res) => {
     statusCode: HttpStatus.OK,
     message: "Remove permission successfully",
     data: removedPermission,
+  });
+};
+
+export const isExistPermissionNameController = async (req, res) => {
+  const { name } = req.body;
+  const existPermissionName = await checkExistPermissionNameService(name);
+
+  return res.json({
+    statusCode: HttpStatus.OK,
+    message: existPermissionName
+      ? "Permission name exists"
+      : "Permission name does not exist",
+    data: existPermissionName,
+  });
+};
+
+export const activatePermissionByIdController = async (req, res) => {
+  const { id } = req.params;
+  const existPermission = await getPermissionByIdService(id, "_id");
+  if (!existPermission) {
+    throw new NotFoundException("Permission not found");
+  }
+
+  await activatePermissionByIdService(id);
+
+  return res.json({
+    statusCode: HttpStatus.NO_CONTENT,
+    message: "Activate permission successfully",
+  });
+};
+
+export const deactivatePermissionByIdController = async (req, res) => {
+  const { id } = req.params;
+  const existPermission = await getPermissionByIdService(id, "_id");
+  if (!existPermission) {
+    throw new NotFoundException("Permission not found");
+  }
+
+  await deactivatePermissionByIdService(id);
+
+  return res.json({
+    statusCode: HttpStatus.NO_CONTENT,
+    message: "Deactivate permission successfully",
   });
 };

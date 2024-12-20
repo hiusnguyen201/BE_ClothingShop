@@ -1,7 +1,6 @@
 import Joi from "joi";
 import {
   ALLOW_METHODS,
-  PERMISSION_STATUS,
   REGEX_PATTERNS,
 } from "#src/core/constant";
 import { replaceMultiSpacesToSingleSpace } from "#src/utils/string.util";
@@ -34,7 +33,5 @@ export const createPermissionDto = Joi.object({
   method: Joi.string()
     .required()
     .valid(...ALLOW_METHODS),
-  status: Joi.string()
-    .required()
-    .valid(...[PERMISSION_STATUS.ACTIVE, PERMISSION_STATUS.INACTIVE]),
+  isActive: Joi.boolean().required(),
 });

@@ -1,10 +1,9 @@
 import Joi from "joi";
 import { replaceMultiSpacesToSingleSpace } from "#src/utils/string.util";
 
-export const updateCategoryDto = Joi.object({
+export const checkExistPermissionNameDto = Joi.object({
   name: Joi.string()
     .min(3)
-    .max(120)
+    .max(50)
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
-  isHide: Joi.boolean(),
 });
