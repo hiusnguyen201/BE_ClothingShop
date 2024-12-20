@@ -52,10 +52,7 @@ export async function countAllUsersService(filters) {
  * @param {*} selectFields
  * @returns
  */
-export async function getUserByIdService(
-  id,
-  selectFields = SELECTED_FIELDS
-) {
+export async function getUserByIdService(id, selectFields = SELECTED_FIELDS) {
   if (!id) return null;
   const filter = {};
 
@@ -134,11 +131,7 @@ export async function changePasswordByIdService(id, password) {
  * @param {*} file
  * @returns
  */
-export async function updateUserAvatarByIdService(
-  id,
-  file,
-  currentAvatar
-) {
+export async function updateUserAvatarByIdService(id, file, currentAvatar) {
   if (currentAvatar) {
     removeImageByPublicIdService(currentAvatar);
   }
