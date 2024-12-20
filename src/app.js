@@ -39,7 +39,7 @@ app.get("/favicon.ico", (req, res) =>
   res.status(httpStatus.NO_CONTENT).end()
 );
 
-// Api Docs
+// Api Docs - Must use swagger-ui-express v4.6.3
 app.use("/api-docs", swaggerUiSetup);
 
 // Api version 1
