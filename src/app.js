@@ -11,7 +11,7 @@ import routerV1 from "#src/routes/v1/index";
 import { handleError, notFound } from "#src/middlewares/error.middleware";
 import { limiter } from "#src/middlewares/rate-limit.middleware";
 import { swaggerUiSetup } from "#src/middlewares/swagger.middleware";
-import asyncHandler from "#src/utils/async-handler";
+import { wrapAllRoutersWithAsyncHandler } from "#src/utils/async-handler";
 
 moment.tz("Asia/Ho_Chi_Minh").format();
 
@@ -43,7 +43,7 @@ app.get("/favicon.ico", (req, res) =>
 app.use("/api-docs", swaggerUiSetup);
 
 // Api version 1
-app.use("/api/v1", asyncHandler(routerV1));
+app.use("/api/v1", wrapAllRoutersWithAsyncHandler(routerV1));
 
 // Catch 404
 app.use(notFound);

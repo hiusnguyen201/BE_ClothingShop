@@ -89,11 +89,6 @@ export async function updateCategoryInfoByIdService(id, data) {
  * @param {*} file
  * @returns
  */
-<<<<<<< HEAD:src/modules/categories/categories.services.js
-export async function updateCategoryIconByIdService(id, file, currentIcon) {
-  if (currentIcon) {
-    removeImageByPublicIdService(currentIcon);
-=======
 export async function updateCategoryImageByIdService(
   id,
   file,
@@ -101,7 +96,6 @@ export async function updateCategoryImageByIdService(
 ) {
   if (currentImage) {
     removeImageByPublicIdService(currentImage);
->>>>>>> develop:src/modules/categories/categories.service.js
   }
 
   const result = await uploadImageBufferService({

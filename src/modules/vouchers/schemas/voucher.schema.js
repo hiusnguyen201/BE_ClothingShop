@@ -18,6 +18,7 @@ const voucherSchema = new Schema(
     description: {
       type: String,
       required: false,
+      length: 255,
     },
     maxUses: {
       type: Number,
