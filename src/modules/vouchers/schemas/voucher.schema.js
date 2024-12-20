@@ -8,7 +8,7 @@ const voucherSchema = new Schema(
     code: {
       type: String,
       required: true,
-      length: 50,
+      length: 15,
     },
     name: {
       type: String,
@@ -22,6 +22,11 @@ const voucherSchema = new Schema(
     maxUses: {
       type: Number,
       required: true,
+    },
+    maxUsesPerUser: {
+      type: Number,
+      required: true,
+      default: 1,
     },
     discount: {
       type: Number,
@@ -37,7 +42,7 @@ const voucherSchema = new Schema(
     },
     maxDiscount: {
       type: Number,
-      required: true,
+      required: false,
     },
     hasMaxDiscount: {
       type: Boolean,
@@ -50,7 +55,6 @@ const voucherSchema = new Schema(
     startDate: {
       type: Date,
       required: true,
-      default: Date.now(),
     },
     endDate: {
       type: Date,

@@ -6,6 +6,7 @@ export const createVoucherDto = Joi.object({
   name: Joi.string().required().min(3).max(30),
   description: Joi.string(),
   maxUses: Joi.number().required(),
+  maxUsesPerUser: Joi.number().required(),
   startDate: Joi.date().iso().required().min(moment().valueOf()),
   endDate: Joi.date().iso().required().greater(Joi.ref("startDate")),
   discount: Joi.number()
@@ -35,7 +36,8 @@ export const createVoucherDto = Joi.object({
     .required()
     .custom((value, helpers) => {
       const { isFixed, hasMaxDiscount } = helpers.state.ancestors[0];
-      if (hasMaxDiscount === "false" || isFixed === "true") return undefined;
+      if (hasMaxDiscount === "false" || isFixed === "true")
+        return undefined;
       if (value < 1000) {
         return helpers.message(`Minimum value is 1000`);
       }

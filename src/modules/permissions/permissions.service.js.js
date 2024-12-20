@@ -1,6 +1,5 @@
 import { isValidObjectId } from "mongoose";
 import { PermissionModel } from "#src/modules/permissions/schemas/permission.schema";
-import { calculatePagination } from "#src/utils/pagination.util";
 
 const SELECTED_FIELDS =
   "_id name description module endpoint method status createdAt updatedAt";
@@ -11,44 +10,34 @@ const SELECTED_FIELDS =
  * @returns
  */
 export async function createPermissionService(data) {
-  return await PermissionModel.create(data);
+  return PermissionModel.create(data);
 }
 
 /**
  * Get all permissions
- * @param {*} query
- * @param {*} selectFields
+ * @param {*} param0
  * @returns
  */
-export async function getAllPermissionsService(
-  query,
-  selectFields = SELECTED_FIELDS
-) {
-  let { keyword = "", method, status, limit = 10, page = 1 } = query;
-
-  const filterOptions = {
-    $or: [
-      { name: { $regex: keyword, $options: "i" } },
-      { module: { $regex: keyword, $options: "i" } },
-      { endpoint: { $regex: keyword, $options: "i" } },
-    ],
-    [method && "method"]: method,
-    [status && "status"]: status,
-  };
-
-  const totalCount = await PermissionModel.countDocuments(filterOptions);
-  const metaData = calculatePagination(page, limit, totalCount);
-
-  const permissions = await PermissionModel.find(filterOptions)
-    .skip(metaData.offset)
-    .limit(metaData.limit)
+export async function getAllPermissionsService({
+  filters,
+  offset = 0,
+  limit = 10,
+  selectFields = SELECTED_FIELDS,
+}) {
+  return PermissionModel.find(filters)
+    .skip(offset)
+    .limit(limit)
     .select(selectFields)
     .sort({ createdAt: -1 });
+}
 
-  return {
-    meta: metaData,
-    list: permissions,
-  };
+/**
+ * Count all permissions
+ * @param {*} filters
+ * @returns
+ */
+export async function countAllPermissionsService(filters) {
+  return PermissionModel.countDocuments(filters);
 }
 
 /**
@@ -70,7 +59,7 @@ export async function getPermissionByIdService(
     filter.name = id;
   }
 
-  return await PermissionModel.findOne(filter).select(selectFields);
+  return PermissionModel.findOne(filter).select(selectFields);
 }
 
 /**
@@ -80,7 +69,7 @@ export async function getPermissionByIdService(
  * @returns
  */
 export async function updatePermissionInfoByIdService(id, data) {
-  return await PermissionModel.findByIdAndUpdate(id, data, {
+  return PermissionModel.findByIdAndUpdate(id, data, {
     new: true,
   }).select(SELECTED_FIELDS);
 }
@@ -91,9 +80,7 @@ export async function updatePermissionInfoByIdService(id, data) {
  * @returns
  */
 export async function removePermissionByIdService(id) {
-  return await PermissionModel.findByIdAndDelete(id).select(
-    SELECTED_FIELDS
-  );
+  return PermissionModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
 }
 
 /**

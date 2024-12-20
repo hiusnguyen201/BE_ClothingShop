@@ -4,9 +4,7 @@ import {
   removeImageByPublicIdService,
   uploadImageBufferService,
 } from "#src/modules/cloudinary/cloudinary.service";
-import { REGEX_PATTERNS, USER_TYPES } from "#src/core/constant";
-import { calculatePagination } from "#src/utils/pagination.util";
-import { makeHash } from "#src/utils/bcrypt.util";
+import { REGEX_PATTERNS } from "#src/core/constant";
 
 const SELECTED_FIELDS =
   "_id avatar name email status birthday gender createdAt updatedAt";
@@ -17,8 +15,7 @@ const SELECTED_FIELDS =
  * @returns
  */
 export async function createUserService(data) {
-  data.password = makeHash(data.password);
-  return await UserModel.create(data);
+  return UserModel.create(data);
 }
 
 /**
@@ -27,40 +24,26 @@ export async function createUserService(data) {
  * @param {*} selectFields
  * @returns
  */
-export async function getAllUsersService(
-  query,
-  selectFields = SELECTED_FIELDS
-) {
-  let {
-    keyword = "",
-    status,
-    limit = 10,
-    page = 1,
-    type = USER_TYPES.CUSTOMER,
-  } = query;
-
-  const filterOptions = {
-    $or: [
-      { name: { $regex: keyword, $options: "i" } },
-      { email: { $regex: keyword, $options: "i" } },
-    ],
-    [status && "status"]: status,
-    type,
-  };
-
-  const totalCount = await UserModel.countDocuments(filterOptions);
-  const metaData = calculatePagination(page, limit, totalCount);
-
-  const users = await UserModel.find(filterOptions)
-    .skip(metaData.offset)
-    .limit(metaData.limit)
+export async function getAllUsersService({
+  filters,
+  offset = 0,
+  limit = 10,
+  selectFields = SELECTED_FIELDS,
+}) {
+  return UserModel.find(filters)
+    .skip(offset)
+    .limit(limit)
     .select(selectFields)
     .sort({ createdAt: -1 });
+}
 
-  return {
-    meta: metaData,
-    list: users,
-  };
+/**
+ * Count all users
+ * @param {*} filters
+ * @returns
+ */
+export async function countAllUsersService(filters) {
+  return UserModel.countDocuments(filters);
 }
 
 /**
@@ -81,7 +64,7 @@ export async function getUserByIdService(id, selectFields = SELECTED_FIELDS) {
     return null;
   }
 
-  return await UserModel.findOne(filter).select(selectFields);
+  return UserModel.findOne(filter).select(selectFields);
 }
 
 /**
@@ -90,7 +73,7 @@ export async function getUserByIdService(id, selectFields = SELECTED_FIELDS) {
  * @returns
  */
 export async function removeUserByIdService(id) {
-  return await UserModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
+  return UserModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
 }
 
 /**
@@ -114,7 +97,7 @@ export async function checkExistEmailService(email, skipId) {
  * @returns
  */
 export async function updateUserVerifiedByIdService(id) {
-  return await UserModel.findByIdAndUpdate(
+  return UserModel.findByIdAndUpdate(
     id,
     {
       isVerified: true,
@@ -131,7 +114,7 @@ export async function updateUserVerifiedByIdService(id) {
  */
 export async function changePasswordByIdService(id, password) {
   const hashedPassword = makeHash(password);
-  return await UserModel.findByIdAndUpdate(
+  return UserModel.findByIdAndUpdate(
     id,
     {
       password: hashedPassword,
@@ -158,7 +141,7 @@ export async function updateUserAvatarByIdService(id, file, currentAvatar) {
     folderName: "avatars",
   });
 
-  return await UserModel.findByIdAndUpdate(id, {
+  return UserModel.findByIdAndUpdate(id, {
     avatar: result.public_id,
   }).select(SELECTED_FIELDS);
 }
@@ -169,7 +152,7 @@ export async function updateUserAvatarByIdService(id, file, currentAvatar) {
  * @param {*} data
  */
 export async function updateUserInfoByIdService(id, data) {
-  return await UserModel.findByIdAndUpdate(id, data, {
+  return UserModel.findByIdAndUpdate(id, data, {
     new: true,
   }).select(SELECTED_FIELDS);
 }

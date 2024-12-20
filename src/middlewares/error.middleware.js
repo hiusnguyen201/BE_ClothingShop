@@ -13,7 +13,7 @@ export const handleError = (err, req, res, next) => {
     url: req.originalUrl,
   };
 
-  if (req.app.get("env") === "development") {
+  if (process.env.NODE_ENV === "development") {
     console.log({ ...response, stack: err.stack });
   }
 

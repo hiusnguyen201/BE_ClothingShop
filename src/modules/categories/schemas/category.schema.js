@@ -1,12 +1,11 @@
 import mongoose from "mongoose";
-import { CATEGORY_STATUS } from "#src/core/constant";
 const { Schema } = mongoose;
 
 const CATEGORY_MODEL = "categories";
 
 const categorySchema = new Schema(
   {
-    icon: {
+    image: {
       type: String,
       length: 300,
     },
@@ -14,7 +13,6 @@ const categorySchema = new Schema(
       type: String,
       required: true,
       length: 120,
-      index: true,
       unique: true,
     },
     slug: {
@@ -22,24 +20,17 @@ const categorySchema = new Schema(
       length: 150,
       required: true,
     },
-    status: {
-      type: String,
-      length: 50,
-      required: true,
-      enum: [
-        CATEGORY_STATUS.PUBLIC,
-        CATEGORY_STATUS.HIDDEN,
-        CATEGORY_STATUS.DELETED,
-      ],
-      default: CATEGORY_STATUS.HIDDEN,
-    },
-    isHidden: {
+    isHide: {
       type: Boolean,
       default: true,
     },
+    level: {
+      type: Number,
+      default: 1
+    },
 
     // Foreign key
-    parentCategory: { type: Schema.Types.ObjectId, ref: "Category" },
+    parent: { type: Schema.Types.ObjectId, ref: "Category" },
   },
   {
     versionKey: false,

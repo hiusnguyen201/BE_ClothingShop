@@ -1,13 +1,8 @@
 import { isValidObjectId } from "mongoose";
-import {
-  removeImageByPublicIdService,
-  uploadImageBufferService,
-} from "#src/modules/cloudinary/cloudinary.service";
-import { calculatePagination } from "#src/utils/pagination.util";
 import { VoucherModel } from "#src/modules/vouchers/schemas/voucher.schema";
 
 const SELECTED_FIELDS =
-  "_id code name maxUses minPrice discount startDate endDate uses isFixed";
+  "_id code name description maxUses discount isFixed isPublic maxDiscount hasMaxDiscount minPrice startDate endDate createdAt updatedAt";
 
 /**
  * Create voucher
@@ -19,44 +14,31 @@ export async function createVoucherService(data) {
 }
 
 /**
- * Find all vouchers
+ * Get all vouchers
  * @param {*} query
  * @param {*} selectFields
  * @returns
  */
-export async function getAllVouchersService(
-  query,
-  selectFields = SELECTED_FIELDS
-) {
-  let { keyword = "", limit = 10, page = 1, startDate, endDate } = query;
-
-  const fillerByCreatedAt = {
-    ...(startDate ? { $gte: startDate } : {}),
-    ...(endDate ? { $lte: endDate } : {}),
-  };
-  const filterOptions = {
-    $or: [
-      { name: { $regex: keyword, $options: "i" } },
-      { code: { $regex: keyword, $options: "i" } },
-    ],
-    ...(Object.keys(fillerByCreatedAt).length
-      ? { createdAt: fillerByCreatedAt }
-      : {}),
-  };
-
-  const totalCount = await VoucherModel.countDocuments(filterOptions);
-  const metaData = calculatePagination(page, limit, totalCount);
-
-  const vouchers = await VoucherModel.find(filterOptions)
-    .skip(metaData.offset)
-    .limit(metaData.limit)
+export async function getAllVouchersService({
+  filters,
+  offset = 0,
+  limit = 10,
+  selectFields = SELECTED_FIELDS,
+}) {
+  return VoucherModel.find(filters)
+    .skip(offset)
+    .limit(limit)
     .select(selectFields)
     .sort({ createdAt: -1 });
+}
 
-  return {
-    list: vouchers,
-    meta: metaData,
-  };
+/**
+ * Count all vouchers
+ * @param {*} filters
+ * @returns
+ */
+export async function countAllVouchersService(filters) {
+  return VoucherModel.countDocuments(filters);
 }
 
 /**
@@ -114,27 +96,6 @@ export async function checkExistVoucherCodeService(code, skipId) {
     code,
   }).select("_id");
   return Boolean(voucher);
-}
-
-/**
- * Update avatar by id
- * @param {*} id
- * @param {*} file
- * @returns
- */
-export async function updateVoucherImageByIdService(id, file, currentImage) {
-  if (currentImage) {
-    removeImageByPublicIdService(currentImage);
-  }
-
-  const result = await uploadImageBufferService({
-    file,
-    folderName: "image-voucher",
-  });
-
-  return await VoucherModel.findByIdAndUpdate(id, {
-    image: result.public_id,
-  }).select(SELECTED_FIELDS);
 }
 
 /**
