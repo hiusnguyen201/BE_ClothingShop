@@ -12,4 +12,4 @@ export const updateRoleDto = Joi.object({
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
   isActive: Joi.boolean(),
   permissions: Joi.array().items(Joi.string()),
-}).min(1);
+});

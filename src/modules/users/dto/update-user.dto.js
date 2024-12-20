@@ -17,4 +17,4 @@ export const updateUserDto = Joi.object({
     }
     return helper.message("Invalid vietnam phone number");
   }),
-}).min(1);
+});

@@ -68,21 +68,21 @@ export const getAllPermissionsController = async (req, res) => {
 
 export const getPermissionByIdController = async (req, res) => {
   const { id } = req.params;
-  const existPermission = await getPermissionByIdService(id);
-  if (!existPermission) {
+  const permission = await getPermissionByIdService(id);
+  if (!permission) {
     throw new NotFoundException("Permission not found");
   }
 
   return res.json({
     statusCode: HttpStatus.OK,
     message: "Get one permission successfully",
-    data: existPermission,
+    data: permission,
   });
 };
 
 export const updatePermissionByIdController = async (req, res) => {
   const { id } = req.params;
-  const existPermission = await getPermissionByIdService(id);
+  const existPermission = await getPermissionByIdService(id, "_id");
   if (!existPermission) {
     throw new NotFoundException("Permission not found");
   }
@@ -109,13 +109,13 @@ export const updatePermissionByIdController = async (req, res) => {
 
 export const removePermissionByIdController = async (req, res) => {
   const { id } = req.params;
-  const existPermission = await getPermissionByIdService(id);
+  const existPermission = await getPermissionByIdService(id, "_id");
   if (!existPermission) {
     throw new NotFoundException("Permission not found");
   }
 
   if (existPermission.isActive) {
-    throw new PreconditionFailedException("Role is active");
+    throw new PreconditionFailedException("Permission is active");
   }
 
   const removedPermission = await removePermissionByIdService(id);

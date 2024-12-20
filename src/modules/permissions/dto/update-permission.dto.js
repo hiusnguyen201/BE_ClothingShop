@@ -1,8 +1,5 @@
 import Joi from "joi";
-import {
-  ALLOW_METHODS,
-  REGEX_PATTERNS,
-} from "#src/core/constant";
+import { ALLOW_METHODS, REGEX_PATTERNS } from "#src/core/constant";
 import { replaceMultiSpacesToSingleSpace } from "#src/utils/string.util";
 
 export const updatePermissionDto = Joi.object({
@@ -29,4 +26,4 @@ export const updatePermissionDto = Joi.object({
     }),
   method: Joi.string().valid(...ALLOW_METHODS),
   isActive: Joi.boolean(),
-}).min(1);
+});
