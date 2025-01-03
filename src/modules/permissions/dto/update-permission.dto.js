@@ -18,12 +18,11 @@ export const updatePermissionDto = Joi.object({
   endpoint: Joi.string()
     .min(3)
     .max(255)
-    .custom((value, helper) => {
-      if (REGEX_PATTERNS.ENDPOINT.test(value)) {
-        return value;
-      }
-      return helper.message("Invalid endpoint");
-    }),
+    .custom((value, helper) =>
+      value.match(REGEX_PATTERNS.ENDPOINT)
+        ? value
+        : helper.message("Invalid endpoint")
+    ),
   method: Joi.string().valid(...ALLOW_METHODS),
   isActive: Joi.boolean(),
 });

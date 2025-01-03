@@ -52,13 +52,16 @@ export async function countAllUsersService(filters) {
  * @param {*} selectFields
  * @returns
  */
-export async function getUserByIdService(id, selectFields = SELECTED_FIELDS) {
+export async function getUserByIdService(
+  id,
+  selectFields = SELECTED_FIELDS
+) {
   if (!id) return null;
   const filter = {};
 
   if (isValidObjectId(id)) {
     filter._id = id;
-  } else if (REGEX_PATTERNS.EMAIL.test(id)) {
+  } else if (id.match(REGEX_PATTERNS.EMAIL)) {
     filter.email = id;
   } else {
     return null;
@@ -131,7 +134,11 @@ export async function changePasswordByIdService(id, password) {
  * @param {*} file
  * @returns
  */
-export async function updateUserAvatarByIdService(id, file, currentAvatar) {
+export async function updateUserAvatarByIdService(
+  id,
+  file,
+  currentAvatar
+) {
   if (currentAvatar) {
     removeImageByPublicIdService(currentAvatar);
   }
@@ -155,4 +162,25 @@ export async function updateUserInfoByIdService(id, data) {
   return UserModel.findByIdAndUpdate(id, data, {
     new: true,
   }).select(SELECTED_FIELDS);
+}
+
+export async function checkUserHasPermissionByMethodAndEndpointService(
+  id,
+  { method, endpoint }
+) {
+  const user = await UserModel.findById(id)
+    .select("role")
+    .populate({
+      path: "role",
+      select: "permissions",
+      populate: {
+        path: "permissions",
+        match: {
+          method,
+          endpoint,
+        },
+      },
+    });
+
+  return Boolean(user?.role?.permissions?.length > 0);
 }

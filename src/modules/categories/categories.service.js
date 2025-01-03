@@ -62,7 +62,7 @@ export async function getCategoryByIdService(
 
   if (isValidObjectId(id)) {
     filter._id = id;
-  } else if (REGEX_PATTERNS.SLUG.test(id)) {
+  } else if (id.match(REGEX_PATTERNS.SLUG)) {
     filter.slug = id;
   } else {
     filter.name = id;

@@ -72,6 +72,7 @@ export const loginController = async (req, res) => {
     email,
     "_id password name email isVerified type"
   );
+
   if (!user) {
     throw new UnauthorizedException("Invalid Credentials");
   }
@@ -81,14 +82,14 @@ export const loginController = async (req, res) => {
     throw new UnauthorizedException("Invalid Credentials");
   }
 
-  const isNeed2Fa = !user.isVerified || user.type === USER_TYPES.USER;
+  const isNeed2Fa = !user.isVerified; // || user.type === USER_TYPES.USER;
 
   return res.json({
     statusCode: HttpStatus.OK,
     message: "Login successfully",
     data: {
       isAuthenticated: !isNeed2Fa,
-      accessToken: isNeed2Fa ? null : generateToken({ userId: user._id }),
+      accessToken: isNeed2Fa ? null : generateToken({ _id: user._id }),
       is2FactorRequired: isNeed2Fa,
       user: { _id: user._id, name: user.name, email: user.email },
     },
@@ -131,7 +132,7 @@ export const verifyOtpController = async (req, res) => {
     sendWelcomeEmailService(user.email, user.name);
   }
 
-  const accessToken = generateToken({ userId: user._id });
+  const accessToken = generateToken({ _id: user._id });
   return res.json({
     statusCode: HttpStatus.OK,
     message: "Verify otp successfully",
