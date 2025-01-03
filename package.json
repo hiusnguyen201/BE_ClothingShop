@@ -8,8 +8,9 @@
     "#src/*": "./src/*.js"
   },
   "scripts": {
-    "start": "node ./src/index.js",
-    "dev": "nodemon ./src/index.js",
+    "start": "cross-env NODE_ENV=production node ./src/index.js",
+    "dev": "cross-env NODE_ENV=development nodemon ./src/index.js",
+    "test": "cross-env NODE_ENV=test mocha --exit",
     "build": "echo 'No build step required for Express.js'",
     "vercel-build": "npm run build"
   },
@@ -34,5 +35,11 @@
     "slugify": "^1.6.6",
     "swagger-ui-express": "^4.6.3",
     "uuid": "^11.0.3"
+  },
+  "devDependencies": {
+    "chai": "^5.1.2",
+    "chai-http": "^5.1.1",
+    "cross-env": "^7.0.3",
+    "mocha": "^11.0.1"
   }
 }

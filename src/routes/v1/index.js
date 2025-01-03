@@ -9,6 +9,10 @@ import customersRouter from "#src/routes/v1/customers.route";
 import categoriesRouter from "#src/routes/v1/categories.route";
 import vouchersRouter from "#src/routes/v1/vouchers.route";
 
+router.get("/ping", (req, res) => {
+  res.send("Hello, world! PING");
+});
+
 router.use("/users", usersRouter);
 
 router.use("/auth", authRouter);
