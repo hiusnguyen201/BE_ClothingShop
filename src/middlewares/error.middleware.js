@@ -11,6 +11,7 @@ export const handleError = (err, req, res, next) => {
     ...(err.message ? { message: err.message } : {}),
     timestamp: moment().valueOf(),
     url: req.originalUrl,
+    ip: req.ipv4,
   };
 
   if (process.env.NODE_ENV === "development") {

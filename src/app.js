@@ -11,7 +11,7 @@ import routerV1 from "#src/routes/v1/index";
 import { handleError, notFound } from "#src/middlewares/error.middleware";
 import { limiter } from "#src/middlewares/rate-limit.middleware";
 import { swaggerUiSetup } from "#src/middlewares/swagger.middleware";
-import { wrapAllRoutersWithAsyncHandler } from "#src/utils/async-handler";
+import { enhanceRouter } from "#src/utils/async-handler";
 
 moment.tz("Asia/Ho_Chi_Minh").format();
 
@@ -34,6 +34,13 @@ app.use(cookieParser());
 app.use(cors());
 app.use(limiter);
 
+// Add ipv4 to req
+app.use((req, res, next) => {
+  req.ipv4 =
+    req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+  next();
+});
+
 // Ignore favicon request
 app.get("/favicon.ico", (req, res) =>
   res.status(httpStatus.NO_CONTENT).end()
@@ -43,7 +50,7 @@ app.get("/favicon.ico", (req, res) =>
 app.use("/api-docs", swaggerUiSetup);
 
 // Api version 1
-app.use("/api/v1", wrapAllRoutersWithAsyncHandler(routerV1));
+app.use("/api/v1", enhanceRouter(routerV1));
 
 // Catch 404
 app.use(notFound);

@@ -20,7 +20,7 @@ import { USER_TYPES } from "#src/core/constant";
 import { makeHash } from "#src/utils/bcrypt.util";
 import { calculatePagination } from "#src/utils/pagination.util";
 
-export const createUserController = async (req, res) => {
+export const createUserController = async (req) => {
   const { email, role } = req.body;
   const isExistEmail = await checkExistEmailService(email);
   if (isExistEmail) {
@@ -52,14 +52,14 @@ export const createUserController = async (req, res) => {
 
   const formatterUser = await getUserByIdService(newUser._id);
 
-  return res.json({
+  return {
     statusCode: HttpStatus.CREATED,
     message: "Create user successfully",
     data: formatterUser,
-  });
+  };
 };
 
-export const getAllUsersController = async (req, res) => {
+export const getAllUsersController = async (req) => {
   let { keyword = "", limit = 10, page = 1 } = req.query;
 
   const filterOptions = {
@@ -79,28 +79,28 @@ export const getAllUsersController = async (req, res) => {
     limit: metaData.limit,
   });
 
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: "Get all users successfully",
     data: { meta: metaData, list: users },
-  });
+  };
 };
 
-export const getUserByIdController = async (req, res) => {
+export const getUserByIdController = async (req) => {
   const { id } = req.params;
   const existUser = await getUserByIdService(id);
   if (!existUser) {
     throw new NotFoundException("User not found");
   }
 
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: "Get one user successfully",
     data: existUser,
-  });
+  };
 };
 
-export const updateUserByIdController = async (req, res) => {
+export const updateUserByIdController = async (req) => {
   const { id } = req.params;
   const existUser = await getUserByIdService(id, "_id");
   if (!existUser) {
@@ -134,14 +134,14 @@ export const updateUserByIdController = async (req, res) => {
     );
   }
 
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: "Update user successfully",
     data: updatedUser,
-  });
+  };
 };
 
-export const removeUserByIdController = async (req, res) => {
+export const removeUserByIdController = async (req) => {
   const { id } = req.params;
   const existUser = await getUserByIdService(id);
   if (!existUser) {
@@ -149,9 +149,9 @@ export const removeUserByIdController = async (req, res) => {
   }
 
   const removedUser = await removeUserByIdService(id);
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: "Remove user successfully",
     data: removedUser,
-  });
+  };
 };

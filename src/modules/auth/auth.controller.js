@@ -31,7 +31,7 @@ import {
   getResetPasswordByTokenService,
 } from "#src/modules/reset-password/reset-password.service";
 
-export const registerController = async (req, res) => {
+export const registerController = async (req) => {
   const { password, email } = req.body;
   const isExistEmail = await checkExistEmailService(email);
   if (isExistEmail) {
@@ -49,7 +49,7 @@ export const registerController = async (req, res) => {
     return await updateUserAvatarByIdService(newCustomer._id, req.file);
   }
 
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: "Register successfully",
     data: {
@@ -62,10 +62,10 @@ export const registerController = async (req, res) => {
         email: newCustomer.email,
       },
     },
-  });
+  };
 };
 
-export const loginController = async (req, res) => {
+export const loginController = async (req) => {
   const { email, password } = req.body;
 
   const user = await getUserByIdService(
@@ -84,7 +84,7 @@ export const loginController = async (req, res) => {
 
   const isNeed2Fa = !user.isVerified; // || user.type === USER_TYPES.USER;
 
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: "Login successfully",
     data: {
@@ -93,10 +93,10 @@ export const loginController = async (req, res) => {
       is2FactorRequired: isNeed2Fa,
       user: { _id: user._id, name: user.name, email: user.email },
     },
-  });
+  };
 };
 
-export const sendOtpViaEmailController = async (req, res) => {
+export const sendOtpViaEmailController = async (req) => {
   const { email } = req.body;
   const user = await getUserByIdService(email);
   if (!user) {
@@ -106,13 +106,13 @@ export const sendOtpViaEmailController = async (req, res) => {
   const userOtp = await createUserOtpService(user._id);
   await sendOtpCodeService(user.email, userOtp.otp);
 
-  return res.json({
+  return {
     statusCode: HttpStatus.NO_CONTENT,
     message: "Send otp via email successfully",
-  });
+  };
 };
 
-export const verifyOtpController = async (req, res) => {
+export const verifyOtpController = async (req) => {
   const { email, otp } = req.body;
   const user = await getUserByIdService(
     email,
@@ -133,7 +133,7 @@ export const verifyOtpController = async (req, res) => {
   }
 
   const accessToken = generateToken({ _id: user._id });
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: "Verify otp successfully",
     data: {
@@ -141,10 +141,10 @@ export const verifyOtpController = async (req, res) => {
       accessToken,
       user: { _id: user._id, name: user.name, email: user.email },
     },
-  });
+  };
 };
 
-export const forgotPasswordController = async (req, res) => {
+export const forgotPasswordController = async (req) => {
   const { email, callbackUrl } = req.body;
   const user = await getUserByIdService(email);
   if (!user) {
@@ -156,13 +156,13 @@ export const forgotPasswordController = async (req, res) => {
   const resetURL = path.join(callbackUrl, resetPassword.token);
   await sendResetPasswordRequestService(email, resetURL);
 
-  return res.json({
+  return {
     statusCode: HttpStatus.NO_CONTENT,
     message: "Required Forgot Password Success",
-  });
+  };
 };
 
-export const resetPasswordController = async (req, res) => {
+export const resetPasswordController = async (req) => {
   const { token } = req.params;
   const resetPassword = await getResetPasswordByTokenService(token);
   if (!resetPassword) {
@@ -175,10 +175,10 @@ export const resetPasswordController = async (req, res) => {
     password
   );
 
-  sendResetPasswordSuccessService(updatedUser.email);
+  await sendResetPasswordSuccessService(updatedUser.email);
 
-  return res.json({
+  return {
     statusCode: HttpStatus.NO_CONTENT,
     message: "Reset password successfully",
-  });
+  };
 };

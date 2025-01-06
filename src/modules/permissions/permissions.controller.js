@@ -17,7 +17,7 @@ import {
 } from "#src/core/exception/http-exception";
 import { calculatePagination } from "#src/utils/pagination.util";
 
-export const createPermissionController = async (req, res) => {
+export const createPermissionController = async (req) => {
   const { name } = req.body;
   const isExistName = await checkExistPermissionNameService(name);
   if (isExistName) {
@@ -30,14 +30,14 @@ export const createPermissionController = async (req, res) => {
     newPermission._id
   );
 
-  return res.json({
+  return {
     statusCode: HttpStatus.CREATED,
     message: "Create permission successfully",
     data: formatterPermission,
-  });
+  };
 };
 
-export const getAllPermissionsController = async (req, res) => {
+export const getAllPermissionsController = async (req) => {
   let { keyword = "", method, limit = 10, page = 1, isActive } = req.query;
 
   const filterOptions = {
@@ -59,28 +59,28 @@ export const getAllPermissionsController = async (req, res) => {
     limit: metaData.limit,
   });
 
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: "Get all permissions successfully",
     data: { meta: metaData, list: permissions },
-  });
+  };
 };
 
-export const getPermissionByIdController = async (req, res) => {
+export const getPermissionByIdController = async (req) => {
   const { id } = req.params;
   const permission = await getPermissionByIdService(id);
   if (!permission) {
     throw new NotFoundException("Permission not found");
   }
 
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: "Get one permission successfully",
     data: permission,
-  });
+  };
 };
 
-export const updatePermissionByIdController = async (req, res) => {
+export const updatePermissionByIdController = async (req) => {
   const { id } = req.params;
   const existPermission = await getPermissionByIdService(id, "_id");
   if (!existPermission) {
@@ -100,14 +100,14 @@ export const updatePermissionByIdController = async (req, res) => {
     req.body
   );
 
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: "Update permission successfully",
     data: updatedPermission,
-  });
+  };
 };
 
-export const removePermissionByIdController = async (req, res) => {
+export const removePermissionByIdController = async (req) => {
   const { id } = req.params;
   const existPermission = await getPermissionByIdService(id, "_id");
   if (!existPermission) {
@@ -119,27 +119,27 @@ export const removePermissionByIdController = async (req, res) => {
   }
 
   const removedPermission = await removePermissionByIdService(id);
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: "Remove permission successfully",
     data: removedPermission,
-  });
+  };
 };
 
-export const isExistPermissionNameController = async (req, res) => {
+export const isExistPermissionNameController = async (req) => {
   const { name } = req.body;
   const existPermissionName = await checkExistPermissionNameService(name);
 
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: existPermissionName
       ? "Permission name exists"
       : "Permission name does not exist",
     data: existPermissionName,
-  });
+  };
 };
 
-export const activatePermissionByIdController = async (req, res) => {
+export const activatePermissionByIdController = async (req) => {
   const { id } = req.params;
   const existPermission = await getPermissionByIdService(id, "_id");
   if (!existPermission) {
@@ -148,13 +148,13 @@ export const activatePermissionByIdController = async (req, res) => {
 
   await activatePermissionByIdService(id);
 
-  return res.json({
+  return {
     statusCode: HttpStatus.NO_CONTENT,
     message: "Activate permission successfully",
-  });
+  };
 };
 
-export const deactivatePermissionByIdController = async (req, res) => {
+export const deactivatePermissionByIdController = async (req) => {
   const { id } = req.params;
   const existPermission = await getPermissionByIdService(id, "_id");
   if (!existPermission) {
@@ -163,8 +163,8 @@ export const deactivatePermissionByIdController = async (req, res) => {
 
   await deactivatePermissionByIdService(id);
 
-  return res.json({
+  return {
     statusCode: HttpStatus.NO_CONTENT,
     message: "Deactivate permission successfully",
-  });
+  };
 };

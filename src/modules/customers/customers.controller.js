@@ -24,7 +24,7 @@ import {
 import { getVoucherByCodeService } from "#src/modules/vouchers/vouchers.service";
 import { calculatePagination } from "#src/utils/pagination.util";
 
-export const createCustomerController = async (req, res) => {
+export const createCustomerController = async (req) => {
   const { email } = req.body;
   const isExistEmail = await checkExistEmailService(email);
   if (isExistEmail) {
@@ -47,14 +47,14 @@ export const createCustomerController = async (req, res) => {
 
   const formatterCustomer = await getUserByIdService(newCustomer._id);
 
-  return res.json({
+  return {
     statusCode: HttpStatus.CREATED,
     message: "Create customer successfully",
     data: formatterCustomer,
-  });
+  };
 };
 
-export const getAllCustomersController = async (req, res) => {
+export const getAllCustomersController = async (req) => {
   let { keyword = "", limit = 10, page = 1 } = req.query;
 
   const filterOptions = {
@@ -74,28 +74,28 @@ export const getAllCustomersController = async (req, res) => {
     limit: metaData.limit,
   });
 
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: "Get all customers successfully",
     data: { meta: metaData, list: customers },
-  });
+  };
 };
 
-export const getCustomerByIdController = async (req, res) => {
+export const getCustomerByIdController = async (req) => {
   const { id } = req.params;
   const existCustomer = await getUserByIdService(id);
   if (!existCustomer) {
     throw new NotFoundException("Customer not found");
   }
 
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: "Get customer successfully",
     data: existCustomer,
-  });
+  };
 };
 
-export const updateCustomerByIdController = async (req, res) => {
+export const updateCustomerByIdController = async (req) => {
   const { id } = req.params;
   const { email } = req.body;
   const existCustomer = await getUserByIdService(id, "_id");
@@ -120,14 +120,14 @@ export const updateCustomerByIdController = async (req, res) => {
     );
   }
 
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: "Update customer successfully",
     data: updatedCustomer,
-  });
+  };
 };
 
-export const removeCustomerByIdController = async (req, res) => {
+export const removeCustomerByIdController = async (req) => {
   const { id } = req.params;
   const existCustomer = await getUserByIdService(id, "_id");
   if (!existCustomer) {
@@ -135,54 +135,45 @@ export const removeCustomerByIdController = async (req, res) => {
   }
 
   const removedCustomer = await removeUserByIdService(id);
-  return res.json({
+
+  return {
     statusCode: HttpStatus.OK,
     message: "Remove customer successfully",
     data: removedCustomer,
-  });
+  };
 };
 
-export const claimVoucherByCodeController = async (req, res, next) => {
-  try {
-    const { voucherCode } = req.body;
-    const userId = "675daed04cc3d82f1ef5d20b";
+export const claimVoucherByCodeController = async (req) => {
+  const { voucherCode } = req.body;
+  const userId = req.user._id;
 
-    const voucher = await getVoucherByCodeService(voucherCode);
-    if (!voucher) {
-      throw new NotFoundException("Voucher not found");
-    }
-
-    const user = await getUserByIdService(userId, "vouchers");
-
-    if (user.vouchers.includes(voucher._id)) {
-      throw new ConflictException("Voucher already claim");
-    }
-
-    await addVoucherToCustomerService(userId, voucher._id);
-
-    return res.json({
-      statusCode: HttpStatus.NO_CONTENT,
-      message: "Claim voucher by code successfully",
-    });
-  } catch (err) {
-    next(err);
+  const voucher = await getVoucherByCodeService(voucherCode);
+  if (!voucher) {
+    throw new NotFoundException("Voucher not found");
   }
+
+  const user = await getUserByIdService(userId, "vouchers");
+
+  if (user.vouchers.includes(voucher._id)) {
+    throw new ConflictException("Voucher already claim");
+  }
+
+  await addVoucherToCustomerService(userId, voucher._id);
+
+  return {
+    statusCode: HttpStatus.NO_CONTENT,
+    message: "Claim voucher by code successfully",
+  };
 };
 
-export const getAllVoucherFromCustomerController = async (
-  req,
-  res,
-  next
-) => {
-  try {
-    const userId = "675daed04cc3d82f1ef5d20b";
-    const data = await getAllVouchersByCustomerService(userId, req.query);
-    return res.json({
-      statusCode: HttpStatus.OK,
-      message: "Get customer successfully",
-      data,
-    });
-  } catch (err) {
-    next(err);
-  }
+export const getAllVoucherFromCustomerController = async (req) => {
+  const userId = req.user._id;
+
+  const data = await getAllVouchersByCustomerService(userId, req.query);
+
+  return {
+    statusCode: HttpStatus.OK,
+    message: "Get customer successfully",
+    data,
+  };
 };
