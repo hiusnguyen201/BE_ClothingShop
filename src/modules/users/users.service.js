@@ -22,8 +22,8 @@ export async function createUserService(data) {
  * @param {*} data
  * @returns
  */
-export async function createUserWithinTransactionService(data, session) {
-  return UserModel.create([data], { session });
+export async function createUsersWithinTransactionService(data, session) {
+  return UserModel.insertMany(data, { session });
 }
 
 /**
@@ -189,6 +189,8 @@ export async function checkUserHasPermissionByMethodAndEndpointService(
         },
       },
     });
+
+  console.log(user);
 
   return Boolean(user?.role?.permissions?.length > 0);
 }

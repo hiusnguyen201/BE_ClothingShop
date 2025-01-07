@@ -53,18 +53,18 @@ const userSchema = new Schema(
       required: false,
       length: 100,
     },
-    status: {
-      type: String,
-      length: 50,
-      required: true,
-      enum: [
-        USER_STATUS.ACTIVE,
-        USER_STATUS.INACTIVE,
-        USER_STATUS.DELETED,
-        USER_STATUS.BANNED,
-      ],
-      default: USER_STATUS.INACTIVE,
-    },
+    // status: {
+    //   type: String,
+    //   length: 50,
+    //   required: true,
+    //   enum: [
+    //     USER_STATUS.ACTIVE,
+    //     USER_STATUS.INACTIVE,
+    //     USER_STATUS.DELETED,
+    //     USER_STATUS.BANNED,
+    //   ],
+    //   default: USER_STATUS.INACTIVE,
+    // },
     isVerified: {
       type: Boolean,
       required: false,

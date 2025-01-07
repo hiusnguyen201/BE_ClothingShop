@@ -18,10 +18,10 @@ import {
 import { UploadUtils } from "#src/utils/upload.util";
 import { ALLOW_IMAGE_MIME_TYPES } from "#src/core/constant";
 import { checkExistEmailDto } from "#src/modules/users/dto/check-exist-email.dto";
-// import {
-//   hasPermission,
-//   isAuthorized,
-// } from "#src/middlewares/jwt-auth.middleware";
+import {
+  hasPermission,
+  isAuthorized,
+} from "#src/middlewares/jwt-auth.middleware";
 
 const upload = UploadUtils.config({
   allowedMimeTypes: ALLOW_IMAGE_MIME_TYPES,
@@ -33,22 +33,31 @@ router.post(
   isExistEmailController
 );
 
-// router.use([isAuthorized, hasPermission]);
 router
-  .get("/get-users", getAllUsersController)
-  .get("/get-user-by-id/:id", getUserByIdController)
+  .get("/get-users", [isAuthorized, hasPermission], getAllUsersController)
+  .get(
+    "/get-user-by-id/:id",
+    [isAuthorized, hasPermission],
+    getUserByIdController
+  )
   .post(
     "/create-user",
+    [isAuthorized, hasPermission],
     validateFile(upload.single("avatar")),
     validateSchema(createUserDto),
     createUserController
   )
   .patch(
     "/update-user-by-id/:id",
+    [isAuthorized, hasPermission],
     validateFile(upload.single("avatar")),
     validateSchema(updateUserDto),
     updateUserByIdController
   )
-  .delete("/remove-user-by-id/:id", removeUserByIdController);
+  .delete(
+    "/remove-user-by-id/:id",
+    [isAuthorized, hasPermission],
+    removeUserByIdController
+  );
 
 export default router;

@@ -1,11 +1,11 @@
 import "dotenv/config";
 import mongoose from "mongoose";
 import { PERMISSIONS_LIST } from "./permissions.seeder.js";
-import { createPermissionWithinTransactionService } from "#src/modules/permissions/permissions.service";
-import { createUserWithinTransactionService } from "#src/modules/users/users.service";
+import { createPermissionsWithinTransactionService } from "#src/modules/permissions/permissions.service";
+import { createUsersWithinTransactionService } from "#src/modules/users/users.service";
 import { makeHash } from "#src/utils/bcrypt.util";
 import { USER_TYPES } from "#src/core/constant";
-import { createRoleWithinTransactionService } from "#src/modules/roles/roles.service";
+import { createRolesWithinTransactionService } from "#src/modules/roles/roles.service";
 import { makeSlug } from "#src/utils/string.util";
 
 /**
@@ -28,31 +28,29 @@ async function runSeeder() {
     await session.startTransaction();
 
     // Permissions
-    const result = await Promise.all(
-      PERMISSIONS_LIST.map((item) =>
-        createPermissionWithinTransactionService(item, session)
-      )
+    const result = await createPermissionsWithinTransactionService(
+      PERMISSIONS_LIST
     );
 
     // Role admin
-    const roleAdmin = await createRoleWithinTransactionService(
+    const roles = await createRolesWithinTransactionService(
       {
         name: "Admin",
         isActive: true,
         slug: makeSlug("Admin"),
-        permissions: result.map((item) => item._id),
+        permissions: result.map((item) => item._doc._id),
       },
       session
     );
 
     // Admin account
-    await createUserWithinTransactionService(
+    await createUsersWithinTransactionService(
       {
         name: "Admin 123",
         email: "admin123@gmail.com",
         password: makeHash("1234"),
         isVerified: true,
-        role: roleAdmin._id,
+        role: roles[0]._id,
         type: USER_TYPES.USER,
       },
       session
@@ -60,6 +58,7 @@ async function runSeeder() {
 
     await session.commitTransaction();
   } catch (err) {
+    console.log(err);
     await session.abortTransaction();
     throw err;
   } finally {

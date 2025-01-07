@@ -25,6 +25,8 @@ mongoose
     console.error("Connect to MongoDB failed", err);
   });
 
+mongoose.set("debug", false);
+
 const app = express();
 app.set("trust proxy", true);
 app.use(logger("dev"));

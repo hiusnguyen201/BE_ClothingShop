@@ -5,7 +5,10 @@ import {
   UnauthorizedException,
 } from "#src/core/exception/http-exception";
 import { verifyToken } from "#src/utils/jwt.util";
-import { checkUserHasPermissionByMethodAndEndpointService } from "#src/modules/users/users.service";
+import {
+  checkUserHasPermissionByMethodAndEndpointService,
+  getUserByIdService,
+} from "#src/modules/users/users.service";
 
 export async function isAuthorized(req, res, next) {
   let token =
@@ -27,7 +30,7 @@ export async function isAuthorized(req, res, next) {
 
   try {
     const decoded = verifyToken(token);
-    if (!decoded) {
+    if (!decoded || !(await getUserByIdService(decoded._id))) {
       return next(new UnauthorizedException("Invalid token"));
     }
 
@@ -43,10 +46,16 @@ export async function hasPermission(req, res, next) {
     next(new UnauthorizedException("User not logged in"));
   }
 
+  // Convert to dynamic path
+  let endpoint = req.originalUrl;
+  Object.entries(req.params).map(([key, value]) => {
+    endpoint = endpoint.replace(value, `:${key}`);
+  });
+
   const hasPermission =
     await checkUserHasPermissionByMethodAndEndpointService(req.user._id, {
       method: req.method,
-      endpoint: req.originalUrl,
+      endpoint,
     });
 
   return hasPermission

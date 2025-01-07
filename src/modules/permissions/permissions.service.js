@@ -18,11 +18,11 @@ export async function createPermissionService(data) {
  * @param {*} data
  * @returns
  */
-export async function createPermissionWithinTransactionService(
+export async function createPermissionsWithinTransactionService(
   data,
   session
 ) {
-  return PermissionModel.create([data], { session });
+  return PermissionModel.insertMany(data, { session });
 }
 
 /**

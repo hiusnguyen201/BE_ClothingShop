@@ -25,8 +25,8 @@ export async function createRoleService(data) {
  * @param {*} data
  * @returns
  */
-export async function createRoleWithinTransactionService(data, session) {
-  return RoleModel.create([data], { session });
+export async function createRolesWithinTransactionService(data, session) {
+  return RoleModel.insertMany(data, { session });
 }
 
 /**
