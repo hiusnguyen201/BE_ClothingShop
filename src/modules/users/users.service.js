@@ -6,8 +6,7 @@ import {
 } from "#src/modules/cloudinary/cloudinary.service";
 import { REGEX_PATTERNS } from "#src/core/constant";
 
-const SELECTED_FIELDS =
-  "_id avatar name email status birthday gender createdAt updatedAt";
+const SELECTED_FIELDS = "_id avatar name email gender createdAt updatedAt";
 
 /**
  * Create user
@@ -16,6 +15,15 @@ const SELECTED_FIELDS =
  */
 export async function createUserService(data) {
   return UserModel.create(data);
+}
+
+/**
+ * Create user within transaction
+ * @param {*} data
+ * @returns
+ */
+export async function createUserWithinTransactionService(data, session) {
+  return UserModel.create([data], { session });
 }
 
 /**

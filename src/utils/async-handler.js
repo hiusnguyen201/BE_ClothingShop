@@ -1,6 +1,5 @@
 import express from "express";
-import httpStatus from "http-status-codes";
-import moment from "moment-timezone";
+import HttpStatus from "http-status-codes";
 
 const wrapAsync = (fn) => async (req, res, next) => {
   try {
@@ -13,10 +12,7 @@ const wrapAsync = (fn) => async (req, res, next) => {
 const enhanceResponse = (fn) => async (req, res, next) => {
   try {
     const result = await fn(req, res);
-    return res.status(result?.statusCode || httpStatus.OK).json({
-      ...result,
-      timestamp: moment().valueOf(),
-    });
+    return res.status(result?.statusCode || HttpStatus.OK).json(result);
   } catch (error) {
     next(error);
   }

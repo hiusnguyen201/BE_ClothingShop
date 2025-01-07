@@ -4,7 +4,7 @@ const { Schema } = mongoose;
 
 const PERMISSION_MODEL = "permissions";
 
-const permissionSchema = new Schema(
+export const permissionSchema = new Schema(
   {
     name: {
       type: String,
@@ -34,7 +34,7 @@ const permissionSchema = new Schema(
     },
     isActive: {
       type: Boolean,
-      default: false
+      default: false,
     },
 
     // Foreign Key

@@ -148,14 +148,13 @@ export async function checkExistCategoryNameService(name, skipId) {
  * @returns
  */
 export async function showCategoryService(id) {
-  await CategoryModel.findByIdAndUpdate(
+  return CategoryModel.findByIdAndUpdate(
     id,
     {
       isHide: false,
     },
     { new: true }
   ).select(SELECTED_FIELDS);
-  return;
 }
 
 /**
@@ -164,12 +163,11 @@ export async function showCategoryService(id) {
  * @returns
  */
 export async function hideCategoryService(id) {
-  await CategoryModel.findByIdAndUpdate(
+  return CategoryModel.findByIdAndUpdate(
     id,
     {
       isHide: true,
     },
     { new: true }
   ).select(SELECTED_FIELDS);
-  return;
 }

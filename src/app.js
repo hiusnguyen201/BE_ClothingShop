@@ -5,7 +5,7 @@ import logger from "morgan";
 import cors from "cors";
 import moment from "moment-timezone";
 import cookieParser from "cookie-parser";
-import httpStatus from "http-status-codes";
+import HttpStatus from "http-status-codes";
 
 import routerV1 from "#src/routes/v1/index";
 import { handleError, notFound } from "#src/middlewares/error.middleware";
@@ -43,7 +43,7 @@ app.use((req, res, next) => {
 
 // Ignore favicon request
 app.get("/favicon.ico", (req, res) =>
-  res.status(httpStatus.NO_CONTENT).end()
+  res.status(HttpStatus.NO_CONTENT).end()
 );
 
 // Api Docs - Must use swagger-ui-express v4.6.3

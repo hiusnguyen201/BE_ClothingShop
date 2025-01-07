@@ -14,6 +14,18 @@ export async function createPermissionService(data) {
 }
 
 /**
+ * Create permission within transaction
+ * @param {*} data
+ * @returns
+ */
+export async function createPermissionWithinTransactionService(
+  data,
+  session
+) {
+  return PermissionModel.create([data], { session });
+}
+
+/**
  * Get all permissions
  * @param {*} param0
  * @returns
@@ -103,14 +115,13 @@ export async function checkExistPermissionNameService(name, skipId) {
  * @returns
  */
 export async function activatePermissionByIdService(id) {
-  await PermissionModel.findByIdAndUpdate(
+  return PermissionModel.findByIdAndUpdate(
     id,
     {
       isActive: true,
     },
     { new: true }
   ).select(SELECTED_FIELDS);
-  return;
 }
 
 /**
@@ -119,12 +130,11 @@ export async function activatePermissionByIdService(id) {
  * @returns
  */
 export async function deactivatePermissionByIdService(id) {
-  await PermissionModel.findByIdAndUpdate(
+  return PermissionModel.findByIdAndUpdate(
     id,
     {
       isActive: false,
     },
     { new: true }
   ).select(SELECTED_FIELDS);
-  return;
 }

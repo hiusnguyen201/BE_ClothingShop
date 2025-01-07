@@ -20,10 +20,21 @@ import {
 import { UploadUtils } from "#src/utils/upload.util";
 import { ALLOW_ICON_MIME_TYPES } from "#src/core/constant";
 import { checkExistRoleNameDto } from "#src/modules/roles/dto/check-exist-role-name.dto";
+// import {
+//   hasPermission,
+//   isAuthorized,
+// } from "#src/middlewares/jwt-auth.middleware";
 const upload = UploadUtils.config({
   allowedMimeTypes: ALLOW_ICON_MIME_TYPES,
 });
 
+router.post(
+  "/is-exist-role-name",
+  validateSchema(checkExistRoleNameDto),
+  isExistRoleNameController
+);
+
+// router.use([isAuthorized, hasPermission]);
 router
   .get("/get-roles", getAllRolesController)
   .get("/get-role-by-id/:id", getRoleByIdController)
@@ -40,11 +51,6 @@ router
     updateRoleByIdController
   )
   .delete("/remove-role-by-id/:id", removeRoleByIdController)
-  .post(
-    "/is-exist-role-name",
-    validateSchema(checkExistRoleNameDto),
-    isExistRoleNameController
-  )
   .patch("/activate-role-by-id/:id", activateRoleByIdController)
   .patch("/deactivate-role-by-id/:id", deactivateRoleByIdController);
 

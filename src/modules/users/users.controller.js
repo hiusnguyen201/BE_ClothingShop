@@ -155,3 +155,14 @@ export const removeUserByIdController = async (req) => {
     data: removedUser,
   };
 };
+
+export const isExistEmailController = async (req) => {
+  const { email } = req.body;
+  const isExistEmail = await checkExistEmailService(email);
+
+  return {
+    statusCode: HttpStatus.OK,
+    message: isExistEmail ? "Email exists" : "Email does not exist",
+    data: isExistEmail,
+  };
+};

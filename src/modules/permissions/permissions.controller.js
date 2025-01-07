@@ -9,33 +9,33 @@ import {
   countAllPermissionsService,
   activatePermissionByIdService,
   deactivatePermissionByIdService,
-} from "#src/modules/permissions/permissions.service.js";
+} from "#src/modules/permissions/permissions.service";
 import {
-  ConflictException,
+  // ConflictException,
   NotFoundException,
   PreconditionFailedException,
 } from "#src/core/exception/http-exception";
 import { calculatePagination } from "#src/utils/pagination.util";
 
-export const createPermissionController = async (req) => {
-  const { name } = req.body;
-  const isExistName = await checkExistPermissionNameService(name);
-  if (isExistName) {
-    throw new ConflictException("Permission name already exist");
-  }
+// export const createPermissionController = async (req) => {
+//   const { name } = req.body;
+//   const isExistName = await checkExistPermissionNameService(name);
+//   if (isExistName) {
+//     throw new ConflictException("Permission name already exist");
+//   }
 
-  const newPermission = await createPermissionService(req.body);
+//   const newPermission = await createPermissionService(req.body);
 
-  const formatterPermission = await getPermissionByIdService(
-    newPermission._id
-  );
+//   const formatterPermission = await getPermissionByIdService(
+//     newPermission._id
+//   );
 
-  return {
-    statusCode: HttpStatus.CREATED,
-    message: "Create permission successfully",
-    data: formatterPermission,
-  };
-};
+//   return {
+//     statusCode: HttpStatus.CREATED,
+//     message: "Create permission successfully",
+//     data: formatterPermission,
+//   };
+// };
 
 export const getAllPermissionsController = async (req) => {
   let { keyword = "", method, limit = 10, page = 1, isActive } = req.query;

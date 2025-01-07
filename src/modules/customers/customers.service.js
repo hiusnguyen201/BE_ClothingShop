@@ -3,10 +3,10 @@ import { getUserByIdService } from "#src/modules/users/users.service";
 import { calculatePagination } from "#src/utils/pagination.util";
 
 const SELECTED_FIELDS =
-  "_id avatar name email status birthday gender createdAt updatedAt";
+  "_id avatar name email birthday gender createdAt updatedAt";
 
 export async function addVoucherToCustomerService(userId, voucherId) {
-  return await UserModel.findByIdAndUpdate(
+  return UserModel.findByIdAndUpdate(
     userId,
     { $push: { vouchers: voucherId } },
     { new: true }
@@ -27,6 +27,7 @@ export async function getAllVouchersByCustomerService(id, query) {
       },
     })
     .select("vouchers");
+
   return {
     meta: metaData,
     list: userVouchers.vouchers,

@@ -1,5 +1,5 @@
 import request from "supertest";
-import httpStatus from "http-status-codes";
+import HttpStatus from "http-status-codes";
 import app from "#src/app";
 
 describe("Create user route", () => {
@@ -11,7 +11,7 @@ describe("Create user route", () => {
           name: "user",
         });
 
-      expect(statusCode).toBe(httpStatus.BAD_REQUEST);
+      expect(statusCode).toBe(HttpStatus.BAD_REQUEST);
     });
   });
 });
