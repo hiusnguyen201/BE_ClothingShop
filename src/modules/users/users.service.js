@@ -190,7 +190,5 @@ export async function checkUserHasPermissionByMethodAndEndpointService(
       },
     });
 
-  console.log(user);
-
   return Boolean(user?.role?.permissions?.length > 0);
 }

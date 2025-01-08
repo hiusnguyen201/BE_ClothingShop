@@ -1,9 +1,10 @@
 import mongoose from "mongoose";
 
-beforeAll(async () => {
+beforeEach(async () => {
   await mongoose.connect(process.env.MONGO_URI);
 });
 
-afterAll(async () => {
+afterEach(async () => {
+  await mongoose.connection.db?.dropDatabase();
   await mongoose.connection.close();
 });

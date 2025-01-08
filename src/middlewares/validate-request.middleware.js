@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   PayloadTooLargeException,
+  UnprocessableContentException,
   UnsupportedMediaTypeException,
 } from "#src/core/exception/http-exception";
 
@@ -18,7 +19,7 @@ export const validateSchema = (schema) => {
     const { error, value } = schema.validate(req.body, options);
     if (error) {
       const message = error.details.map((item) => item.message);
-      return next(new BadRequestException(message));
+      return next(new UnprocessableContentException(message));
     }
 
     req.body = value;

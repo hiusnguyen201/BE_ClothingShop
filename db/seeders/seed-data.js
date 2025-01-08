@@ -38,7 +38,7 @@ async function runSeeder() {
         name: "Admin",
         isActive: true,
         slug: makeSlug("Admin"),
-        permissions: result.map((item) => item._doc._id),
+        permissions: result.map((item) => item._id),
       },
       session
     );

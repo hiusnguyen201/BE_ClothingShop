@@ -10,7 +10,7 @@ import {
   getUserByIdService,
 } from "#src/modules/users/users.service";
 
-export async function isAuthorized(req, res, next) {
+async function authorized(req, res, next) {
   let token =
     req.headers["x-access-token"] || req.headers["authorization"];
 
@@ -31,17 +31,17 @@ export async function isAuthorized(req, res, next) {
   try {
     const decoded = verifyToken(token);
     if (!decoded || !(await getUserByIdService(decoded._id))) {
-      return next(new UnauthorizedException("Invalid token"));
+      return next(new UnauthorizedException("Invalid or expired token"));
     }
 
     req.user = decoded;
     next();
   } catch (e) {
-    return next(new UnauthorizedException("Invalid token"));
+    return next(new UnauthorizedException("Invalid or expired token"));
   }
 }
 
-export async function hasPermission(req, res, next) {
+async function checkPermission(req, res, next) {
   if (!req?.user) {
     next(new UnauthorizedException("User not logged in"));
   }
@@ -66,3 +66,6 @@ export async function hasPermission(req, res, next) {
         )
       );
 }
+
+export const isAuthorized = [authorized];
+export const isAuthorizedAndHasPermission = [authorized, checkPermission];
