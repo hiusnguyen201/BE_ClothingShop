@@ -8,10 +8,17 @@ import permissionsRouter from "#src/routes/v1/permissions.route";
 import customersRouter from "#src/routes/v1/customers.route";
 import categoriesRouter from "#src/routes/v1/categories.route";
 import vouchersRouter from "#src/routes/v1/vouchers.route";
+import accountRouter from "#src/routes/v1/account.route";
 
-router.use("/users", usersRouter);
+router.get("/ping", (req, res) => {
+  return "Hello, world! PING";
+});
 
 router.use("/auth", authRouter);
+
+router.use("/account", accountRouter);
+
+router.use("/users", usersRouter);
 
 router.use("/roles", rolesRouter);
 

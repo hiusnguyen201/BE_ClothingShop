@@ -6,4 +6,4 @@ export const updateVoucherDto = Joi.object({
   isPublic: Joi.boolean(),
   endDate: Joi.date().iso().min(moment().valueOf()),
   maxUses: Joi.number(),
-}).min(1);
+});

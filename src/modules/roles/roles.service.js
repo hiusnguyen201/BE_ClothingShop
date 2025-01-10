@@ -4,7 +4,7 @@ import {
   removeImageByPublicIdService,
   uploadImageBufferService,
 } from "#src/modules/cloudinary/cloudinary.service";
-import { getPermissionByIdService } from "#src/modules/permissions/permissions.service.js";
+import { getPermissionByIdService } from "#src/modules/permissions/permissions.service";
 import { makeSlug } from "#src/utils/string.util";
 import { REGEX_PATTERNS } from "#src/core/constant";
 
@@ -18,6 +18,15 @@ const SELECTED_FIELDS =
  */
 export async function createRoleService(data) {
   return RoleModel.create(data);
+}
+
+/**
+ * Create role within transaction
+ * @param {*} data
+ * @returns
+ */
+export async function createRolesWithinTransactionService(data, session) {
+  return RoleModel.insertMany(data, { session });
 }
 
 /**
@@ -63,7 +72,7 @@ export async function getRoleByIdService(
 
   if (isValidObjectId(id)) {
     filter._id = id;
-  } else if (REGEX_PATTERNS.SLUG.test(id)) {
+  } else if (id.match(REGEX_PATTERNS.SLUG)) {
     filter.slug = id;
   } else {
     filter.name = id;
@@ -164,14 +173,13 @@ export async function updateRolePermissionsByIdService(
  * @returns
  */
 export async function activateRoleByIdService(id) {
-  await RoleModel.findByIdAndUpdate(
+  return RoleModel.findByIdAndUpdate(
     id,
     {
       isActive: true,
     },
     { new: true }
   ).select(SELECTED_FIELDS);
-  return;
 }
 
 /**
@@ -180,12 +188,11 @@ export async function activateRoleByIdService(id) {
  * @returns
  */
 export async function deactivateRoleByIdService(id) {
-  await RoleModel.findByIdAndUpdate(
+  return RoleModel.findByIdAndUpdate(
     id,
     {
       isActive: false,
     },
     { new: true }
   ).select(SELECTED_FIELDS);
-  return;
 }

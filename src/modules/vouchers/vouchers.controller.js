@@ -2,6 +2,7 @@ import HttpStatus from "http-status-codes";
 import {
   ConflictException,
   NotFoundException,
+  PreconditionFailedException,
 } from "#src/core/exception/http-exception";
 
 import {
@@ -15,7 +16,7 @@ import {
 } from "#src/modules/vouchers/vouchers.service";
 import { calculatePagination } from "#src/utils/pagination.util";
 
-export const createVoucherController = async (req, res) => {
+export const createVoucherController = async (req) => {
   const { code } = req.body;
   const isExistVoucherCode = await checkExistVoucherCodeService(code);
   if (isExistVoucherCode) {
@@ -26,14 +27,14 @@ export const createVoucherController = async (req, res) => {
 
   const formatterVoucher = await getVoucherByIdService(newVoucher._id);
 
-  return res.json({
+  return {
     statusCode: HttpStatus.CREATED,
     message: "Create voucher successfully",
     data: formatterVoucher,
-  });
+  };
 };
 
-export const getAllVouchersController = async (req, res) => {
+export const getAllVouchersController = async (req) => {
   let { keyword = "", limit = 10, page = 1 } = req.query;
 
   const filterOptions = {
@@ -52,31 +53,31 @@ export const getAllVouchersController = async (req, res) => {
     limit: metaData.limit,
   });
 
-  return res.json({
-    statusCode: HttpStatus.CREATED,
+  return {
+    statusCode: HttpStatus.OK,
     message: "Get all vouchers successfully",
     data: {
       meta: metaData,
       list: vouchers,
     },
-  });
+  };
 };
 
-export const getVoucherByIdController = async (req, res) => {
+export const getVoucherByIdController = async (req) => {
   const { id } = req.params;
   const existVoucher = await getVoucherByIdService(id);
   if (!existVoucher) {
     throw new ConflictException("Voucher code already exist");
   }
 
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: "Get one voucher successfully",
     data: existVoucher,
-  });
+  };
 };
 
-export const updateVoucherByIdController = async (req, res) => {
+export const updateVoucherByIdController = async (req) => {
   const { id } = req.params;
   const existVoucher = await getVoucherByIdService(id, "_id uses");
   if (!existVoucher) {
@@ -85,20 +86,20 @@ export const updateVoucherByIdController = async (req, res) => {
 
   const { maxUses } = req.body;
   if (maxUses < existVoucher.uses) {
-    throw new BadRequestException(
+    throw new PreconditionFailedException(
       `maxUses must be greater than the number of ${existVoucher.uses} `
     );
   }
   const updatedVoucher = await updateVoucherByIdService(id, req.body);
 
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: "Update voucher successfully",
     data: updatedVoucher,
-  });
+  };
 };
 
-export const removeVoucherByIdController = async (req, res) => {
+export const removeVoucherByIdController = async (req) => {
   const { id } = req.params;
   const existVoucher = await getVoucherByIdService(id, "_id");
   if (!existVoucher) {
@@ -107,22 +108,22 @@ export const removeVoucherByIdController = async (req, res) => {
 
   const removeVoucher = await removeVoucherByIdService(id);
 
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: "Remove voucher successfully",
     data: removeVoucher,
-  });
+  };
 };
 
-export const isExistVoucherCodeController = async (req, res) => {
+export const isExistVoucherCodeController = async (req) => {
   const { code } = req.body;
   const isExistCode = await checkExistVoucherCodeService(code);
 
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: isExistCode
       ? "Voucher code exists"
       : "Voucher code does not exist",
     data: isExistCode,
-  });
+  };
 };

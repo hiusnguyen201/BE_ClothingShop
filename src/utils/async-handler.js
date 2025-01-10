@@ -1,40 +1,49 @@
 import express from "express";
+import HttpStatus from "http-status-codes";
 
-const asyncHandler = (fn) => (req, res, next) => {
-  Promise.resolve(fn(req, res, next)).catch(next);
+const wrapAsync = (fn) => async (req, res, next) => {
+  try {
+    await fn(req, res, next);
+  } catch (error) {
+    next(error);
+  }
 };
 
-export default asyncHandler;
+const enhanceResponse = (fn) => async (req, res, next) => {
+  try {
+    const result = await fn(req, res);
+    return res.status(result?.statusCode || HttpStatus.OK).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
 
-export const wrapAllRoutersWithAsyncHandler = (router) => {
-  const originalRouter = express.Router();
-
-  console.log(2);
+export const enhanceRouter = (router) => {
+  const enhancedRouter = express.Router();
 
   router.stack.forEach((layer) => {
     if (layer.name === "router") {
-      // layer.handle is an instance of express.Router
-      // recursively wrap sub router
-      const nestedRouter = wrapAllRoutersWithAsyncHandler(layer.handle);
-
-      // layer.regexp is the path of the router
-      originalRouter.use(layer.regexp.source, nestedRouter); // setup prefix for sub router
+      // Recursively enhance nested routers
+      const nestedRouter = enhanceRouter(layer.handle);
+      enhancedRouter.use(layer.regexp.source, nestedRouter);
     } else if (layer.route) {
       const { path: endpoint, methods, stack } = layer.route;
 
-      // stack - array of handler functions
-      stack.forEach((handlerFnc, i) => {
-        stack[i].handle = asyncHandler(handlerFnc.handle);
-      });
-
       Object.keys(methods).forEach((method) => {
-        originalRouter[method](
+        enhancedRouter[method](
           endpoint,
-          ...stack.map((childLayer) => childLayer.handle)
+          ...stack.map((middleware, index) =>
+            index === stack.length - 1
+              ? enhanceResponse(middleware.handle)
+              : wrapAsync(middleware.handle)
+          )
         );
       });
+    } else {
+      // Attach non-route middleware directly
+      enhancedRouter.use(layer.handle);
     }
   });
 
-  return originalRouter;
+  return enhancedRouter;
 };

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { GENDER, USER_STATUS, USER_TYPES } from "#src/core/constant";
+import { GENDER, USER_TYPES } from "#src/core/constant";
 const { Schema } = mongoose;
 
 const USER_MODEL = "users";
@@ -53,18 +53,18 @@ const userSchema = new Schema(
       required: false,
       length: 100,
     },
-    status: {
-      type: String,
-      length: 50,
-      required: true,
-      enum: [
-        USER_STATUS.ACTIVE,
-        USER_STATUS.INACTIVE,
-        USER_STATUS.DELETED,
-        USER_STATUS.BANNED,
-      ],
-      default: USER_STATUS.INACTIVE,
-    },
+    // status: {
+    //   type: String,
+    //   length: 50,
+    //   required: true,
+    //   enum: [
+    //     USER_STATUS.ACTIVE,
+    //     USER_STATUS.INACTIVE,
+    //     USER_STATUS.DELETED,
+    //     USER_STATUS.BANNED,
+    //   ],
+    //   default: USER_STATUS.INACTIVE,
+    // },
     isVerified: {
       type: Boolean,
       required: false,
@@ -85,7 +85,10 @@ const userSchema = new Schema(
     role: { type: Schema.Types.ObjectId, ref: "Role" },
     // permissions: [{ type: Schema.Types.ObjectId, ref: "Permission" }],
 
-    vouchers: [{ type: Schema.Types.ObjectId, ref: "Voucher" }],
+    vouchers: {
+      type: [{ type: Schema.Types.ObjectId, ref: "Voucher" }],
+      default: undefined,
+    },
   },
   {
     versionKey: false,

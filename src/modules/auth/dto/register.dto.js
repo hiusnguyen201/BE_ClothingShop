@@ -11,10 +11,11 @@ export const registerDto = Joi.object({
   confirmPassword: Joi.string().required().valid(Joi.ref("password")),
   phone: Joi.string()
     .required()
-    .custom((value, helper) => {
-      if (REGEX_PATTERNS.PHONE_VIETNAM.test(value)) {
-        return value;
-      }
-      return helper.message("Invalid vietnam phone number");
-    }),
+    .custom((value, helper) =>
+      value.match(
+        REGEX_PATTERNS.PHONE_VIETNAM
+          ? value
+          : helper.message("Invalid vietnam phone number")
+      )
+    ),
 });

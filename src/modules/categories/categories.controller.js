@@ -21,7 +21,7 @@ import { calculatePagination } from "#src/utils/pagination.util";
 
 const MAX_LEVEL_CHILDREN = 2;
 
-export const createCategoryController = async (req, res) => {
+export const createCategoryController = async (req) => {
   let { name, parent, level = 1 } = req.body;
   const isExistName = await checkExistCategoryNameService(name);
   if (isExistName) {
@@ -59,14 +59,14 @@ export const createCategoryController = async (req, res) => {
 
   const formatterCategory = await getCategoryByIdService(newCategory._id);
 
-  return res.json({
+  return {
     statusCode: HttpStatus.CREATED,
     message: "Create category successfully",
     data: formatterCategory,
-  });
+  };
 };
 
-export const getAllCategoriesController = async (req, res) => {
+export const getAllCategoriesController = async (req) => {
   let { keyword = "", isHide = false, limit = 10, page = 1 } = req.query;
 
   const filterOptions = {
@@ -83,31 +83,31 @@ export const getAllCategoriesController = async (req, res) => {
     limit: metaData.limit,
   });
 
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: "Get all categories successfully",
     data: {
       meta: metaData,
       list: categories,
     },
-  });
+  };
 };
 
-export const getCategoryByIdController = async (req, res) => {
+export const getCategoryByIdController = async (req) => {
   const { id } = req.params;
   const existCategory = await getCategoryByIdService(id);
   if (!existCategory) {
     throw new NotFoundException("Category not found");
   }
 
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: "Get one category successfully",
     data: existCategory,
-  });
+  };
 };
 
-export const updateCategoryByIdController = async (req, res) => {
+export const updateCategoryByIdController = async (req) => {
   const { id } = req.params;
   const existCategory = await getCategoryByIdService(id, "_id");
   if (!existCategory) {
@@ -136,14 +136,14 @@ export const updateCategoryByIdController = async (req, res) => {
     );
   }
 
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: "Update category successfully",
     data: updatedCategory,
-  });
+  };
 };
 
-export const removeCategoryByIdController = async (req, res) => {
+export const removeCategoryByIdController = async (req) => {
   const { id } = req.params;
   const existCategory = await getCategoryByIdService(id);
   if (!existCategory) {
@@ -155,27 +155,28 @@ export const removeCategoryByIdController = async (req, res) => {
   }
 
   const removedCategory = await removeCategoryByIdService(id);
-  return res.json({
+
+  return {
     statusCode: HttpStatus.OK,
     message: "Remove category successfully",
     data: removedCategory,
-  });
+  };
 };
 
-export const isExistCategoryNameController = async (req, res) => {
+export const isExistCategoryNameController = async (req) => {
   const { name } = req.body;
   const isExistName = await checkExistCategoryNameService(name);
 
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: isExistName
       ? "Category name exists"
       : "Category name does not exist",
     data: isExistName,
-  });
+  };
 };
 
-export const showCategoryByIdController = async (req, res) => {
+export const showCategoryByIdController = async (req) => {
   const { id } = req.params;
   const existCategory = await getCategoryByIdService(id, "_id");
   if (!existCategory) {
@@ -184,13 +185,13 @@ export const showCategoryByIdController = async (req, res) => {
 
   await showCategoryService(id);
 
-  return res.json({
+  return {
     statusCode: HttpStatus.NO_CONTENT,
     message: "Show category successfully",
-  });
+  };
 };
 
-export const hideCategoryByIdController = async (req, res) => {
+export const hideCategoryByIdController = async (req) => {
   const { id } = req.params;
   const existCategory = await getCategoryByIdService(id, "_id");
   if (!existCategory) {
@@ -199,8 +200,8 @@ export const hideCategoryByIdController = async (req, res) => {
 
   await hideCategoryService(id);
 
-  return res.json({
+  return {
     statusCode: HttpStatus.NO_CONTENT,
     message: "Hide category successfully",
-  });
+  };
 };

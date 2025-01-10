@@ -1,14 +1,20 @@
 import mongoose from "mongoose";
-import { PERMISSION_STATUS, ALLOW_METHODS } from "#src/core/constant";
+import { ALLOW_METHODS } from "#src/core/constant";
 const { Schema } = mongoose;
 
 const PERMISSION_MODEL = "permissions";
 
-const permissionSchema = new Schema(
+export const permissionSchema = new Schema(
   {
     name: {
       type: String,
       length: 50,
+      unique: true,
+      required: true,
+    },
+    slug: {
+      type: String,
+      length: 100,
       unique: true,
       required: true,
     },
@@ -32,15 +38,9 @@ const permissionSchema = new Schema(
       required: true,
       enum: ALLOW_METHODS,
     },
-    status: {
-      type: String,
-      length: 50,
-      required: true,
-      enum: [
-        PERMISSION_STATUS.ACTIVE,
-        PERMISSION_STATUS.INACTIVE,
-        PERMISSION_STATUS.DELETED,
-      ],
+    isActive: {
+      type: Boolean,
+      default: false,
     },
 
     // Foreign Key

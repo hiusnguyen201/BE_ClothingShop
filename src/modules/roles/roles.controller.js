@@ -20,7 +20,7 @@ import {
 import { makeSlug } from "#src/utils/string.util";
 import { calculatePagination } from "#src/utils/pagination.util";
 
-export const createRoleController = async (req, res) => {
+export const createRoleController = async (req) => {
   const { name, permissions } = req.body;
   const isExistName = await checkExistRoleNameService(name);
   if (isExistName) {
@@ -44,14 +44,14 @@ export const createRoleController = async (req, res) => {
 
   const formatterRole = await getRoleByIdService(newRole._id);
 
-  return res.json({
+  return {
     statusCode: HttpStatus.CREATED,
     message: "Create role successfully",
     data: formatterRole,
-  });
+  };
 };
 
-export const getAllRolesController = async (req, res) => {
+export const getAllRolesController = async (req) => {
   let { keyword = "", limit = 10, page = 1, isActive } = req.query;
 
   const filterOptions = {
@@ -68,28 +68,28 @@ export const getAllRolesController = async (req, res) => {
     limit: metaData.limit,
   });
 
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: "Get all roles successfully",
     data: { meta: metaData, list: roles },
-  });
+  };
 };
 
-export const getRoleByIdController = async (req, res) => {
+export const getRoleByIdController = async (req) => {
   const { id } = req.params;
   const existRole = await getRoleByIdService(id);
   if (!existRole) {
     throw new NotFoundException("Role not found");
   }
 
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: "Get one role successfully",
     data: existRole,
-  });
+  };
 };
 
-export const updateRoleByIdController = async (req, res) => {
+export const updateRoleByIdController = async (req) => {
   const { id } = req.params;
   const existRole = await getRoleByIdService(id, "_id");
   if (!existRole) {
@@ -122,14 +122,14 @@ export const updateRoleByIdController = async (req, res) => {
     updatedRole = await updateRolePermissionsByIdService(id, permissions);
   }
 
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: "Update role successfully",
     data: updatedRole,
-  });
+  };
 };
 
-export const removeRoleByIdController = async (req, res) => {
+export const removeRoleByIdController = async (req) => {
   const { id } = req.params;
   const existRole = await getRoleByIdService(id);
   if (!existRole) {
@@ -141,27 +141,27 @@ export const removeRoleByIdController = async (req, res) => {
   }
 
   const data = await removeRoleByIdService(id);
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: "Remove role successfully",
     data,
-  });
+  };
 };
 
-export const isExistRoleNameController = async (req, res) => {
+export const isExistRoleNameController = async (req) => {
   const { name } = req.body;
   const existRoleName = await checkExistRoleNameService(name);
 
-  return res.json({
+  return {
     statusCode: HttpStatus.OK,
     message: existRoleName
       ? "Role name exists"
       : "Role name does not exist",
     data: existRoleName,
-  });
+  };
 };
 
-export const activateRoleByIdController = async (req, res) => {
+export const activateRoleByIdController = async (req) => {
   const { id } = req.params;
   const existRole = await getRoleByIdService(id, "_id");
   if (!existRole) {
@@ -170,13 +170,13 @@ export const activateRoleByIdController = async (req, res) => {
 
   await activateRoleByIdService(id);
 
-  return res.json({
+  return {
     statusCode: HttpStatus.NO_CONTENT,
     message: "Activate role successfully",
-  });
+  };
 };
 
-export const deactivateRoleByIdController = async (req, res) => {
+export const deactivateRoleByIdController = async (req) => {
   const { id } = req.params;
   const existRole = await getRoleByIdService(id, "_id");
   if (!existRole) {
@@ -185,8 +185,8 @@ export const deactivateRoleByIdController = async (req, res) => {
 
   await deactivateRoleByIdService(id);
 
-  return res.json({
+  return {
     statusCode: HttpStatus.NO_CONTENT,
     message: "Deactivate role successfully",
-  });
+  };
 };

@@ -20,10 +20,18 @@ import {
 } from "#src/middlewares/validate-request.middleware";
 import { UploadUtils } from "#src/utils/upload.util";
 import { ALLOW_IMAGE_MIME_TYPES } from "#src/core/constant";
+// import { hasPermission, isAuthorized } from "#src/middlewares/jwt-auth.middleware";
 const upload = UploadUtils.config({
   allowedMimeTypes: ALLOW_IMAGE_MIME_TYPES,
 });
 
+router.post(
+  "/is-exist-category-name",
+  validateSchema(checkExistCategoryNameDto),
+  isExistCategoryNameController
+);
+
+// router.use([isAuthorized, hasPermission])
 router
   .get("/get-categories", getAllCategoriesController)
   .get("/get-category-by-id/:id", getCategoryByIdController)
@@ -40,11 +48,6 @@ router
     updateCategoryByIdController
   )
   .delete("/remove-category-by-id/:id", removeCategoryByIdController)
-  .post(
-    "/is-exist-category-name",
-    validateSchema(checkExistCategoryNameDto),
-    isExistCategoryNameController
-  )
   .patch("/show-category-by-id/:id", showCategoryByIdController)
   .patch("/hide-category-by-id/:id", hideCategoryByIdController);
 

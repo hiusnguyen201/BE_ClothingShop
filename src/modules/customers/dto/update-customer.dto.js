@@ -12,10 +12,11 @@ export const updateCustomersDto = Joi.object({
   gender: Joi.string().valid(...Object.values(GENDER)),
   phone: Joi.string()
     .required()
-    .custom((value, helper) => {
-      if (REGEX_PATTERNS.PHONE_VIETNAM.test(value)) {
-        return value;
-      }
-      return helper.message("Invalid vietnam phone number");
-    }),
-}).min(1);
+    .custom((value, helper) =>
+      value.match(
+        REGEX_PATTERNS.PHONE_VIETNAM
+          ? value
+          : helper.message("Invalid vietnam phone number")
+      )
+    ),
+});

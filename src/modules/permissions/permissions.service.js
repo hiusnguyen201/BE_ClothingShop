@@ -2,7 +2,7 @@ import { isValidObjectId } from "mongoose";
 import { PermissionModel } from "#src/modules/permissions/schemas/permission.schema";
 
 const SELECTED_FIELDS =
-  "_id name description module endpoint method status createdAt updatedAt";
+  "_id name description module endpoint method isActive createdAt updatedAt";
 
 /**
  * Create permission
@@ -11,6 +11,18 @@ const SELECTED_FIELDS =
  */
 export async function createPermissionService(data) {
   return PermissionModel.create(data);
+}
+
+/**
+ * Create permission within transaction
+ * @param {*} data
+ * @returns
+ */
+export async function createPermissionsWithinTransactionService(
+  data,
+  session
+) {
+  return PermissionModel.insertMany(data, { session });
 }
 
 /**
@@ -95,4 +107,34 @@ export async function checkExistPermissionNameService(name, skipId) {
     _id: { $ne: skipId },
   }).select("_id");
   return Boolean(existRole);
+}
+
+/**
+ * Activate permission
+ * @param {*} id
+ * @returns
+ */
+export async function activatePermissionByIdService(id) {
+  return PermissionModel.findByIdAndUpdate(
+    id,
+    {
+      isActive: true,
+    },
+    { new: true }
+  ).select(SELECTED_FIELDS);
+}
+
+/**
+ * Deactivate permission
+ * @param {*} id
+ * @returns
+ */
+export async function deactivatePermissionByIdService(id) {
+  return PermissionModel.findByIdAndUpdate(
+    id,
+    {
+      isActive: false,
+    },
+    { new: true }
+  ).select(SELECTED_FIELDS);
 }
