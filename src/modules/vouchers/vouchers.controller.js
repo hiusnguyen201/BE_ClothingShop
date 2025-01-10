@@ -2,6 +2,7 @@ import HttpStatus from "http-status-codes";
 import {
   ConflictException,
   NotFoundException,
+  PreconditionFailedException,
 } from "#src/core/exception/http-exception";
 
 import {
@@ -85,7 +86,7 @@ export const updateVoucherByIdController = async (req) => {
 
   const { maxUses } = req.body;
   if (maxUses < existVoucher.uses) {
-    throw new BadRequestException(
+    throw new PreconditionFailedException(
       `maxUses must be greater than the number of ${existVoucher.uses} `
     );
   }

@@ -91,6 +91,15 @@ export class UnsupportedMediaTypeException extends HttpException {
 }
 
 /**
+ * The HTTP response status code will be 422.
+ */
+export class UnprocessableContentException extends HttpException {
+  constructor(message) {
+    super(message, HttpStatus.UNPROCESSABLE_ENTITY);
+  }
+}
+
+/**
  * The HTTP response status code will be 429.
  */
 export class TooManyRequestException extends HttpException {

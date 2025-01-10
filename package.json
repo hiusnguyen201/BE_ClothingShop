@@ -11,12 +11,14 @@
     "start": "cross-env NODE_ENV=production node ./src/index.js",
     "dev": "cross-env NODE_ENV=development nodemon ./src/index.js",
     "test": "cross-env NODE_ENV=test jest --config",
+    "test:silent": "cross-env NODE_ENV=test jest --config --silent",
     "test:watch": "cross-env NODE_ENV=test jest --watch --config",
     "build": "echo 'No build step required for Express.js'",
     "vercel-build": "npm run build",
     "seed": "node ./db/seeders/seed-data.js"
   },
   "dependencies": {
+    "@faker-js/faker": "^9.3.0",
     "bcrypt": "^5.1.1",
     "cloudinary": "^2.5.1",
     "cookie-parser": "~1.4.4",
