@@ -1,11 +1,14 @@
 /** @type {import('#src/modules/permissions/schemas/permission.schema')} */
 
+import { makeSlug } from "#src/utils/string.util";
+
 const USERS_DATA = [
   {
     name: "Get users list",
     module: "users",
     endpoint: "/api/v1/users/get-users",
     method: "GET",
+    slug: makeSlug("Get users list"),
     isActive: true,
   },
   {
@@ -13,6 +16,7 @@ const USERS_DATA = [
     module: "users",
     endpoint: "/api/v1/users/get-user-by-id/:id",
     method: "GET",
+    slug: makeSlug("Get user by id"),
     isActive: true,
   },
   {
@@ -20,6 +24,7 @@ const USERS_DATA = [
     module: "users",
     endpoint: "/api/v1/users/create-user",
     method: "POST",
+    slug: makeSlug("Create user"),
     isActive: true,
   },
   {
@@ -27,6 +32,7 @@ const USERS_DATA = [
     module: "users",
     endpoint: "/api/v1/users/update-user-by-id/:id",
     method: "PATCH",
+    slug: makeSlug("Update user by id"),
     isActive: true,
   },
   {
@@ -34,6 +40,7 @@ const USERS_DATA = [
     module: "users",
     endpoint: "/api/v1/users/remove-user-by-id/:id",
     method: "DELETE",
+    slug: makeSlug("Remove user by id"),
     isActive: true,
   },
 ];

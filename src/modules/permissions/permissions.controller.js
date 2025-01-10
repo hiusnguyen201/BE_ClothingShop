@@ -11,6 +11,7 @@ import {
   deactivatePermissionByIdService,
 } from "#src/modules/permissions/permissions.service";
 import {
+  ConflictException,
   // ConflictException,
   NotFoundException,
   PreconditionFailedException,
@@ -91,7 +92,7 @@ export const updatePermissionByIdController = async (req) => {
   if (name) {
     const isExistName = await checkExistPermissionNameService(name, id);
     if (isExistName) {
-      throw new NotFoundException("Permission name is exist");
+      throw new ConflictException("Permission name is exist");
     }
   }
 

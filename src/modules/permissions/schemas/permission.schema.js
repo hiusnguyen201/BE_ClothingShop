@@ -12,6 +12,12 @@ export const permissionSchema = new Schema(
       unique: true,
       required: true,
     },
+    slug: {
+      type: String,
+      length: 100,
+      unique: true,
+      required: true,
+    },
     description: {
       type: String,
       length: 255,
