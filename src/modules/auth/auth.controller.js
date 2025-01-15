@@ -1,5 +1,4 @@
 import HttpStatus from "http-status-codes";
-import path from "path";
 import {
   createUserService,
   getUserByIdService,
@@ -48,7 +47,6 @@ export const registerController = async (req, res) => {
   if (req.file) {
     return await updateUserAvatarByIdService(newCustomer._id, req.file);
   }
-
   return res.json({
     statusCode: HttpStatus.OK,
     message: "Register successfully",
@@ -60,6 +58,7 @@ export const registerController = async (req, res) => {
         _id: newCustomer._id,
         name: newCustomer.name,
         email: newCustomer.email,
+        type: newCustomer.type,
       },
     },
   });
@@ -72,7 +71,6 @@ export const loginController = async (req, res) => {
     email,
     "_id password name email isVerified type"
   );
-
   if (!user) {
     throw new UnauthorizedException("Invalid Credentials");
   }
@@ -91,7 +89,12 @@ export const loginController = async (req, res) => {
       isAuthenticated: !isNeed2Fa,
       accessToken: isNeed2Fa ? null : generateToken({ _id: user._id }),
       is2FactorRequired: isNeed2Fa,
-      user: { _id: user._id, name: user.name, email: user.email },
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        type: user.type,
+      },
     },
   });
 };
@@ -114,10 +117,7 @@ export const sendOtpViaEmailController = async (req, res) => {
 
 export const verifyOtpController = async (req, res) => {
   const { email, otp } = req.body;
-  const user = await getUserByIdService(
-    email,
-    "_id email name isVerified"
-  );
+  const user = await getUserByIdService(email, "_id email name isVerified");
   if (!user) {
     throw new NotFoundException("User not found");
   }
@@ -139,7 +139,12 @@ export const verifyOtpController = async (req, res) => {
     data: {
       isAuthenticated: true,
       accessToken,
-      user: { _id: user._id, name: user.name, email: user.email },
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        type: user.type,
+      },
     },
   });
 };
@@ -150,15 +155,21 @@ export const forgotPasswordController = async (req, res) => {
   if (!user) {
     throw new NotFoundException("User not found");
   }
-
   const resetPassword = await createResetPasswordService(user._id);
 
-  const resetURL = path.join(callbackUrl, resetPassword.token);
-  await sendResetPasswordRequestService(email, resetURL);
+  const resetURL = new URL(callbackUrl);
+  resetURL.searchParams.append("token", resetPassword.token);
+  const finalURL = resetURL.href;
+  await sendResetPasswordRequestService(email, finalURL);
 
   return res.json({
     statusCode: HttpStatus.NO_CONTENT,
     message: "Required Forgot Password Success",
+    data: {
+      user: {
+        email: email,
+      },
+    },
   });
 };
 

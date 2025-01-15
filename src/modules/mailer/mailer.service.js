@@ -51,9 +51,10 @@ export const sendWelcomeEmailService = async (email, name) => {
 };
 
 export const sendResetPasswordRequestService = async (email, resetURL) => {
-  const html = getEmailTemplateToString(
-    "password-reset-request.html"
-  ).replace("{resetURL}", resetURL);
+  const html = getEmailTemplateToString("password-reset-request.html").replace(
+    "{resetURL}",
+    resetURL
+  );
 
   await transporter.sendMail({
     from: mailerEmail,
