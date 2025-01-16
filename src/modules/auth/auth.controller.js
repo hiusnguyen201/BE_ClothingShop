@@ -6,11 +6,13 @@ import {
   updateUserAvatarByIdService,
   updateUserVerifiedByIdService,
   changePasswordByIdService,
+  updateUserLockUntilByIdService,
 } from "#src/modules/users/users.service";
 import {
   UnauthorizedException,
   ConflictException,
   NotFoundException,
+  ForbiddenException,
 } from "#src/core/exception/http-exception";
 import { compareHash, makeHash } from "#src/utils/bcrypt.util";
 import { generateToken } from "#src/utils/jwt.util";
@@ -29,7 +31,12 @@ import {
   createResetPasswordService,
   getResetPasswordByTokenService,
 } from "#src/modules/reset-password/reset-password.service";
-
+import {
+  clearLoginAttemptByUserId,
+  createLoginAttemptByUserId,
+  countAttemptByUserId,
+} from "#src/modules/login-attempt/login-attempt.service";
+import moment from "moment-timezone";
 export const registerController = async (req, res) => {
   const { password, email } = req.body;
   const isExistEmail = await checkExistEmailService(email);
@@ -69,34 +76,57 @@ export const loginController = async (req, res) => {
 
   const user = await getUserByIdService(
     email,
-    "_id password name email isVerified type"
+    "_id password name email isVerified type lockedUntil"
   );
   if (!user) {
     throw new UnauthorizedException("Invalid Credentials");
   }
-
-  const isMatchPassword = compareHash(password, user.password);
-  if (!isMatchPassword) {
-    throw new UnauthorizedException("Invalid Credentials");
+  if (user.lockedUntil) {
+    if (user.lockedUntil > moment().valueOf()) {
+      throw new ForbiddenException("Account is locked. Try again later !");
+    } else {
+      await updateUserLockUntilByIdService(user._id, null);
+    }
   }
 
-  const isNeed2Fa = !user.isVerified; // || user.type === USER_TYPES.USER;
+  const isMatchPassword = compareHash(password, user.password);
 
-  return res.json({
-    statusCode: HttpStatus.OK,
-    message: "Login successfully",
-    data: {
-      isAuthenticated: !isNeed2Fa,
-      accessToken: isNeed2Fa ? null : generateToken({ _id: user._id }),
-      is2FactorRequired: isNeed2Fa,
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        type: user.type,
+  if (isMatchPassword) {
+    await clearLoginAttemptByUserId(user._id);
+    const isNeed2Fa = !user.isVerified; // || user.type === USER_TYPES.USER;
+
+    return res.json({
+      statusCode: HttpStatus.OK,
+      message: "Login successfully",
+      data: {
+        isAuthenticated: !isNeed2Fa,
+        accessToken: isNeed2Fa ? null : generateToken({ _id: user._id }),
+        is2FactorRequired: isNeed2Fa,
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          type: user.type,
+        },
       },
-    },
-  });
+    });
+  } else {
+    await createLoginAttemptByUserId(user._id);
+
+    const timeAgo =
+      moment().valueOf() - 60 * 1000 * (+process.env.TIME_LOCK_ACCONT || 30);
+    const attemptCount = await countAttemptByUserId(user._id, timeAgo);
+
+    if (attemptCount >= 5) {
+      const timeLock =
+        moment().valueOf() + 60 * 1000 * (+process.env.TIME_LOCK_ACCONT || 30);
+      await updateUserLockUntilByIdService(user._id, timeLock);
+      throw new ForbiddenException(
+        "Account locked due to too many failed login attempts."
+      );
+    }
+    throw new UnauthorizedException("Invalid Credentials");
+  }
 };
 
 export const sendOtpViaEmailController = async (req, res) => {

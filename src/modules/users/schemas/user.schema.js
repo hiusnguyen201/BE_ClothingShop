@@ -70,6 +70,11 @@ const userSchema = new Schema(
       required: false,
       default: false,
     },
+    lockedUntil: {
+      type: Date,
+      required: false,
+      default: null,
+    },
     googleId: {
       type: String,
       required: false,

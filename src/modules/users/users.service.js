@@ -8,7 +8,7 @@ import { REGEX_PATTERNS } from "#src/core/constant";
 import { makeHash } from "#src/utils/bcrypt.util";
 
 const SELECTED_FIELDS =
-  "_id avatar name email status birthday gender createdAt updatedAt";
+  "_id avatar name email status birthday gender lockedUntil createdAt updatedAt";
 
 /**
  * Create user
@@ -102,6 +102,21 @@ export async function updateUserVerifiedByIdService(id) {
     id,
     {
       isVerified: true,
+    },
+    { new: true }
+  ).select(SELECTED_FIELDS);
+}
+
+/**
+ * Update verified by id
+ * @param {*} id
+ * @returns
+ */
+export async function updateUserLockUntilByIdService(id, timeLock) {
+  return UserModel.findByIdAndUpdate(
+    id,
+    {
+      lockedUntil: timeLock,
     },
     { new: true }
   ).select(SELECTED_FIELDS);
