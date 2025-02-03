@@ -11,17 +11,17 @@ export const createVoucherDto = Joi.object({
   endDate: Joi.date().iso().required().greater(Joi.ref("startDate")),
   discount: Joi.number()
     .required()
-    .custom((value, helpers) => {
-      const { minPrice, isFixed } = helpers.state.ancestors[0];
+    .custom((value, helper) => {
+      const { minPrice, isFixed } = helper.state.ancestors[0];
       if (isFixed === "false") {
         if (value > 70) {
-          return helpers.message(
+          return helper.message(
             `Discount price cannot be less than 70% of minPrice`
           );
         }
       }
       if (value > 0.7 * minPrice) {
-        return helpers.message(
+        return helper.message(
           `Discount price cannot be less than 70% of minPrice`
         );
       }
@@ -34,12 +34,12 @@ export const createVoucherDto = Joi.object({
   hasMaxDiscount: Joi.boolean().required(),
   maxDiscount: Joi.number()
     .required()
-    .custom((value, helpers) => {
-      const { isFixed, hasMaxDiscount } = helpers.state.ancestors[0];
+    .custom((value, helper) => {
+      const { isFixed, hasMaxDiscount } = helper.state.ancestors[0];
       if (hasMaxDiscount === "false" || isFixed === "true")
         return undefined;
       if (value < 1000) {
-        return helpers.message(`Minimum value is 1000`);
+        return helper.message(`Minimum value is 1000`);
       }
       return value;
     }),

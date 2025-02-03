@@ -11,9 +11,10 @@ export const updateUserDto = Joi.object({
   birthday: Joi.date().iso(),
   gender: Joi.string().valid(...Object.values(GENDER)),
   role: Joi.string(),
-  phone: Joi.string().custom((value, helper) =>
-    value.match(REGEX_PATTERNS.PHONE_VIETNAM)
-      ? value
-      : helper.message("Invalid vietnam phone number")
-  ),
+  phone: Joi.string().custom((value, helper) => {
+    if (!value.match(REGEX_PATTERNS.PHONE_VIETNAM)) {
+      return helper.message("Invalid vietnam phone number");
+    }
+    return value;
+  }),
 });

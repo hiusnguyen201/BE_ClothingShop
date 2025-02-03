@@ -21,12 +21,12 @@ export const createPermissionDto = Joi.object({
     .required()
     .min(3)
     .max(255)
-    .custom((value, helper) =>
-      value.match(REGEX_PATTERNS.ENDPOINT)
-        ? value
-        : helper.message("Invalid endpoint")
-    ),
-
+    .custom((value, helper) => {
+      if (!value.match(REGEX_PATTERNS.ENDPOINT)) {
+        return helper.message("Invalid endpoint");
+      }
+      return value;
+    }),
   method: Joi.string()
     .required()
     .valid(...ALLOW_METHODS),
