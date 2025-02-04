@@ -50,3 +50,9 @@ export const REGEX_PATTERNS = {
   ENDPOINT: /^\/[a-zA-Z0-9_-]+(?:\/[a-zA-Z0-9_-]+)*\/?$/g,
   BEARER_TOKEN: /^Bearer ((?:\.?(?:[A-Za-z0-9-_]+)){3})$/,
 };
+
+export const PRODUCT_STATUS = [
+  "Public",
+  "Hidden",
+  "Deleted",
+];
