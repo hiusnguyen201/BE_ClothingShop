@@ -1,35 +1,35 @@
+"use strict";
 import "dotenv/config";
 import express from "express";
-import mongoose from "mongoose";
-import logger from "morgan";
+import morgan from "morgan";
 import cors from "cors";
-import moment from "moment-timezone";
 import cookieParser from "cookie-parser";
 import HttpStatus from "http-status-codes";
+import helmet from "helmet";
+import compression from "compression";
 
 import routerV1 from "#src/routes/v1/index";
 import { handleError, notFound } from "#src/middlewares/error.middleware";
 import { limiter } from "#src/middlewares/rate-limit.middleware";
 import { swaggerUiSetup } from "#src/middlewares/swagger.middleware";
 import { enhanceRouter } from "#src/utils/async-handler";
+import Database from "#src/database/init.database";
 
-moment.tz("Asia/Ho_Chi_Minh").format();
-
-// Connect MongoDb
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log("Connected successfully to MongoDB");
-  })
-  .catch((err) => {
-    console.error("Connect to MongoDB failed", err);
-  });
-
-mongoose.set("debug", false);
+// Connect to Database
+Database.getInstance({
+  type: "mongodb",
+  logging: process.env.NODE_ENV === "development",
+  timezone: "Asia/Ho_Chi_Minh",
+});
 
 const app = express();
+app.use(helmet());
+app.use(compression());
 app.set("trust proxy", true);
-app.use(logger("dev"));
+
+app.use(
+  morgan(process.env.NODE_ENV === "development" ? "dev" : "combined")
+);
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 app.use(cookieParser());

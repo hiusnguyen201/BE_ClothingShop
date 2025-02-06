@@ -1,3 +1,4 @@
+"use strict";
 import "dotenv/config";
 import http from "http";
 import app from "#src/app";
