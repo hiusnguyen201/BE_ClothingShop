@@ -87,7 +87,7 @@ export async function getRoleByIdService(
  * @returns
  */
 export async function removeRoleByIdService(id) {
-  return RoleModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
+  return RoleModel.findByIdAndSoftDelete(id).select(SELECTED_FIELDS);
 }
 
 /**

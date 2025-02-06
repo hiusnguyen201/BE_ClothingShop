@@ -118,7 +118,7 @@ export async function updateCategoryImageByIdService(
  * @returns
  */
 export async function removeCategoryByIdService(id) {
-  return CategoryModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
+  return CategoryModel.findByIdAndSoftDelete(id).select(SELECTED_FIELDS);
 }
 
 /**

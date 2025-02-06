@@ -1,5 +1,6 @@
 "use strict";
-import "dotenv/config";
+import dotenv from "dotenv";
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 import express from "express";
 import morgan from "morgan";
 import cors from "cors";

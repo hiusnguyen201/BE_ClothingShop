@@ -1,10 +1,11 @@
+import SoftDelete from "#src/core/plugins/soft-delete.plugin";
 import mongoose from "mongoose";
 import { ALLOW_METHODS } from "#src/core/constant";
 const { Schema } = mongoose;
 
 const PERMISSION_MODEL = "permissions";
 
-export const permissionSchema = new Schema(
+export const PermissionSchema = new Schema(
   {
     name: {
       type: String,
@@ -56,5 +57,6 @@ export const permissionSchema = new Schema(
   }
 );
 
-const PermissionModel = mongoose.model("Permission", permissionSchema);
+PermissionSchema.plugin(SoftDelete);
+const PermissionModel = mongoose.model("Permission", PermissionSchema);
 export { PermissionModel };

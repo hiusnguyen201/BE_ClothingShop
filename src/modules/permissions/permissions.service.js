@@ -92,7 +92,7 @@ export async function updatePermissionInfoByIdService(id, data) {
  * @returns
  */
 export async function removePermissionByIdService(id) {
-  return PermissionModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
+  return PermissionModel.findByIdAndSoftDelete(id).select(SELECTED_FIELDS);
 }
 
 /**

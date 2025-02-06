@@ -1,9 +1,10 @@
+import SoftDelete from "#src/core/plugins/soft-delete.plugin";
 import mongoose from "mongoose";
 const { Schema } = mongoose;
 
 const ROLE_MODEL = "roles";
 
-const roleSchema = new Schema(
+const RoleSchema = new Schema(
   {
     icon: {
       type: String,
@@ -27,7 +28,7 @@ const roleSchema = new Schema(
     },
     isActive: {
       type: Boolean,
-      default: false
+      default: false,
     },
 
     // Foreign Key
@@ -42,5 +43,6 @@ const roleSchema = new Schema(
   }
 );
 
-const RoleModel = mongoose.model("Role", roleSchema);
+RoleSchema.plugin(SoftDelete);
+const RoleModel = mongoose.model("Role", RoleSchema);
 export { RoleModel };

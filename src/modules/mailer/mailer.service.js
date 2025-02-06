@@ -23,67 +23,87 @@ const getEmailTemplateToString = (fileName) => {
 };
 
 export const sendOtpCodeService = async (email, otpCode) => {
-  const html = getEmailTemplateToString("verification-otp.html").replace(
-    "{otpCode}",
-    otpCode
-  );
+  try {
+    const html = getEmailTemplateToString("verification-otp.html").replace(
+      "{otpCode}",
+      otpCode
+    );
 
-  await transporter.sendMail({
-    from: mailerEmail,
-    to: email,
-    subject: "Verify Otp",
-    html,
-  });
+    await transporter.sendMail({
+      from: mailerEmail,
+      to: email,
+      subject: "Verify Otp",
+      html,
+    });
+  } catch (err) {
+    console.log(err);
+  }
 };
 
 export const sendWelcomeEmailService = async (email, name) => {
-  const html = getEmailTemplateToString("welcome-user.html").replace(
-    "{name}",
-    name
-  );
+  try {
+    const html = getEmailTemplateToString("welcome-user.html").replace(
+      "{name}",
+      name
+    );
 
-  await transporter.sendMail({
-    from: mailerEmail,
-    to: email,
-    subject: "Welcome",
-    html,
-  });
+    await transporter.sendMail({
+      from: mailerEmail,
+      to: email,
+      subject: "Welcome",
+      html,
+    });
+  } catch (err) {
+    console.log(err);
+  }
 };
 
 export const sendResetPasswordRequestService = async (email, resetURL) => {
-  const html = getEmailTemplateToString(
-    "password-reset-request.html"
-  ).replace("{resetURL}", resetURL);
+  try {
+    const html = getEmailTemplateToString(
+      "password-reset-request.html"
+    ).replace("{resetURL}", resetURL);
 
-  await transporter.sendMail({
-    from: mailerEmail,
-    to: email,
-    subject: "Send Request Reset Password",
-    html,
-  });
+    await transporter.sendMail({
+      from: mailerEmail,
+      to: email,
+      subject: "Send Request Reset Password",
+      html,
+    });
+  } catch (err) {
+    console.log(err);
+  }
 };
 
 export const sendResetPasswordSuccessService = async (email) => {
-  const html = getEmailTemplateToString("password-reset-success.html");
+  try {
+    const html = getEmailTemplateToString("password-reset-success.html");
 
-  await transporter.sendMail({
-    from: mailerEmail,
-    to: email,
-    subject: "Password Reset Successfully",
-    html,
-  });
+    await transporter.sendMail({
+      from: mailerEmail,
+      to: email,
+      subject: "Password Reset Successfully",
+      html,
+    });
+  } catch (err) {
+    console.log(err);
+  }
 };
 
 export const sendPasswordService = async (email, password) => {
-  const html = getEmailTemplateToString("send-password.html").replace(
-    "{password}",
-    password
-  );
+  try {
+    const html = getEmailTemplateToString("send-password.html").replace(
+      "{password}",
+      password
+    );
 
-  await transporter.sendMail({
-    from: mailerEmail,
-    to: email,
-    subject: "Send Password Successfully",
-    html,
-  });
+    await transporter.sendMail({
+      from: mailerEmail,
+      to: email,
+      subject: "Send Password Successfully",
+      html,
+    });
+  } catch (err) {
+    console.log(err);
+  }
 };

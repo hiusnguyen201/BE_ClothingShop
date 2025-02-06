@@ -5,6 +5,7 @@ import {
   uploadImageBufferService,
 } from "#src/modules/cloudinary/cloudinary.service";
 import { REGEX_PATTERNS } from "#src/core/constant";
+import moment from "moment-timezone";
 
 const SELECTED_FIELDS = "_id avatar name email gender createdAt updatedAt";
 
@@ -14,7 +15,8 @@ const SELECTED_FIELDS = "_id avatar name email gender createdAt updatedAt";
  * @returns
  */
 export async function createUserService(data) {
-  return UserModel.create(data);
+  const user = new UserModel(data);
+  return user.save();
 }
 
 /**
@@ -84,7 +86,7 @@ export async function getUserByIdService(
  * @returns
  */
 export async function removeUserByIdService(id) {
-  return UserModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
+  return UserModel.findByIdAndSoftDelete(id).select(SELECTED_FIELDS);
 }
 
 /**

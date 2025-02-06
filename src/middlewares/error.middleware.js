@@ -10,8 +10,7 @@ export const handleError = (err, req, res, next) => {
     error: err.error || HttpStatus.getStatusText(status),
     ...(err.message ? { message: err.message } : {}),
     timestamp: moment().valueOf(),
-    url: req.originalUrl,
-    ip: req.ipv4,
+    url: `${req.method} ${req.originalUrl}`,
   };
 
   if (process.env.NODE_ENV === "development") {

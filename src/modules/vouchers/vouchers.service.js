@@ -81,7 +81,9 @@ export async function updateVoucherByIdService(id, data) {
  * @returns
  */
 export async function removeVoucherByIdService(id) {
-  return await VoucherModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
+  return await VoucherModel.findByIdAndSoftDelete(id).select(
+    SELECTED_FIELDS
+  );
 }
 
 /**

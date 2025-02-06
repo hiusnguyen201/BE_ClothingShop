@@ -1,9 +1,10 @@
+import MongooseDelete from "mongoose-delete";
 import mongoose from "mongoose";
 const { Schema } = mongoose;
 
 const CATEGORY_MODEL = "categories";
 
-const categorySchema = new Schema(
+const CategorySchema = new Schema(
   {
     image: {
       type: String,
@@ -26,7 +27,7 @@ const categorySchema = new Schema(
     },
     level: {
       type: Number,
-      default: 1
+      default: 1,
     },
 
     // Foreign key
@@ -41,5 +42,6 @@ const categorySchema = new Schema(
   }
 );
 
-const CategoryModel = mongoose.model("Category", categorySchema);
+CategorySchema.plugin(MongooseDelete, { deletedAt: true });
+const CategoryModel = mongoose.model("Category", CategorySchema);
 export { CategoryModel };

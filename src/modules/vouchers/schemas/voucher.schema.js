@@ -1,9 +1,10 @@
+import SoftDelete from "#src/core/plugins/soft-delete.plugin";
 import mongoose from "mongoose";
 const { Schema } = mongoose;
 
 const VOUCHER_MODEL = "vouchers";
 
-const voucherSchema = new Schema(
+const VoucherSchema = new Schema(
   {
     code: {
       type: String,
@@ -78,5 +79,6 @@ const voucherSchema = new Schema(
   }
 );
 
-const VoucherModel = mongoose.model("Voucher", voucherSchema);
+VoucherSchema.plugin(SoftDelete);
+const VoucherModel = mongoose.model("Voucher", VoucherSchema);
 export { VoucherModel };
