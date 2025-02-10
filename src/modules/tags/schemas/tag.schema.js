@@ -14,10 +14,10 @@ const tagSchema = new Schema(
       required: true,
     },
 
-    // products: [{
-    //   type: Schema.Types.ObjectId,
-    //   ref: "Product"
-    // }]
+    products: [{
+      type: Schema.Types.ObjectId,
+      ref: "Product"
+    }]
   },
   {
     versionKey: false,

@@ -22,4 +22,5 @@ export const updateProductDto = Joi.object({
   is_new: Joi.boolean(),
   category: Joi.string(),
   sub_category: Joi.string(),
+  tags: Joi.array().items(Joi.string()),
 });

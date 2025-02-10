@@ -270,6 +270,10 @@ const VOUCHERS_DATA = [
   },
 ];
 
+const OPTIONS_DATA = [
+  { name: "Color" }
+]
+
 export const PERMISSIONS_LIST = [
   ...USERS_DATA,
   ...ROLES_DATA,
@@ -277,4 +281,5 @@ export const PERMISSIONS_LIST = [
   ...CATEGORIES_DATA,
   ...CUSTOMERS_DATA,
   ...VOUCHERS_DATA,
+  ...OPTIONS_DATA,
 ];

@@ -58,10 +58,10 @@ const productSchema = new Schema(
       ref: "Category"
     },
 
-    // tags: [{
-    //   type: Schema.Types.ObjectId,
-    //   ref: "Tag"
-    // }]
+    tags: [{
+      type: Schema.Types.ObjectId,
+      ref: "Tag"
+    }]
   },
   {
     versionKey: false,

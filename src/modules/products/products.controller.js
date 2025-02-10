@@ -10,6 +10,7 @@ import {
   getAllProductsService,
   getProductByIdService,
   updateProductByIdService,
+  updateProductTagsByIdService,
   removeProductByIdService,
   checkExistProductNameService,
   countAllProductsService,
@@ -20,7 +21,7 @@ import { calculatePagination } from "#src/utils/pagination.util";
 import { makeSlug } from "#src/utils/string.util";
 
 export const createProductController = async (req) => {
-  const { name } = req.body;
+  const { name, tags } = req.body;
   const isExistProduct = await checkExistProductNameService(name);
   if (isExistProduct) {
     throw new ConflictException("Product name already exist");
@@ -31,21 +32,32 @@ export const createProductController = async (req) => {
     slug: makeSlug(name),
   });
 
+  if (tags && tags.length > 0) {
+    const uniqueTags = [...new Set(tags)];
+    await updateProductTagsByIdService(newProduct._id, uniqueTags);
+  }
+
+  const formatterProduct = await getProductByIdService(newProduct._id);
+
   return {
     statusCode: HttpStatus.CREATED,
     message: "Create product successfully",
-    data: newProduct,
+    data: formatterProduct,
   };
 };
 
 export const getAllProductsController = async (req) => {
-  let { keyword = "", is_hidden = false, limit = 10, page = 1 } = req.query;
+  let { keyword = "", category, tags, is_hidden = false, limit = 10, page = 1 } = req.query;
+
+  const tagArray = tags ? (Array.isArray(tags) ? tags : [tags]) : [];
 
   const filterOptions = {
     $or: [
       { name: { $regex: keyword, $options: "i" } },
     ],
     ...(is_hidden ? { is_hidden } : {}),
+    ...(category ? { category } : {}),
+    ...(tagArray.length ? { tags: { $in: tagArray } } : {}),
   };
 
   const totalCount = await countAllProductsService(filterOptions);
@@ -83,13 +95,12 @@ export const getProductByIdController = async (req) => {
 
 export const updateProductByIdController = async (req) => {
   const { id } = req.params;
-  const { name } = req.body;
-
   const existProduct = await getProductByIdService(id, "_id");
   if (!existProduct) {
     throw new NotFoundException("Product not found");
   }
 
+  const { name, tags } = req.body;
   if (name) {
     const isExistName = await checkExistProductNameService(
       name,
@@ -101,7 +112,12 @@ export const updateProductByIdController = async (req) => {
     req.body.slug = makeSlug(name);
   }
 
-  const updatedProduct = await updateProductByIdService(id, req.body);
+  let updatedProduct = await updateProductByIdService(id, req.body);
+
+  if (tags && tags.length > 0) {
+    const uniqueTags = [...new Set(tags)];
+    updatedProduct = await updateProductTagsByIdService(id, uniqueTags);
+  }
 
   return {
     statusCode: HttpStatus.OK,
@@ -117,7 +133,7 @@ export const removeProductByIdController = async (req) => {
     throw new NotFoundException("Product not found");
   }
 
-  if (!existProduct) {
+  if (!existProduct.is_hidden) {
     throw new PreconditionFailedException("Product is public");
   }
 

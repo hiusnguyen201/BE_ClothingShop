@@ -24,4 +24,5 @@ export const createProductDto = Joi.object({
   is_new: Joi.boolean().required(),
   category: Joi.string().required(),
   sub_category: Joi.string(),
+  tags: Joi.array().items(Joi.string()),
 });

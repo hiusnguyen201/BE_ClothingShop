@@ -1,9 +1,10 @@
 import { isValidObjectId } from "mongoose";
 import { ProductModel } from "#src/modules/products/schemas/product.schema";
 import { makeSlug } from "#src/utils/string.util";
+import { getTagByIdService } from "#src/modules/tags/tags.service";
 
 const SELECTED_FIELDS =
-  "_id name slug short_description content status is_hidden is_featured is_new avg_rating total_review category sub_category createdAt updatedAt";
+  "_id name slug short_description content status is_hidden is_featured is_new avg_rating total_review category sub_category tags createdAt updatedAt";
 
 /**
  * Create product
@@ -74,6 +75,31 @@ export async function updateProductByIdService(id, data) {
   return await ProductModel.findByIdAndUpdate(id, data, {
     new: true,
   }).select(SELECTED_FIELDS);
+}
+
+/**
+ * Update tags by product id
+ * @param {*} id
+ * @param {*} tags
+ * @returns
+ */
+export async function updateProductTagsByIdService(
+  id,
+  tags = []
+) {
+  const result = await Promise.all(
+    tags.map(async (item) => {
+      return getTagByIdService(item);
+    })
+  );
+
+  return ProductModel.findByIdAndUpdate(
+    id,
+    {
+      tags: result.filter(Boolean),
+    },
+    { new: true }
+  ).select(SELECTED_FIELDS);
 }
 
 /**
