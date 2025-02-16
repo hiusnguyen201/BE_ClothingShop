@@ -25,7 +25,7 @@ router
         createProductDiscountController
     )
     .patch(
-        "/update-product-by-id/:id",
+        "/update-product-discount-by-id/:id",
         validateSchema(updateProductDiscountDto),
         updateProductDiscountByIdController
     )

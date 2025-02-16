@@ -1,20 +1,20 @@
 import { isValidObjectId } from "mongoose";
-import { OptionModel } from "#src/modules/options/schemas/option.schema";
+import { OptionValueModel } from "#src/modules/option_values/schemas/option-value.schema";
 
 const SELECTED_FIELDS =
-  "_id name createdAt updatedAt";
+  "_id value images createdAt updatedAt";
 
 /**
- * Create option
+ * Create option value
  * @param {*} data
  * @returns
  */
-export async function createOptionService(data) {
-  return OptionModel.create(data);
+export async function createOptionValueService(data) {
+  return await OptionValueModel.create(data);
 }
 
 /**
- * Find one option by id
+ * Find one option value by id
  * @param {*} id
  * @param {*} selectFields
  * @returns
@@ -32,11 +32,11 @@ export async function getOptionByIdService(
     return null;
   }
 
-  return await OptionModel.findOne(filter).select(selectFields);
+  return await OptionValueModel.findOne(filter).select(selectFields);
 }
 
 /**
- * Get all options
+ * Get all option values
  * @param {*} query
  * @param {*} selectFields
  * @returns
@@ -47,7 +47,7 @@ export async function getAllOptionsService({
   limit = 10,
   selectFields = SELECTED_FIELDS,
 }) {
-  return OptionModel.find(filters)
+  return OptionValueModel.find(filters)
     .skip(offset)
     .limit(limit)
     .select(selectFields)
@@ -55,45 +55,31 @@ export async function getAllOptionsService({
 }
 
 /**
- * Count all options
+ * Count all option values
  * @param {*} filters
  * @returns
  */
 export async function countAllOptionsService(filters) {
-  return OptionModel.countDocuments(filters);
+  return OptionValueModel.countDocuments(filters);
 }
 
 /**
- * Update option by id
+ * Update option value by id
  * @param {*} id
  * @param {*} data
  * @returns
  */
 export async function updateOptionByIdService(id, data) {
-  return await OptionModel.findByIdAndUpdate(id, data, {
+  return await OptionValueModel.findByIdAndUpdate(id, data, {
     new: true,
   }).select(SELECTED_FIELDS);
 }
 
 /**
- * Remove option by id
+ * Remove option value by id
  * @param {*} id
  * @returns
  */
 export async function removeOptionByIdService(id) {
-  return await OptionModel.findByIdAndDelete(id).select(SELECTED_FIELDS)
-}
-
-/**
- * Find exist option name
- * @param {*} id
- * @param {*} skipId
- * @returns
- */
-export async function checkExistOptionNameService(name, skipId) {
-  const option = await OptionModel.findOne({
-    name: name,
-    _id: { $ne: skipId },
-  }).select("_id");
-  return Boolean(option);
+  return await OptionValueModel.findByIdAndDelete(id).select(SELECTED_FIELDS)
 }

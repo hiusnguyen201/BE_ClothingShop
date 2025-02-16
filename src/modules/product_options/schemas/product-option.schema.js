@@ -5,25 +5,20 @@ const PRODUCT_OPTIONS_MODEL = "product_options";
 
 const productOptionSchema = new Schema(
   {
-    // option_name: {
-    //   type: String,
-    //   required: true
-    // },
-
-    value: {
-      type: Object,
+    option_name: {
+      type: String,
+      required: true
+    },
+    hasImages: {
+      type: Boolean,
       required: true
     },
 
     // FK
-    product: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Product'
-    },
-    option: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Option'
-    },
+    option_values: [{
+      type: Schema.Types.ObjectId,
+      ref: "Option_Value"
+    }]
   },
   {
     versionKey: false,

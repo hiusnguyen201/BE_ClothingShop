@@ -2,9 +2,11 @@ import { isValidObjectId } from "mongoose";
 import { ProductModel } from "#src/modules/products/schemas/product.schema";
 import { makeSlug } from "#src/utils/string.util";
 import { getTagByIdService } from "#src/modules/tags/tags.service";
+import { createProductOptionService as createProductOptionServiceImport } from "#src/modules/product_options/product_options.service";
+import { createOptionValueService } from "#src/modules/option_values/options.service";
 
 const SELECTED_FIELDS =
-  "_id name slug short_description content status is_hidden is_featured is_new avg_rating total_review category sub_category tags createdAt updatedAt";
+  "_id name slug price short_description content status is_hidden is_featured is_new avg_rating total_review category sub_category discount tags product_options createdAt updatedAt";
 
 /**
  * Create product
@@ -62,7 +64,17 @@ export async function getProductByIdService(
     return null;
   }
 
-  return await ProductModel.findOne(filter).select(selectFields);
+  return await ProductModel
+    .findOne(filter)
+    .populate({
+      path: 'product_options',
+      populate: {
+        path: 'option_values',
+        model: 'Option_Value'
+      }
+    })
+    .populate('product_discount')
+    .select(selectFields);
 }
 
 /**
@@ -160,4 +172,38 @@ export async function hideProductService(id) {
     },
     { new: true }
   ).select(SELECTED_FIELDS);
+}
+
+/**
+ * Create product option
+ * @param {*} data
+ * @returns
+ */
+export async function createProductOptionService(data) {
+  return await createProductOptionServiceImport(data);
+}
+
+/**
+ * Update product discount by productId
+ * @param {*} id
+ * @param {*} data
+ * @returns
+ */
+export async function updateProductDiscountByProductIdService(id, data) {
+  return await ProductModel.findByIdAndUpdate(
+    id,
+    {
+      product_discount: data
+    },
+    { new: true }
+  ).select(SELECTED_FIELDS);
+}
+
+/**
+ * Create product option value
+ * @param {*} data
+ * @returns
+ */
+export async function createProductOptionValueService(data) {
+  return await createOptionValueService(data);
 }

@@ -15,6 +15,10 @@ const productSchema = new Schema(
       required: true,
       length: 200,
     },
+    price: {
+      type: Number,
+      required: true,
+    },
     short_description: {
       type: String,
       length: 255,
@@ -57,10 +61,18 @@ const productSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Category"
     },
+    product_discount: {
+      type: Schema.Types.ObjectId,
+      ref: "Product_Discount"
+    },
 
     tags: [{
       type: Schema.Types.ObjectId,
       ref: "Tag"
+    }],
+    product_options: [{
+      type: Schema.Types.ObjectId,
+      ref: "Product_Option"
     }]
   },
   {

@@ -4,7 +4,7 @@ export const createProductDiscountDto = Joi.object({
   name: Joi.string()
     .required()
     .min(3)
-    .max(50)
+    .max(150)
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
   amount: Joi.number()
     .required(),

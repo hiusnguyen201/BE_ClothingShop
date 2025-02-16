@@ -16,15 +16,45 @@ import {
   countAllProductsService,
   showProductService,
   hideProductService,
+  createProductOptionService,
+  createProductOptionValueService
 } from "#src/modules/products/products.service";
 import { calculatePagination } from "#src/utils/pagination.util";
 import { makeSlug } from "#src/utils/string.util";
 
 export const createProductController = async (req) => {
-  const { name, tags } = req.body;
+  const { name, tags, product_options } = req.body;
+  delete req.body.product_options;
   const isExistProduct = await checkExistProductNameService(name);
   if (isExistProduct) {
     throw new ConflictException("Product name already exist");
+  }
+  const count = product_options.filter(productOption => productOption.hasImages === true).length;;
+  if (count > 1) throw new ConflictException("Only allows 1 option have image")
+
+  if (product_options && product_options.length > 0) {
+    const createProductOptionValue = async (option) => {
+      const optionValues = await Promise.all(
+        option.values.map(async (value) =>
+          await createProductOptionValueService(value)
+        ))
+      return {
+        option_name: option.option_name,
+        hasImages: option.hasImages,
+        option_values: optionValues.map(value => value._id)
+      }
+    }
+
+    const productOptionValues = await Promise.all(
+      product_options.map((async (option) =>
+        await createProductOptionValue(option)
+      )))
+
+    const productOptions = await Promise.all(
+      productOptionValues.map((async (productOption) =>
+        await createProductOptionService(productOption)))
+    )
+    req.body.product_options = productOptions.map(option => option._id);
   }
 
   const newProduct = await createProductService({

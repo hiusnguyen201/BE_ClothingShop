@@ -2,7 +2,7 @@ import { isValidObjectId } from "mongoose";
 import { ProductOptionModel } from "#src/modules/product_options/schemas/product-option.schema";
 
 const SELECTED_FIELDS =
-  "_id value product option createdAt updatedAt";
+  "_id option_name hasImages createdAt updatedAt";
 
 /**
  * Create product option

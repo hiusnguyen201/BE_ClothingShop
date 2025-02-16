@@ -1,6 +1,7 @@
 import Joi from "joi";
 import { replaceMultiSpacesToSingleSpace } from "#src/utils/string.util";
 import { PRODUCT_STATUS } from "#src/core/constant";
+import { createProductOptionDto } from "#src/modules/product_options/dto/create-product-options.dto";
 
 export const createProductDto = Joi.object({
   name: Joi.string()
@@ -8,6 +9,8 @@ export const createProductDto = Joi.object({
     .max(120)
     .required()
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
+  price: Joi.number()
+    .required(),
   short_description: Joi.string()
     .min(3)
     .max(255)
@@ -25,4 +28,8 @@ export const createProductDto = Joi.object({
   category: Joi.string().required(),
   sub_category: Joi.string(),
   tags: Joi.array().items(Joi.string()),
+
+  product_options: Joi.array()
+    .required()
+    .items(createProductOptionDto)
 });

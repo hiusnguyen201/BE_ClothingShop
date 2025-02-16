@@ -1,5 +1,6 @@
 import HttpStatus from "http-status-codes";
 import {
+  ConflictException,
   NotFoundException,
 } from "#src/core/exception/http-exception";
 
@@ -10,13 +11,18 @@ import {
   getProductDiscountByIdService,
   updateProductDiscountByIdService,
   removeProductDiscountByIdService,
+  updateProductDiscountByProductIdService,
 } from "#src/modules/product_discounts/product_discounts.service"
 import { calculatePagination } from "#src/utils/pagination.util";
 
 export const createProductDiscountController = async (req) => {
+  const { amount, is_fixed, product } = req.body;
+  if (is_fixed && amount < 1 || amount > 99) {
+    throw new ConflictException("Discounts ranging from 1 to 99 percent")
+  }
 
   const newProductDiscount = await createProductDiscountService(req.body);
-
+  await updateProductDiscountByProductIdService(product, newProductDiscount._id)
   return {
     statusCode: HttpStatus.CREATED,
     message: "Create product discount successfully",
@@ -25,13 +31,12 @@ export const createProductDiscountController = async (req) => {
 };
 
 export const getAllProductDiscountsController = async (req) => {
-  let { keyword = "", product, limit = 10, page = 1 } = req.query;
+  let { keyword = "", limit = 10, page = 1 } = req.query;
 
   const filterDiscounts = {
     $or: [
-      { name: { $regex: keyword, $discounts: "i" } },
+      { name: { $regex: keyword, $options: "i" } },
     ],
-    ...(product ? { product } : {})
   };
 
   const totalCount = await countAllProductDiscountsService(filterDiscounts);
@@ -69,10 +74,14 @@ export const getProductDiscountByIdController = async (req) => {
 
 export const updateProductDiscountByIdController = async (req) => {
   const { id } = req.params;
-
   const existProductDiscount = await getProductDiscountByIdService(id, "_id");
   if (!existProductDiscount) {
     throw new NotFoundException("Product discount not found");
+  }
+
+  const { amount, is_fixed } = req.body;
+  if (is_fixed && amount < 1 || amount > 99) {
+    throw new ConflictException("Discounts ranging from 1 to 99 percent")
   }
 
   const updatedProductDiscount = await updateProductDiscountByIdService(id, req.body);
