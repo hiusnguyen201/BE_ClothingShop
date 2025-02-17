@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { replaceMultiSpacesToSingleSpace } from "#src/utils/string.util";
 
 export const updateProductDiscountDto = Joi.object({
   name: Joi.string()

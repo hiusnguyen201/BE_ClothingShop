@@ -17,8 +17,10 @@ import { calculatePagination } from "#src/utils/pagination.util";
 
 export const createProductDiscountController = async (req) => {
   const { amount, is_fixed, product } = req.body;
-  if (is_fixed && amount < 1 || amount > 99) {
-    throw new ConflictException("Discounts ranging from 1 to 99 percent")
+  if (is_fixed) {
+    if (amount < 1 || amount > 99) {
+      throw new ConflictException("Discounts ranging from 1 to 99 percent")
+    }
   }
 
   const newProductDiscount = await createProductDiscountService(req.body);
@@ -80,8 +82,10 @@ export const updateProductDiscountByIdController = async (req) => {
   }
 
   const { amount, is_fixed } = req.body;
-  if (is_fixed && amount < 1 || amount > 99) {
-    throw new ConflictException("Discounts ranging from 1 to 99 percent")
+  if (is_fixed) {
+    if (amount < 1 || amount > 99) {
+      throw new ConflictException("Discounts ranging from 1 to 99 percent")
+    }
   }
 
   const updatedProductDiscount = await updateProductDiscountByIdService(id, req.body);
