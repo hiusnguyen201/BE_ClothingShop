@@ -1,9 +1,5 @@
 import { isValidObjectId } from "mongoose";
-import { ProductDiscountModel } from "#src/modules/product_discounts/schemas/product-discount.schema";
-import {
-  getProductByIdService,
-  updateProductDiscountByProductIdService as updateProductDiscountByProductIdServiceImport
-} from "#src/modules/products/products.service";
+import { ProductDiscountModel } from "#src/modules/product-discounts/schemas/product-discount.schema";
 
 const SELECTED_FIELDS =
   "_id name amount is_fixed end_date product createdAt updatedAt";
@@ -14,13 +10,6 @@ const SELECTED_FIELDS =
  * @returns
  */
 export async function createProductDiscountService(data) {
-  const product = await getProductByIdService(data.product);
-  if (!product) {
-    return null;
-  }
-  if (product.price < data.amount) {
-    return null;
-  }
   return await ProductDiscountModel.create(data);
 }
 
@@ -40,7 +29,7 @@ export async function getProductDiscountByIdService(
   if (isValidObjectId(id)) {
     filter._id = id;
   } else {
-    return null;
+    filter.name = id;
   }
 
   return await ProductDiscountModel.findOne(filter).select(selectFields);
@@ -81,14 +70,6 @@ export async function countAllProductDiscountsService(filters) {
  * @returns
  */
 export async function updateProductDiscountByIdService(id, data) {
-  const product = await getProductByIdService(data.product);
-  if (!product) {
-    return null;
-  }
-  if (product.price < data.amount) {
-    return null;
-  }
-
   return ProductDiscountModel.findByIdAndUpdate(id, data, {
     new: true,
   }).select(SELECTED_FIELDS);
@@ -102,14 +83,4 @@ export async function updateProductDiscountByIdService(id, data) {
 export async function removeProductDiscountByIdService(id) {
   return await ProductDiscountModel.findByIdAndDelete(id)
     .select(SELECTED_FIELDS)
-}
-
-/**
- * Update product discount by product id
- * @param {*} id
- * @param {*} productDiscountId
- * @returns
- */
-export async function updateProductDiscountByProductIdService(id, productDiscountId) {
-  return await updateProductDiscountByProductIdServiceImport(id, productDiscountId)
 }

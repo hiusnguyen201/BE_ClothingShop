@@ -5,13 +5,14 @@ const OPTION_VALUES_MODEL = "option_values";
 
 const optionValueSchema = new Schema(
     {
-        value: {
+        name: {
             type: String,
             required: true
         },
 
         images: [{
-            type: String,
+            type: Schema.Types.ObjectId,
+            ref: "Value_Image"
         }]
     },
     {

@@ -9,7 +9,7 @@ const productOptionSchema = new Schema(
       type: String,
       required: true
     },
-    hasImages: {
+    has_images: {
       type: Boolean,
       required: true
     },

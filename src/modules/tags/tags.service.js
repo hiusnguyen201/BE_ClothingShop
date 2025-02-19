@@ -11,7 +11,10 @@ const SELECTED_FIELDS =
  * @returns
  */
 export async function createTagService(data) {
-  return await TagModel.create(data);
+  return await TagModel.create({
+    ...data,
+    slug: makeSlug(data.name)
+  });
 }
 
 /**
@@ -58,7 +61,7 @@ export async function getTagByIdService(
   if (isValidObjectId(id)) {
     filter._id = id;
   } else {
-    return null;
+    filter.name = id;
   }
 
   return await TagModel.findOne(filter).select(selectFields);
@@ -104,4 +107,13 @@ export async function checkExistTagNameService(name, skipId) {
     _id: { $ne: skipId },
   }).select("_id");
   return Boolean(tag);
+}
+
+export async function getOrCreateTagByName(name) {
+  const tag = await getTagByIdService(name);
+  if (!tag) {
+    const newTag = await createTagService(name);
+    return newTag;
+  }
+  return tag;
 }

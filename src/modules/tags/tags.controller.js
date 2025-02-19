@@ -56,7 +56,7 @@ export const getAllTagsController = async (req) => {
 
   return {
     statusCode: HttpStatus.OK,
-    message: "Get all product variants successfully",
+    message: "Get all tags successfully",
     data: {
       meta: metaData,
       list: tags,

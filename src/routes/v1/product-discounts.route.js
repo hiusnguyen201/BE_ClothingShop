@@ -7,9 +7,9 @@ import {
     getProductDiscountByIdController,
     updateProductDiscountByIdController,
     removeProductDiscountByIdController,
-} from "#src/modules/product_discounts/product_discounts.controller";
-import { createProductDiscountDto } from "#src/modules/product_discounts/dto/create-product-discount.dto";
-import { updateProductDiscountDto } from "#src/modules/product_discounts/dto/update-product-discount.dto";
+} from "#src/modules/product-discounts/product-discounts.controller";
+import { createProductDiscountDto } from "#src/modules/product-discounts/dto/create-product-discount.dto";
+import { updateProductDiscountDto } from "#src/modules/product-discounts/dto/update-product-discount.dto";
 import {
     validateSchema,
 } from "#src/middlewares/validate-request.middleware";

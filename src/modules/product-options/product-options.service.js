@@ -1,5 +1,5 @@
 import { isValidObjectId } from "mongoose";
-import { ProductOptionModel } from "#src/modules/product_options/schemas/product-option.schema";
+import { ProductOptionModel } from "#src/modules/product-options/schemas/product-option.schema";
 
 const SELECTED_FIELDS =
   "_id option_name hasImages createdAt updatedAt";

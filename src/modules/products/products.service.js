@@ -2,8 +2,7 @@ import { isValidObjectId } from "mongoose";
 import { ProductModel } from "#src/modules/products/schemas/product.schema";
 import { makeSlug } from "#src/utils/string.util";
 import { getTagByIdService } from "#src/modules/tags/tags.service";
-import { createProductOptionService as createProductOptionServiceImport } from "#src/modules/product_options/product_options.service";
-import { createOptionValueService } from "#src/modules/option_values/options.service";
+import { getAllProductReviewsService } from "#src/modules/product-reviews/product-reviews.service";
 
 const SELECTED_FIELDS =
   "_id name slug price short_description content status is_hidden is_featured is_new avg_rating total_review category sub_category discount tags product_options createdAt updatedAt";
@@ -74,6 +73,7 @@ export async function getProductByIdService(
       }
     })
     .populate('product_discount')
+    .populate('tags')
     .select(selectFields);
 }
 
@@ -175,15 +175,6 @@ export async function hideProductService(id) {
 }
 
 /**
- * Create product option
- * @param {*} data
- * @returns
- */
-export async function createProductOptionService(data) {
-  return await createProductOptionServiceImport(data);
-}
-
-/**
  * Update product discount by productId
  * @param {*} id
  * @param {*} data
@@ -200,10 +191,31 @@ export async function updateProductDiscountByProductIdService(id, data) {
 }
 
 /**
- * Create product option value
- * @param {*} data
+ * Update product rating by productId
+ * @param {*} id
  * @returns
  */
-export async function createProductOptionValueService(data) {
-  return await createOptionValueService(data);
+export async function updateProductRatingAndTotalReviewByProductIdService(id) {
+  const filterOptions = {
+    product: id
+  };
+
+  const reviews = await getAllProductReviewsService({
+    filters: filterOptions
+  });
+  const reviewsLength = reviews.length;
+
+  const rating = reviews.reduce(
+    (accumulator, currentValue) => accumulator + currentValue.score,
+    0);
+  const avgRating = rating / reviewsLength;
+
+  return await ProductModel.findByIdAndUpdate(
+    id,
+    {
+      avg_rating: avgRating,
+      total_review: reviewsLength
+    },
+    { new: true }
+  ).select(SELECTED_FIELDS);
 }

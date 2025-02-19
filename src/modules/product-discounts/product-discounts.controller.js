@@ -11,9 +11,12 @@ import {
   getProductDiscountByIdService,
   updateProductDiscountByIdService,
   removeProductDiscountByIdService,
-  updateProductDiscountByProductIdService,
-} from "#src/modules/product_discounts/product_discounts.service"
+} from "#src/modules/product-discounts/product-discounts.service"
 import { calculatePagination } from "#src/utils/pagination.util";
+import {
+  getProductByIdService,
+  updateProductDiscountByProductIdService
+} from "#src/modules/products/products.service";
 
 export const createProductDiscountController = async (req) => {
   const { amount, is_fixed, product } = req.body;
@@ -21,6 +24,14 @@ export const createProductDiscountController = async (req) => {
     if (amount < 1 || amount > 99) {
       throw new ConflictException("Discounts ranging from 1 to 99 percent")
     }
+  }
+  const getProduct = await getProductByIdService(product);
+  if (!getProduct) {
+    throw new NotFoundException("Product not found")
+  }
+
+  if (getProduct.price < amount) {
+    throw new ConflictException("The product price must be greater than the discount price")
   }
 
   const newProductDiscount = await createProductDiscountService(req.body);
@@ -76,7 +87,7 @@ export const getProductDiscountByIdController = async (req) => {
 
 export const updateProductDiscountByIdController = async (req) => {
   const { id } = req.params;
-  const existProductDiscount = await getProductDiscountByIdService(id, "_id");
+  const existProductDiscount = await getProductDiscountByIdService(id, "_id product");
   if (!existProductDiscount) {
     throw new NotFoundException("Product discount not found");
   }
@@ -86,6 +97,14 @@ export const updateProductDiscountByIdController = async (req) => {
     if (amount < 1 || amount > 99) {
       throw new ConflictException("Discounts ranging from 1 to 99 percent")
     }
+  }
+  const getProduct = await getProductByIdService(existProductDiscount.product);
+  if (!getProduct) {
+    throw new NotFoundException("Product not found")
+  }
+
+  if (getProduct.price < amount) {
+    throw new ConflictException("The product price must be greater than the discount price")
   }
 
   const updatedProductDiscount = await updateProductDiscountByIdService(id, req.body);

@@ -1,7 +1,28 @@
 import Joi from "joi";
 import { replaceMultiSpacesToSingleSpace } from "#src/utils/string.util";
 import { PRODUCT_STATUS } from "#src/core/constant";
-import { createProductOptionDto } from "#src/modules/product_options/dto/create-product-options.dto";
+
+const createOptionValueDto = Joi.object({
+  name: Joi.string()
+    .required()
+    .custom((value) => replaceMultiSpacesToSingleSpace(value)),
+  images: Joi.array()
+    .items(
+      Joi.string()
+        .max(300)
+    )
+});
+
+const createProductOptionDto = Joi.object({
+  option_name: Joi.string()
+    .max(100)
+    .required(),
+  has_images: Joi.boolean()
+    .required(),
+  values: Joi.array()
+    .required()
+    .items(createOptionValueDto)
+});
 
 export const createProductDto = Joi.object({
   name: Joi.string()
@@ -32,4 +53,12 @@ export const createProductDto = Joi.object({
   product_options: Joi.array()
     .required()
     .items(createProductOptionDto)
+    .custom((value, helper) => {
+      const count = value.filter(productOption => productOption.hasImages === true).length;
+      if (count > 1) {
+        return helper.message("Only allows 1 option have image");
+      }
+      return value;
+    }),
 });
+

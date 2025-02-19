@@ -16,58 +16,93 @@ import {
   countAllProductsService,
   showProductService,
   hideProductService,
-  createProductOptionService,
-  createProductOptionValueService
 } from "#src/modules/products/products.service";
 import { calculatePagination } from "#src/utils/pagination.util";
 import { makeSlug } from "#src/utils/string.util";
+import { getOrCreateTagByName } from "#src/modules/tags/tags.service";
+import { createOptionValueService } from "#src/modules/option-values/option-values.service";
+import { createValueImageService } from "#src/modules/value-images/value-images.service";
+import {
+  createProductOptionService,
+  updateProductOptionByIdService
+} from "#src/modules/product-options/product-options.service";
 
 export const createProductController = async (req) => {
   const { name, tags, product_options } = req.body;
   delete req.body.product_options;
-  const isExistProduct = await checkExistProductNameService(name);
-  if (isExistProduct) {
-    throw new ConflictException("Product name already exist");
-  }
-  const count = product_options.filter(productOption => productOption.hasImages === true).length;;
-  if (count > 1) throw new ConflictException("Only allows 1 option have image")
-
-  if (product_options && product_options.length > 0) {
-    const createProductOptionValue = async (option) => {
-      const optionValues = await Promise.all(
-        option.values.map(async (value) =>
-          await createProductOptionValueService(value)
-        ))
-      return {
-        option_name: option.option_name,
-        hasImages: option.hasImages,
-        option_values: optionValues.map(value => value._id)
-      }
-    }
-
-    const productOptionValues = await Promise.all(
-      product_options.map((async (option) =>
-        await createProductOptionValue(option)
-      )))
-
-    const productOptions = await Promise.all(
-      productOptionValues.map((async (productOption) =>
-        await createProductOptionService(productOption)))
-    )
-    req.body.product_options = productOptions.map(option => option._id);
-  }
+  delete req.body.tags;
+  // const isExistProduct = await checkExistProductNameService(name);
+  // if (isExistProduct) {
+  //   throw new ConflictException("Product name already exist");
+  // }
 
   const newProduct = await createProductService({
     ...req.body,
     slug: makeSlug(name),
   });
 
-  if (tags && tags.length > 0) {
-    const uniqueTags = [...new Set(tags)];
-    await updateProductTagsByIdService(newProduct._id, uniqueTags);
+  const updateProduct = {};
+
+  if (product_options && product_options.length > 0) {
+    const createProductOptionValue = async (option) => {
+      const optionValues = await Promise.all(
+        option.values.map(async (value) => {
+          const optionValue = await createOptionValueService(value);
+          return optionValue._id;
+        })
+      )
+      return {
+        option_name: option.option_name,
+        hasImages: option.hasImages,
+        option_values: optionValues
+      }
+    }
+
+    const createValueImages = async (images) => {
+      const valueImages = await Promise.all(
+        images.map(async (image) => {
+          const valueImage = await createValueImageService(image);
+          return valueImage._id
+        })
+      )
+      return valueImages
+    }
+
+    const productOptionsIds = await Promise.all(
+      product_options.map(async (productOption) => {
+        const newProductOption = await createProductOptionService({
+          option_name: productOption.option_name,
+          has_images: productOption.has_images,
+        });
+        return newProductOption._id;
+      })
+    )
+
+    const optionValuesIds = await Promise.all(
+      product_options.values.map(async (optionValue) => {
+        const newOptionValue = await createOptionValueService({
+          name: optionValue.name
+        });
+        return newOptionValue._id;
+      })
+    )
+
+
+
+    updateProduct.product_options = productOptionsIds
   }
 
-  const formatterProduct = await getProductByIdService(newProduct._id);
+  if (tags && tags.length > 0) {
+    const tagsIds = await Promise.all(
+      tags.map(async (name) => {
+        const tag = await getOrCreateTagByName(name);
+        return tag._id;
+      })
+    )
+    updateProduct.tags = tagsIds;
+  }
+
+  const formatterProduct = await updateProductByIdService(newProduct._id, updateProduct);
 
   return {
     statusCode: HttpStatus.CREATED,
@@ -130,7 +165,7 @@ export const updateProductByIdController = async (req) => {
     throw new NotFoundException("Product not found");
   }
 
-  const { name, tags } = req.body;
+  const { name, tags, product_options } = req.body;
   if (name) {
     const isExistName = await checkExistProductNameService(
       name,
@@ -140,6 +175,31 @@ export const updateProductByIdController = async (req) => {
       throw new ConflictException("Product name already exist");
     }
     req.body.slug = makeSlug(name);
+  }
+
+  if (product_options && product_options.length > 0) {
+    const createProductOptionValue = async (option) => {
+      const optionValues = await Promise.all(
+        option.values.map(async (value) =>
+          await createOptionValueService(value)
+        ))
+      return {
+        option_name: option.option_name,
+        hasImages: option.hasImages,
+        option_values: optionValues.map(value => value._id)
+      }
+    }
+
+    const productOptionValues = await Promise.all(
+      product_options.map((async (option) =>
+        await createProductOptionValue(option)
+      )))
+
+    const productOptions = await Promise.all(
+      productOptionValues.map((async (productOption) =>
+        await createProductOptionService(productOption)))
+    )
+    req.body.product_options = productOptions.map(option => option._id);
   }
 
   let updatedProduct = await updateProductByIdService(id, req.body);
