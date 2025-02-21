@@ -1,6 +1,6 @@
-"use strict";
-import express from "express";
-import HttpStatus from "http-status-codes";
+'use strict';
+import express from 'express';
+import HttpStatus from 'http-status-codes';
 
 const wrapAsync = (fn) => async (req, res, next) => {
   try {
@@ -23,7 +23,7 @@ export const enhanceRouter = (router) => {
   const enhancedRouter = express.Router();
 
   router.stack.forEach((layer) => {
-    if (layer.name === "router") {
+    if (layer.name === 'router') {
       // Recursively enhance nested routers
       const nestedRouter = enhanceRouter(layer.handle);
       enhancedRouter.use(layer.regexp.source, nestedRouter);
@@ -34,10 +34,8 @@ export const enhanceRouter = (router) => {
         enhancedRouter[method](
           endpoint,
           ...stack.map((middleware, index) =>
-            index === stack.length - 1
-              ? enhanceResponse(middleware.handle)
-              : wrapAsync(middleware.handle)
-          )
+            index === stack.length - 1 ? enhanceResponse(middleware.handle) : wrapAsync(middleware.handle),
+          ),
         );
       });
     } else {

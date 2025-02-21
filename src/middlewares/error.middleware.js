@@ -1,6 +1,6 @@
-import { NotFoundException } from "#src/core/exception/http-exception";
-import HttpStatus from "http-status-codes";
-import moment from "moment-timezone";
+import { NotFoundException } from '#core/exception/http-exception';
+import HttpStatus from 'http-status-codes';
+import moment from 'moment-timezone';
 
 export const handleError = (err, req, res, next) => {
   const status = err.status || HttpStatus.INTERNAL_SERVER_ERROR;
@@ -13,11 +13,11 @@ export const handleError = (err, req, res, next) => {
     url: `${req.method} ${req.originalUrl}`,
   };
 
-  if (process.env.NODE_ENV === "development") {
+  if (process.env.NODE_ENV === 'development') {
     console.log({ ...response, stack: err.stack });
   }
 
-  res.set("Content-Type", "application/json");
+  res.set('Content-Type', 'application/json');
   return res.status(status).json(response);
 };
 

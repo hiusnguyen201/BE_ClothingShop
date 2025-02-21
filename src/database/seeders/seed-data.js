@@ -1,13 +1,16 @@
-import "dotenv/config";
-import mongoose from "mongoose";
-import { PERMISSIONS_LIST } from "./permissions.seeder.js";
-import { createPermissionsWithinTransactionService } from "#src/modules/permissions/permissions.service";
-import { createUsersWithinTransactionService } from "#src/modules/users/users.service";
-import { makeHash } from "#src/utils/bcrypt.util";
-import { USER_TYPES } from "#src/core/constant";
-import { createRolesWithinTransactionService } from "#src/modules/roles/roles.service";
-import { makeSlug } from "#src/utils/string.util";
+'use strict';
+import dotenv from 'dotenv';
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
+import { startSession } from 'mongoose';
+import { USER_TYPES } from '#core/constant';
+import { makeSlug } from '#utils/string.util';
+import { insertPermissionsService } from '#app/permissions/permissions.service';
+import { insertRolesService } from '#app/roles/roles.service';
+import { insertUsersService } from '#app/users/users.service';
+import { PERMISSIONS_LIST } from '#database/seeders/permissions-data';
+import Database from '#src/modules/mongodb/init.database';
 
+Database.getInstance({ type: 'mongodb', logging: process.env.NODE_ENV === 'development' });
 /**
  * Need fix MongoServerError: Transaction numbers are only allowed on a replica set member or mongos
  * - Stop mongodb service
@@ -22,48 +25,44 @@ import { makeSlug } from "#src/utils/string.util";
  * - Check replica set is configured: rs.status()
  */
 async function runSeeder() {
-  await mongoose.connect(process.env.MONGO_URI);
-  const session = await mongoose.startSession();
+  const session = await startSession();
   try {
-    await session.startTransaction();
+    await session.withTransaction(async () => {
+      // List permissions
+      const result = await insertPermissionsService(
+        PERMISSIONS_LIST.map((item) => ({ ...item, isActive: true, slug: makeSlug(item.name) })),
+        { session },
+      );
 
-    // Permissions
-    const result = await createPermissionsWithinTransactionService(
-      PERMISSIONS_LIST
-    );
+      // Role admin
+      const roles = await insertRolesService(
+        {
+          name: 'Admin',
+          isActive: true,
+          slug: makeSlug('Admin'),
+          permissions: result.map((item) => item._id),
+        },
+        { session },
+      );
 
-    // Role admin
-    const roles = await createRolesWithinTransactionService(
-      {
-        name: "Admin",
-        isActive: true,
-        slug: makeSlug("Admin"),
-        permissions: result.map((item) => item._id),
-      },
-      session
-    );
-
-    // Admin account
-    await createUsersWithinTransactionService(
-      {
-        name: "Admin 123",
-        email: "admin123@gmail.com",
-        password: makeHash("1234"),
-        isVerified: true,
-        role: roles[0]._id,
-        type: USER_TYPES.USER,
-      },
-      session
-    );
-
-    await session.commitTransaction();
+      // Admin account
+      await insertUsersService(
+        {
+          name: 'Admin 123',
+          email: 'admin123@gmail.com',
+          password: '1234',
+          isVerified: true,
+          role: roles[0]._id,
+          type: USER_TYPES.USER,
+        },
+        { session },
+      );
+    });
   } catch (err) {
-    console.log(err);
-    await session.abortTransaction();
-    throw err;
+    console.error('Transaction failed:', err.message);
   } finally {
-    session.endSession();
-    await mongoose.connection.close();
+    await session.endSession();
+    await Database.close();
   }
 }
 

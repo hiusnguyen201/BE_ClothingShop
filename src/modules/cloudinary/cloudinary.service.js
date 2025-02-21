@@ -1,6 +1,6 @@
-import { v2 as cloudinary } from "cloudinary";
-import moment from "moment-timezone";
-import { v4 as uuidv4 } from "uuid";
+import { v2 as cloudinary } from 'cloudinary';
+import moment from 'moment-timezone';
+import { v4 as uuidv4 } from 'uuid';
 
 cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -14,14 +14,13 @@ cloudinary.config({
  * @returns
  */
 export async function uploadImageBufferService({ file, folderName }) {
-  const base64 = Buffer.from(file.buffer).toString("base64");
-  const url = "data:" + file.mimetype + ";base64," + base64;
-  const result = await cloudinary.uploader.upload(url, {
+  const base64 = Buffer.from(file.buffer).toString('base64');
+  const url = 'data:' + file.mimetype + ';base64,' + base64;
+  return cloudinary.uploader.upload(url, {
     folder: folderName,
-    public_id: moment().valueOf() + "_" + uuidv4(),
-    resource_type: "image",
+    public_id: moment().valueOf() + '_' + uuidv4(),
+    resource_type: 'image',
   });
-  return result;
 }
 
 /**
@@ -30,8 +29,7 @@ export async function uploadImageBufferService({ file, folderName }) {
  * @returns
  */
 export const removeImageByPublicIdService = async (publicId) => {
-  const result = await cloudinary.uploader.destroy(publicId);
-  return result;
+  return cloudinary.uploader.destroy(publicId);
 };
 
 /**
@@ -39,11 +37,6 @@ export const removeImageByPublicIdService = async (publicId) => {
  * @param {*} arrayPublicId
  * @returns
  */
-export const removeImagesByArrayPublicIdService = async (
-  arrayPublicId = []
-) => {
-  const result = await cloudinary.api.delete_resources(
-    Array.isArray(arrayPublicId) ? arrayPublicId : [arrayPublicId]
-  );
-  return result;
+export const removeImagesByArrayPublicIdService = async (arrayPublicId = []) => {
+  return cloudinary.api.delete_resources(Array.isArray(arrayPublicId) ? arrayPublicId : [arrayPublicId]);
 };

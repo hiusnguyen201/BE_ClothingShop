@@ -1,28 +1,31 @@
 import {
   BadRequestException,
   PayloadTooLargeException,
-  UnprocessableContentException,
   UnsupportedMediaTypeException,
-} from "#src/core/exception/http-exception";
+} from '#core/exception/http-exception';
 
 /**
  * Ref: https://joi.dev/api - any.validate(value, [options])
  */
-const options = {
+export const options = {
   abortEarly: false, // when true, stops validation on the first error, otherwise returns all the errors found. Defaults to true.
   allowUnknown: true, //  when true, allows object to contain unknown keys which are ignored. Defaults to false.
   stripUnknown: true, //  when true, ignores unknown keys with a function value. Defaults to false.
 };
 
-export const validateSchema = (schema) => {
+export const validateSchema = (schema, payloadPath = 'body') => {
+  if (!['body', 'params', 'query'].includes(reqPath)) {
+    throw new Error(`Invalid payload path: \"${payloadPath}\"`);
+  }
+
   return (req, res, next) => {
-    const { error, value } = schema.validate(req.body, options);
+    const { error, value } = schema.validate(req[payloadPath], options);
     if (error) {
       const message = error.details.map((item) => item.message);
-      return next(new UnprocessableContentException(message));
+      return next(new BadRequestException(message));
     }
 
-    req.body = value;
+    req[payloadPath] = value;
     return next();
   };
 };
@@ -34,14 +37,12 @@ export const validateFile = (multerUpload) => {
         return next();
       }
 
-      if (err.code === "LIMIT_FILE_SIZE") {
-        return next(new PayloadTooLargeException("File too large"));
-      } else if (err.code === "LIMIT_FILE_COUNT") {
-        return next(new BadRequestException("Too many files"));
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return next(new PayloadTooLargeException('File too large'));
+      } else if (err.code === 'LIMIT_FILE_COUNT') {
+        return next(new BadRequestException('Too many files'));
       } else {
-        return next(
-          new UnsupportedMediaTypeException("Invalid file type")
-        );
+        return next(new UnsupportedMediaTypeException('Invalid file type'));
       }
     });
   };
