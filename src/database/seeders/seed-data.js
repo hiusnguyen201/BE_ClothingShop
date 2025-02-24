@@ -2,11 +2,11 @@
 import dotenv from 'dotenv';
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 import { startSession } from 'mongoose';
-import { USER_TYPES } from '#core/constant';
+import { UserConstant } from '#app/v2/users/UserConstant';
 import { makeSlug } from '#utils/string.util';
-import { insertPermissionsService } from '#app/permissions/permissions.service';
-import { insertRolesService } from '#app/roles/roles.service';
-import { insertUsersService } from '#app/users/users.service';
+import { insertPermissionsService } from '#src/app/v1/permissions/permissions.service';
+import { insertRolesService } from '#src/app/v1/roles/roles.service';
+import { insertUsersService } from '#src/app/v1/users/users.service';
 import { PERMISSIONS_LIST } from '#database/seeders/permissions-data';
 import Database from '#src/modules/mongodb/init.database';
 
@@ -40,7 +40,7 @@ async function runSeeder() {
           name: 'Admin',
           isActive: true,
           slug: makeSlug('Admin'),
-          permissions: result.map((item) => item._id),
+          permissions: result.map((item) => item.id),
         },
         { session },
       );
@@ -52,8 +52,8 @@ async function runSeeder() {
           email: 'admin123@gmail.com',
           password: '1234',
           isVerified: true,
-          role: roles[0]._id,
-          type: USER_TYPES.USER,
+          role: roles[0].id,
+          type: UserConstant.USER_TYPES.USER,
         },
         { session },
       );

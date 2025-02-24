@@ -16,4 +16,10 @@ export class Assert {
       throw exception;
     }
   }
+
+  static isArray(arr, exception) {
+    if (!Array.isArray(arr)) {
+      throw exception;
+    }
+  }
 }

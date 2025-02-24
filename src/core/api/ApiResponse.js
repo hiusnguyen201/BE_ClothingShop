@@ -10,7 +10,7 @@ export class ApiResponse {
 
   static success(data, message) {
     const resultCode = this.code || HttpStatus.OK;
-    const resultMessage = message || HttpStatus.getStatusText(HttpStatus.OK);
+    const resultMessage = message || 'Success';
     return new ApiResponse(resultCode, resultMessage, data);
   }
 

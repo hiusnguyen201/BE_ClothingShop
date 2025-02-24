@@ -1,4 +1,4 @@
-/** @type {import('#src/app/permissions/models/permission.model')} */
+/** @type {import('#src/models/permission.model')} */
 
 import { makeSlug } from '#utils/string.util';
 

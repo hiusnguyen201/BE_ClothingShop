@@ -1,15 +1,15 @@
 import express from 'express';
 const router = express.Router();
-import { validateSchema, validateFile } from '#middlewares/validate-request.middleware';
+import { validateBody, validateFile } from '#core/validations/request.validation';
 import {
   getAllCustomersController,
   createCustomerController,
   getCustomerByIdController,
   updateCustomerByIdController,
   removeCustomerByIdController,
-} from '#app/customers/customers.controller';
-import { createCustomerDto } from '#app/customers/dto/create-customer.dto';
-import { updateCustomersDto } from '#app/customers/dto/update-customer.dto';
+} from '#src/app/v1/customers/customers.controller';
+import { createCustomerDto } from '#src/app/v1/customers/dtos/create-customer.dto';
+import { updateCustomersDto } from '#src/app/v1/customers/dtos/update-customer.dto';
 
 import { UploadUtils } from '#utils/upload.util';
 import { ALLOW_IMAGE_MIME_TYPES } from '#core/constant';
@@ -25,13 +25,13 @@ router
   .post(
     '/create-customer',
     validateFile(upload.single('avatar')),
-    validateSchema(createCustomerDto),
+    validateBody(createCustomerDto),
     createCustomerController,
   )
   .patch(
     '/update-customer-by-id/:id',
     validateFile(upload.single('avatar')),
-    validateSchema(updateCustomersDto),
+    validateBody(updateCustomersDto),
     updateCustomerByIdController,
   )
   .delete('/remove-customer-by-id/:id', removeCustomerByIdController);

@@ -4606,7 +4606,7 @@
     "UserModel": {
       "type": "object",
       "properties": {
-        "_id": {
+        "id": {
           "type": "string"
         },
         "type": {
@@ -4655,7 +4655,7 @@
     "RoleModel": {
       "type": "object",
       "properties": {
-        "_id": {
+        "id": {
           "type": "string"
         },
         "icon": {
@@ -4692,7 +4692,7 @@
     "PermissionModel": {
       "type": "object",
       "properties": {
-        "_id": {
+        "id": {
           "type": "string"
         },
         "name": {
@@ -4742,7 +4742,7 @@
     "CategoryModel": {
       "type": "object",
       "properties": {
-        "_id": {
+        "id": {
           "type": "string"
         },
         "image": {
@@ -4776,7 +4776,7 @@
     "VoucherModel": {
       "type": "object",
       "properties": {
-        "_id": {
+        "id": {
           "type": "string"
         },
         "code": {

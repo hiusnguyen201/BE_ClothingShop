@@ -9,19 +9,19 @@ import {
   isExistPermissionNameController,
   activatePermissionByIdController,
   deactivatePermissionByIdController,
-} from '#app/permissions/permissions.controller';
-import { updatePermissionDto } from '#app/permissions/dto/update-permission.dto';
-import { checkExistPermissionNameDto } from '#app/permissions/dto/check-exist-permission-name.dto';
-import { validateSchema } from '#middlewares/validate-request.middleware';
+} from '#src/app/v1/permissions/permissions.controller';
+import { updatePermissionDto } from '#src/app/v1/permissions/dtos/update-permission.dto';
+import { checkExistPermissionNameDto } from '#src/app/v1/permissions/dtos/check-exist-permission-name.dto';
+import { validateBody } from '#core/validations/request.validation';
 import { isAuthorizedAndHasPermission } from '#src/middlewares/jwt-auth.middleware';
 
-router.post('/is-exist-permission-name', validateSchema(checkExistPermissionNameDto), isExistPermissionNameController);
+router.post('/is-exist-permission-name', validateBody(checkExistPermissionNameDto), isExistPermissionNameController);
 
 router.use([isAuthorizedAndHasPermission]);
 router
   .get('/get-permissions', getAllPermissionsController)
   .get('/get-permission-by-id/:id', getPermissionByIdController)
-  .patch('/update-permission-by-id/:id', validateSchema(updatePermissionDto), updatePermissionByIdController)
+  .patch('/update-permission-by-id/:id', validateBody(updatePermissionDto), updatePermissionByIdController)
   .delete('/remove-permission-by-id/:id', removePermissionByIdController)
   .patch('/activate-permission-by-id/:id', activatePermissionByIdController)
   .patch('/deactivate-permission-by-id/:id', deactivatePermissionByIdController);

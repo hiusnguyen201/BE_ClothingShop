@@ -10,19 +10,19 @@ import {
   isExistCategoryNameController,
   showCategoryByIdController,
   hideCategoryByIdController,
-} from '#app/categories/categories.controller';
-import { createCategoryDto } from '#app/categories/dto/create-category.dto';
-import { updateCategoryDto } from '#app/categories/dto/update-category.dto';
-import { checkExistCategoryNameDto } from '#app/categories/dto/check-exist-category-name.dto';
-import { validateSchema, validateFile } from '#middlewares/validate-request.middleware';
+} from '#app/v1/categories/categories.controller';
+import { createCategoryDto } from '#app/v1/categories/dtos/create-category.dto';
+import { updateCategoryDto } from '#app/v1/categories/dtos/update-category.dto';
+import { checkExistCategoryNameDto } from '#app/v1/categories/dtos/check-exist-category-name.dto';
+import { validateBody, validateFile } from '#core/validations/request.validation';
 import { UploadUtils } from '#utils/upload.util';
 import { ALLOW_IMAGE_MIME_TYPES } from '#core/constant';
-import { isAuthorizedAndHasPermission } from '#src/middlewares/jwt-auth.middleware';
+import { isAuthorizedAndHasPermission } from '#middlewares/jwt-auth.middleware';
 const upload = UploadUtils.config({
   allowedMimeTypes: ALLOW_IMAGE_MIME_TYPES,
 });
 
-router.post('/is-exist-category-name', validateSchema(checkExistCategoryNameDto), isExistCategoryNameController);
+router.post('/is-exist-category-name', validateBody(checkExistCategoryNameDto), isExistCategoryNameController);
 
 router.use([isAuthorizedAndHasPermission]);
 router
@@ -31,13 +31,13 @@ router
   .post(
     '/create-category',
     validateFile(upload.single('image')),
-    validateSchema(createCategoryDto),
+    validateBody(createCategoryDto),
     createCategoryController,
   )
   .patch(
     '/update-category-by-id/:id',
     validateFile(upload.single('image')),
-    validateSchema(updateCategoryDto),
+    validateBody(updateCategoryDto),
     updateCategoryByIdController,
   )
   .delete('/remove-category-by-id/:id', removeCategoryByIdController)

@@ -8,35 +8,32 @@ import {
   updateUserByIdController,
   removeUserByIdController,
   checkExistEmailController,
-} from '#app/users/users.controller';
-import { createUserDto } from '#app/users/dto/create-user.dto';
-import { updateUserDto } from '#app/users/dto/update-user.dto';
-import { getAllUsersDto } from '#app/users/dto/get-all-users.dto';
-import { getUserDto } from '#src/app/users/dto/get-user.dto';
-import { validateSchema, validateFile } from '#middlewares/validate-request.middleware';
+} from '#app/v1/users/users.controller';
+import { isAuthorizedAndHasPermission } from '#middlewares/jwt-auth.middleware';
 import { UploadUtils } from '#utils/upload.util';
 import { ALLOW_IMAGE_MIME_TYPES } from '#core/constant';
-import { checkExistEmailDto } from '#app/users/dto/check-exist-email.dto';
-import { isAuthorizedAndHasPermission } from '#middlewares/jwt-auth.middleware';
+import { createUserDto } from '#app/v1/users/dtos/create-user.dto';
+import { updateUserDto } from '#app/v1/users/dtos/update-user.dto';
+import { checkExistEmailDto } from '#app/v1/users/dtos/check-exist-email.dto';
+import { validateBody, validateFile } from '#core/validations/request.validation';
 
 const upload = UploadUtils.config({
   allowedMimeTypes: ALLOW_IMAGE_MIME_TYPES,
 });
 
-router.post('/is-exist-email', validateSchema(checkExistEmailDto), checkExistEmailController);
+router.post('/is-exist-email', validateBody(checkExistEmailDto), checkExistEmailController);
 
 router.use([isAuthorizedAndHasPermission]);
 router
-  .get('/get-users', validateSchema(getAllUsersDto, 'query'), getAllUsersController)
-  .get('/get-user-by-id/:userId', validateSchema(getUserDto, 'params'), getUserByIdController)
-  .post('/create-user', validateFile(upload.single('avatar')), validateSchema(createUserDto), createUserController)
+  .get('/get-users', getAllUsersController)
+  .get('/get-user-by-id/:id', getUserByIdController)
+  .post('/create-user', validateFile(upload.single('avatar')), validateBody(createUserDto), createUserController)
   .patch(
-    '/update-user-by-id/:userId',
-    validateSchema(getUserDto, 'params'),
+    '/update-user-by-id/:id',
     validateFile(upload.single('avatar')),
-    validateSchema(updateUserDto),
+    validateBody(updateUserDto),
     updateUserByIdController,
   )
-  .delete('/remove-user-by-id/:userId', validateSchema(getUserDto, 'params'), removeUserByIdController);
+  .delete('/remove-user-by-id/:id', removeUserByIdController);
 
 export default router;

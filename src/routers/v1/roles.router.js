@@ -10,29 +10,29 @@ import {
   isExistRoleNameController,
   activateRoleByIdController,
   deactivateRoleByIdController,
-} from '#app/roles/roles.controller';
-import { createRoleDto } from '#app/roles/dto/create-role.dto';
-import { updateRoleDto } from '#app/roles/dto/update-role.dto';
-import { validateSchema, validateFile } from '#middlewares/validate-request.middleware';
+} from '#src/app/v1/roles/roles.controller';
+import { createRoleDto } from '#src/app/v1/roles/dtos/create-role.dto';
+import { updateRoleDto } from '#src/app/v1/roles/dtos/update-role.dto';
+import { validateBody, validateFile } from '#core/validations/request.validation';
 import { UploadUtils } from '#utils/upload.util';
 import { ALLOW_ICON_MIME_TYPES } from '#core/constant';
-import { checkExistRoleNameDto } from '#app/roles/dto/check-exist-role-name.dto';
+import { checkExistRoleNameDto } from '#src/app/v1/roles/dtos/check-exist-role-name.dto';
 import { isAuthorizedAndHasPermission } from '#src/middlewares/jwt-auth.middleware';
 const upload = UploadUtils.config({
   allowedMimeTypes: ALLOW_ICON_MIME_TYPES,
 });
 
-router.post('/is-exist-role-name', validateSchema(checkExistRoleNameDto), isExistRoleNameController);
+router.post('/is-exist-role-name', validateBody(checkExistRoleNameDto), isExistRoleNameController);
 
 router.use([isAuthorizedAndHasPermission]);
 router
   .get('/get-roles', getAllRolesController)
   .get('/get-role-by-id/:id', getRoleByIdController)
-  .post('/create-role', validateFile(upload.single('icon')), validateSchema(createRoleDto), createRoleController)
+  .post('/create-role', validateFile(upload.single('icon')), validateBody(createRoleDto), createRoleController)
   .patch(
     '/update-role-by-id/:id',
     validateFile(upload.single('icon')),
-    validateSchema(updateRoleDto),
+    validateBody(updateRoleDto),
     updateRoleByIdController,
   )
   .delete('/remove-role-by-id/:id', removeRoleByIdController)

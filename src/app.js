@@ -9,8 +9,9 @@ import HttpStatus from 'http-status-codes';
 import helmet from 'helmet';
 import compression from 'compression';
 
-import '#core/validators/main.validator';
-import routerV1 from '#routers/v1/main.router';
+import '#core/validations/index';
+import routerV1 from '#routers/v1/index';
+import routerV2 from '#routers/v2/index';
 import { handleError, notFound } from '#middlewares/error.middleware';
 import { limiter } from '#middlewares/rate-limit.middleware';
 import { enhanceRouter } from '#utils/async-handler';
@@ -46,6 +47,9 @@ app.get('/favicon.ico', (req, res) => res.status(HttpStatus.NO_CONTENT).end());
 
 // Api version 1
 app.use('/api/v1', enhanceRouter(routerV1));
+
+// Api version 2
+app.use('/api/v2', enhanceRouter(routerV2));
 
 // Catch 404
 app.use(notFound);

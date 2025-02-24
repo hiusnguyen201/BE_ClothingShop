@@ -1,9 +1,3 @@
-export const GENDER = {
-  MALE: 'Male',
-  FEMALE: 'Female',
-  OTHER: 'Other',
-};
-
 export const ALLOW_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD'];
 
 export const ALLOW_IMAGE_MIME_TYPES = [
@@ -17,12 +11,9 @@ export const ALLOW_IMAGE_MIME_TYPES = [
   'image/x-icon', // same above
 ];
 
-export const ALLOW_ICON_MIME_TYPES = ['image/svg+xml', 'image/vnd.microsoft.icon', 'image/x-icon'];
+export const MAX_UPLOAD_FILE_SIZE = 1024 * 1024 * 1;
 
-export const USER_TYPES = {
-  CUSTOMER: 'Customer',
-  USER: 'User',
-};
+export const ALLOW_ICON_MIME_TYPES = ['image/svg+xml', 'image/vnd.microsoft.icon', 'image/x-icon'];
 
 export const REGEX_PATTERNS = {
   EMAIL: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
@@ -32,4 +23,5 @@ export const REGEX_PATTERNS = {
     '+84': /(84|0[3|5|7|8|9])+([0-9]{8})\b/g,
   },
   BEARER_TOKEN: /^Bearer ((?:\.?(?:[A-Za-z0-9-_]+)){3})$/,
+  COMMA_SEPARATED_LIST: /^[a-zA-Z0-9,]+$/,
 };

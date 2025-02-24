@@ -1,7 +1,7 @@
 import { REGEX_PATTERNS } from '#core/constant';
 import { BadRequestException, ForbiddenException, UnauthorizedException } from '#core/exception/http-exception';
 import { verifyToken } from '#utils/jwt.util';
-import { checkUserHasPermissionByMethodAndEndpointService, getUserByIdService } from '#app/users/users.service';
+import { checkUserHasPermissionByMethodAndEndpointService, getUserByIdService } from '#src/app/v1/users/users.service';
 
 async function authorized(req, res, next) {
   let token = req.headers['x-access-token'] || req.headers['authorization'];
@@ -18,7 +18,7 @@ async function authorized(req, res, next) {
 
   try {
     const decoded = verifyToken(token);
-    if (!decoded || !(await getUserByIdService(decoded._id))) {
+    if (!decoded || !(await getUserByIdService(decoded.id))) {
       return next(new UnauthorizedException('Invalid or expired token'));
     }
 
@@ -40,7 +40,7 @@ async function checkPermission(req, res, next) {
     endpoint = endpoint.replace(value, `:${key}`);
   });
 
-  const hasPermission = await checkUserHasPermissionByMethodAndEndpointService(req.user._id, {
+  const hasPermission = await checkUserHasPermissionByMethodAndEndpointService(req.user.id, {
     method: req.method,
     endpoint,
   });

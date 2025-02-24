@@ -8,12 +8,12 @@ import {
   resetPasswordController,
   verifyOtpController,
   sendOtpViaEmailController,
-} from '#app/auth/auth.controller';
-import { validateFile, validateSchema } from '#middlewares/validate-request.middleware';
-import { registerDto } from '#app/auth/dto/register.dto';
-import { loginDto } from '#app/auth/dto/login.dto';
-import { verifyOtpDto, sendOtpViaEmailDto } from '#app/auth/dto/two-factor.dto';
-import { forgotPasswordDto, resetPasswordDto } from '#app/auth/dto/forgot-password.dto';
+} from '#src/app/v1/auth/auth.controller';
+import { validateFile, validateBody } from '#core/validations/request.validation';
+import { registerDto } from '#src/app/v1/auth/dtos/register.dto';
+import { loginDto } from '#src/app/v1/auth/dtos/login.dto';
+import { verifyOtpDto, sendOtpViaEmailDto } from '#src/app/v1/auth/dtos/two-factor.dto';
+import { forgotPasswordDto, resetPasswordDto } from '#src/app/v1/auth/dtos/forgot-password.dto';
 import { UploadUtils } from '#utils/upload.util';
 import { ALLOW_IMAGE_MIME_TYPES } from '#core/constant';
 const upload = UploadUtils.config({
@@ -21,11 +21,11 @@ const upload = UploadUtils.config({
 });
 
 router
-  .post('/register', validateFile(upload.single('avatar')), validateSchema(registerDto), registerController)
-  .post('/login', validateSchema(loginDto), loginController)
-  .post('/send-otp-via-email', validateSchema(sendOtpViaEmailDto), sendOtpViaEmailController)
-  .post('/verify-otp', validateSchema(verifyOtpDto), verifyOtpController)
-  .post('/forgot-password', validateSchema(forgotPasswordDto), forgotPasswordController)
-  .post('/reset-password/:token', validateSchema(resetPasswordDto), resetPasswordController);
+  .post('/register', validateFile(upload.single('avatar')), validateBody(registerDto), registerController)
+  .post('/login', validateBody(loginDto), loginController)
+  .post('/send-otp-via-email', validateBody(sendOtpViaEmailDto), sendOtpViaEmailController)
+  .post('/verify-otp', validateBody(verifyOtpDto), verifyOtpController)
+  .post('/forgot-password', validateBody(forgotPasswordDto), forgotPasswordController)
+  .post('/reset-password/:token', validateBody(resetPasswordDto), resetPasswordController);
 
 export default router;
