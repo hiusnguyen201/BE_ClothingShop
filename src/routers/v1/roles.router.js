@@ -18,6 +18,7 @@ import { UploadUtils } from '#utils/upload.util';
 import { ALLOW_ICON_MIME_TYPES } from '#core/constant';
 import { checkExistRoleNameDto } from '#src/app/v1/roles/dtos/check-exist-role-name.dto';
 import { isAuthorizedAndHasPermission } from '#src/middlewares/jwt-auth.middleware';
+
 const upload = UploadUtils.config({
   allowedMimeTypes: ALLOW_ICON_MIME_TYPES,
 });

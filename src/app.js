@@ -9,12 +9,12 @@ import HttpStatus from 'http-status-codes';
 import helmet from 'helmet';
 import compression from 'compression';
 
-import '#core/validations/index';
-import routerV1 from '#routers/v1/index';
-import routerV2 from '#routers/v2/index';
-import { handleError, notFound } from '#middlewares/error.middleware';
-import { limiter } from '#middlewares/rate-limit.middleware';
-import { enhanceRouter } from '#utils/async-handler';
+import '#src/core/validations/index';
+import routerV1 from '#src/routers/v1/index';
+import routerV2 from '#src/routers/v2/index';
+import { handleError, notFound } from '#src/middlewares/error.middleware';
+import { limiter } from '#src/middlewares/rate-limit.middleware';
+import { enhanceRouter } from '#src/utils/async-handler';
 import Database from '#src/modules/mongodb/init.database';
 
 // Connect to Database
@@ -44,6 +44,8 @@ app.use((req, res, next) => {
 
 // Ignore favicon request
 app.get('/favicon.ico', (req, res) => res.status(HttpStatus.NO_CONTENT).end());
+
+app.use('/api-docs', (req, res) => res.redirect(process.env.POSTMAN_URL_DOCS));
 
 // Api version 1
 app.use('/api/v1', enhanceRouter(routerV1));

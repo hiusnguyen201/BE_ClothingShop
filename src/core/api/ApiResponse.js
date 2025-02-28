@@ -2,7 +2,7 @@ import HttpStatus from 'http-status-codes';
 
 export class ApiResponse {
   constructor(code, message, data) {
-    this.code = code;
+    this.statusCode = code;
     this.message = message;
     this.data = data;
     this.timestamp = new Date();

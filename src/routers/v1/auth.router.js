@@ -21,8 +21,8 @@ const upload = UploadUtils.config({
 });
 
 router
-  .post('/register', validateFile(upload.single('avatar')), validateBody(registerDto), registerController)
   .post('/login', validateBody(loginDto), loginController)
+  .post('/register', validateFile(upload.single('avatar')), validateBody(registerDto), registerController)
   .post('/send-otp-via-email', validateBody(sendOtpViaEmailDto), sendOtpViaEmailController)
   .post('/verify-otp', validateBody(verifyOtpDto), verifyOtpController)
   .post('/forgot-password', validateBody(forgotPasswordDto), forgotPasswordController)

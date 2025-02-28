@@ -16,9 +16,11 @@ import { randomStr } from '#utils/string.util';
 import { UserConstant } from '#app/v2/users/UserConstant';
 import { makeHash } from '#utils/bcrypt.util';
 import { calculatePagination } from '#utils/pagination.util';
+import { ApiResponse } from '#src/core/api/ApiResponse';
 
 export const createUserController = async (req) => {
   const { email, role } = req.body;
+
   const isExistEmail = await checkExistEmailService(email);
   if (isExistEmail) {
     throw new ConflictException('Email already exist');
@@ -40,7 +42,7 @@ export const createUserController = async (req) => {
   });
 
   // Send password to mail for user
-  await sendPasswordService(email, password);
+  sendPasswordService(email, password);
 
   // Update avatar
   if (req.file) {
@@ -49,11 +51,7 @@ export const createUserController = async (req) => {
 
   const formatterUser = await getUserByIdService(newUser._id);
 
-  return {
-    statusCode: HttpStatus.CREATED,
-    message: 'Create user successfully',
-    data: formatterUser,
-  };
+  return ApiResponse.statusCode(HttpStatus.CREATED).success(formatterUser);
 };
 
 export const getAllUsersController = async (req) => {
@@ -73,11 +71,7 @@ export const getAllUsersController = async (req) => {
     limit: metaData.limit,
   });
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Get all users successfully',
-    data: { meta: metaData, list: users },
-  };
+  return ApiResponse.statusCode(HttpStatus.OK).success({ meta: metaData, list: users });
 };
 
 export const getUserByIdController = async (req) => {
@@ -87,15 +81,12 @@ export const getUserByIdController = async (req) => {
     throw new NotFoundException('User not found');
   }
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Get one user successfully',
-    data: existUser,
-  };
+  return ApiResponse.statusCode(HttpStatus.OK).success(existUser);
 };
 
 export const updateUserByIdController = async (req) => {
   const { id } = req.params;
+
   const existUser = await getUserByIdService(id, '_id');
   if (!existUser) {
     throw new NotFoundException('User not found');
@@ -124,35 +115,25 @@ export const updateUserByIdController = async (req) => {
     updatedUser = await updateUserAvatarByIdService(id, req.file, updatedUser?.avatar);
   }
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Update user successfully',
-    data: updatedUser,
-  };
+  return ApiResponse.statusCode(HttpStatus.OK).success(updatedUser);
 };
 
 export const removeUserByIdController = async (req) => {
   const { id } = req.params;
+
   const existUser = await getUserByIdService(id);
   if (!existUser) {
     throw new NotFoundException('User not found');
   }
 
   const removedUser = await removeUserByIdService(id);
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Remove user successfully',
-    data: removedUser,
-  };
+  return ApiResponse.statusCode(HttpStatus.OK).success(removedUser);
 };
 
 export const checkExistEmailController = async (req) => {
   const { email } = req.body;
+
   const isExistEmail = await checkExistEmailService(email);
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: isExistEmail ? 'Email exists' : 'Email does not exist',
-    data: isExistEmail,
-  };
+  return ApiResponse.statusCode(HttpStatus.OK).success(isExistEmail);
 };

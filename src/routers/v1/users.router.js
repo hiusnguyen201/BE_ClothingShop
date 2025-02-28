@@ -12,28 +12,34 @@ import {
 import { isAuthorizedAndHasPermission } from '#middlewares/jwt-auth.middleware';
 import { UploadUtils } from '#utils/upload.util';
 import { ALLOW_IMAGE_MIME_TYPES } from '#core/constant';
-import { createUserDto } from '#app/v1/users/dtos/create-user.dto';
-import { updateUserDto } from '#app/v1/users/dtos/update-user.dto';
-import { checkExistEmailDto } from '#app/v1/users/dtos/check-exist-email.dto';
+import { CreateUserDto } from '#app/v1/users/dtos/create-user.dto';
+import { UpdateUserDto } from '#app/v1/users/dtos/update-user.dto';
+import { CheckExistEmailDto } from '#app/v1/users/dtos/check-exist-email.dto';
 import { validateBody, validateFile } from '#core/validations/request.validation';
 
 const upload = UploadUtils.config({
   allowedMimeTypes: ALLOW_IMAGE_MIME_TYPES,
 });
 
-router.post('/is-exist-email', validateBody(checkExistEmailDto), checkExistEmailController);
+router.post('/is-exist-email', validateBody(CheckExistEmailDto), checkExistEmailController);
 
-router.use([isAuthorizedAndHasPermission]);
 router
-  .get('/get-users', getAllUsersController)
-  .get('/get-user-by-id/:id', getUserByIdController)
-  .post('/create-user', validateFile(upload.single('avatar')), validateBody(createUserDto), createUserController)
+  .post(
+    '/create-user',
+    isAuthorizedAndHasPermission,
+    validateFile(upload.single('avatar')),
+    validateBody(CreateUserDto),
+    createUserController,
+  )
+  .get('/get-users', isAuthorizedAndHasPermission, getAllUsersController)
+  .get('/get-user-by-id/:id', isAuthorizedAndHasPermission, getUserByIdController)
   .patch(
     '/update-user-by-id/:id',
+    isAuthorizedAndHasPermission,
     validateFile(upload.single('avatar')),
-    validateBody(updateUserDto),
+    validateBody(UpdateUserDto),
     updateUserByIdController,
   )
-  .delete('/remove-user-by-id/:id', removeUserByIdController);
+  .delete('/remove-user-by-id/:id', isAuthorizedAndHasPermission, removeUserByIdController);
 
 export default router;

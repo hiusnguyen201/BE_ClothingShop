@@ -1,5 +1,5 @@
-import Joi from "joi";
+import Joi from 'joi';
 
-export const checkExistEmailDto = Joi.object({
-  email: Joi.string().email(),
+export const CheckExistEmailDto = Joi.object({
+  email: Joi.string().email().required(),
 });

@@ -74,10 +74,14 @@ export async function removeVoucherByIdService(id) {
  * @returns
  */
 export async function checkExistVoucherCodeService(code, skipId) {
-  const result = await VoucherModel.exists({
-    id: { $ne: skipId },
-    code,
-  });
+  const result = await VoucherModel.exists(
+    {
+      id: { $ne: skipId },
+      code,
+    },
+    '_id',
+    { withDeleted: true },
+  );
   return !!result;
 }
 

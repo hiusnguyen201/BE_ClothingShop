@@ -126,14 +126,14 @@ class UserService {
     return UserSchemaDto.newFromUser(removedUser);
   }
 
-  async countAllUsers(filters) {
-    return UserModel.countDocuments(filters);
-  }
-
   async checkExistUser(adapter) {
     const { userId, email } = adapter;
-    const result = await UserModel.exists({ email, _id: userId });
+    const result = await UserModel.findOne({ email, _id: userId }, '_id', { withDeleted: true });
     return !!result;
+  }
+
+  async countAllUsers(filters) {
+    return UserModel.countDocuments(filters);
   }
 }
 

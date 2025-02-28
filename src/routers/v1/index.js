@@ -1,7 +1,6 @@
 import express from 'express';
 const router = express.Router();
 
-import docsRouter from '#routers/v1/docs.router';
 import usersRouter from '#routers/v1/users.router';
 import authRouter from '#routers/v1/auth.router';
 import rolesRouter from '#routers/v1/roles.router';
@@ -11,9 +10,7 @@ import categoriesRouter from '#routers/v1/categories.router';
 import vouchersRouter from '#routers/v1/vouchers.router';
 import accountRouter from '#routers/v1/account.router';
 
-router.get('/ping', () => 'Hello world! PING');
-
-router.use('/docs', docsRouter);
+router.get('/ping', () => 'Hello world! PING 1');
 
 router.use('/auth', authRouter);
 
@@ -32,14 +29,3 @@ router.use('/customers', customersRouter);
 router.use('/vouchers', vouchersRouter);
 
 export default router;
-
-/**
- * @swagger
- * /ping:
- *   get:
- *     summary: Returns API operational status
- *     tags: [Ping]
- *     responses:
- *       200:
- *          description: API is running
- */

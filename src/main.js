@@ -6,6 +6,7 @@ import app from '#src/app';
 const PORT = process.env.PORT || 3000;
 
 const serverApi = http.createServer(app);
+
 serverApi.listen(PORT, () => {
   if (process.env.NODE_ENV === 'development') {
     console.log(`
