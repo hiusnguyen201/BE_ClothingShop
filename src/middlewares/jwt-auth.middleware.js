@@ -11,8 +11,7 @@ import {
 } from "#src/modules/users/users.service";
 
 async function authorized(req, res, next) {
-  let token =
-    req.headers["x-access-token"] || req.headers["authorization"];
+  let token = req.headers["x-access-token"] || req.headers["authorization"];
 
   if (!token) {
     return next(new UnauthorizedException("No token provided"));
@@ -33,7 +32,6 @@ async function authorized(req, res, next) {
     if (!decoded || !(await getUserByIdService(decoded._id))) {
       return next(new UnauthorizedException("Invalid or expired token"));
     }
-
     req.user = decoded;
     next();
   } catch (e) {
@@ -52,18 +50,18 @@ async function checkPermission(req, res, next) {
     endpoint = endpoint.replace(value, `:${key}`);
   });
 
-  const hasPermission =
-    await checkUserHasPermissionByMethodAndEndpointService(req.user._id, {
+  const hasPermission = await checkUserHasPermissionByMethodAndEndpointService(
+    req.user._id,
+    {
       method: req.method,
       endpoint,
-    });
+    }
+  );
 
   return hasPermission
     ? next()
     : next(
-        new ForbiddenException(
-          "Don't have permission to access this resource"
-        )
+        new ForbiddenException("Don't have permission to access this resource")
       );
 }
 

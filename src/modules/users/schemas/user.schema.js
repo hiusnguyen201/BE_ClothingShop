@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { GENDER, USER_TYPES } from "#src/core/constant";
 const { Schema } = mongoose;
 
-const USER_MODEL = "users";
+export const USER_MODEL = "users";
 
 const userSchema = new Schema(
   {

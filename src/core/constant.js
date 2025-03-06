@@ -1,3 +1,5 @@
+import moment from "moment-timezone";
+
 export const GENDER = {
   MALE: "Male",
   FEMALE: "Female",
@@ -11,14 +13,7 @@ export const USER_STATUS = {
   DELETED: "Deleted",
 };
 
-export const ALLOW_METHODS = [
-  "GET",
-  "POST",
-  "PUT",
-  "PATCH",
-  "DELETE",
-  "HEAD",
-];
+export const ALLOW_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"];
 
 export const ALLOW_IMAGE_MIME_TYPES = [
   "image/bmp", // .bmp       - Windows OS/2 Bitmap Graphics
@@ -50,3 +45,19 @@ export const REGEX_PATTERNS = {
   ENDPOINT: /^\/[a-zA-Z0-9_-]+(?:\/[a-zA-Z0-9_-]+)*\/?$/g,
   BEARER_TOKEN: /^Bearer ((?:\.?(?:[A-Za-z0-9-_]+)){3})$/,
 };
+
+export const ORDERS_STATUS = {
+  PENDING: "Pending",
+  PAID: "Paid",
+  SHIPPED: "Shipped",
+  DELIVERED: "Delivered",
+  CANCELLED: "Canceled",
+};
+
+export const PAYMENT_METHOD = {
+  COD: "Cod",
+  VNPAY: "Vnpay",
+  MOMO: "Momo",
+};
+
+export const CURRENT_TIME = moment().format("YYYY-MM-DD HH:mm:ss");

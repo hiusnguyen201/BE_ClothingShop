@@ -6,7 +6,8 @@ import {
 } from "#src/modules/cloudinary/cloudinary.service";
 import { REGEX_PATTERNS } from "#src/core/constant";
 
-const SELECTED_FIELDS = "_id avatar name email gender createdAt updatedAt";
+const SELECTED_FIELDS =
+  "_id avatar name email phone gender createdAt updatedAt";
 
 /**
  * Create user
@@ -60,10 +61,7 @@ export async function countAllUsersService(filters) {
  * @param {*} selectFields
  * @returns
  */
-export async function getUserByIdService(
-  id,
-  selectFields = SELECTED_FIELDS
-) {
+export async function getUserByIdService(id, selectFields = SELECTED_FIELDS) {
   if (!id) return null;
   const filter = {};
 
@@ -142,11 +140,7 @@ export async function changePasswordByIdService(id, password) {
  * @param {*} file
  * @returns
  */
-export async function updateUserAvatarByIdService(
-  id,
-  file,
-  currentAvatar
-) {
+export async function updateUserAvatarByIdService(id, file, currentAvatar) {
   if (currentAvatar) {
     removeImageByPublicIdService(currentAvatar);
   }
