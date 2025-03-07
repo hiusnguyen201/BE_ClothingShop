@@ -8,10 +8,20 @@ import {
   updateUserVerifiedByIdService,
   changePasswordByIdService,
 } from '#app/v1/users/users.service';
-import { UnauthorizedException, ConflictException, NotFoundException } from '#core/exception/http-exception';
+import {
+  UnauthorizedException,
+  ConflictException,
+  NotFoundException,
+  TooManyRequestException,
+} from '#core/exception/http-exception';
 import { generateToken } from '#utils/jwt.util';
 import { UserConstant } from '#app/v2/users/UserConstant';
-import { createUserOtpService, getUserOtpByOtpAndUserIdService } from '#src/app/v1/user-otps/user-otps.service';
+import {
+  createUserOtpService,
+  getCurrentUserOtpService,
+  getUserOtpByOtpAndUserIdService,
+  removeUserOtpById,
+} from '#src/app/v1/user-otps/user-otps.service';
 import {
   sendOtpCodeService,
   sendResetPasswordRequestService,
@@ -23,6 +33,7 @@ import {
   getResetPasswordByTokenService,
 } from '#src/app/v1/reset-password/reset-password.service';
 import { compareSync } from 'bcrypt';
+import { generateNumericOTP } from '#src/utils/string.util';
 
 export const registerController = async (req) => {
   const { email } = req.body;
@@ -37,8 +48,11 @@ export const registerController = async (req) => {
   });
 
   if (req.file) {
-    return await updateUserAvatarByIdService(newCustomer.id, req.file);
+    return await updateUserAvatarByIdService(newCustomer._id, req.file);
   }
+
+  const userOtp = await createUserOtpService(newCustomer._id);
+  sendOtpCodeService(email, userOtp.otp);
 
   return {
     statusCode: HttpStatus.OK,
@@ -47,11 +61,7 @@ export const registerController = async (req) => {
       isAuthenticated: false,
       accessToken: null,
       is2FactorRequired: true,
-      user: {
-        id: newCustomer.id,
-        name: newCustomer.name,
-        email: newCustomer.email,
-      },
+      user: { id: newCustomer._id, name: newCustomer.name, email: newCustomer.email },
     },
   };
 };
@@ -77,9 +87,9 @@ export const loginController = async (req) => {
     message: 'Login successfully',
     data: {
       isAuthenticated: !isNeed2Fa,
-      accessToken: isNeed2Fa ? null : generateToken({ id: user.id }),
+      accessToken: isNeed2Fa ? null : generateToken({ _id: user._id }),
       is2FactorRequired: isNeed2Fa,
-      user: { id: user.id, name: user.name, email: user.email },
+      user: { id: user._id, name: user.name, email: user.email },
     },
   };
 };
@@ -91,7 +101,15 @@ export const sendOtpViaEmailController = async (req) => {
     throw new NotFoundException('User not found');
   }
 
-  const userOtp = await createUserOtpService(user.id);
+  const existValidOtp = await getCurrentUserOtpService(user._id);
+  if (existValidOtp && moment().isBefore(existValidOtp.resendDate)) {
+    const timeLeft = moment(existValidOtp.resendDate).diff(moment(), 'seconds');
+    throw new TooManyRequestException(`Please wait ${timeLeft} seconds before requesting another OTP.`);
+  } else if (existValidOtp) {
+    await removeUserOtpById(existValidOtp._id);
+  }
+
+  const userOtp = await createUserOtpService(user._id);
   await sendOtpCodeService(user.email, userOtp.otp);
 
   return {
@@ -107,24 +125,26 @@ export const verifyOtpController = async (req) => {
     throw new NotFoundException('User not found');
   }
 
-  const userOtp = await getUserOtpByOtpAndUserIdService(otp, user.id);
+  const userOtp = await getUserOtpByOtpAndUserIdService(otp, user._id);
   if (!userOtp) {
     throw new UnauthorizedException('Invalid or expired otp');
   }
 
   if (!user.isVerified) {
-    await updateUserVerifiedByIdService(user.id);
+    await updateUserVerifiedByIdService(user._id);
     sendWelcomeEmailService(user.email, user.name);
   }
 
-  const accessToken = generateToken({ id: user.id });
+  await removeUserOtpById(userOtp._id);
+
+  const accessToken = generateToken({ id: user._id });
   return {
     statusCode: HttpStatus.OK,
     message: 'Verify otp successfully',
     data: {
       isAuthenticated: true,
       accessToken,
-      user: { id: user.id, name: user.name, email: user.email },
+      user: { _id: user._id, name: user.name, email: user.email },
     },
   };
 };
@@ -136,7 +156,7 @@ export const forgotPasswordController = async (req) => {
     throw new NotFoundException('User not found');
   }
 
-  const resetPassword = await createResetPasswordService(user.id);
+  const resetPassword = await createResetPasswordService(user._id);
 
   const resetURL = path.join(callbackUrl, resetPassword.token);
   await sendResetPasswordRequestService(email, resetURL);

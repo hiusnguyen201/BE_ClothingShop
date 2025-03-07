@@ -1,6 +1,6 @@
 import moment from 'moment-timezone';
 import { UserOtpModel } from '#models/user-otp.model';
-import { generateOtp } from '#utils/string.util';
+import { generateNumericOTP } from '#utils/string.util';
 
 /**
  * Create userOtp
@@ -9,8 +9,9 @@ import { generateOtp } from '#utils/string.util';
  */
 export async function createUserOtpService(userId) {
   const newUserOtp = await UserOtpModel.create({
-    otp: generateOtp(),
+    otp: generateNumericOTP(),
     expireDate: moment().valueOf() + 60 * 1000 * (+process.env.OTP_EXPIRES || 5),
+    resendDate: moment().valueOf() + 60 * 1000 * (+process.env.RESEND_OTP_TIME || 2),
     user: userId,
   });
   return newUserOtp;
@@ -23,10 +24,17 @@ export async function createUserOtpService(userId) {
  * @returns
  */
 export async function getUserOtpByOtpAndUserIdService(otp, userId) {
-  const userOtp = await UserOtpModel.findOne({
+  return UserOtpModel.findOne({
     user: userId,
     otp,
     expireDate: { $gt: moment().valueOf() },
   });
-  return userOtp;
+}
+
+export async function getCurrentUserOtpService(userId) {
+  return UserOtpModel.findOne({ user: userId }).lean();
+}
+
+export async function removeUserOtpById(id) {
+  return UserOtpModel.findByIdAndDelete(id);
 }

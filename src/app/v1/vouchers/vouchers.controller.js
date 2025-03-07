@@ -21,7 +21,7 @@ export const createVoucherController = async (req) => {
 
   const newVoucher = await createVoucherService(req.body);
 
-  const formatterVoucher = await getVoucherByIdService(newVoucher.id);
+  const formatterVoucher = await getVoucherByIdService(newVoucher._id);
 
   return {
     statusCode: HttpStatus.CREATED,

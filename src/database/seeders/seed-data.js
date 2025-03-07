@@ -4,9 +4,9 @@ dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 import { startSession } from 'mongoose';
 import { UserConstant } from '#app/v2/users/UserConstant';
 import { makeSlug } from '#utils/string.util';
-import { insertPermissionsService } from '#src/app/v1/permissions/permissions.service';
-import { insertRolesService } from '#src/app/v1/roles/roles.service';
-import { insertUsersService } from '#src/app/v1/users/users.service';
+import { getOrCreatePermissionServiceWithTransaction } from '#src/app/v1/permissions/permissions.service';
+import { getOrCreateRoleServiceWithTransaction } from '#src/app/v1/roles/roles.service';
+import { getOrCreateUserWithTransaction } from '#src/app/v1/users/users.service';
 import { PERMISSIONS_LIST } from '#database/seeders/permissions-data';
 import Database from '#src/modules/mongodb/init.database';
 
@@ -29,30 +29,32 @@ async function runSeeder() {
   try {
     await session.withTransaction(async () => {
       // List permissions
-      const result = await insertPermissionsService(
-        PERMISSIONS_LIST.map((item) => ({ ...item, isActive: true, slug: makeSlug(item.name) })),
-        { session },
+      const permissionIds = await Promise.all(
+        PERMISSIONS_LIST.map(async (item) => {
+          const result = await getOrCreatePermissionServiceWithTransaction(item, session);
+          return result._id;
+        }),
       );
 
       // Role admin
-      const roles = await insertRolesService(
+      const role = await getOrCreateRoleServiceWithTransaction(
         {
           name: 'Admin',
           isActive: true,
           slug: makeSlug('Admin'),
-          permissions: result.map((item) => item.id),
+          permissions: permissionIds,
         },
         { session },
       );
 
       // Admin account
-      await insertUsersService(
+      await getOrCreateUserWithTransaction(
         {
           name: 'Admin 123',
           email: 'admin123@gmail.com',
           password: '1234',
           isVerified: true,
-          role: roles[0].id,
+          role: role._id,
           type: UserConstant.USER_TYPES.USER,
         },
         { session },

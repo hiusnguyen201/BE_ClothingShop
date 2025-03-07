@@ -32,10 +32,10 @@ export const createCustomerController = async (req) => {
   await sendPasswordService(email, password);
 
   if (req.file) {
-    await updateUserAvatarByIdService(newCustomer.id, req.file);
+    await updateUserAvatarByIdService(newCustomer._id, req.file);
   }
 
-  const formatterCustomer = await getUserByIdService(newCustomer.id);
+  const formatterCustomer = await getUserByIdService(newCustomer._id);
 
   return {
     statusCode: HttpStatus.CREATED,

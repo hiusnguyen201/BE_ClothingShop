@@ -1,0 +1,24 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC10.1: View user profile
+
+|User|
+start
+note left
+    User is logged in
+end note
+
+|User|
+:Navigate to the "Profile" section;
+
+|System|
+:Retrieve the user's current data;
+:Display the user's profile details;
+
+stop
+
+@enduml

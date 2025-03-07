@@ -1,0 +1,31 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC12.1: View role list
+
+|User|
+start
+note left
+    User is logged in  
+    User must have permission
+end note
+
+|User|
+:Navigate to the "Roles management" section;
+
+|System|
+:Retrieve the list of roles from the database;
+:Check the results;
+
+if(Results available?) then(yes)
+    :Display the list of roles;
+else(no)
+    :Display a message "No results found";
+endif
+
+stop
+
+@enduml

@@ -41,7 +41,7 @@ export async function getCategoryByIdService(id) {
   const filter = {};
 
   if (isValidObjectId(id)) {
-    filter.id = id;
+    filter._id = id;
   } else if (id.match(REGEX_PATTERNS.SLUG)) {
     filter.slug = id;
   } else {

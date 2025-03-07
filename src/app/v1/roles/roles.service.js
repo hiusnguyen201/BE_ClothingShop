@@ -15,12 +15,18 @@ export async function createRoleService(data) {
 }
 
 /**
- * Insert roles
+ * Get or create role with transaction
  * @param {*} data
  * @returns
  */
-export async function insertRolesService(data, options) {
-  return RoleModel.insertMany(data, options);
+export async function getOrCreateRoleServiceWithTransaction(data, session) {
+  const existRole = await RoleModel.findOne({ name: data.name }).lean();
+
+  if (existRole) {
+    return existRole;
+  }
+
+  return RoleModel.create(data, { session });
 }
 
 /**
@@ -51,7 +57,7 @@ export async function getRoleByIdService(id) {
   const filter = {};
 
   if (isValidObjectId(id)) {
-    filter.id = id;
+    filter._id = id;
   } else if (id.match(REGEX_PATTERNS.SLUG)) {
     filter.slug = id;
   } else {

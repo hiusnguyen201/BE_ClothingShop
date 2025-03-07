@@ -6,10 +6,6 @@ const ROLE_MODEL = 'roles';
 
 const RoleSchema = new Schema(
   {
-    icon: {
-      type: String,
-      length: 300,
-    },
     name: {
       type: String,
       length: 50,

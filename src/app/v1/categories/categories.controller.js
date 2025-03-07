@@ -50,10 +50,10 @@ export const createCategoryController = async (req) => {
 
   // Update Image
   if (req.file) {
-    await updateCategoryImageByIdService(newCategory.id, req.file);
+    await updateCategoryImageByIdService(newCategory._id, req.file);
   }
 
-  const formatterCategory = await getCategoryByIdService(newCategory.id);
+  const formatterCategory = await getCategoryByIdService(newCategory._id);
 
   return {
     statusCode: HttpStatus.CREATED,
@@ -112,7 +112,7 @@ export const updateCategoryByIdController = async (req) => {
 
   const { name } = req.body;
   if (name) {
-    const isExistName = await checkExistCategoryNameService(name, existCategory.id);
+    const isExistName = await checkExistCategoryNameService(name, existCategory._id);
     if (isExistName) {
       throw new ConflictException('Category name already exist');
     }

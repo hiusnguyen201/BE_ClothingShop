@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import fs from 'fs';
 import path from 'path';
+import { ServiceUnavailableException } from '#src/core/exception/http-exception';
 
 const mailerEmail = process.env.MAILER_AUTH_USER;
 
@@ -29,7 +30,7 @@ export const sendOtpCodeService = async (email, otpCode) => {
       html,
     });
   } catch (err) {
-    console.log(err);
+    throw new ServiceUnavailableException('Send OTP failed');
   }
 };
 
@@ -44,7 +45,7 @@ export const sendWelcomeEmailService = async (email, name) => {
       html,
     });
   } catch (err) {
-    console.log(err);
+    throw new ServiceUnavailableException('Send welcome email failed');
   }
 };
 
@@ -59,7 +60,7 @@ export const sendResetPasswordRequestService = async (email, resetURL) => {
       html,
     });
   } catch (err) {
-    console.log(err);
+    throw new ServiceUnavailableException('Send link reset password failed');
   }
 };
 
@@ -74,7 +75,7 @@ export const sendResetPasswordSuccessService = async (email) => {
       html,
     });
   } catch (err) {
-    console.log(err);
+    throw new ServiceUnavailableException('Send reset password success email failed');
   }
 };
 
@@ -89,6 +90,6 @@ export const sendPasswordService = async (email, password) => {
       html,
     });
   } catch (err) {
-    console.log(err);
+    throw new ServiceUnavailableException('Send password failed');
   }
 };

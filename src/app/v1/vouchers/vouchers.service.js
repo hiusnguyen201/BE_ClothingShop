@@ -1,5 +1,5 @@
 import { isValidObjectId } from 'mongoose';
-import { VoucherModel } from '#src/app/v1/vouchers/models/voucher.model';
+import { VoucherModel } from '#src/models/voucher.model';
 
 /**
  * Create voucher
@@ -38,7 +38,7 @@ export async function getVoucherByIdService(id) {
   const filter = {};
 
   if (isValidObjectId(id)) {
-    filter.id = id;
+    filter._id = id;
   } else {
     filter.code = id;
   }

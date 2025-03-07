@@ -6,7 +6,7 @@ import { addVoucherToCustomerService, getAllVouchersByCustomerService } from '#s
 
 export const claimVoucherByCodeController = async (req) => {
   const { voucherCode } = req.body;
-  const userId = req.user.id;
+  const userId = req.user._id;
 
   const voucher = await getVoucherByCodeService(voucherCode);
   if (!voucher) {
@@ -15,11 +15,11 @@ export const claimVoucherByCodeController = async (req) => {
 
   const user = await getUserByIdService(userId, 'vouchers');
 
-  if (user.vouchers.includes(voucher.id)) {
+  if (user.vouchers.includes(voucher._id)) {
     throw new ConflictException('Voucher already claim');
   }
 
-  await addVoucherToCustomerService(userId, voucher.id);
+  await addVoucherToCustomerService(userId, voucher._id);
 
   return {
     statusCode: HttpStatus.NO_CONTENT,
@@ -28,7 +28,7 @@ export const claimVoucherByCodeController = async (req) => {
 };
 
 export const getAllVoucherFromCustomerController = async (req) => {
-  const userId = req.user.id;
+  const userId = req.user._id;
 
   const data = await getAllVouchersByCustomerService(userId, req.query);
 

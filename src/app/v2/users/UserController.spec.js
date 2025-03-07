@@ -22,7 +22,7 @@ describe('POST /api/v1/users/create-user', () => {
   describe('token provided not right format', () => {
     test('should return 400', async () => {
       const user = await userFactory.createUser();
-      const token = generateToken({ id: user.id });
+      const token = generateToken({ id: user._id });
       await request(app).post(endpoint).set('Authorization', token).send(dataCreateUser).expect(HttpStatus.BAD_REQUEST);
     });
   });
@@ -30,7 +30,7 @@ describe('POST /api/v1/users/create-user', () => {
   describe('invalid or expired token', () => {
     test('should return 401', async () => {
       const user = await userFactory.createUser();
-      const token = generateToken({ id: user.id }, '-10s');
+      const token = generateToken({ id: user._id }, '-10s');
       await request(app)
         .post(endpoint)
         .set('Authorization', `Bearer ${token}`)
@@ -42,7 +42,7 @@ describe('POST /api/v1/users/create-user', () => {
   describe('user does not have permission', () => {
     test('should return 403', async () => {
       const user = await userFactory.createUser();
-      const token = generateToken({ id: user.id });
+      const token = generateToken({ id: user._id });
       const { statusCode } = await request(app)
         .post(endpoint)
         .set('Authorization', `Bearer ${token}`)
@@ -58,12 +58,12 @@ describe('POST /api/v1/users/create-user', () => {
         endpoint,
       });
       const role = await roleFactory.createRole({
-        permissions: [permission.id],
+        permissions: [permission._id],
       });
       const user = await userFactory.createUser({
-        role: role.id,
+        role: role._id,
       });
-      const token = generateToken({ id: user.id });
+      const token = generateToken({ id: user._id });
       await request(app)
         .post(endpoint)
         .set('Authorization', `Bearer ${token}`)
@@ -81,12 +81,12 @@ describe('POST /api/v1/users/create-user', () => {
         endpoint,
       });
       const role = await roleFactory.createRole({
-        permissions: [permission.id],
+        permissions: [permission._id],
       });
       const user = await userFactory.createUser({
-        role: role.id,
+        role: role._id,
       });
-      const token = generateToken({ id: user.id });
+      const token = generateToken({ id: user._id });
       await request(app)
         .post(endpoint)
         .set('Authorization', `Bearer ${token}`)

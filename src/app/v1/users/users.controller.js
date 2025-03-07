@@ -42,12 +42,7 @@ export const createUserController = async (req) => {
   });
 
   // Send password to mail for user
-  sendPasswordService(email, password);
-
-  // Update avatar
-  if (req.file) {
-    await updateUserAvatarByIdService(newUser._id, req.file);
-  }
+  await sendPasswordService(email, password);
 
   const formatterUser = await getUserByIdService(newUser._id);
 
@@ -107,13 +102,7 @@ export const updateUserByIdController = async (req) => {
     }
   }
 
-  // Update basic info
-  let updatedUser = await updateUserInfoByIdService(id, req.body);
-
-  // Update avatar
-  if (req.file) {
-    updatedUser = await updateUserAvatarByIdService(id, req.file, updatedUser?.avatar);
-  }
+  const updatedUser = await updateUserInfoByIdService(id, req.body);
 
   return ApiResponse.statusCode(HttpStatus.OK).success(updatedUser);
 };

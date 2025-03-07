@@ -18,7 +18,7 @@ async function authorized(req, res, next) {
 
   try {
     const decoded = verifyToken(token);
-    if (!decoded || !(await getUserByIdService(decoded.id))) {
+    if (!decoded || !(await getUserByIdService(decoded._id))) {
       return next(new UnauthorizedException('Invalid or expired token'));
     }
 
@@ -40,7 +40,7 @@ async function checkPermission(req, res, next) {
     endpoint = endpoint.replace(value, `:${key}`);
   });
 
-  const hasPermission = await checkUserHasPermissionByMethodAndEndpointService(req.user.id, {
+  const hasPermission = await checkUserHasPermissionByMethodAndEndpointService(req.user._id, {
     method: req.method,
     endpoint,
   });

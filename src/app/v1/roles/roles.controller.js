@@ -30,15 +30,10 @@ export const createRoleController = async (req) => {
 
   // Update permissions
   if (permissions && permissions.length > 0) {
-    await updateRolePermissionsByIdService(newRole.id, permissions);
+    await updateRolePermissionsByIdService(newRole._id, permissions);
   }
 
-  // Update icon
-  if (req.file) {
-    await updateRoleIconByIdService(newRole.id, req.file);
-  }
-
-  const formatterRole = await getRoleByIdService(newRole.id);
+  const formatterRole = await getRoleByIdService(newRole._id);
 
   return {
     statusCode: HttpStatus.CREATED,
@@ -103,11 +98,6 @@ export const updateRoleByIdController = async (req) => {
 
   // Update basic info
   let updatedRole = await updateRoleInfoByIdService(id, req.body);
-
-  // Update icon
-  if (req.file) {
-    updatedRole = await updateRoleIconByIdService(id, req.file, updatedRole?.icon);
-  }
 
   // Update permissions
   if (permissions && permissions.length > 0) {

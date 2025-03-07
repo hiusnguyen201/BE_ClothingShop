@@ -11,12 +11,20 @@ export async function createPermissionService(data) {
 }
 
 /**
- * Insert permissions
+ * Get or create permission
  * @param {*} data
  * @returns
  */
-export async function insertPermissionsService(data, options) {
-  return PermissionModel.insertMany(data, options);
+export async function getOrCreatePermissionServiceWithTransaction(data, session) {
+  const existPermission = await PermissionModel.findOne({
+    name: data.name,
+  }).lean();
+
+  if (existPermission) {
+    return existPermission;
+  }
+
+  return PermissionModel.create(data, { session });
 }
 
 /**
@@ -47,7 +55,7 @@ export async function getPermissionByIdService(id) {
   const filter = {};
 
   if (isValidObjectId(id)) {
-    filter.id = id;
+    filter._id = id;
   } else {
     filter.name = id;
   }

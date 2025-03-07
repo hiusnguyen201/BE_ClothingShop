@@ -2,6 +2,7 @@ import { isValidObjectId } from 'mongoose';
 import { UserModel } from '#models/user.model';
 import { removeImageByPublicIdService, uploadImageBufferService } from '#src/modules/cloudinary/CloudinaryService';
 import { REGEX_PATTERNS } from '#core/constant';
+import { genSalt, hashSync } from 'bcrypt';
 
 const SELECTED_FIELDS = '_id avatar name email gender createdAt updatedAt';
 
@@ -20,8 +21,16 @@ export async function createUserService(data) {
  * @param {*} data
  * @returns
  */
-export async function createUsersWithinTransactionService(data, session) {
-  return UserModel.insertMany(data, { session });
+export async function getOrCreateUserWithTransaction(data, session) {
+  const existUser = await UserModel.findOne({ email: data.email }).lean();
+
+  if (existUser) {
+    return existUser;
+  }
+
+  const salt = await genSalt();
+  data.password = hashSync(data.password, salt);
+  return UserModel.create(data, { session });
 }
 
 /**
