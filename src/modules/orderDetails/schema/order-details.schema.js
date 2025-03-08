@@ -29,9 +29,9 @@ export const orderDetailSchema = new Schema(
     },
     // Foreign Key
     // roles: [{ type: Schema.Types.ObjectId, ref: "Role" }],
-    orderId: [{ type: Schema.Types.ObjectId, ref: "Orders", required: true }],
+    orderId: [{ type: Schema.Types.ObjectId, ref: "Order", required: true }],
     productId: [
-      { type: Schema.Types.ObjectId, ref: "Products", required: true },
+      { type: Schema.Types.ObjectId, ref: "Product", required: true },
     ],
   },
   {
@@ -43,5 +43,5 @@ export const orderDetailSchema = new Schema(
   }
 );
 
-const OrderDetailModel = mongoose.model("Order-details", orderDetailSchema);
+const OrderDetailModel = mongoose.model("Order-detail", orderDetailSchema);
 export { OrderDetailModel };

@@ -62,16 +62,16 @@ export const orderSchema = new Schema(
     paymentId: [
       {
         type: Schema.Types.ObjectId,
-        ref: "Payments",
+        ref: "Payment",
         required: true,
         default: null,
       },
     ],
-    customerId: [{ type: Schema.Types.ObjectId, ref: "Users", required: true }],
+    customerId: [{ type: Schema.Types.ObjectId, ref: "User", required: true }],
     voucherId: [
       {
         type: Schema.Types.ObjectId,
-        ref: "Vouchers",
+        ref: "Voucher",
         required: true,
         default: null,
       },

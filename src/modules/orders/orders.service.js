@@ -9,14 +9,15 @@ export async function getAllOrdersByUserService(userId) {
   });
   return orders;
 }
+
 export async function getOrderByIdService(orderId) {
   const order = await OrderModel.findOne({
     _id: orderId,
-  });
+  }).populate("paymentId");
   return order;
 }
 
-export async function updateOrderByIdService({ orderId, ...data }) {
+export async function updateOrderByIdService(orderId, data) {
   return await OrderModel.findByIdAndUpdate(orderId, data, {
     new: true,
   });

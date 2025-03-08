@@ -56,8 +56,8 @@ export const createOrderController = async (req, res) => {
     total,
     status: ORDERS_STATUS.PENDING,
     orderDetails: req.body.orderDetails,
-    voucherId: req.body.voucherId || null,
-    userId: req.body.userId || user._id,
+    voucherId: voucherExisted._id || null,
+    customerId: user._id,
   };
 
   const newOrder = await createOrderService({ ...createOrderRequirement });
