@@ -1,0 +1,36 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC5.2: Create shipping address
+
+|User|
+start
+note left
+    In UC5.1
+end note
+:Click the "Add new address" button;
+
+|System|
+:Display a form modal for entering shipping details;
+
+|User|
+repeat :Fills in the required details;
+:Submit the form;
+
+|System|
+:Validate the input;
+backward :Show detailed error;
+repeat while(Is valid?) is (no) not (yes)
+
+:Create the new shipping address to the database;
+:Display a success message;
+
+stop
+note right
+    Go to UC5.1
+end note
+
+@enduml

@@ -1,0 +1,46 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC6.3: Update quantity in cart
+
+|User|
+start
+note left
+    User is logged in
+    Product variant must be available in stock
+    Have at least one item in the cart
+    In UC6.1
+end note
+
+|User|
+:Select an item in the cart;
+:Click the increase or decrease 
+icon to modify the quantity;
+
+|System|
+:Check if the cart exists;
+if(Is exist cart?) then(yes)
+    :Check product availability quantity;
+    if(Available quantity?) then(yes)
+        if(Quantity is zero?) then(yes)
+            :Remove the item from the cart;
+        else(no)
+            :Update the quantity in the cart;
+        endif
+        :Show success message;
+    else(no)
+        :Show out-of-stock message;
+    endif
+else(no)
+    :Show error message;
+endif
+
+stop
+note left
+    Go to UC6.1
+end note
+
+@enduml

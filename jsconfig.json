@@ -1,8 +1,17 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
+    "baseUrl": "./",
     "paths": {
-      "#src/*": ["src/*"]
+      "#src/*": ["src/*"],
+      "#app/*": ["src/app/*"],
+      "#models/*": ["src/models/*"],
+      "#config/*": ["src/config/*"],
+      "#core/*": ["src/core/*"],
+      "#database/*": ["src/database/*"],
+      "#middlewares/*": ["src/middlewares/*"],
+      "#modules/*": ["src/modules/*"],
+      "#routers/*": ["src/routers/*"],
+      "#utils/*": ["src/utils/*"]
     }
   }
 }

@@ -1,0 +1,31 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC5.1: View shipping address list
+
+|User|
+start
+note left
+    User is logged in
+end note
+:Navigate to the "Shipping Address" section;
+
+|System|
+:Retrieve the user's saved shipping addresses from the database;
+:Check the results;
+
+if(Have result) then(yes)
+    :Display the list of shipping addresses;
+else(no)
+    :Display a message "No results found";
+endif
+
+stop
+note right
+    Go to UC5.1
+end note
+
+@enduml

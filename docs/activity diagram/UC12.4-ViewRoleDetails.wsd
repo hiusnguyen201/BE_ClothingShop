@@ -1,0 +1,33 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC12.4: View role details
+
+|User|
+start
+note left
+    User is logged in  
+    User must have permission
+    In UC12.1
+end note
+
+|User|
+:Select a role from the list and 
+clicks to option “View details”;
+
+|System|
+:Redirect the user to the details page;
+:Check the role exists;
+
+if(Is exist role?) then(yes)    
+    :Display the details of the selected role;
+else(no)
+    :Redirect the user to "Not found" page;
+endif
+
+stop
+
+@enduml

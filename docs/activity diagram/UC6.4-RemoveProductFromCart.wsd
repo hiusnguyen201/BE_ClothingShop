@@ -1,0 +1,35 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC6.4: Remove product from cart
+
+|User|
+start
+note left
+    User is logged in
+    Have at least one item in the cart
+    In UC6.1
+end note
+
+|User|
+:Select an item in the cart;
+:Click the "Remove" button/icon;
+
+|System|
+:Check if the cart exists;
+if(Is exist cart?) then(yes)
+    :Remove the product variant from the cart;
+    :Display a success message;
+else(no)
+    :Show error message;
+endif
+
+stop
+note left
+    Go to UC6.1
+end note
+
+@enduml

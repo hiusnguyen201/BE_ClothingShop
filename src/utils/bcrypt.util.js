@@ -1,4 +1,5 @@
-import bcrypt from "bcrypt";
+'use strict';
+import bcrypt from 'bcrypt';
 
 export const makeHash = (value) => {
   const salt = 10;

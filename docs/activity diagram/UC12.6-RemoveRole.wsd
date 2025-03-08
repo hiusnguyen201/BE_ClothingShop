@@ -1,0 +1,54 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC12.6: Remove role
+
+|User|
+start
+note left
+    User is logged in  
+    User must have permission
+    In UC12.4
+end note
+
+
+|User|
+:Click to remove button in 
+view role details page;
+
+|System|
+:Display a confirmation prompt;
+
+|User|
+split
+    :Click confirm button;
+split again
+    :Click cancel button;
+    stop
+end split
+
+|System|
+:Check the role exists;
+if(Exist role?) then(yes)
+    :Check the role is disabled;
+    if(Disabled role?) then(yes)
+        :Check the role is not assigned to any users;
+        if(Not assigned to any users) then(yes)
+            :Update the role as removed in the database;
+        else(no)
+            :Display error message;
+        endif
+    else(no)
+        :Display error message;
+    endif
+else(no)
+    :Display error message;
+endif
+
+stop
+
+
+@enduml
