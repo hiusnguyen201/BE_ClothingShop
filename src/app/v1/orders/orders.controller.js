@@ -1,4 +1,4 @@
-import { getUserByIdService } from '#src/modules/users/users.service';
+import { getUserByIdService } from '#src/app/v1/users/users.service';
 import {
   createOrderService,
   getAllOrdersByUserService,
@@ -8,69 +8,89 @@ import {
 } from '#src/app/v1/orders/orders.service';
 import HttpStatus from 'http-status-codes';
 import { BadRequestException, NotFoundException } from '#src/core/exception/http-exception';
-import { getVoucherByIdService } from '#src/modules/vouchers/vouchers.service';
+import { getVoucherByIdService } from '#src/app/v1/vouchers/vouchers.service';
 import { createOrderDetailService } from '#src/app/v1/orderDetails/order-details.service';
 import { ORDERS_STATUS } from '#src/core/constant';
+import { TransactionalServiceWrapper } from '#src/core/transaction/TransactionalServiceWrapper';
 
+/**
+ *  Tạo order từ quản trị
+ */
 export const createOrderController = async (req, res) => {
-  const user = await getUserByIdService(req.user._id);
-  if (!user) {
-    throw new NotFoundException('User not found');
-  }
-  const { orderDetails, shipping_fee, voucherId } = req.body;
+  return TransactionalServiceWrapper.execute(async (session) => {
+    const { orderDetails, shipping_fee, voucherId } = req.body;
 
-  if (!orderDetails || orderDetails.length === 0) {
-    throw new BadRequestException('Cart not found');
-  }
+    // đổi sang customer
+    const user = await getUserByIdService(req.user._id);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
 
-  //total order details
-  let sub_total = 0;
-  const orderDetailDocs = orderDetails.map((item) => {
-    const total_price = item.quantity * item.unit_price - item.discount;
-    sub_total += total_price;
-    return { ...item, total_price };
+    // Thay vào là tìm product variant
+    if (!orderDetails || orderDetails.length === 0) {
+      throw new BadRequestException('Cart not found');
+    }
+    // - Lấy được mảng product variant
+    // - phần tính toán tiền đơn hàng (tính cả voucher)viết vào utils
+    // Input: mảng product variant
+    // Output: {subTotal, shipping_fee, total, quantity}
+
+    //total order details
+    let sub_total = 0;
+    const orderDetailDocs = orderDetails.map((item) => {
+      const total_price = item.quantity * item.unit_price - item.discount;
+      sub_total += total_price;
+      return { ...item, total_price };
+    });
+
+    //check voucher
+    const voucherExisted = await getVoucherByIdService(voucherId);
+    let discountVoucher = 0;
+    if (voucherExisted.isFixed) {
+      discountVoucher = voucherExisted.discount;
+    } else {
+      discountVoucher = (sub_total * voucherExisted.discount) / 100;
+    }
+
+    const total = sub_total + (shipping_fee || 0) - discountVoucher;
+
+    // Thêm order Date, code (tự gen. Ex: 250303KYYWJ0W4)
+    const createOrderRequirement = {
+      customer_name: req.body.customer_name || user.name,
+      customer_email: req.body.customer_email || user.email,
+      customer_phone: req.body.customer_phone || user.phone,
+      shipping_address: req.body.shipping_address,
+      quantity: orderDetailDocs.length,
+      sub_total,
+      shipping_fee: req.body.shipping_fee || 0,
+      total,
+      status: ORDERS_STATUS.PENDING,
+      orderDetails: req.body.orderDetails,
+      voucherId: voucherExisted._id || null,
+      customerId: user._id,
+    };
+
+    const newOrder = await createOrderService(createOrderRequirement, session);
+    const orderDetailRecords = orderDetailDocs.map((item) => ({
+      ...item,
+      orderId: newOrder._id,
+    }));
+
+    // Thêm session
+    await createOrderDetailService(orderDetailRecords);
+
+    return {
+      statusCode: HttpStatus.CREATED,
+      message: 'Create order successfully',
+      data: newOrder,
+    };
   });
-
-  //check voucher
-  const voucherExisted = await getVoucherByIdService(voucherId);
-  let discountVoucher = 0;
-  if (voucherExisted.isFixed) {
-    discountVoucher = voucherExisted.discount;
-  } else {
-    discountVoucher = (sub_total * voucherExisted.discount) / 100;
-  }
-
-  const total = sub_total + (shipping_fee || 0) - discountVoucher;
-
-  const createOrderRequirement = {
-    customer_name: req.body.customer_name || user.name,
-    customer_email: req.body.customer_email || user.email,
-    customer_phone: req.body.customer_phone || user.phone,
-    shipping_address: req.body.shipping_address,
-    quantity: orderDetailDocs.length,
-    sub_total,
-    shipping_fee: req.body.shipping_fee || 0,
-    total,
-    status: ORDERS_STATUS.PENDING,
-    orderDetails: req.body.orderDetails,
-    voucherId: voucherExisted._id || null,
-    customerId: user._id,
-  };
-
-  const newOrder = await createOrderService({ ...createOrderRequirement });
-  const orderDetailRecords = orderDetailDocs.map((item) => ({
-    ...item,
-    orderId: newOrder._id,
-  }));
-
-  await createOrderDetailService(orderDetailRecords);
-  return {
-    statusCode: HttpStatus.CREATED,
-    message: 'Create order successfully',
-    data: newOrder,
-  };
 };
 
+/**
+ * lấy tất cả order bên quản trị
+ * Thêm sắp xếp (mới nhất, cũ nhất, theo khoảng thời gian tính theo orderDate) và lọc (status)
+ */
 export const getAllOrdersByUserController = async (req, res) => {
   let { keyword = '', limit = 10, page = 1 } = req.query;
 

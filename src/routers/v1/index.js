@@ -9,8 +9,15 @@ import customersRouter from '#routers/v1/customers.router';
 import categoriesRouter from '#routers/v1/categories.router';
 import vouchersRouter from '#routers/v1/vouchers.router';
 import accountRouter from '#routers/v1/account.router';
+import ordersRouter from '#src/routers/v1/orders.route';
+import paymentsRouter from '#src/routers/v1/payments.route';
+import orderDetailsRouter from '#src/routers/v1/order-details.router';
+import productsRouter from '#src/routers/v1/products.router';
+import * as provinces from 'vietnam-provinces';
 
 router.get('/ping', () => 'Hello world! PING 1');
+
+router.get('/provinces', () => provinces);
 
 router.use('/auth', authRouter);
 
@@ -27,5 +34,13 @@ router.use('/categories', categoriesRouter);
 router.use('/customers', customersRouter);
 
 router.use('/vouchers', vouchersRouter);
+
+router.use('/orders', ordersRouter);
+
+router.use('/payments', paymentsRouter);
+
+router.use('/order-details', orderDetailsRouter);
+
+router.use('/products', productsRouter);
 
 export default router;

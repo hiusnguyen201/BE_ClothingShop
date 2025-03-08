@@ -1,7 +1,7 @@
 import { OrderModel } from '#src/app/v1/orders/schema/orders.schema';
 
-export async function createOrderService(data) {
-  return await OrderModel.create(data);
+export async function createOrderService(data, session) {
+  return await OrderModel.create(data, { session });
 }
 export async function getAllOrdersByUserService(userId) {
   const orders = await OrderModel.find({
@@ -13,7 +13,7 @@ export async function getAllOrdersByUserService(userId) {
 export async function getOrderByIdService(orderId) {
   const order = await OrderModel.findOne({
     _id: orderId,
-  }).populate("paymentId");
+  }).populate('paymentId');
   return order;
 }
 

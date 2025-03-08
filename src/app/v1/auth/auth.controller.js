@@ -89,7 +89,7 @@ export const loginController = async (req) => {
       isAuthenticated: !isNeed2Fa,
       accessToken: isNeed2Fa ? null : generateToken({ _id: user._id }),
       is2FactorRequired: isNeed2Fa,
-      user: { id: user._id, name: user.name, email: user.email },
+      user: { id: user._id, name: user.name, email: user.email, type: user.type },
     },
   };
 };
@@ -120,7 +120,7 @@ export const sendOtpViaEmailController = async (req) => {
 
 export const verifyOtpController = async (req) => {
   const { email, otp } = req.body;
-  const user = await getUserByIdService(email, 'id email name isVerified');
+  const user = await getUserByIdService(email, 'id email name isVerified type');
   if (!user) {
     throw new NotFoundException('User not found');
   }
@@ -144,7 +144,7 @@ export const verifyOtpController = async (req) => {
     data: {
       isAuthenticated: true,
       accessToken,
-      user: { _id: user._id, name: user.name, email: user.email },
+      user: { _id: user._id, name: user.name, email: user.email, type: user.type },
     },
   };
 };

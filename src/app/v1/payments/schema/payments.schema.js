@@ -1,9 +1,9 @@
-import { CURRENT_TIME, PAYMENT_METHOD } from "#src/core/constant";
-import moment from "moment-timezone";
-import mongoose from "mongoose";
+import { PAYMENT_METHOD } from '#src/core/constant';
+import moment from 'moment-timezone';
+import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
-const PAYMENT_MODEL = "payments";
+const PAYMENT_MODEL = 'payments';
 
 export const paymentSchema = new Schema(
   {
@@ -21,7 +21,6 @@ export const paymentSchema = new Schema(
     paid_date: {
       type: Date,
       required: true,
-      default: CURRENT_TIME,
     },
     transactionId: {
       type: String,
@@ -33,7 +32,7 @@ export const paymentSchema = new Schema(
     },
     // Foreign Key
     // roles: [{ type: Schema.Types.ObjectId, ref: "Role" }],
-    orderId: [{ type: Schema.Types.ObjectId, ref: "Order" }],
+    orderId: [{ type: Schema.Types.ObjectId, ref: 'Order' }],
   },
   {
     versionKey: false,
@@ -41,8 +40,8 @@ export const paymentSchema = new Schema(
     _id: true,
     id: false,
     collection: PAYMENT_MODEL,
-  }
+  },
 );
 
-const PaymentModel = mongoose.model("Payment", paymentSchema);
+const PaymentModel = mongoose.model('Payment', paymentSchema);
 export { PaymentModel };

@@ -1,15 +1,10 @@
-import { CURRENT_TIME, ORDERS_STATUS, PAYMENT_METHOD } from '#src/core/constant';
-import { BadRequestException, NotFoundException } from '#src/core/exception/http-exception';
-import { getOrderByIdService, updateOrderByIdService } from '#src/modules/orders/orders.service';
-import HttpStatus from 'http-status-codes';
-import { createPaymentService, getPaymentByOrderIdService } from '#src/modules/payments/payments.service';
-import { createMomoPayment } from '#src/utils/paymentMomo';
-import { createVnpayPayment } from '#src/utils/paymentVnpay';
-import { CURRENT_TIME, ORDERS_STATUS, PAYMENT_METHOD } from '#src/core/constant';
+import { ORDERS_STATUS, PAYMENT_METHOD } from '#src/core/constant';
 import { BadRequestException, NotFoundException } from '#src/core/exception/http-exception';
 import { getOrderByIdService, updateOrderByIdService } from '#src/app/v1/orders/orders.service';
 import HttpStatus from 'http-status-codes';
-import { createPaymentService } from '#src/app/v1/payments/payments.service';
+import { createPaymentService, getPaymentByOrderIdService } from '#src/app/v1/payments/payments.service';
+// import { createMomoPayment } from '#src/utils/paymentMomo';
+// import { createVnpayPayment } from '#src/utils/paymentVnpay';
 
 export const createPaymentController = async (req, res) => {
   const { orderId, paymentMethod } = req.body;
@@ -24,21 +19,21 @@ export const createPaymentController = async (req, res) => {
   let notes = '';
   switch (paymentMethod) {
     case PAYMENT_METHOD.MOMO:
-      transactionId = `${PAYMENT_METHOD.MOMO}_${orderExisted._id}_${CURRENT_TIME}`;
+      transactionId = `${PAYMENT_METHOD.MOMO}_${orderExisted._id}`;
       notes = `Payment via ${PAYMENT_METHOD.MOMO}`;
       const momoResponse = await createMomoPayment(orderId, orderExisted.total);
       paymentUrl = momoResponse.payUrl;
       break;
 
     case PAYMENT_METHOD.VNPAY:
-      transactionId = `${PAYMENT_METHOD.VNPAY}_${orderExisted._id}_${CURRENT_TIME}`;
+      transactionId = `${PAYMENT_METHOD.VNPAY}_${orderExisted._id}`;
       notes = `Payment via ${PAYMENT_METHOD.VNPAY}`;
       const ipAddress = '127.0.0.1';
       paymentUrl = await createVnpayPayment(orderId, orderExisted.total, ipAddress);
       break;
 
     case PAYMENT_METHOD.COD:
-      transactionId = `${PAYMENT_METHOD.COD}_${orderExisted._id}_${CURRENT_TIME}`;
+      transactionId = `${PAYMENT_METHOD.COD}_${orderExisted._id}`;
       notes = 'Cash on Delivery';
       break;
 

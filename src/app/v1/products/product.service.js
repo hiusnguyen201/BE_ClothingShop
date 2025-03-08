@@ -1,4 +1,4 @@
-import { ProductModel } from '#src/app/v1/producuts/product.model';
+import { ProductModel } from '#src/app/v1/products/product.model';
 
 export const getProductByIdService = async ({ productId }) => {
   const product = await ProductModel.findOne({ productId });

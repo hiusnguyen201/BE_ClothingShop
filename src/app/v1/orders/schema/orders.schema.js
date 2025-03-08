@@ -1,8 +1,8 @@
-import { CURRENT_TIME, ORDERS_STATUS } from "#src/core/constant";
-import mongoose from "mongoose";
+import { ORDERS_STATUS } from '#src/core/constant';
+import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
-const ORDER_MODEL = "orders";
+const ORDER_MODEL = 'orders';
 
 export const orderSchema = new Schema(
   {
@@ -25,7 +25,6 @@ export const orderSchema = new Schema(
     order_date: {
       type: Date,
       required: true,
-      default: CURRENT_TIME,
     },
     quantity: {
       type: Number,
@@ -62,16 +61,16 @@ export const orderSchema = new Schema(
     paymentId: [
       {
         type: Schema.Types.ObjectId,
-        ref: "Payment",
+        ref: 'Payment',
         required: true,
         default: null,
       },
     ],
-    customerId: [{ type: Schema.Types.ObjectId, ref: "User", required: true }],
+    customerId: [{ type: Schema.Types.ObjectId, ref: 'User', required: true }],
     voucherId: [
       {
         type: Schema.Types.ObjectId,
-        ref: "Voucher",
+        ref: 'Voucher',
         required: true,
         default: null,
       },
@@ -83,8 +82,8 @@ export const orderSchema = new Schema(
     _id: true,
     id: false,
     collection: ORDER_MODEL,
-  }
+  },
 );
 
-const OrderModel = mongoose.model("Order", orderSchema);
+const OrderModel = mongoose.model('Order', orderSchema);
 export { OrderModel };

@@ -3,6 +3,19 @@ import { REGEX_PATTERNS } from '#src/core/constant';
 import mongoose from 'mongoose';
 import { createOrderDetailDto } from '#src/app/v1/orderDetails/dto/create-order-detail.dto';
 
+/**
+ * Thêm:
+ *  + customerId
+ *  + provinceId
+ *  + districtId
+ *  + wardId
+ * Bỏ shipping_fee
+ * Sửa orderDetails -> productVariants (mảng id của product variant). Ex: [{variantId: "cascas", quantity: 2}]
+ *
+ *
+ * Customer:
+ * Gửi mảng id cart lên
+ */
 export const createOrderDto = Joi.object({
   customer_name: Joi.string().min(3).max(100).required(),
   customer_email: Joi.string().email().required(),

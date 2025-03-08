@@ -1,5 +1,3 @@
-import moment from 'moment-timezone';
-
 export const GENDER = {
   MALE: 'Male',
   FEMALE: 'Female',
@@ -54,5 +52,3 @@ export const PAYMENT_METHOD = {
   VNPAY: 'Vnpay',
   MOMO: 'Momo',
 };
-
-export const CURRENT_TIME = moment().format('YYYY-MM-DD HH:mm:ss');
