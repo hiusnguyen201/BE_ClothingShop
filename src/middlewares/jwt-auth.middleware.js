@@ -21,7 +21,6 @@ async function authorized(req, res, next) {
     if (!decoded || !(await getUserByIdService(decoded._id))) {
       return next(new UnauthorizedException('Invalid or expired token'));
     }
-
     req.user = decoded;
     next();
   } catch (e) {

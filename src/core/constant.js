@@ -1,3 +1,18 @@
+import moment from 'moment-timezone';
+
+export const GENDER = {
+  MALE: 'Male',
+  FEMALE: 'Female',
+  OTHER: 'Other',
+};
+
+export const USER_STATUS = {
+  ACTIVE: 'Active',
+  INACTIVE: 'Inactive',
+  BANNED: 'Banned',
+  DELETED: 'Deleted',
+};
+
 export const ALLOW_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD'];
 
 export const ALLOW_IMAGE_MIME_TYPES = [
@@ -25,3 +40,19 @@ export const REGEX_PATTERNS = {
   BEARER_TOKEN: /^Bearer ((?:\.?(?:[A-Za-z0-9-_]+)){3})$/,
   COMMA_SEPARATED_LIST: /^[a-zA-Z0-9,]+$/,
 };
+
+export const ORDERS_STATUS = {
+  PENDING: 'Pending',
+  PAID: 'Paid',
+  SHIPPED: 'Shipped',
+  DELIVERED: 'Delivered',
+  CANCELLED: 'Canceled',
+};
+
+export const PAYMENT_METHOD = {
+  COD: 'Cod',
+  VNPAY: 'Vnpay',
+  MOMO: 'Momo',
+};
+
+export const CURRENT_TIME = moment().format('YYYY-MM-DD HH:mm:ss');
