@@ -1,7 +1,7 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
-const ORDER_DETAIL_MODEL = "order-details";
+const ORDER_DETAIL_MODEL = 'order-details';
 
 export const orderDetailSchema = new Schema(
   {
@@ -9,15 +9,15 @@ export const orderDetailSchema = new Schema(
       type: Number,
       required: true,
     },
-    unit_price: {
+    unitPrice: {
       type: Number,
       required: true,
     },
-    total_price: {
+    totalPrice: {
       type: Number,
       required: true,
     },
-    is_fixed: {
+    isFixed: {
       type: Boolean,
       required: true,
       default: false,
@@ -29,10 +29,8 @@ export const orderDetailSchema = new Schema(
     },
     // Foreign Key
     // roles: [{ type: Schema.Types.ObjectId, ref: "Role" }],
-    orderId: [{ type: Schema.Types.ObjectId, ref: "Order", required: true }],
-    productId: [
-      { type: Schema.Types.ObjectId, ref: "Product", required: true },
-    ],
+    orderId: [{ type: Schema.Types.ObjectId, ref: 'Order', required: true }],
+    productId: [{ type: Schema.Types.ObjectId, ref: 'Product', required: true }],
   },
   {
     versionKey: false,
@@ -40,8 +38,8 @@ export const orderDetailSchema = new Schema(
     _id: true,
     id: false,
     collection: ORDER_DETAIL_MODEL,
-  }
+  },
 );
 
-const OrderDetailModel = mongoose.model("Order-detail", orderDetailSchema);
+const OrderDetailModel = mongoose.model('Order-detail', orderDetailSchema);
 export { OrderDetailModel };

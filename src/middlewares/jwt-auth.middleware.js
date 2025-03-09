@@ -55,7 +55,7 @@ async function checkCustomer(req, res, next) {
 
   return req.user.type === UserConstant.USER_TYPES.CUSTOMER
     ? next()
-    : next(new ForbiddenException("Don't have permission to access this resource"));
+    : next(new ForbiddenException("Don't have Customer to access this resource"));
 }
 
 export const isAuthorized = [authorized];

@@ -2,8 +2,8 @@ import mongoose from 'mongoose';
 
 const connectToMongoDb = (options) => {
   if (options?.logging) {
-    mongoose.set('debug', true);
-    mongoose.set('debug', { color: true });
+    // mongoose.set('debug', true);
+    // mongoose.set('debug', { color: true });
   }
 
   mongoose

@@ -1,7 +1,7 @@
 import { OrderModel } from '#src/app/v1/orders/schema/orders.schema';
 
 export async function createOrderService(data, session) {
-  return await OrderModel.create(data, { session });
+  return await OrderModel.create(data);
 }
 export async function getAllOrdersByUserService(userId) {
   const orders = await OrderModel.find({

@@ -4,7 +4,8 @@ import { getOrderByIdService, updateOrderByIdService } from '#src/app/v1/orders/
 import HttpStatus from 'http-status-codes';
 import { createPaymentService, getPaymentByOrderIdService } from '#src/app/v1/payments/payments.service';
 // import { createMomoPayment } from '#src/utils/paymentMomo';
-// import { createVnpayPayment } from '#src/utils/paymentVnpay';
+import { createVnpayPayment } from '#src/utils/paymentVnpay';
+import moment from 'moment-timezone';
 
 export const createPaymentController = async (req, res) => {
   const { orderId, paymentMethod } = req.body;
@@ -21,15 +22,14 @@ export const createPaymentController = async (req, res) => {
     case PAYMENT_METHOD.MOMO:
       transactionId = `${PAYMENT_METHOD.MOMO}_${orderExisted._id}`;
       notes = `Payment via ${PAYMENT_METHOD.MOMO}`;
-      const momoResponse = await createMomoPayment(orderId, orderExisted.total);
+      const momoResponse = await createMomoPayment(orderId, orderExisted.total, orderExisted.code);
       paymentUrl = momoResponse.payUrl;
       break;
 
     case PAYMENT_METHOD.VNPAY:
       transactionId = `${PAYMENT_METHOD.VNPAY}_${orderExisted._id}`;
       notes = `Payment via ${PAYMENT_METHOD.VNPAY}`;
-      const ipAddress = '127.0.0.1';
-      paymentUrl = await createVnpayPayment(orderId, orderExisted.total, ipAddress);
+      paymentUrl = await createVnpayPayment(orderId, orderExisted.total, orderExisted.code);
       break;
 
     case PAYMENT_METHOD.COD:
@@ -40,15 +40,18 @@ export const createPaymentController = async (req, res) => {
     default:
       throw new BadRequestException('Invalid payment method');
   }
+
+  const paidDate = moment().format('YYYY-MM-DD HH:mm:ss');
+
   const newPayment = await createPaymentService({
     orderId,
     paymentMethod,
-    amount_paid: orderExisted.total,
+    amountPaid: orderExisted.total,
     transactionId,
     notes,
+    paidDate,
   });
 
-  //update status order
   if (paymentMethod === PAYMENT_METHOD.COD) {
     await updateOrderByIdService(orderExisted._id, {
       status: ORDERS_STATUS.SHIPPED,
@@ -63,8 +66,6 @@ export const createPaymentController = async (req, res) => {
       newPayment,
       paymentUrl,
     },
-    message: 'Create order successfully',
-    data: newPayment,
   };
 };
 

@@ -13,12 +13,12 @@ export const paymentSchema = new Schema(
       enum: [PAYMENT_METHOD.COD, PAYMENT_METHOD.VNPAY, PAYMENT_METHOD.MOMO],
       default: PAYMENT_METHOD.COD,
     },
-    amount_paid: {
+    amountPaid: {
       type: Number,
       required: true,
       default: 0,
     },
-    paid_date: {
+    paidDate: {
       type: Date,
       required: true,
     },
@@ -31,7 +31,6 @@ export const paymentSchema = new Schema(
       required: false,
     },
     // Foreign Key
-    // roles: [{ type: Schema.Types.ObjectId, ref: "Role" }],
     orderId: [{ type: Schema.Types.ObjectId, ref: 'Order' }],
   },
   {

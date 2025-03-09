@@ -8,76 +8,60 @@ import {
 } from '#src/app/v1/orders/orders.service';
 import HttpStatus from 'http-status-codes';
 import { BadRequestException, NotFoundException } from '#src/core/exception/http-exception';
-import { getVoucherByIdService } from '#src/app/v1/vouchers/vouchers.service';
 import { createOrderDetailService } from '#src/app/v1/orderDetails/order-details.service';
 import { ORDERS_STATUS } from '#src/core/constant';
 import { TransactionalServiceWrapper } from '#src/core/transaction/TransactionalServiceWrapper';
+import { UserConstant } from '#src/app/v2/users/UserConstant';
+import { calculateCartTotal } from '#src/utils/calculateCareTotal';
+import moment from 'moment-timezone';
+import { randomCodeOrder } from '#src/utils/string.util';
 
 /**
  *  Tạo order từ quản trị
  */
 export const createOrderController = async (req, res) => {
   return TransactionalServiceWrapper.execute(async (session) => {
-    const { orderDetails, shipping_fee, voucherId } = req.body;
+    const { productVariantIds, customerId, voucherId } = req.body;
 
-    // đổi sang customer
-    const user = await getUserByIdService(req.user._id);
-    if (!user) {
+    const customerExisted = await getUserByIdService(customerId);
+
+    if (!customerExisted || customerExisted.type !== UserConstant.USER_TYPES.CUSTOMER) {
       throw new NotFoundException('User not found');
     }
-
-    // Thay vào là tìm product variant
-    if (!orderDetails || orderDetails.length === 0) {
-      throw new BadRequestException('Cart not found');
+    if (!productVariantIds || productVariantIds.length === 0) {
+      throw new BadRequestException('Product not found');
     }
-    // - Lấy được mảng product variant
-    // - phần tính toán tiền đơn hàng (tính cả voucher)viết vào utils
-    // Input: mảng product variant
-    // Output: {subTotal, shipping_fee, total, quantity}
+    const calculateOrderDetails = await calculateCartTotal(productVariantIds, voucherId);
 
-    //total order details
-    let sub_total = 0;
-    const orderDetailDocs = orderDetails.map((item) => {
-      const total_price = item.quantity * item.unit_price - item.discount;
-      sub_total += total_price;
-      return { ...item, total_price };
-    });
+    const orderDate = moment().format('YYYY-MM-DD HH:mm:ss');
+    const code = randomCodeOrder(14);
 
-    //check voucher
-    const voucherExisted = await getVoucherByIdService(voucherId);
-    let discountVoucher = 0;
-    if (voucherExisted.isFixed) {
-      discountVoucher = voucherExisted.discount;
-    } else {
-      discountVoucher = (sub_total * voucherExisted.discount) / 100;
-    }
-
-    const total = sub_total + (shipping_fee || 0) - discountVoucher;
-
-    // Thêm order Date, code (tự gen. Ex: 250303KYYWJ0W4)
     const createOrderRequirement = {
-      customer_name: req.body.customer_name || user.name,
-      customer_email: req.body.customer_email || user.email,
-      customer_phone: req.body.customer_phone || user.phone,
-      shipping_address: req.body.shipping_address,
-      quantity: orderDetailDocs.length,
-      sub_total,
-      shipping_fee: req.body.shipping_fee || 0,
-      total,
+      code,
+      customerId: customerExisted._id,
+      customerName: req.body.customerName || customerExisted.name,
+      customerEmail: req.body.customerEmail || customerExisted.email,
+      customerPhone: req.body.customerPhone || customerExisted.phone,
+      shippingAddress: req.body.shippingAddress,
+      quantity: calculateOrderDetails.totalQuantity,
+      subTotal: calculateOrderDetails.subTotal,
+      shippingFee: 0,
+      orderDate: orderDate,
+      total: calculateOrderDetails.total,
       status: ORDERS_STATUS.PENDING,
-      orderDetails: req.body.orderDetails,
-      voucherId: voucherExisted._id || null,
-      customerId: user._id,
+      voucherId: voucherId || null,
     };
 
     const newOrder = await createOrderService(createOrderRequirement, session);
-    const orderDetailRecords = orderDetailDocs.map((item) => ({
+
+    const newOrderDetails = calculateOrderDetails.processedVariants.map((item) => ({
       ...item,
+      totalPrice: calculateOrderDetails.total,
       orderId: newOrder._id,
     }));
 
     // Thêm session
-    await createOrderDetailService(orderDetailRecords);
+    await createOrderDetailService(newOrderDetails);
 
     return {
       statusCode: HttpStatus.CREATED,

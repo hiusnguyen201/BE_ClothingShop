@@ -6,23 +6,28 @@ const ORDER_MODEL = 'orders';
 
 export const orderSchema = new Schema(
   {
-    customer_name: {
+    code: {
+      type: String,
+      required: true,
+      length: 14,
+    },
+    customerName: {
       type: String,
       required: true,
     },
-    customer_email: {
+    customerEmail: {
       type: String,
       required: true,
     },
-    customer_phone: {
+    customerPhone: {
       type: String,
       required: true,
     },
-    shipping_address: {
+    shippingAddress: {
       type: String,
       required: true,
     },
-    order_date: {
+    orderDate: {
       type: Date,
       required: true,
     },
@@ -30,11 +35,11 @@ export const orderSchema = new Schema(
       type: Number,
       required: true,
     },
-    sub_total: {
+    subTotal: {
       type: Number,
       required: true,
     },
-    shipping_fee: {
+    shippingFee: {
       type: Number,
       required: true,
       default: 0,
@@ -75,6 +80,14 @@ export const orderSchema = new Schema(
         default: null,
       },
     ],
+    employeeId: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+        default: null,
+      },
+    ],
   },
   {
     versionKey: false,
@@ -85,5 +98,5 @@ export const orderSchema = new Schema(
   },
 );
 
-const OrderModel = mongoose.model('Order', orderSchema);
+const OrderModel = mongoose.model('Orders', orderSchema);
 export { OrderModel };

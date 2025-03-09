@@ -4,7 +4,7 @@ import { removeImageByPublicIdService, uploadImageBufferService } from '#src/mod
 import { REGEX_PATTERNS } from '#core/constant';
 import { genSalt, hashSync } from 'bcrypt';
 
-const SELECTED_FIELDS = '_id avatar name email gender createdAt updatedAt';
+const SELECTED_FIELDS = '_id avatar name email type gender createdAt updatedAt';
 
 /**
  * Create user

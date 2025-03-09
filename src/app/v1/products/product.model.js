@@ -1,7 +1,7 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
-const PRODUCT_MODEL = "products";
+const PRODUCT_MODEL = 'products';
 
 export const productSchema = new Schema(
   {
@@ -18,14 +18,15 @@ export const productSchema = new Schema(
       required: true,
     },
   },
+
   {
     versionKey: false,
     timestamps: true,
     _id: true,
     id: false,
     collection: PRODUCT_MODEL,
-  }
+  },
 );
 
-const ProductModel = mongoose.model("Product", productSchema);
+const ProductModel = mongoose.model('Product', productSchema);
 export { ProductModel };
