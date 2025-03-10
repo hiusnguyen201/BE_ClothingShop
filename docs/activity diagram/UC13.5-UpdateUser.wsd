@@ -4,14 +4,14 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC12.5: Update role
+title UC13.5: Update user
 
 |User|
 start
 note left
     User is logged in  
     User must have permission
-    In UC12.4
+    In UC13.4
 end note
 
 
@@ -27,23 +27,22 @@ repeat
         backward :Show detailed error;
     repeat while(Is valid?) is(no) not(yes)
 
-    :Check role exist;
-    if(Role exists?) then(yes)
+    :Check user exist;
+    if(User exists?) then(yes)
     else(no)
         :Display error message;
         stop
     endif
 
     backward :Display error message;
-    :Check role name exist;
-repeat while(Role name exists?) is(yes) not(no)
+    :Check email exist;
+repeat while(Email exists?) is(yes) not(no)
 
-:Update the role in the database;
+:Update the user in the database;
 :Display a success message;
 stop
 note right
-    Go to UC12.4
+    Go to UC13.4
 end note
-
 
 @enduml

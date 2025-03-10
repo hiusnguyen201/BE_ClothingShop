@@ -4,26 +4,26 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC12.4: View role details
+title UC18.4: View customer details
 
 |User|
 start
 note left
     User is logged in  
     User must have permission
-    In UC12.1
+    In UC18.1
 end note
 
 |User|
-:Select a role from the list and 
+:Select a customer from the list and 
 clicks to option “View details”;
 
 |System|
-:Redirect the user to the details page;
-:Check the role exists;
+:Redirect the customer to the details page;
+:Check the customer exists;
 
-if(Is exist role?) then(yes)    
-    :Display the details of the selected role;
+if(Customer exists?) then(yes)    
+    :Display the details of the selected customer;
     stop
 else(no)
     :Display error message "Not found";

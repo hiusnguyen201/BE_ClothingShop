@@ -4,26 +4,26 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC12.4: View role details
+title UC17.4: View category details
 
 |User|
 start
 note left
     User is logged in  
     User must have permission
-    In UC12.1
+    In UC17.1
 end note
 
 |User|
-:Select a role from the list and 
+:Select a category from the list and 
 clicks to option “View details”;
 
 |System|
-:Redirect the user to the details page;
-:Check the role exists;
+:Redirect the category to the details page;
+:Check the category exists;
 
-if(Is exist role?) then(yes)    
-    :Display the details of the selected role;
+if(Category exists?) then(yes)    
+    :Display the details of the selected category;
     stop
 else(no)
     :Display error message "Not found";

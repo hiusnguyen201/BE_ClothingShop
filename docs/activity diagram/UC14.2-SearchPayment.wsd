@@ -1,0 +1,33 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC14.2: Search payment
+
+|User|
+start
+note left
+    User is logged in  
+    User must have permission
+    In UC14.1
+end note
+
+|User|
+:Enter a keyword into the search bar or apply filters;
+
+|System|
+:Retrieve the list of payments from the 
+database based on the provided query;
+:Check the results;
+
+if(Results available?) then(yes)
+    :Display the list of payments that match the search criteria;
+else(no)
+    :Display a message "No results found";
+endif
+
+stop
+
+@enduml

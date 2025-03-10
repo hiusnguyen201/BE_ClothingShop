@@ -1,0 +1,33 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC16.2: Search order
+
+|User|
+start
+note left
+    User is logged in  
+    User must have permission
+    In UC16.1
+end note
+
+|User|
+:Enter a keyword into the search bar or apply filters;
+
+|System|
+:Retrieve the list of orders from the 
+database based on the provided query;
+:Check the results;
+
+if(Results available?) then(yes)
+    :Display the list of orders that match the search criteria;
+else(no)
+    :Display a message "No results found";
+endif
+
+stop
+
+@enduml

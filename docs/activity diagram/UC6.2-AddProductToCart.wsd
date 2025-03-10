@@ -33,10 +33,11 @@ if(Is exist?) then (yes)
     else(no)
         :Show error message;
     endif
+    stop
 else(no)
     :Show error message;
+    stop
 endif
 
-stop
 
 @enduml

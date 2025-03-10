@@ -4,26 +4,26 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC12.4: View role details
+title UC14.4: View payment details
 
 |User|
 start
 note left
     User is logged in  
     User must have permission
-    In UC12.1
+    In UC14.1
 end note
 
 |User|
-:Select a role from the list and 
+:Select a payment from the list and 
 clicks to option “View details”;
 
 |System|
-:Redirect the user to the details page;
-:Check the role exists;
+:Redirect the payment to the details page;
+:Check the payment exists;
 
-if(Is exist role?) then(yes)    
-    :Display the details of the selected role;
+if(Is exist payment?) then(yes)    
+    :Display the details of the selected payment;
     stop
 else(no)
     :Display error message "Not found";

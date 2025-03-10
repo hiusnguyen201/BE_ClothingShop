@@ -33,5 +33,8 @@ repeat while(Is valid?) is(no) not(yes)
 :Display a success message;
 
 stop
+note right
+    Go to UC10.1
+end note
 
 @enduml

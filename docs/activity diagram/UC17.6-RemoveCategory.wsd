@@ -4,20 +4,20 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC12.6: Remove role
+title UC17.6: Remove category
 
 |User|
 start
 note left
     User is logged in  
     User must have permission
-    In UC12.4
+    In UC17.4
 end note
 
 
 |User|
 :Click to remove button in 
-view role details page;
+view category details page;
 
 |System|
 :Display a confirmation prompt;
@@ -29,23 +29,23 @@ else(no)
 endif
 
 |System|
-:Check the role exists;
-if(Exist role?) then(yes)
-    :Check the role is disabled;
-    if(Disabled role?) then(yes)
-        :Check the role is not assigned to any users;
-    else(no)
+:Check the category exists;
+if(Exist category?) then(yes)
+    :Check category status;
+    if(Active?) then(yes)
         :Display error message;
-    endif
-    stop
-            note right
-            Go to UC12.1
+        stop
+    else(no)
+        :Update the category as removed in the database;
+        :Display success message;
+        stop
+        note right
+            Go to UC17.1
         end note
+    endif
 else(no)
     :Display error message;
     stop
 endif
-
-
 
 @enduml

@@ -24,13 +24,14 @@ repeat while(Is valid?) is (no) not (yes)
 
 if(Is exist?) then (yes)
     :Update the shipping address in the database;
+    stop
+    note left
+        Go to UC5.1
+    end note
 else(no)
     :Show error message;
+    stop
 endif
 
-stop
-note left
-    Go to UC5.1
-end note
 
 @enduml
