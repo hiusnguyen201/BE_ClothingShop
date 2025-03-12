@@ -31,7 +31,7 @@ async function authorized(req, res, next) {
 
 async function checkPermission(req, res, next) {
   if (!req?.user) {
-    next(new UnauthorizedException('User not logged in'));
+    return next(new UnauthorizedException('User not logged in'));
   }
 
   // Convert to dynamic path

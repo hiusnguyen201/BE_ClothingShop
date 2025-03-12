@@ -4,7 +4,7 @@ import { UserConstant } from '#app/v2/users/UserConstant';
 import SoftDelete from '#core/plugins/soft-delete.plugin';
 const { Schema } = mongoose;
 
-const USER_MODEL = 'users';
+export const USER_MODEL = 'users';
 
 const UserSchema = new Schema(
   {
@@ -20,6 +20,7 @@ const UserSchema = new Schema(
       type: String,
       required: false,
       length: 300,
+      default: null,
     },
     name: {
       type: String,
@@ -29,7 +30,7 @@ const UserSchema = new Schema(
     },
     phone: {
       type: String,
-      required: false,
+      required: true,
       length: 15,
     },
     birthday: {
@@ -59,6 +60,11 @@ const UserSchema = new Schema(
       type: Boolean,
       required: false,
       default: false,
+    },
+    verifiedAt: {
+      type: Date,
+      required: false,
+      default: null,
     },
     googleId: {
       type: String,

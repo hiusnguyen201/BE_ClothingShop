@@ -22,7 +22,7 @@ class UserController {
 
     const createdUser = await userService.createUser(adapter);
 
-    return ApiResponse.statusCode(HttpStatus.CREATED).success(createdUser);
+    return ApiResponse.success(createdUser);
   };
 
   getUserList = async (req) => {
@@ -37,7 +37,7 @@ class UserController {
 
     const data = await userService.getUserList(adapter);
 
-    return ApiResponse.statusCode(HttpStatus.OK).success(data);
+    return ApiResponse.success(data);
   };
 
   getUserById = async (req) => {
@@ -47,7 +47,7 @@ class UserController {
 
     const user = await userService.getUserById(adapter);
 
-    return ApiResponse.statusCode(HttpStatus.OK).success(user);
+    return ApiResponse.success(user);
   };
 
   updateUserInfoById = async (req) => {
@@ -62,7 +62,7 @@ class UserController {
 
     const updatedUser = await userService.updateUserInfoById(adapter);
 
-    return ApiResponse.statusCode(HttpStatus.OK).success(updatedUser);
+    return ApiResponse.success(updatedUser);
   };
 
   updateUserAvatarById = async (req) => {
@@ -73,7 +73,7 @@ class UserController {
 
     const updatedUser = await userService.updateUserAvatarById(adapter);
 
-    return ApiResponse.statusCode(HttpStatus.OK).success(updatedUser);
+    return ApiResponse.success(updatedUser);
   };
 
   removeUserById = async (req) => {
@@ -83,7 +83,7 @@ class UserController {
 
     const removedUser = await userService.removeUserById(adapter);
 
-    return ApiResponse.statusCode(HttpStatus.OK).success(removedUser);
+    return ApiResponse.success(removedUser);
   };
 
   checkExistEmail = async (req) => {
@@ -93,7 +93,7 @@ class UserController {
 
     const isExistEmail = await userService.checkExistUser(adapter);
 
-    return ApiResponse.statusCode(HttpStatus.OK).success(isExistEmail);
+    return ApiResponse.success(isExistEmail);
   };
 }
 

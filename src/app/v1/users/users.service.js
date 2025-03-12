@@ -2,17 +2,22 @@ import { isValidObjectId } from 'mongoose';
 import { UserModel } from '#models/user.model';
 import { removeImageByPublicIdService, uploadImageBufferService } from '#src/modules/cloudinary/CloudinaryService';
 import { REGEX_PATTERNS } from '#core/constant';
-import { genSalt, hashSync } from 'bcrypt';
+import { genSalt, genSaltSync, hashSync } from 'bcrypt';
 
-const SELECTED_FIELDS = '_id avatar name email gender createdAt updatedAt';
+const SELECTED_FIELDS = '_id avatar name email gender birthday isVerified verifiedAt createdAt updatedAt';
 
 /**
- * Create user
+ * Create user instance
  * @param {*} data
  * @returns
  */
 export async function createUserService(data) {
-  const user = new UserModel(data);
+  const salt = genSaltSync();
+  data.password = hashSync(data.password, salt);
+  return new UserModel({ ...data, isVerified: false, verifiedAt: null });
+}
+
+export async function saveUserService(user) {
   return user.save();
 }
 
@@ -22,15 +27,18 @@ export async function createUserService(data) {
  * @returns
  */
 export async function getOrCreateUserWithTransaction(data, session) {
-  const existUser = await UserModel.findOne({ email: data.email }).lean();
+  const user = await UserModel.findOne({ email: data.email }).lean();
 
-  if (existUser) {
-    return existUser;
+  if (user) {
+    return user;
   }
 
   const salt = await genSalt();
   data.password = hashSync(data.password, salt);
-  return UserModel.create(data, { session });
+  const [created] = await UserModel.insertMany([data], {
+    session,
+  });
+  return created;
 }
 
 /**
@@ -40,7 +48,7 @@ export async function getOrCreateUserWithTransaction(data, session) {
  * @returns
  */
 export async function getAllUsersService({ filters, offset = 0, limit = 10, selectFields = SELECTED_FIELDS }) {
-  return UserModel.find(filters).skip(offset).limit(limit).select(selectFields).sort({ createdAt: -1 });
+  return UserModel.find(filters).skip(offset).limit(limit).select(selectFields).sort({ createdAt: -1 }).lean();
 }
 
 /**
@@ -70,7 +78,7 @@ export async function getUserByIdService(id, selectFields = SELECTED_FIELDS) {
     return null;
   }
 
-  return UserModel.findOne(filter).select(selectFields);
+  return UserModel.findOne(filter).select(selectFields).lean();
 }
 
 /**
@@ -79,7 +87,7 @@ export async function getUserByIdService(id, selectFields = SELECTED_FIELDS) {
  * @returns
  */
 export async function removeUserByIdService(id) {
-  return UserModel.findByIdAndSoftDelete(id).select(SELECTED_FIELDS);
+  return UserModel.findByIdAndSoftDelete(id).select(SELECTED_FIELDS).lean();
 }
 
 /**
@@ -96,7 +104,7 @@ export async function checkExistEmailService(email, skipId) {
     },
     '_id',
     { withDeleted: true },
-  );
+  ).lean();
 
   return !!user;
 }
@@ -113,7 +121,9 @@ export async function updateUserVerifiedByIdService(id) {
       isVerified: true,
     },
     { new: true },
-  ).select(SELECTED_FIELDS);
+  )
+    .select(SELECTED_FIELDS)
+    .lean();
 }
 
 /**
@@ -132,7 +142,9 @@ export async function changePasswordByIdService(id, password) {
       resetPasswordExpiresAt: null,
     },
     { new: true },
-  ).select(SELECTED_FIELDS);
+  )
+    .select(SELECTED_FIELDS)
+    .lean();
 }
 
 /**
@@ -153,7 +165,9 @@ export async function updateUserAvatarByIdService(id, file, currentAvatar) {
 
   return UserModel.findByIdAndUpdate(id, {
     avatar: result.public_id,
-  }).select(SELECTED_FIELDS);
+  })
+    .select(SELECTED_FIELDS)
+    .lean();
 }
 
 /**
@@ -164,11 +178,14 @@ export async function updateUserAvatarByIdService(id, file, currentAvatar) {
 export async function updateUserInfoByIdService(id, data) {
   return UserModel.findByIdAndUpdate(id, data, {
     new: true,
-  }).select(SELECTED_FIELDS);
+  })
+    .select(SELECTED_FIELDS)
+    .lean();
 }
 
 export async function checkUserHasPermissionByMethodAndEndpointService(id, { method, endpoint }) {
   const user = await UserModel.findById(id)
+    .lean()
     .select('role')
     .populate({
       path: 'role',
@@ -178,6 +195,7 @@ export async function checkUserHasPermissionByMethodAndEndpointService(id, { met
         match: {
           method,
           endpoint,
+          isActive: true,
         },
       },
     });

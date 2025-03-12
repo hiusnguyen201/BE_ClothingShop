@@ -2,26 +2,21 @@ import HttpStatus from 'http-status-codes';
 
 export class ApiResponse {
   constructor(code, message, data) {
-    this.statusCode = code;
+    this.statusCode = code || HttpStatus.OK;
     this.message = message;
-    this.data = data;
-    this.timestamp = new Date();
+    this.timestamp = Date.now();
+    this.data = data || null;
   }
 
   static success(data, message) {
-    const resultCode = this.code || HttpStatus.OK;
-    const resultMessage = message || 'Success';
+    const resultCode = HttpStatus.OK;
+    const resultMessage = message || HttpStatus.getStatusText(HttpStatus.OK);
     return new ApiResponse(resultCode, resultMessage, data);
   }
 
-  static error(message, data) {
-    const resultCode = this.code || HttpStatus.INTERNAL_SERVER_ERROR;
+  static error(code, message, data) {
+    const resultCode = code || HttpStatus.INTERNAL_SERVER_ERROR;
     const resultMessage = message || HttpStatus.getStatusText(resultCode);
     return new ApiResponse(resultCode, resultMessage, data);
-  }
-
-  static statusCode(code) {
-    this.code = code;
-    return this;
   }
 }

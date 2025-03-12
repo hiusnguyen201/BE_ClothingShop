@@ -15,7 +15,7 @@ import routerV2 from '#src/routers/v2/index';
 import { handleError, notFound } from '#src/middlewares/error.middleware';
 import { limiter } from '#src/middlewares/rate-limit.middleware';
 import { enhanceRouter } from '#src/utils/async-handler';
-import Database from '#src/modules/mongodb/init.database';
+import Database from '#src/modules/database/init.database';
 
 // Connect to Database
 Database.getInstance({
@@ -51,12 +51,11 @@ app.use('/api-docs', (req, res) => res.redirect(process.env.POSTMAN_URL_DOCS));
 app.use('/api/v1', enhanceRouter(routerV1));
 
 // Api version 2
-app.use('/api/v2', enhanceRouter(routerV2));
+// app.use('/api/v2', enhanceRouter(routerV2));
 
 // Catch 404
 app.use(notFound);
 
-// Handler Error
 app.use(handleError);
 
 export default app;

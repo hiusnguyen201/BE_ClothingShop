@@ -8,7 +8,9 @@ const CategorySchema = new Schema(
   {
     image: {
       type: String,
+      required: false,
       length: 300,
+      default: null,
     },
     name: {
       type: String,
@@ -23,10 +25,12 @@ const CategorySchema = new Schema(
     },
     isHide: {
       type: Boolean,
+      required: false,
       default: true,
     },
     level: {
       type: Number,
+      required: false,
       default: 1,
     },
 

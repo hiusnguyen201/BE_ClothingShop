@@ -16,7 +16,7 @@ export async function createVoucherService(data) {
  * @returns
  */
 export async function getAllVouchersService({ filters, offset = 0, limit = 10 }) {
-  return VoucherModel.find(filters).skip(offset).limit(limit).sort({ createdAt: -1 });
+  return VoucherModel.find(filters).skip(offset).limit(limit).sort({ createdAt: -1 }).lean();
 }
 
 /**
@@ -43,7 +43,7 @@ export async function getVoucherByIdService(id) {
     filter.code = id;
   }
 
-  return await VoucherModel.findOne(filter);
+  return await VoucherModel.findOne(filter).lean();
 }
 
 /**
@@ -55,7 +55,7 @@ export async function getVoucherByIdService(id) {
 export async function updateVoucherByIdService(id, data) {
   return VoucherModel.findByIdAndUpdate(id, data, {
     new: true,
-  });
+  }).lean();
 }
 
 /**
@@ -64,7 +64,7 @@ export async function updateVoucherByIdService(id, data) {
  * @returns
  */
 export async function removeVoucherByIdService(id) {
-  return VoucherModel.findByIdAndSoftDelete(id);
+  return VoucherModel.findByIdAndSoftDelete(id).lean();
 }
 
 /**
@@ -94,5 +94,5 @@ export async function getVoucherByCodeService(code) {
   if (!code) return null;
   const filter = { code };
 
-  return await VoucherModel.findOne(filter);
+  return await VoucherModel.findOne(filter).lean();
 }

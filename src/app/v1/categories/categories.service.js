@@ -5,12 +5,21 @@ import { REGEX_PATTERNS } from '#core/constant';
 import { makeSlug } from '#utils/string.util';
 
 /**
- * Create category
+ * Create category instance
  * @param {*} data
  * @returns
  */
 export async function createCategoryService(data) {
-  return CategoryModel.create(data);
+  return new CategoryModel({ ...data, slug: makeSlug(data.name) });
+}
+
+/**
+ * Save category
+ * @param {*} data
+ * @returns
+ */
+export async function saveCategoryService(categoryModel) {
+  return categoryModel.save();
 }
 
 /**
@@ -19,7 +28,7 @@ export async function createCategoryService(data) {
  * @returns
  */
 export async function getAllCategoriesService({ filters, offset, limit }) {
-  return CategoryModel.find(filters).skip(offset).limit(limit).sort({ createdAt: -1 });
+  return CategoryModel.find(filters).skip(offset).limit(limit).sort({ createdAt: -1 }).lean();
 }
 
 /**
@@ -48,7 +57,7 @@ export async function getCategoryByIdService(id) {
     filter.name = id;
   }
 
-  return CategoryModel.findOne(filter);
+  return CategoryModel.findOne(filter).lean();
 }
 
 /**
@@ -60,7 +69,7 @@ export async function getCategoryByIdService(id) {
 export async function updateCategoryInfoByIdService(id, data) {
   return CategoryModel.findByIdAndUpdate(id, data, {
     new: true,
-  });
+  }).lean();
 }
 
 /**
@@ -85,7 +94,7 @@ export async function updateCategoryImageByIdService(id, file, currentImage) {
       image: result.public_id,
     },
     { new: true },
-  );
+  ).lean();
 }
 
 /**
@@ -94,7 +103,7 @@ export async function updateCategoryImageByIdService(id, file, currentImage) {
  * @returns
  */
 export async function removeCategoryByIdService(id) {
-  return CategoryModel.findByIdAndSoftDelete(id);
+  return CategoryModel.findByIdAndSoftDelete(id).lean();
 }
 
 /**
@@ -106,6 +115,7 @@ export async function removeCategoryByIdService(id) {
 export async function checkExistCategoryNameService(name, skipId) {
   const result = await CategoryModel.findOne(
     {
+      _id: { $ne: skipId },
       $or: [
         {
           name,
@@ -114,11 +124,10 @@ export async function checkExistCategoryNameService(name, skipId) {
           slug: makeSlug(name),
         },
       ],
-      id: { $ne: skipId },
     },
     '_id',
     { withDeleted: true },
-  );
+  ).lean();
   return !!result;
 }
 
@@ -134,7 +143,7 @@ export async function showCategoryService(id) {
       isHide: false,
     },
     { new: true },
-  );
+  ).lean();
 }
 
 /**
@@ -149,5 +158,5 @@ export async function hideCategoryService(id) {
       isHide: true,
     },
     { new: true },
-  );
+  ).lean();
 }

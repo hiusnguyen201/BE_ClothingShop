@@ -11,6 +11,9 @@ import {
   countAllVouchersService,
 } from '#src/app/v1/vouchers/vouchers.service';
 import { calculatePagination } from '#utils/pagination.util';
+import { ApiResponse } from '#src/core/api/ApiResponse';
+import { Dto } from '#src/core/dto/Dto';
+import { VoucherDto } from '#src/app/v1/vouchers/dtos/voucher.dto';
 
 export const createVoucherController = async (req) => {
   const { code } = req.body;
@@ -21,13 +24,8 @@ export const createVoucherController = async (req) => {
 
   const newVoucher = await createVoucherService(req.body);
 
-  const formatterVoucher = await getVoucherByIdService(newVoucher._id);
-
-  return {
-    statusCode: HttpStatus.CREATED,
-    message: 'Create voucher successfully',
-    data: formatterVoucher,
-  };
+  const voucherDto = Dto.new(VoucherDto, newVoucher);
+  return ApiResponse.success(voucherDto, 'Create voucher successfully');
 };
 
 export const getAllVouchersController = async (req) => {
@@ -46,28 +44,25 @@ export const getAllVouchersController = async (req) => {
     limit: metaData.limit,
   });
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Get all vouchers successfully',
-    data: {
+  const vouchersDto = Dto.newList(VoucherDto, vouchers);
+  return ApiResponse.success(
+    {
       meta: metaData,
-      list: vouchers,
+      list: vouchersDto,
     },
-  };
+    'Get all vouchers successfully',
+  );
 };
 
 export const getVoucherByIdController = async (req) => {
   const { id } = req.params;
-  const existVoucher = await getVoucherByIdService(id);
-  if (!existVoucher) {
+  const voucher = await getVoucherByIdService(id);
+  if (!voucher) {
     throw new ConflictException('Voucher code already exist');
   }
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Get one voucher successfully',
-    data: existVoucher,
-  };
+  const voucherDto = Dto.new(VoucherDto, voucher);
+  return ApiResponse.success(voucherDto, 'Get one voucher successfully');
 };
 
 export const updateVoucherByIdController = async (req) => {
@@ -83,11 +78,8 @@ export const updateVoucherByIdController = async (req) => {
   }
   const updatedVoucher = await updateVoucherByIdService(id, req.body);
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Update voucher successfully',
-    data: updatedVoucher,
-  };
+  const voucherDto = Dto.new(VoucherDto, updatedVoucher);
+  return ApiResponse.success(voucherDto, 'Update voucher successfully');
 };
 
 export const removeVoucherByIdController = async (req) => {
@@ -99,20 +91,13 @@ export const removeVoucherByIdController = async (req) => {
 
   const removeVoucher = await removeVoucherByIdService(id);
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Remove voucher successfully',
-    data: removeVoucher,
-  };
+  const voucherDto = Dto.new(VoucherDto, removeVoucher);
+  return ApiResponse.success(voucherDto, 'Remove voucher successfully');
 };
 
 export const isExistVoucherCodeController = async (req) => {
   const { code } = req.body;
   const isExistCode = await checkExistVoucherCodeService(code);
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: isExistCode ? 'Voucher code exists' : 'Voucher code does not exist',
-    data: isExistCode,
-  };
+  return ApiResponse.success(isExistCode, isExistCode ? 'Voucher code exists' : 'Voucher code does not exist');
 };

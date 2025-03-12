@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const connectToMongoDb = (options) => {
+export const connectToMongoDb = (options) => {
   if (options?.logging) {
     mongoose.set('debug', true);
     mongoose.set('debug', { color: true });
@@ -16,8 +16,4 @@ const connectToMongoDb = (options) => {
     });
 
   return mongoose.connection;
-};
-
-export const getDatabaseStrategies = {
-  mongodb: connectToMongoDb,
 };

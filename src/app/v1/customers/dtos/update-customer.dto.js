@@ -10,5 +10,5 @@ export const updateCustomersDto = Joi.object({
   email: Joi.string().email(),
   birthday: Joi.date().iso(),
   gender: Joi.string().valid(...Object.values(UserConstant.GENDER)),
-  phone: Joi.phoneNumber('+84').required(),
+  phone: Joi.phoneNumber('VN').required(),
 });

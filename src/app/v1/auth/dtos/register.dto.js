@@ -10,6 +10,6 @@ export const registerDto = Joi.object({
   password: Joi.string().required().min(3).max(30),
   confirmPassword: Joi.string().required().valid(Joi.ref('password')),
   gender: Joi.string().valid(...Object.values(UserConstant.GENDER)),
-  phone: Joi.phoneNumber('+84').required(),
+  phone: Joi.phoneNumber('VN').required(),
   birthday: Joi.date(),
 });

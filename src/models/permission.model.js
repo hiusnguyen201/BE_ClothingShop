@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import { ALLOW_METHODS } from '#core/constant';
 const { Schema } = mongoose;
 
-const PERMISSION_MODEL = 'permissions';
+export const PERMISSION_MODEL = 'permissions';
 
 export const PermissionSchema = new Schema(
   {
@@ -21,6 +21,7 @@ export const PermissionSchema = new Schema(
     },
     description: {
       type: String,
+      required: false,
       length: 255,
     },
     module: {
@@ -41,6 +42,7 @@ export const PermissionSchema = new Schema(
     },
     isActive: {
       type: Boolean,
+      required: false,
       default: false,
     },
 

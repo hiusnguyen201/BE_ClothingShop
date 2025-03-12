@@ -11,6 +11,9 @@ import {
 } from '#src/app/v1/permissions/permissions.service';
 import { ConflictException, NotFoundException, PreconditionFailedException } from '#core/exception/http-exception';
 import { calculatePagination } from '#utils/pagination.util';
+import { ApiResponse } from '#src/core/api/ApiResponse';
+import { Dto } from '#src/core/dto/Dto';
+import { PermissionDto } from '#src/app/v1/permissions/dtos/permission.dto';
 
 export const getAllPermissionsController = async (req) => {
   let { keyword = '', method, limit = 10, page = 1, isActive } = req.query;
@@ -34,11 +37,8 @@ export const getAllPermissionsController = async (req) => {
     limit: metaData.limit,
   });
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Get all permissions successfully',
-    data: { meta: metaData, list: permissions },
-  };
+  const permissionDto = Dto.newList(PermissionDto, permissions);
+  return ApiResponse.success({ meta: metaData, list: permissionDto }, 'Get all permissions successfully');
 };
 
 export const getPermissionByIdController = async (req) => {
@@ -48,11 +48,8 @@ export const getPermissionByIdController = async (req) => {
     throw new NotFoundException('Permission not found');
   }
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Get one permission successfully',
-    data: permission,
-  };
+  const permissionDto = Dto.new(PermissionDto, permission);
+  return ApiResponse.success(permissionDto, 'Get one permission successfully');
 };
 
 export const updatePermissionByIdController = async (req) => {
@@ -72,11 +69,8 @@ export const updatePermissionByIdController = async (req) => {
 
   const updatedPermission = await updatePermissionInfoByIdService(id, req.body);
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Update permission successfully',
-    data: updatedPermission,
-  };
+  const permissionDto = Dto.new(PermissionDto, updatedPermission);
+  return ApiResponse.success(permissionDto, 'Update permission successfully');
 };
 
 export const removePermissionByIdController = async (req) => {
@@ -91,22 +85,19 @@ export const removePermissionByIdController = async (req) => {
   }
 
   const removedPermission = await removePermissionByIdService(id);
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Remove permission successfully',
-    data: removedPermission,
-  };
+
+  const permissionDto = Dto.new(PermissionDto, removedPermission);
+  return ApiResponse.success(permissionDto, 'Remove permission successfully');
 };
 
 export const isExistPermissionNameController = async (req) => {
   const { name } = req.body;
   const existPermissionName = await checkExistPermissionNameService(name);
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: existPermissionName ? 'Permission name exists' : 'Permission name does not exist',
-    data: existPermissionName,
-  };
+  return ApiResponse.success(
+    existPermissionName,
+    existPermissionName ? 'Permission name exists' : 'Permission name does not exist',
+  );
 };
 
 export const activatePermissionByIdController = async (req) => {
@@ -118,10 +109,7 @@ export const activatePermissionByIdController = async (req) => {
 
   await activatePermissionByIdService(id);
 
-  return {
-    statusCode: HttpStatus.NO_CONTENT,
-    message: 'Activate permission successfully',
-  };
+  return ApiResponse.success(true, 'Activate permission successfully');
 };
 
 export const deactivatePermissionByIdController = async (req) => {
@@ -133,8 +121,5 @@ export const deactivatePermissionByIdController = async (req) => {
 
   await deactivatePermissionByIdService(id);
 
-  return {
-    statusCode: HttpStatus.NO_CONTENT,
-    message: 'Deactivate permission successfully',
-  };
+  return ApiResponse.success(true, 'Deactivate permission successfully');
 };

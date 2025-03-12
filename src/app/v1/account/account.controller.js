@@ -1,8 +1,14 @@
+import { Dto } from '#src/core/dto/Dto';
+import { ApiResponse } from '#src/core/api/ApiResponse';
 import { NotFoundException } from '#core/exception/http-exception';
-import HttpStatus from 'http-status-codes';
+import {
+  addVoucherToCustomerService,
+  checkClaimedVoucherService,
+  countAllVouchersInCustomerService,
+  getAllVouchersInCustomerService,
+} from '#src/app/v1/customers/customers.service';
 import { getVoucherByCodeService } from '#src/app/v1/vouchers/vouchers.service';
-import { getUserByIdService } from '#src/app/v1/users/users.service';
-import { addVoucherToCustomerService, getAllVouchersByCustomerService } from '#src/app/v1/customers/customers.service';
+import { VoucherDto } from '#src/app/v1/vouchers/dtos/voucher.dto';
 
 export const claimVoucherByCodeController = async (req) => {
   const { voucherCode } = req.body;
@@ -13,28 +19,33 @@ export const claimVoucherByCodeController = async (req) => {
     throw new NotFoundException('Voucher not found');
   }
 
-  const user = await getUserByIdService(userId, 'vouchers');
-
-  if (user.vouchers.includes(voucher._id)) {
+  const isClaimed = await checkClaimedVoucherService(userId, 'vouchers');
+  if (isClaimed) {
     throw new ConflictException('Voucher already claim');
   }
 
   await addVoucherToCustomerService(userId, voucher._id);
 
-  return {
-    statusCode: HttpStatus.NO_CONTENT,
-    message: 'Claim voucher by code successfully',
-  };
+  return ApiResponse.success(true, 'Claim voucher by code successfully');
 };
 
 export const getAllVoucherFromCustomerController = async (req) => {
   const userId = req.user._id;
 
-  const data = await getAllVouchersByCustomerService(userId, req.query);
+  const totalCount = await countAllVouchersInCustomerService(userId);
+  const metaData = calculatePagination(page, limit, totalCount);
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Get customer successfully',
-    data,
-  };
+  const vouchers = await getAllVouchersInCustomerService(userId, {
+    offset: metaData.offset,
+    limit: metaData.limit,
+  });
+
+  const vouchersDto = Dto.newList(VoucherDto, vouchers);
+  return ApiResponse.success(
+    {
+      meta: metaData,
+      list: vouchersDto,
+    },
+    'Get all vouchers successfully',
+  );
 };

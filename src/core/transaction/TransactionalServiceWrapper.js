@@ -9,8 +9,10 @@ export class TransactionalServiceWrapper {
       await session.commitTransaction();
       return result;
     } catch (err) {
-      await session.abortTransaction();
-      throw err;
+      if (session.inTransaction()) {
+        await session.abortTransaction();
+        throw err;
+      }
     } finally {
       session.endSession();
     }

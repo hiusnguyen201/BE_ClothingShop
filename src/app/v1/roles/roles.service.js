@@ -1,6 +1,5 @@
 import { isValidObjectId } from 'mongoose';
 import { RoleModel } from '#src/models/role.model';
-import { removeImageByPublicIdService, uploadImageBufferService } from '#src/modules/cloudinary/CloudinaryService';
 import { getPermissionByIdService } from '#src/app/v1/permissions/permissions.service';
 import { makeSlug } from '#utils/string.util';
 import { REGEX_PATTERNS } from '#core/constant';
@@ -20,13 +19,16 @@ export async function createRoleService(data) {
  * @returns
  */
 export async function getOrCreateRoleServiceWithTransaction(data, session) {
-  const existRole = await RoleModel.findOne({ name: data.name }).lean();
+  const role = await RoleModel.findOne({ name: data.name }).lean();
 
-  if (existRole) {
-    return existRole;
+  if (role) {
+    return role;
   }
 
-  return RoleModel.create(data, { session });
+  const [created] = await RoleModel.insertMany([{ ...data, slug: makeSlug(data.name) }], {
+    session,
+  });
+  return created;
 }
 
 /**
@@ -35,7 +37,7 @@ export async function getOrCreateRoleServiceWithTransaction(data, session) {
  * @returns
  */
 export async function getAllRolesService({ filters, offset = 0, limit = 10 }) {
-  return RoleModel.find(filters).skip(offset).limit(limit).sort({ createdAt: -1 });
+  return RoleModel.find(filters).skip(offset).limit(limit).sort({ createdAt: -1 }).lean();
 }
 
 /**
@@ -64,7 +66,7 @@ export async function getRoleByIdService(id) {
     filter.name = id;
   }
 
-  return RoleModel.findOne(filter);
+  return RoleModel.findOne(filter).lean();
 }
 
 /**
@@ -73,7 +75,7 @@ export async function getRoleByIdService(id) {
  * @returns
  */
 export async function removeRoleByIdService(id) {
-  return RoleModel.findByIdAndSoftDelete(id);
+  return RoleModel.findByIdAndSoftDelete(id).lean();
 }
 
 /**
@@ -90,7 +92,7 @@ export async function checkExistRoleNameService(name, skipId) {
     },
     '_id',
     { withDeleted: true },
-  );
+  ).lean();
   return !!result;
 }
 
@@ -116,32 +118,7 @@ export async function checkExistRoleByIdService(id) {
 export async function updateRoleInfoByIdService(id, data) {
   return RoleModel.findByIdAndUpdate(id, data, {
     new: true,
-  });
-}
-
-/**
- * Update icon by id
- * @param {*} id
- * @param {*} file
- * @returns
- */
-export async function updateRoleIconByIdService(id, file, currentIcon) {
-  if (currentIcon) {
-    removeImageByPublicIdService(currentIcon);
-  }
-
-  const result = await uploadImageBufferService({
-    file,
-    folderName: 'role-icons',
-  });
-
-  return RoleModel.findByIdAndUpdate(
-    id,
-    {
-      icon: result.public_id,
-    },
-    { new: true },
-  );
+  }).lean();
 }
 
 /**
@@ -163,7 +140,7 @@ export async function updateRolePermissionsByIdService(id, permissions = []) {
       permissions: result.filter(Boolean),
     },
     { new: true },
-  );
+  ).lean();
 }
 
 /**
@@ -178,7 +155,7 @@ export async function activateRoleByIdService(id) {
       isActive: true,
     },
     { new: true },
-  );
+  ).lean();
 }
 
 /**
@@ -193,5 +170,5 @@ export async function deactivateRoleByIdService(id) {
       isActive: false,
     },
     { new: true },
-  );
+  ).lean();
 }

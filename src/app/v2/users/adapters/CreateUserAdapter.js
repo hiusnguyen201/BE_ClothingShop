@@ -13,7 +13,7 @@ export class CreateUserAdapter extends ValidatableAdapter {
     email: Joi.string().required().email(),
     gender: Joi.string().valid(...Object.values(UserConstant.GENDER)),
     roleId: Joi.objectId(),
-    phone: Joi.phoneNumber('+84'),
+    phone: Joi.phoneNumber('VN'),
   });
 
   static new(payload) {

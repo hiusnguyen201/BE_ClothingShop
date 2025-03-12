@@ -1,5 +1,9 @@
-import { getDatabaseStrategies } from '#src/modules/mongodb/strategy.database';
 import moment from 'moment-timezone';
+import { connectToMongoDb } from '#src/modules/database/mongodb.database';
+
+const databaseStrategies = {
+  mongodb: connectToMongoDb,
+};
 
 class Database {
   static instance = null;
@@ -20,7 +24,7 @@ class Database {
   }
 
   connect(options) {
-    const connectStrategy = getDatabaseStrategies[options?.type];
+    const connectStrategy = databaseStrategies[options?.type];
     if (connectStrategy) {
       this.connection = connectStrategy(options);
     } else {

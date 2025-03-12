@@ -9,11 +9,16 @@ import {
   updateUserInfoByIdService,
   removeUserByIdService,
   countAllUsersService,
+  saveUserService,
 } from '#src/app/v1/users/users.service';
 import { UserConstant } from '#app/v2/users/UserConstant';
 import { randomStr } from '#utils/string.util';
 import { sendPasswordService } from '#modules/mailer/mailer.service';
 import { calculatePagination } from '#utils/pagination.util';
+import { ApiResponse } from '#src/core/api/ApiResponse';
+import { Dto } from '#src/core/dto/Dto';
+import { CustomerDto } from '#src/app/v1/customers/dtos/customer.dto';
+import { uploadImageBufferService } from '#src/modules/cloudinary/CloudinaryService';
 
 export const createCustomerController = async (req) => {
   const { email } = req.body;
@@ -26,22 +31,19 @@ export const createCustomerController = async (req) => {
   const newCustomer = await createUserService({
     ...req.body,
     password,
-    type: UserConstant.CUSTOMER,
+    type: UserConstant.USER_TYPES.CUSTOMER,
   });
 
-  await sendPasswordService(email, password);
-
   if (req.file) {
-    await updateUserAvatarByIdService(newCustomer._id, req.file);
+    const result = await uploadImageBufferService({ file: req.file, folderName: 'avatars' });
+    newCustomer.avatar = result.url;
   }
 
-  const formatterCustomer = await getUserByIdService(newCustomer._id);
+  await saveUserService(newCustomer);
+  await sendPasswordService(email, password);
 
-  return {
-    statusCode: HttpStatus.CREATED,
-    message: 'Create customer successfully',
-    data: formatterCustomer,
-  };
+  const customersDto = Dto.new(CustomerDto, newCustomer.toObject());
+  return ApiResponse.success(customersDto, 'Create customer successfully');
 };
 
 export const getAllCustomersController = async (req) => {
@@ -49,7 +51,7 @@ export const getAllCustomersController = async (req) => {
 
   const filterOptions = {
     $or: [{ name: { $regex: keyword, $options: 'i' } }, { email: { $regex: keyword, $options: 'i' } }],
-    type: UserConstant.CUSTOMER,
+    type: UserConstant.USER_TYPES.CUSTOMER,
   };
 
   const totalCount = await countAllUsersService(filterOptions);
@@ -61,25 +63,19 @@ export const getAllCustomersController = async (req) => {
     limit: metaData.limit,
   });
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Get all customers successfully',
-    data: { meta: metaData, list: customers },
-  };
+  const customersDto = Dto.newList(CustomerDto, customers);
+  return ApiResponse.success({ meta: metaData, list: customersDto }, 'Get all customers successfully');
 };
 
 export const getCustomerByIdController = async (req) => {
   const { id } = req.params;
-  const existCustomer = await getUserByIdService(id);
-  if (!existCustomer) {
+  const customer = await getUserByIdService(id);
+  if (!customer) {
     throw new NotFoundException('Customer not found');
   }
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Get customer successfully',
-    data: existCustomer,
-  };
+  const customerDto = Dto.new(CustomerDto, customer);
+  return ApiResponse.success(customerDto, 'Get customer successfully');
 };
 
 export const updateCustomerByIdController = async (req) => {
@@ -103,11 +99,8 @@ export const updateCustomerByIdController = async (req) => {
     updatedCustomer = await updateUserAvatarByIdService(id, req.file, updatedCustomer?.avatar);
   }
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Update customer successfully',
-    data: updatedCustomer,
-  };
+  const customerDto = Dto.new(CustomerDto, updatedCustomer);
+  return ApiResponse.success(customerDto, 'Update customer successfully');
 };
 
 export const removeCustomerByIdController = async (req) => {
@@ -119,9 +112,6 @@ export const removeCustomerByIdController = async (req) => {
 
   const removedCustomer = await removeUserByIdService(id);
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Remove customer successfully',
-    data: removedCustomer,
-  };
+  const customerDto = Dto.new(CustomerDto, removedCustomer);
+  return ApiResponse.success(customerDto, 'Remove customer successfully');
 };

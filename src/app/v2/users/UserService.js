@@ -128,7 +128,7 @@ class UserService {
 
   async checkExistUser(adapter) {
     const { userId, email } = adapter;
-    const result = await UserModel.findOne({ email, _id: userId }, '_id', { withDeleted: true });
+    const result = await UserModel.findOne({ email, _id: userId }, '_id', { withDeleted: true }).lean();
     return !!result;
   }
 

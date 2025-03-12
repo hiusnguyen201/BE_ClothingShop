@@ -18,7 +18,7 @@ const validateSchema = (schema, payloadPath = 'body') => {
     const { error, value } = schema.validate(req[payloadPath], options);
     if (error) {
       const message = error.details.map((item) => item.message);
-      return next(new BadRequestException(message));
+      return next(new BadRequestException('Request validation error', message));
     }
 
     req[payloadPath] = value;

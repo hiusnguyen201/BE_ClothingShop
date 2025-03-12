@@ -13,5 +13,5 @@ export const createCustomerDto = Joi.object({
   gender: Joi.string()
     .required()
     .valid(...Object.values(UserConstant.GENDER)),
-  phone: Joi.phoneNumber('+84').required(),
+  phone: Joi.phoneNumber('VN').required(),
 });

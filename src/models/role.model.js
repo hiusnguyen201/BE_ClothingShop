@@ -2,7 +2,7 @@ import SoftDelete from '#core/plugins/soft-delete.plugin';
 import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
-const ROLE_MODEL = 'roles';
+export const ROLE_MODEL = 'roles';
 
 const RoleSchema = new Schema(
   {
@@ -20,10 +20,12 @@ const RoleSchema = new Schema(
     },
     description: {
       type: String,
+      required: false,
       length: 255,
     },
     isActive: {
       type: Boolean,
+      required: false,
       default: false,
     },
 
