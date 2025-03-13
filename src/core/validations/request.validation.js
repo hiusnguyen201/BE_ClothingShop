@@ -13,7 +13,7 @@ const options = {
   stripUnknown: true, //  when true, ignores unknown keys with a function value. Defaults to false.
 };
 
-export const validateSchema = (schema, payloadPath = 'body') => {
+const validateSchema = (schema, payloadPath = 'body') => {
   return (req, res, next) => {
     const { error, value } = schema.validate(req[payloadPath], options);
     if (error) {

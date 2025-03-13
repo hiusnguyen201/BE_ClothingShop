@@ -63,7 +63,7 @@ export const registerController = async (req) => {
       isAuthenticated: false,
       accessToken: null,
       is2FactorRequired: true,
-      user: { id: newCustomer._id, name: newCustomer.name, email: newCustomer.email, type: newCustomer.type },
+      user: { id: newCustomer._id, name: newCustomer.name, email: newCustomer.email },
     },
     'Register successfully',
   );
@@ -90,7 +90,7 @@ export const loginController = async (req) => {
       isAuthenticated: !isNeed2Fa,
       accessToken: isNeed2Fa ? null : generateToken({ _id: user._id }),
       is2FactorRequired: isNeed2Fa,
-      user: { id: user._id, name: user.name, email: user.email, type: user.type },
+      user: { id: user._id, name: user.name, email: user.email },
     },
     'Login successfully',
   );
@@ -141,7 +141,7 @@ export const verifyOtpController = async (req) => {
     {
       isAuthenticated: true,
       accessToken,
-      user: { id: user._id, name: user.name, email: user.email, type: user.type },
+      user: { id: user._id, name: user.name, email: user.email },
     },
     'Verify otp successfully',
   );

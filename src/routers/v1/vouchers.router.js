@@ -17,7 +17,7 @@ import { isAuthorizedAndHasPermission } from '#src/middlewares/jwt-auth.middlewa
 
 router.post('/is-exist-voucher-code', validateBody(isExistVoucherCodeDto), isExistVoucherCodeController);
 
-// router.use([isAuthorizedAndHasPermission]);
+router.use([isAuthorizedAndHasPermission]);
 router
   .get('/get-vouchers', getAllVouchersController)
   .get('/get-voucher-by-id/:id', getVoucherByIdController)

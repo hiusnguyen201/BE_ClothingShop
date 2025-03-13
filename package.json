@@ -30,14 +30,12 @@
   },
   "dependencies": {
     "@faker-js/faker": "^9.3.0",
-    "axios": "^1.8.1",
     "bcrypt": "^5.1.1",
     "chalk": "^5.4.1",
     "cloudinary": "^2.5.1",
     "compression": "^1.7.5",
     "cookie-parser": "~1.4.4",
     "cors": "^2.8.5",
-    "crypto": "^1.0.1",
     "debug": "~2.6.9",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
@@ -52,12 +50,9 @@
     "morgan": "~1.9.1",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.16",
-    "qs": "^6.14.0",
     "sharp": "^0.33.5",
     "slugify": "^1.6.6",
-    "swagger-ui-express": "^4.6.3",
-    "uuid": "^11.0.3",
-    "vietnam-provinces": "^0.0.4"
+    "uuid": "^11.0.3"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.26.0",

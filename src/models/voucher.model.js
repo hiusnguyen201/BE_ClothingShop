@@ -75,8 +75,8 @@ const VoucherSchema = new Schema(
   {
     versionKey: false,
     timestamps: true,
-    id: false,
-    _id: true,
+    id: true,
+    _id: false,
     collection: VOUCHER_MODEL,
   },
 );
