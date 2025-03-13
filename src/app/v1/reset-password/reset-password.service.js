@@ -24,8 +24,8 @@ export async function createResetPasswordService(userId) {
  * @returns
  */
 export async function getResetPasswordByTokenService(token) {
-  return await ResetPassword.findOne({
+  return ResetPassword.findOne({
     token: token,
     expiresAt: { $gte: moment().valueOf() },
-  });
+  }).lean();
 }

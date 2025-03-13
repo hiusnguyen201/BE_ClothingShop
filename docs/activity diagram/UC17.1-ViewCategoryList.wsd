@@ -1,0 +1,31 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC18.1: View customer list
+
+|User|
+start
+note left
+    User is logged in  
+    User must have permission
+end note
+
+|User|
+:Navigate to the "Customers management" section;
+
+|System|
+:Retrieve the list of customers from the database;
+:Check the results;
+
+if(Results available?) then(yes)
+    :Display the list of customers;
+else(no)
+    :Display a message "No results found";
+endif
+
+stop
+
+@enduml

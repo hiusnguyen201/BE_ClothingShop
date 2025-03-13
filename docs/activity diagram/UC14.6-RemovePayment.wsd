@@ -1,0 +1,45 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC14.6: Remove payment
+
+|User|
+start
+note left
+    User is logged in  
+    User must have permission
+    In UC14.4
+end note
+
+
+|User|
+:Click to remove button in 
+view payment details page;
+
+|System|
+:Display a confirmation prompt;
+
+|User|
+if(User clicks "Remove") then(yes)
+else(no)
+    stop
+endif
+
+|System|
+:Check the payment exists;
+if(Exist payment?) then(yes)
+    :Update the payment as removed in the database;
+    :Display success message;
+    stop
+    note right
+        Go to UC14.1
+    end note
+else(no)
+    :Display error message;
+    stop
+endif
+
+@enduml

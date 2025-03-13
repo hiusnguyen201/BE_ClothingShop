@@ -1,0 +1,34 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC17.4: View category details
+
+|User|
+start
+note left
+    User is logged in  
+    User must have permission
+    In UC17.1
+end note
+
+|User|
+:Select a category from the list and 
+clicks to option “View details”;
+
+|System|
+:Redirect the category to the details page;
+:Check the category exists;
+
+if(Category exists?) then(yes)    
+    :Display the details of the selected category;
+    stop
+else(no)
+    :Display error message "Not found";
+    stop
+endif
+
+
+@enduml

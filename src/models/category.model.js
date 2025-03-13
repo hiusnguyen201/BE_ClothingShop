@@ -1,4 +1,4 @@
-import MongooseDelete from 'mongoose-delete';
+import SoftDelete from '#src/core/plugins/soft-delete.plugin';
 import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
@@ -8,7 +8,9 @@ const CategorySchema = new Schema(
   {
     image: {
       type: String,
+      required: false,
       length: 300,
+      default: null,
     },
     name: {
       type: String,
@@ -23,10 +25,12 @@ const CategorySchema = new Schema(
     },
     isHide: {
       type: Boolean,
+      required: false,
       default: true,
     },
     level: {
       type: Number,
+      required: false,
       default: 1,
     },
 
@@ -42,6 +46,7 @@ const CategorySchema = new Schema(
   },
 );
 
-CategorySchema.plugin(MongooseDelete, { deletedAt: true });
+CategorySchema.plugin(SoftDelete);
+
 const CategoryModel = mongoose.model('Category', CategorySchema);
 export { CategoryModel };

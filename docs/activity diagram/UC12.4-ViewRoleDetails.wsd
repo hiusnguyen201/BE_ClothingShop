@@ -24,10 +24,11 @@ clicks to option “View details”;
 
 if(Is exist role?) then(yes)    
     :Display the details of the selected role;
+    stop
 else(no)
-    :Redirect the user to "Not found" page;
+    :Display error message "Not found";
+    stop
 endif
 
-stop
 
 @enduml

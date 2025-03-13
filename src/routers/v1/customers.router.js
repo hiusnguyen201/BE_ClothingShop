@@ -18,22 +18,23 @@ const upload = UploadUtils.config({
   allowedMimeTypes: ALLOW_IMAGE_MIME_TYPES,
 });
 
-router.use([isAuthorizedAndHasPermission]);
 router
-  .get('/get-customers', getAllCustomersController)
-  .get('/get-customer-by-id/:id', getCustomerByIdController)
+  .get('/get-customers', isAuthorizedAndHasPermission, getAllCustomersController)
+  .get('/get-customer-by-id/:id', isAuthorizedAndHasPermission, getCustomerByIdController)
   .post(
     '/create-customer',
+    isAuthorizedAndHasPermission,
     validateFile(upload.single('avatar')),
     validateBody(createCustomerDto),
     createCustomerController,
   )
   .patch(
     '/update-customer-by-id/:id',
+    isAuthorizedAndHasPermission,
     validateFile(upload.single('avatar')),
     validateBody(updateCustomersDto),
     updateCustomerByIdController,
   )
-  .delete('/remove-customer-by-id/:id', removeCustomerByIdController);
+  .delete('/remove-customer-by-id/:id', isAuthorizedAndHasPermission, removeCustomerByIdController);
 
 export default router;

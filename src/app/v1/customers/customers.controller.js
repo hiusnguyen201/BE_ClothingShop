@@ -1,4 +1,3 @@
-import HttpStatus from 'http-status-codes';
 import { NotFoundException, ConflictException } from '#core/exception/http-exception';
 import {
   updateUserAvatarByIdService,
@@ -9,11 +8,16 @@ import {
   updateUserInfoByIdService,
   removeUserByIdService,
   countAllUsersService,
+  saveUserService,
 } from '#src/app/v1/users/users.service';
-import { UserConstant } from '#app/v2/users/UserConstant';
+import { USER_TYPE } from '#src/app/v1/users/users.constant';
 import { randomStr } from '#utils/string.util';
 import { sendPasswordService } from '#modules/mailer/mailer.service';
 import { calculatePagination } from '#utils/pagination.util';
+import { ApiResponse } from '#src/core/api/ApiResponse';
+import { Dto } from '#src/core/dto/Dto';
+import { CustomerDto } from '#src/app/v1/customers/dtos/customer.dto';
+import { uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
 
 export const createCustomerController = async (req) => {
   const { email } = req.body;
@@ -23,25 +27,22 @@ export const createCustomerController = async (req) => {
   }
 
   const password = randomStr(32);
-  const newCustomer = await createUserService({
+  const customer = await createUserService({
     ...req.body,
     password,
-    type: UserConstant.CUSTOMER,
+    type: USER_TYPE.CUSTOMER,
   });
 
-  await sendPasswordService(email, password);
-
   if (req.file) {
-    await updateUserAvatarByIdService(newCustomer._id, req.file);
+    const result = await uploadImageBufferService({ buffer: req.file.buffer, folderName: 'avatars' });
+    customer.avatar = result.url;
   }
 
-  const formatterCustomer = await getUserByIdService(newCustomer._id);
+  await saveUserService(customer);
+  sendPasswordService(email, password);
 
-  return {
-    statusCode: HttpStatus.CREATED,
-    message: 'Create customer successfully',
-    data: formatterCustomer,
-  };
+  const customersDto = Dto.new(CustomerDto, customer);
+  return ApiResponse.success(customersDto, 'Create customer successfully');
 };
 
 export const getAllCustomersController = async (req) => {
@@ -49,7 +50,7 @@ export const getAllCustomersController = async (req) => {
 
   const filterOptions = {
     $or: [{ name: { $regex: keyword, $options: 'i' } }, { email: { $regex: keyword, $options: 'i' } }],
-    type: UserConstant.CUSTOMER,
+    type: USER_TYPE.CUSTOMER,
   };
 
   const totalCount = await countAllUsersService(filterOptions);
@@ -61,31 +62,25 @@ export const getAllCustomersController = async (req) => {
     limit: metaData.limit,
   });
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Get all customers successfully',
-    data: { meta: metaData, list: customers },
-  };
+  const customersDto = Dto.newList(CustomerDto, customers);
+  return ApiResponse.success({ meta: metaData, list: customersDto }, 'Get all customers successfully');
 };
 
 export const getCustomerByIdController = async (req) => {
   const { id } = req.params;
-  const existCustomer = await getUserByIdService(id);
-  if (!existCustomer) {
+  const customer = await getUserByIdService(id);
+  if (!customer) {
     throw new NotFoundException('Customer not found');
   }
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Get customer successfully',
-    data: existCustomer,
-  };
+  const customerDto = Dto.new(CustomerDto, customer);
+  return ApiResponse.success(customerDto, 'Get customer successfully');
 };
 
 export const updateCustomerByIdController = async (req) => {
   const { id } = req.params;
   const { email } = req.body;
-  const existCustomer = await getUserByIdService(id, 'id');
+  const existCustomer = await getUserByIdService(id);
   if (!existCustomer) {
     throw new NotFoundException('Customer not found');
   }
@@ -103,25 +98,19 @@ export const updateCustomerByIdController = async (req) => {
     updatedCustomer = await updateUserAvatarByIdService(id, req.file, updatedCustomer?.avatar);
   }
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Update customer successfully',
-    data: updatedCustomer,
-  };
+  const customerDto = Dto.new(CustomerDto, updatedCustomer);
+  return ApiResponse.success(customerDto, 'Update customer successfully');
 };
 
 export const removeCustomerByIdController = async (req) => {
   const { id } = req.params;
-  const existCustomer = await getUserByIdService(id, 'id');
+  const existCustomer = await getUserByIdService(id);
   if (!existCustomer) {
     throw new NotFoundException('Customer not found');
   }
 
   const removedCustomer = await removeUserByIdService(id);
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Remove customer successfully',
-    data: removedCustomer,
-  };
+  const customerDto = Dto.new(CustomerDto, removedCustomer);
+  return ApiResponse.success(customerDto, 'Remove customer successfully');
 };

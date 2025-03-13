@@ -8,9 +8,13 @@ Joi.phoneNumber = function (code, overrideMessage) {
       throw new Error(`Phone number with code \"${code}\" is not supported`);
     }
 
-    if (!pattern.test(value)) {
-      return helpers.error('any.invalid', { message: overrideMessage || 'Invalid phone number format' });
+    const isValid = value.match(pattern);
+    if (!isValid) {
+      return helpers.message(
+        overrideMessage || `\"${helpers.state.path[0]}\" invalid phone number format with code ${code}`,
+      );
     }
+
     return value;
   });
 };

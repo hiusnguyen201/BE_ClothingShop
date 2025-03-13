@@ -1,5 +1,9 @@
-import HttpStatus from 'http-status-codes';
-import { NotFoundException, ConflictException, PreconditionFailedException } from '#core/exception/http-exception';
+import {
+  NotFoundException,
+  ConflictException,
+  PreconditionFailedException,
+  BadRequestException,
+} from '#core/exception/http-exception';
 import {
   createCategoryService,
   getAllCategoriesService,
@@ -7,13 +11,17 @@ import {
   updateCategoryInfoByIdService,
   removeCategoryByIdService,
   checkExistCategoryNameService,
-  updateCategoryImageByIdService,
   showCategoryService,
   hideCategoryService,
   countAllCategoriesService,
+  saveCategoryService,
 } from '#src/app/v1/categories/categories.service';
+import { CategoryDto } from '#src/app/v1/categories/dtos/category.dto';
 import { makeSlug } from '#utils/string.util';
 import { calculatePagination } from '#utils/pagination.util';
+import { ApiResponse } from '#src/core/api/ApiResponse';
+import { Dto } from '#src/core/dto/Dto';
+import { uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
 
 const MAX_LEVEL_CHILDREN = 2;
 
@@ -32,34 +40,31 @@ export const createCategoryController = async (req) => {
     }
 
     if (existParent.isHide) {
-      throw new ConflictException('Parent category is hidden');
+      throw new BadRequestException('Parent category is hidden');
     }
 
-    const newCategoryLevel = existParent.level + 1;
-    if (existParent.level > MAX_LEVEL_CHILDREN) {
-      throw new ConflictException('Parent category is reach limit');
+    const nextCategoryLevel = existParent.level + 1;
+    if (nextCategoryLevel > MAX_LEVEL_CHILDREN) {
+      throw new BadRequestException('Parent category is reach limit');
     }
-    level = newCategoryLevel;
+    level = nextCategoryLevel;
   }
 
-  const newCategory = await createCategoryService({
+  const category = await createCategoryService({
     ...req.body,
     level,
-    slug: makeSlug(name),
   });
 
   // Update Image
   if (req.file) {
-    await updateCategoryImageByIdService(newCategory._id, req.file);
+    const result = await uploadImageBufferService({ buffer: req.file.buffer, folderName: 'categories-image' });
+    category.image = result.url;
   }
 
-  const formatterCategory = await getCategoryByIdService(newCategory._id);
+  await saveCategoryService(category);
 
-  return {
-    statusCode: HttpStatus.CREATED,
-    message: 'Create category successfully',
-    data: formatterCategory,
-  };
+  const categoryDto = Dto.new(CategoryDto, category);
+  return ApiResponse.success(categoryDto, 'Create category successfully');
 };
 
 export const getAllCategoriesController = async (req) => {
@@ -79,28 +84,25 @@ export const getAllCategoriesController = async (req) => {
     limit: metaData.limit,
   });
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Get all categories successfully',
-    data: {
+  const categoriesDto = Dto.newList(CategoryDto, categories);
+  return ApiResponse.success(
+    {
       meta: metaData,
-      list: categories,
+      list: categoriesDto,
     },
-  };
+    'Get all categories successfully',
+  );
 };
 
 export const getCategoryByIdController = async (req) => {
   const { id } = req.params;
-  const existCategory = await getCategoryByIdService(id);
-  if (!existCategory) {
+  const category = await getCategoryByIdService(id);
+  if (!category) {
     throw new NotFoundException('Category not found');
   }
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Get one category successfully',
-    data: existCategory,
-  };
+  const categoryDto = Dto.newList(CategoryDto, category);
+  return ApiResponse.success(categoryDto, 'Get one category successfully');
 };
 
 export const updateCategoryByIdController = async (req) => {
@@ -119,17 +121,15 @@ export const updateCategoryByIdController = async (req) => {
     req.body.slug = makeSlug(name);
   }
 
-  let updatedCategory = await updateCategoryInfoByIdService(id, req.body);
-
   if (req.file) {
-    updatedCategory = await updateCategoryImageByIdService(id, req.file, updatedCategory?.image);
+    const result = await uploadImageBufferService({ buffer: req.file.buffer, folderName: 'categories-image' });
+    req.body.image = result.url;
   }
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Update category successfully',
-    data: updatedCategory,
-  };
+  const updatedCategory = await updateCategoryInfoByIdService(id, req.body);
+
+  const categoryDto = Dto.newList(CategoryDto, updatedCategory);
+  return ApiResponse.success(categoryDto, 'Update category successfully');
 };
 
 export const removeCategoryByIdController = async (req) => {
@@ -145,22 +145,15 @@ export const removeCategoryByIdController = async (req) => {
 
   const removedCategory = await removeCategoryByIdService(id);
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Remove category successfully',
-    data: removedCategory,
-  };
+  const categoryDto = Dto.newList(CategoryDto, removedCategory);
+  return ApiResponse.success(categoryDto, 'Remove category successfully');
 };
 
 export const isExistCategoryNameController = async (req) => {
   const { name } = req.body;
   const isExistName = await checkExistCategoryNameService(name);
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: isExistName ? 'Category name exists' : 'Category name does not exist',
-    data: isExistName,
-  };
+  return ApiResponse.success(isExistName, isExistName ? 'Category name exists' : 'Category name does not exist');
 };
 
 export const showCategoryByIdController = async (req) => {
@@ -172,10 +165,7 @@ export const showCategoryByIdController = async (req) => {
 
   await showCategoryService(id);
 
-  return {
-    statusCode: HttpStatus.NO_CONTENT,
-    message: 'Show category successfully',
-  };
+  return ApiResponse.success(true, 'Show category successfully');
 };
 
 export const hideCategoryByIdController = async (req) => {
@@ -187,8 +177,5 @@ export const hideCategoryByIdController = async (req) => {
 
   await hideCategoryService(id);
 
-  return {
-    statusCode: HttpStatus.NO_CONTENT,
-    message: 'Hide category successfully',
-  };
+  return ApiResponse.success(true, 'Hide category successfully');
 };

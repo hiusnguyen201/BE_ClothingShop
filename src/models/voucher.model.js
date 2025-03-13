@@ -20,6 +20,7 @@ const VoucherSchema = new Schema(
       type: String,
       required: false,
       length: 255,
+      default: null,
     },
     maxUses: {
       type: Number,
@@ -45,6 +46,7 @@ const VoucherSchema = new Schema(
     maxDiscount: {
       type: Number,
       required: false,
+      default: null,
     },
     hasMaxDiscount: {
       type: Boolean,
@@ -80,5 +82,6 @@ const VoucherSchema = new Schema(
 );
 
 VoucherSchema.plugin(SoftDelete);
+
 const VoucherModel = mongoose.model('Voucher', VoucherSchema);
 export { VoucherModel };

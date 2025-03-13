@@ -1,12 +1,11 @@
-import HttpStatus from 'http-status-codes';
 import path from 'path';
 import {
   createUserService,
   getUserByIdService,
   checkExistEmailService,
-  updateUserAvatarByIdService,
   updateUserVerifiedByIdService,
   changePasswordByIdService,
+  saveUserService,
 } from '#app/v1/users/users.service';
 import {
   UnauthorizedException,
@@ -15,7 +14,6 @@ import {
   TooManyRequestException,
 } from '#core/exception/http-exception';
 import { generateToken } from '#utils/jwt.util';
-import { UserConstant } from '#app/v2/users/UserConstant';
 import {
   createUserOtpService,
   getCurrentUserOtpService,
@@ -33,10 +31,13 @@ import {
   getResetPasswordByTokenService,
 } from '#src/app/v1/reset-password/reset-password.service';
 import { compareSync } from 'bcrypt';
-import { generateNumericOTP } from '#src/utils/string.util';
+import { uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
+import { ApiResponse } from '#src/core/api/ApiResponse';
+import { USER_TYPE } from '#src/app/v1/users/users.constant';
 
 export const registerController = async (req) => {
   const { email } = req.body;
+
   const isExistEmail = await checkExistEmailService(email);
   if (isExistEmail) {
     throw new ConflictException('Email already exist');
@@ -44,32 +45,34 @@ export const registerController = async (req) => {
 
   const newCustomer = await createUserService({
     ...req.body,
-    type: UserConstant.USER_TYPES.CUSTOMER,
+    type: USER_TYPE.CUSTOMER,
   });
 
   if (req.file) {
-    return await updateUserAvatarByIdService(newCustomer._id, req.file);
+    const result = await uploadImageBufferService({ buffer: req.file.buffer, folderName: 'avatars' });
+    newCustomer.avatar = result.url;
   }
+
+  await saveUserService(newCustomer);
 
   const userOtp = await createUserOtpService(newCustomer._id);
   sendOtpCodeService(email, userOtp.otp);
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Register successfully',
-    data: {
+  return ApiResponse.success(
+    {
       isAuthenticated: false,
       accessToken: null,
       is2FactorRequired: true,
-      user: { id: newCustomer._id, name: newCustomer.name, email: newCustomer.email },
+      user: { id: newCustomer._id, name: newCustomer.name, email: newCustomer.email, type: newCustomer.type },
     },
-  };
+    'Register successfully',
+  );
 };
 
 export const loginController = async (req) => {
   const { email, password } = req.body;
 
-  const user = await getUserByIdService(email, 'id password name email isVerified type');
+  const user = await getUserByIdService(email);
 
   if (!user) {
     throw new UnauthorizedException('Invalid Credentials');
@@ -80,18 +83,17 @@ export const loginController = async (req) => {
     throw new UnauthorizedException('Invalid Credentials');
   }
 
-  const isNeed2Fa = !user.isVerified; // || user.type === UserConstant.USER_TYPES.USER;
+  const isNeed2Fa = !user.isVerified; // || user.type === USER_TYPE.USER;
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Login successfully',
-    data: {
+  return ApiResponse.success(
+    {
       isAuthenticated: !isNeed2Fa,
       accessToken: isNeed2Fa ? null : generateToken({ _id: user._id }),
       is2FactorRequired: isNeed2Fa,
       user: { id: user._id, name: user.name, email: user.email, type: user.type },
     },
-  };
+    'Login successfully',
+  );
 };
 
 export const sendOtpViaEmailController = async (req) => {
@@ -112,15 +114,12 @@ export const sendOtpViaEmailController = async (req) => {
   const userOtp = await createUserOtpService(user._id);
   await sendOtpCodeService(user.email, userOtp.otp);
 
-  return {
-    statusCode: HttpStatus.NO_CONTENT,
-    message: 'Send otp via email successfully',
-  };
+  return ApiResponse.success(true, 'Send otp via email successfully');
 };
 
 export const verifyOtpController = async (req) => {
   const { email, otp } = req.body;
-  const user = await getUserByIdService(email, 'id email name isVerified type');
+  const user = await getUserByIdService(email);
   if (!user) {
     throw new NotFoundException('User not found');
   }
@@ -138,15 +137,14 @@ export const verifyOtpController = async (req) => {
   await removeUserOtpById(userOtp._id);
 
   const accessToken = generateToken({ id: user._id });
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Verify otp successfully',
-    data: {
+  return ApiResponse.success(
+    {
       isAuthenticated: true,
       accessToken,
-      user: { _id: user._id, name: user.name, email: user.email, type: user.type },
+      user: { id: user._id, name: user.name, email: user.email, type: user.type },
     },
-  };
+    'Verify otp successfully',
+  );
 };
 
 export const forgotPasswordController = async (req) => {
@@ -161,10 +159,7 @@ export const forgotPasswordController = async (req) => {
   const resetURL = path.join(callbackUrl, resetPassword.token);
   await sendResetPasswordRequestService(email, resetURL);
 
-  return {
-    statusCode: HttpStatus.NO_CONTENT,
-    message: 'Required Forgot Password Success',
-  };
+  return ApiResponse.success(true, 'Required Forgot Password Success');
 };
 
 export const resetPasswordController = async (req) => {
@@ -179,8 +174,5 @@ export const resetPasswordController = async (req) => {
 
   await sendResetPasswordSuccessService(updatedUser.email);
 
-  return {
-    statusCode: HttpStatus.NO_CONTENT,
-    message: 'Reset password successfully',
-  };
+  return ApiResponse.success(true, 'Reset password successfully');
 };

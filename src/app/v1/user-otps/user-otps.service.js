@@ -8,13 +8,12 @@ import { generateNumericOTP } from '#utils/string.util';
  * @returns
  */
 export async function createUserOtpService(userId) {
-  const newUserOtp = await UserOtpModel.create({
+  return await UserOtpModel.create({
     otp: generateNumericOTP(),
     expireDate: moment().valueOf() + 60 * 1000 * (+process.env.OTP_EXPIRES || 5),
     resendDate: moment().valueOf() + 60 * 1000 * (+process.env.RESEND_OTP_TIME || 2),
     user: userId,
   });
-  return newUserOtp;
 }
 
 /**
@@ -28,7 +27,7 @@ export async function getUserOtpByOtpAndUserIdService(otp, userId) {
     user: userId,
     otp,
     expireDate: { $gt: moment().valueOf() },
-  });
+  }).lean();
 }
 
 export async function getCurrentUserOtpService(userId) {
@@ -36,5 +35,5 @@ export async function getCurrentUserOtpService(userId) {
 }
 
 export async function removeUserOtpById(id) {
-  return UserOtpModel.findByIdAndDelete(id);
+  return UserOtpModel.findByIdAndDelete(id).lean();
 }

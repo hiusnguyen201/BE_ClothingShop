@@ -7,6 +7,6 @@ export const createCategoryDto = Joi.object({
     .max(120)
     .required()
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
-  parent: Joi.string(),
-  isHide: Joi.boolean(),
+  parent: Joi.objectId(),
+  isHide: Joi.boolean().required(),
 });

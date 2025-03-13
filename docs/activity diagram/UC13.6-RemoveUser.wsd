@@ -1,0 +1,47 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC13.6: Remove user
+
+|User|
+start
+note left
+    User is logged in  
+    User must have permission
+    In UC13.4
+end note
+
+
+|User|
+:Click to remove button in 
+view user details page;
+
+|System|
+:Display a confirmation prompt;
+
+|User|
+if(User clicks "Remove") then(yes)
+else(no)
+    stop
+endif
+
+|System|
+:Check the user exists;
+if(Exist user?) then(yes)
+    :Update the user as removed in the database;
+    :Display success message;
+    stop
+            note right
+            Go to UC13.1
+        end note
+else(no)
+    :Display error message;
+    stop
+endif
+
+
+
+@enduml

@@ -1,16 +1,3 @@
-export const GENDER = {
-  MALE: 'Male',
-  FEMALE: 'Female',
-  OTHER: 'Other',
-};
-
-export const USER_STATUS = {
-  ACTIVE: 'Active',
-  INACTIVE: 'Inactive',
-  BANNED: 'Banned',
-  DELETED: 'Deleted',
-};
-
 export const ALLOW_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD'];
 
 export const ALLOW_IMAGE_MIME_TYPES = [
@@ -33,7 +20,7 @@ export const REGEX_PATTERNS = {
   SLUG: /^[a-z0-9]+(?:[-_][a-z0-9]+)*$/,
   WHITESPACE: /\s+/g,
   PHONE_NUMBER: {
-    '+84': /(84|0[3|5|7|8|9])+([0-9]{8})\b/g,
+    VN: /(84|0[3|5|7|8|9])+([0-9]{8})\b/g,
   },
   BEARER_TOKEN: /^Bearer ((?:\.?(?:[A-Za-z0-9-_]+)){3})$/,
   COMMA_SEPARATED_LIST: /^[a-zA-Z0-9,]+$/,

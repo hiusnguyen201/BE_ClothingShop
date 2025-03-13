@@ -1,6 +1,6 @@
 import Joi from 'joi';
 import { replaceMultiSpacesToSingleSpace } from '#utils/string.util';
-import { UserConstant } from '#src/app/v2/users/UserConstant';
+import { GENDER } from '#src/app/v1/users/users.constant';
 
 export const registerDto = Joi.object({
   name: Joi.string()
@@ -9,7 +9,7 @@ export const registerDto = Joi.object({
   email: Joi.string().required().email(),
   password: Joi.string().required().min(3).max(30),
   confirmPassword: Joi.string().required().valid(Joi.ref('password')),
-  gender: Joi.string().valid(...Object.values(UserConstant.GENDER)),
-  phone: Joi.phoneNumber('+84').required(),
+  gender: Joi.string().valid(...Object.values(GENDER)),
+  phone: Joi.phoneNumber('VN').required(),
   birthday: Joi.date(),
 });

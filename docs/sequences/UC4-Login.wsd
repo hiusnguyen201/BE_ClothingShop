@@ -1,0 +1,83 @@
+@startuml
+actor       User       
+boundary    LoginPage 
+participant RequestValidation
+control     UserController  
+participant UserService
+entity      UserModel     
+database    Database 
+
+activate User
+User -> LoginPage : Access to login page
+activate LoginPage
+
+LoginPage -> User: Display a login form
+User -> LoginPage : Enter email and password
+User -> LoginPage : Submits login form
+
+LoginPage -> RequestValidation: Validates request
+activate RequestValidation
+
+alt Valid data
+    RequestValidation -> UserController : Send body
+    activate UserController
+
+    UserController -> UserService : Get user (email)
+    activate UserService
+
+    UserService -> UserModel: Find user (email)
+    activate UserModel
+
+    UserModel -> Database : Find user (email)
+    activate Database
+
+    alt User found
+        Database -> UserModel: Return user document
+
+        UserModel -> UserService: Return user document
+
+        UserService -> UserController: Return user document
+
+        ' Compare Password
+        UserController -> UserController: Compare password
+        alt Correct password
+            ' Check need 2FA
+            UserController -> UserController: Check need 2FA
+            alt Don't need 2FA
+                UserController -> UserController: Create access token and refresh token
+            end
+
+            UserController -> LoginPage: Response data
+
+            LoginPage -> User: Redirect user based on response data
+        else Incorrect password
+            UserController -> LoginPage: Response error (401)
+
+            LoginPage -> User: Display error message
+        end
+        
+    else User not found
+        Database -> UserModel: Return null
+        deactivate Database
+
+        UserModel -> UserService: Return null
+        deactivate UserModel
+
+        UserService -> UserController: Return null
+        deactivate UserService
+
+        UserController -> LoginPage: Response error (401)
+        deactivate UserController
+
+        LoginPage -> User: Display error message 
+    end
+else Invalid data
+    RequestValidation -> LoginPage : Response error (400)
+    deactivate RequestValidation
+
+    LoginPage -> User: Display detailed error
+end
+
+deactivate LoginPage
+
+@enduml

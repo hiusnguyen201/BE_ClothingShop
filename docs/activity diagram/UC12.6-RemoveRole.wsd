@@ -23,12 +23,10 @@ view role details page;
 :Display a confirmation prompt;
 
 |User|
-split
-    :Click confirm button;
-split again
-    :Click cancel button;
+if(User clicks "Remove") then(yes)
+else(no)
     stop
-end split
+endif
 
 |System|
 :Check the role exists;
@@ -36,19 +34,18 @@ if(Exist role?) then(yes)
     :Check the role is disabled;
     if(Disabled role?) then(yes)
         :Check the role is not assigned to any users;
-        if(Not assigned to any users) then(yes)
-            :Update the role as removed in the database;
-        else(no)
-            :Display error message;
-        endif
     else(no)
         :Display error message;
     endif
+    stop
+            note right
+            Go to UC12.1
+        end note
 else(no)
     :Display error message;
+    stop
 endif
 
-stop
 
 
 @enduml

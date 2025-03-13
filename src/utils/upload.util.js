@@ -47,11 +47,3 @@ export class UploadUtils {
     };
   }
 }
-
-// (req, res, next) => {
-//   upload.single(field)(req, res, (err) => {
-//     console.log(req.file);
-//     req.body[field] = req.file;
-//     next();
-//   });
-// };

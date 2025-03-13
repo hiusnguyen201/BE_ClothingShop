@@ -1,29 +1,35 @@
 import { UserModel } from '#models/user.model';
-import { getUserByIdService } from '#src/app/v1/users/users.service';
-import { calculatePagination } from '#utils/pagination.util';
 
 export async function addVoucherToCustomerService(userId, voucherId) {
-  return UserModel.findByIdAndUpdate(userId, { $push: { vouchers: voucherId } }, { new: true });
+  return UserModel.findByIdAndUpdate(userId, { $push: { vouchers: voucherId } }, { new: true }).lean();
 }
 
-export async function getAllVouchersByCustomerService(id, query) {
-  let { limit = 10, page = 1 } = query;
-  const user = await getUserByIdService(id, 'vouchers');
-  const metaData = calculatePagination(page, limit, user.vouchers.length);
+export async function countAllVouchersInCustomerService(id) {
+  const user = await UserModel.findById(id).select('vouchers').lean();
+  return user.vouchers.length;
+}
 
-  const userVouchers = await UserModel.findById(id)
+export async function checkClaimedVoucherService(userId, voucherId) {
+  return !!UserModel.findOne({
+    _id: userId,
+    vouchers: {
+      $elemMatch: { _id: voucherId },
+    },
+  }).lean();
+}
+
+export async function getAllVouchersInCustomerService(id, { offset, limit }) {
+  const user = await UserModel.findById(id)
     .populate({
       path: 'vouchers',
       options: {
-        skip: metaData.offset,
-        limit: metaData.limit,
+        skip: offset,
+        limit: limit,
         sort: { createdAt: -1 },
       },
     })
-    .select('vouchers');
+    .select('vouchers')
+    .lean();
 
-  return {
-    meta: metaData,
-    list: userVouchers.vouchers,
-  };
+  return user.vouchers;
 }

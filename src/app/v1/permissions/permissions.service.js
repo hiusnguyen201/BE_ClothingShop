@@ -1,5 +1,6 @@
 import { isValidObjectId } from 'mongoose';
 import { PermissionModel } from '#src/models/permission.model';
+import { makeSlug } from '#src/utils/string.util';
 
 /**
  * Create permission
@@ -7,24 +8,32 @@ import { PermissionModel } from '#src/models/permission.model';
  * @returns
  */
 export async function createPermissionService(data) {
-  return PermissionModel.create(data);
+  return await PermissionModel.create(data);
 }
 
 /**
- * Get or create permission
+ * Get or create list permission
  * @param {*} data
  * @returns
  */
-export async function getOrCreatePermissionServiceWithTransaction(data, session) {
-  const existPermission = await PermissionModel.findOne({
-    name: data.name,
+export async function getOrCreateListPermissionServiceWithTransaction(data = [], session) {
+  const existingPermissions = await PermissionModel.find({
+    endpoint: { $in: data.map((p) => p.endpoint) },
+    method: { $in: data.map((p) => p.method) },
   }).lean();
 
-  if (existPermission) {
-    return existPermission;
+  const existingSet = new Set(existingPermissions.map((p) => `${p.endpoint}-${p.method}`));
+
+  const newPermissions = data
+    .filter((p) => !existingSet.has(`${p.endpoint}-${p.method}`))
+    .map((p) => ({ ...p, slug: makeSlug(p.name) }));
+
+  if (newPermissions.length > 0) {
+    const created = await PermissionModel.insertMany(newPermissions, { session });
+    return [...existingPermissions, ...created];
   }
 
-  return PermissionModel.create(data, { session });
+  return existingPermissions;
 }
 
 /**
@@ -33,7 +42,7 @@ export async function getOrCreatePermissionServiceWithTransaction(data, session)
  * @returns
  */
 export async function getAllPermissionsService({ filters, offset = 0, limit = 10 }) {
-  return PermissionModel.find(filters).skip(offset).limit(limit).sort({ createdAt: -1 });
+  return PermissionModel.find(filters).skip(offset).limit(limit).sort({ createdAt: -1 }).lean();
 }
 
 /**
@@ -60,7 +69,7 @@ export async function getPermissionByIdService(id) {
     filter.name = id;
   }
 
-  return PermissionModel.findOne(filter);
+  return PermissionModel.findOne(filter).lean();
 }
 
 /**
@@ -72,7 +81,7 @@ export async function getPermissionByIdService(id) {
 export async function updatePermissionInfoByIdService(id, data) {
   return PermissionModel.findByIdAndUpdate(id, data, {
     new: true,
-  });
+  }).lean();
 }
 
 /**
@@ -80,8 +89,8 @@ export async function updatePermissionInfoByIdService(id, data) {
  * @param {*} id
  * @returns
  */
-export async function removePermissionByIdService(id) {
-  return PermissionModel.findByIdAndSoftDelete(id);
+export async function removePermissionByIdService(id, removerId) {
+  return PermissionModel.findByIdAndSoftDelete(id, removerId).lean();
 }
 
 /**
@@ -98,7 +107,7 @@ export async function checkExistPermissionNameService(name, skipId) {
     },
     '_id',
     { withDeleted: true },
-  );
+  ).lean();
   return !!result;
 }
 
@@ -114,7 +123,7 @@ export async function activatePermissionByIdService(id) {
       isActive: true,
     },
     { new: true },
-  );
+  ).lean();
 }
 
 /**
@@ -129,5 +138,5 @@ export async function deactivatePermissionByIdService(id) {
       isActive: false,
     },
     { new: true },
-  );
+  ).lean();
 }

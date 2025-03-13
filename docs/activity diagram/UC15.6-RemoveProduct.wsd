@@ -1,0 +1,51 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC15.6: Remove product
+
+|User|
+start
+note left
+    User is logged in  
+    User must have permission
+    In UC15.4
+end note
+
+
+|User|
+:Click to remove button in 
+view product details page;
+
+|System|
+:Display a confirmation prompt;
+
+|User|
+if(User clicks "Remove") then(yes)
+else(no)
+    stop
+endif
+
+|System|
+:Check the product exists;
+if(Exist product?) then(yes)
+    :Check product hiding;
+    if(Product hiding?) then(yes)
+        :Update the product as removed in the database;
+        :Display success message;
+        stop
+        note right
+            Go to UC15.1
+        end note
+    else(no)
+        :Display error message;
+        stop
+    endif
+else(no)
+    :Display error message;
+    stop
+endif
+
+@enduml

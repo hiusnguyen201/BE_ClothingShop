@@ -1,6 +1,6 @@
 import Joi from 'joi';
 import { replaceMultiSpacesToSingleSpace } from '#utils/string.util';
-import { UserConstant } from '#app/v2/users/UserConstant';
+import { GENDER } from '#src/app/v1/users/users.constant';
 
 export const updateCustomersDto = Joi.object({
   name: Joi.string()
@@ -9,6 +9,6 @@ export const updateCustomersDto = Joi.object({
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
   email: Joi.string().email(),
   birthday: Joi.date().iso(),
-  gender: Joi.string().valid(...Object.values(UserConstant.GENDER)),
-  phone: Joi.phoneNumber('+84').required(),
+  gender: Joi.string().valid(...Object.values(GENDER)),
+  phone: Joi.phoneNumber('VN').required(),
 });

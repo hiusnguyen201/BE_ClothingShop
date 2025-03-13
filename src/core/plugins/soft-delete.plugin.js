@@ -1,17 +1,23 @@
-import MongooseDelete from 'mongoose-delete';
+import mongoose from 'mongoose';
 
 const SoftDelete = (schema) => {
-  schema.plugin(MongooseDelete, {
-    deletedAt: true,
-    overrideMethods: 'all',
+  schema.add({
+    removedAt: { type: Date, default: null },
+    isRemoved: { type: Boolean, default: false },
+    removedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   });
 
-  schema.statics.findByIdAndSoftDelete = function (id) {
+  schema.pre(['find', 'findOne', 'findById', 'findOneAndUpdate', 'update', 'countDocuments', 'aggregate'], function () {
+    this.where({ isRemoved: false });
+  });
+
+  schema.statics.findByIdAndSoftDelete = function (id, removerId) {
     return this.findByIdAndUpdate(
       id,
       {
-        deleted: true,
-        deletedAt: new Date(),
+        isRemoved: true,
+        removedAt: new Date(),
+        removedBy: removerId,
       },
       { new: true },
     );

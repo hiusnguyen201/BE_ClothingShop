@@ -1,4 +1,3 @@
-import HttpStatus from 'http-status-codes';
 import { ConflictException, NotFoundException, PreconditionFailedException } from '#core/exception/http-exception';
 import {
   createRoleService,
@@ -6,7 +5,6 @@ import {
   getRoleByIdService,
   removeRoleByIdService,
   updateRolePermissionsByIdService,
-  updateRoleIconByIdService,
   updateRoleInfoByIdService,
   checkExistRoleNameService,
   activateRoleByIdService,
@@ -15,6 +13,9 @@ import {
 } from '#src/app/v1/roles/roles.service';
 import { makeSlug } from '#utils/string.util';
 import { calculatePagination } from '#utils/pagination.util';
+import { ApiResponse } from '#src/core/api/ApiResponse';
+import { RoleDto } from '#src/app/v1/roles/dtos/role.dto';
+import { Dto } from '#src/core/dto/Dto';
 
 export const createRoleController = async (req) => {
   const { name, permissions } = req.body;
@@ -33,13 +34,8 @@ export const createRoleController = async (req) => {
     await updateRolePermissionsByIdService(newRole._id, permissions);
   }
 
-  const formatterRole = await getRoleByIdService(newRole._id);
-
-  return {
-    statusCode: HttpStatus.CREATED,
-    message: 'Create role successfully',
-    data: formatterRole,
-  };
+  const roleDto = Dto.new(RoleDto, newRole);
+  return ApiResponse.success(roleDto, 'Create role successfully');
 };
 
 export const getAllRolesController = async (req) => {
@@ -59,25 +55,19 @@ export const getAllRolesController = async (req) => {
     limit: metaData.limit,
   });
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Get all roles successfully',
-    data: { meta: metaData, list: roles },
-  };
+  const rolesDto = Dto.newList(RoleDto, roles);
+  return ApiResponse.success({ meta: metaData, list: rolesDto }, 'Get all roles successfully');
 };
 
 export const getRoleByIdController = async (req) => {
   const { id } = req.params;
-  const existRole = await getRoleByIdService(id);
-  if (!existRole) {
+  const role = await getRoleByIdService(id);
+  if (!role) {
     throw new NotFoundException('Role not found');
   }
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Get one role successfully',
-    data: existRole,
-  };
+  const roleDto = Dto.newList(RoleDto, role);
+  return ApiResponse.success(roleDto, 'Get one role successfully');
 };
 
 export const updateRoleByIdController = async (req) => {
@@ -104,11 +94,8 @@ export const updateRoleByIdController = async (req) => {
     updatedRole = await updateRolePermissionsByIdService(id, permissions);
   }
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Update role successfully',
-    data: updatedRole,
-  };
+  const roleDto = Dto.newList(RoleDto, updatedRole);
+  return ApiResponse.success(roleDto, 'Update role successfully');
 };
 
 export const removeRoleByIdController = async (req) => {
@@ -122,23 +109,17 @@ export const removeRoleByIdController = async (req) => {
     throw new PreconditionFailedException('Role is active');
   }
 
-  const data = await removeRoleByIdService(id);
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Remove role successfully',
-    data,
-  };
+  const removedRole = await removeRoleByIdService(id);
+
+  const roleDto = Dto.newList(RoleDto, removedRole);
+  return ApiResponse.success(roleDto, 'Remove role successfully');
 };
 
 export const isExistRoleNameController = async (req) => {
   const { name } = req.body;
   const existRoleName = await checkExistRoleNameService(name);
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: existRoleName ? 'Role name exists' : 'Role name does not exist',
-    data: existRoleName,
-  };
+  return ApiResponse.success(existRoleName, existRoleName ? 'Role name exists' : 'Role name does not exist');
 };
 
 export const activateRoleByIdController = async (req) => {
@@ -150,10 +131,7 @@ export const activateRoleByIdController = async (req) => {
 
   await activateRoleByIdService(id);
 
-  return {
-    statusCode: HttpStatus.NO_CONTENT,
-    message: 'Activate role successfully',
-  };
+  return ApiResponse.success(true, 'Activate role successfully');
 };
 
 export const deactivateRoleByIdController = async (req) => {
@@ -165,8 +143,5 @@ export const deactivateRoleByIdController = async (req) => {
 
   await deactivateRoleByIdService(id);
 
-  return {
-    statusCode: HttpStatus.NO_CONTENT,
-    message: 'Deactivate role successfully',
-  };
+  return ApiResponse.success(true, 'Deactivate role successfully');
 };

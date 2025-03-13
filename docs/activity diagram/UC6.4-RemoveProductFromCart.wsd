@@ -23,13 +23,15 @@ end note
 if(Is exist cart?) then(yes)
     :Remove the product variant from the cart;
     :Display a success message;
+    stop
+    note left
+        Go to UC6.1
+    end note
 else(no)
     :Show error message;
+    stop
 endif
 
-stop
-note left
-    Go to UC6.1
-end note
+
 
 @enduml

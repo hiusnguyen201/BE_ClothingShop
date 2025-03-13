@@ -19,10 +19,11 @@ end note
 :Check the result;
 if(Have result?) then (Yes)
     :Display a form with full details of the shipping address;
+    stop
 else(No)
     :Redirect the user to the "Not Found" page;
+    stop
 endif
 
-stop
 
 @enduml

@@ -1,0 +1,51 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC13.3: Create user
+
+|User|
+start
+note left
+    User is logged in  
+    User must have permission
+    In UC13.1
+end note
+
+|User|
+:Click to the "Create user" button;
+
+|System|
+:Display a form for creating;
+
+repeat 
+    repeat
+        |User|
+        :Enter the required fields;
+        :Submit the form;
+
+        |System|
+        :Validate the input;
+
+        backward :Show detailed error;
+    repeat while(Is valid?) is(no) not(yes)
+
+    |System|
+    :Check the email exists;
+
+    backward :Display error message;
+repeat while(Is exist email?) is(yes) not(no)
+
+:Generate new password for user;
+:Create a new user in the database;
+:Send password to the user's email;
+:Display a success message;
+
+stop
+note right
+    Go to UC13.1
+end note
+
+@enduml

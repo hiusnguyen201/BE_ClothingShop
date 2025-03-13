@@ -1,4 +1,4 @@
-import HttpStatus from "http-status-codes";
+import HttpStatus from 'http-status-codes';
 
 class HttpException extends Error {
   constructor(message, status = HttpStatus.INTERNAL_SERVER_ERROR, error) {
@@ -12,8 +12,8 @@ class HttpException extends Error {
  * The HTTP response status code will be 400.
  */
 export class BadRequestException extends HttpException {
-  constructor(message) {
-    super(message, HttpStatus.BAD_REQUEST);
+  constructor(message, data) {
+    super(message, HttpStatus.BAD_REQUEST, data);
     this.message = message;
   }
 }
@@ -68,7 +68,7 @@ export class ConflictException extends HttpException {
  */
 export class PreconditionFailedException extends HttpException {
   constructor(message) {
-    super(message, HttpStatus.PRECONDITION_FAILED, "Precondition Failed");
+    super(message, HttpStatus.PRECONDITION_FAILED, 'Precondition Failed');
   }
 }
 
@@ -77,7 +77,7 @@ export class PreconditionFailedException extends HttpException {
  */
 export class PayloadTooLargeException extends HttpException {
   constructor(message) {
-    super(message, HttpStatus.REQUEST_TOO_LONG, "Payload Too Large");
+    super(message, HttpStatus.REQUEST_TOO_LONG, 'Payload Too Large');
   }
 }
 
