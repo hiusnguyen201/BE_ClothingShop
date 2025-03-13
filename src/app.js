@@ -1,6 +1,4 @@
 'use strict';
-import dotenv from 'dotenv';
-dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 import express from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
@@ -44,7 +42,7 @@ app.use((req, res, next) => {
 // Ignore favicon request
 app.get('/favicon.ico', (req, res) => res.status(HttpStatus.NO_CONTENT).end());
 
-app.use('/api-docs', (req, res) => res.redirect(process.env.POSTMAN_URL_DOCS));
+app.use('/docs', (req, res) => res.redirect(process.env.POSTMAN_URL_DOCS));
 
 // Api version 1
 app.use('/api/v1', enhanceRouter(routerV1));

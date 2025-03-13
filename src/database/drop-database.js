@@ -1,6 +1,4 @@
 'use strict';
-import dotenv from 'dotenv';
-dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 import Database from '#src/modules/database/init.database';
 
 Database.getInstance({ type: 'mongodb', logging: process.env.NODE_ENV === 'development' });

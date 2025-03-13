@@ -5,12 +5,12 @@ export class ApiResponse {
     this.statusCode = code || HttpStatus.OK;
     this.message = message;
     this.timestamp = Date.now();
-    this.data = data || null;
+    this.data = data ?? null;
   }
 
   static success(data, message) {
     const resultCode = HttpStatus.OK;
-    const resultMessage = message || HttpStatus.getStatusText(HttpStatus.OK);
+    const resultMessage = message || 'Success';
     return new ApiResponse(resultCode, resultMessage, data);
   }
 

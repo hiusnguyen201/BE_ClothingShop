@@ -17,19 +17,20 @@
     "#utils/*": "./src/utils/*.js"
   },
   "scripts": {
-    "start": "cross-env NODE_ENV=production node ./src/main.js",
-    "dev": "cross-env NODE_ENV=development nodemon ./src/main.js",
-    "test": "cross-env NODE_ENV=test jest --config",
+    "start": "cross-env NODE_ENV=production  node --env-file=.env.production ./src/main.js ",
+    "dev": "cross-env NODE_ENV=development nodemon --env-file=.env.development ./src/main.js",
+    "test": "cross-env NODE_ENV=test jest --config --env-file=.env.test",
     "test:silent": "cross-env NODE_ENV=test jest --config --silent",
     "test:watch": "cross-env NODE_ENV=test jest --watch --config",
     "build": "echo 'No build step required for Express.js'",
     "vercel-build": "npm run build",
-    "seed": "cross-env NODE_ENV=development node ./src/database/seeders/seed-data.js",
-    "drop-db": "cross-env NODE_ENV=development node ./src/database/drop-database.js"
+    "seed": "cross-env NODE_ENV=development --env-file=.env.development node ./src/database/seeders/seed-data.js",
+    "drop-db": "cross-env NODE_ENV=development --env-file=.env.development node ./src/database/drop-database.js"
   },
   "dependencies": {
     "@faker-js/faker": "^9.3.0",
     "bcrypt": "^5.1.1",
+    "chalk": "^5.4.1",
     "cloudinary": "^2.5.1",
     "compression": "^1.7.5",
     "cookie-parser": "~1.4.4",
@@ -45,7 +46,6 @@
     "jsonwebtoken": "^9.0.2",
     "moment-timezone": "^0.5.46",
     "mongoose": "^8.8.3",
-    "mongoose-delete": "^1.0.2",
     "morgan": "~1.9.1",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.16",

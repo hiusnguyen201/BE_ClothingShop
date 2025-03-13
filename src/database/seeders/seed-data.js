@@ -1,6 +1,4 @@
 'use strict';
-import dotenv from 'dotenv';
-dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 import { USER_TYPE } from '#app/v1/users/users.constant';
 import { getOrCreateListPermissionServiceWithTransaction } from '#src/app/v1/permissions/permissions.service';
 import { getOrCreateRoleServiceWithTransaction } from '#src/app/v1/roles/roles.service';

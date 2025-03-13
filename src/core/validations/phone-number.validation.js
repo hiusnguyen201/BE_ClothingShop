@@ -10,10 +10,12 @@ Joi.phoneNumber = function (code, overrideMessage) {
 
     const isValid = pattern.test(value);
     if (!isValid) {
-      helpers.error('any.invalid', { message: overrideMessage || 'Invalid phone number format' });
-    } else {
-      return value;
+      return helpers.message(
+        overrideMessage || `\"${helpers.state.path[0]}\" invalid phone number format with code ${code}`,
+      );
     }
+
+    return value;
   });
 };
 

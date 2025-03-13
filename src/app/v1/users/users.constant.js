@@ -17,6 +17,5 @@ export const USER_STATUS = {
   REMOVED: 'Removed',
 };
 
-export const SELECTED_FIELDS = [
-  '_id type avatar name email phone gender birthday status isVerified verifiedAt createdAt updatedAt',
-];
+export const SELECTED_FIELDS =
+  '_id type avatar name email phone gender birthday status isVerified verifiedAt createdAt updatedAt';

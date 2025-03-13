@@ -1,5 +1,6 @@
 import { NotFoundException } from '#core/exception/http-exception';
 import { ApiResponse } from '#src/core/api/ApiResponse';
+import chalk from 'chalk';
 import HttpStatus from 'http-status-codes';
 
 export const handleError = (err, req, res, next) => {
@@ -8,7 +9,7 @@ export const handleError = (err, req, res, next) => {
   const apiResponse = ApiResponse.error(status, message, err.error);
 
   if (process.env.NODE_ENV === 'development') {
-    console.error(`[HTTP_TRAFFIC] {${req.method} ${req.url}} ${err.message}`);
+    console.error(chalk.red(`ERROR [HTTP_TRAFFIC] {${req.method} ${req.url}} ${err.message}`));
     console.log({ ...apiResponse, stack: err.stack });
   }
 
