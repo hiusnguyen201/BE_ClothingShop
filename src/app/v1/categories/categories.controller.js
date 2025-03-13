@@ -21,7 +21,7 @@ import { makeSlug } from '#utils/string.util';
 import { calculatePagination } from '#utils/pagination.util';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { Dto } from '#src/core/dto/Dto';
-import { uploadImageBufferService } from '#src/modules/cloudinary/CloudinaryService';
+import { uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
 
 const MAX_LEVEL_CHILDREN = 2;
 
@@ -57,7 +57,7 @@ export const createCategoryController = async (req) => {
 
   // Update Image
   if (req.file) {
-    const result = await uploadImageBufferService({ file: req.file, folderName: 'categories-image' });
+    const result = await uploadImageBufferService({ buffer: req.file.buffer, folderName: 'categories-image' });
     category.image = result.url;
   }
 
@@ -122,7 +122,7 @@ export const updateCategoryByIdController = async (req) => {
   }
 
   if (req.file) {
-    const result = await uploadImageBufferService({ file: req.file, folderName: 'categories-image' });
+    const result = await uploadImageBufferService({ buffer: req.file.buffer, folderName: 'categories-image' });
     req.body.image = result.url;
   }
 

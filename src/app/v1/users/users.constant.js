@@ -18,4 +18,4 @@ export const USER_STATUS = {
 };
 
 export const SELECTED_FIELDS =
-  '_id type avatar name email phone gender birthday status isVerified verifiedAt createdAt updatedAt';
+  '_id type avatar name email password phone gender birthday status isVerified verifiedAt createdAt updatedAt';

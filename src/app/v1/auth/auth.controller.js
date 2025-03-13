@@ -31,7 +31,7 @@ import {
   getResetPasswordByTokenService,
 } from '#src/app/v1/reset-password/reset-password.service';
 import { compareSync } from 'bcrypt';
-import { uploadImageBufferService } from '#src/modules/cloudinary/CloudinaryService';
+import { uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { USER_TYPE } from '#src/app/v1/users/users.constant';
 
@@ -49,7 +49,7 @@ export const registerController = async (req) => {
   });
 
   if (req.file) {
-    const result = await uploadImageBufferService({ file: req.file, folderName: 'avatars' });
+    const result = await uploadImageBufferService({ buffer: req.file.buffer, folderName: 'avatars' });
     newCustomer.avatar = result.url;
   }
 

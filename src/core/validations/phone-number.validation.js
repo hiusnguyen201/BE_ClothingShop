@@ -8,7 +8,7 @@ Joi.phoneNumber = function (code, overrideMessage) {
       throw new Error(`Phone number with code \"${code}\" is not supported`);
     }
 
-    const isValid = pattern.test(value);
+    const isValid = value.match(pattern);
     if (!isValid) {
       return helpers.message(
         overrideMessage || `\"${helpers.state.path[0]}\" invalid phone number format with code ${code}`,

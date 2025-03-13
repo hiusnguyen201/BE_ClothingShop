@@ -1,6 +1,6 @@
 import { isValidObjectId } from 'mongoose';
 import { UserModel } from '#models/user.model';
-import { removeImageByPublicIdService, uploadImageBufferService } from '#src/modules/cloudinary/CloudinaryService';
+import { removeImageByPublicIdService, uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
 import { REGEX_PATTERNS } from '#core/constant';
 import { genSalt, genSaltSync, hashSync } from 'bcrypt';
 import { SELECTED_FIELDS, USER_STATUS } from '#src/app/v1/users/users.constant';
@@ -132,7 +132,8 @@ export async function updateUserVerifiedByIdService(id) {
  * @returns
  */
 export async function changePasswordByIdService(id, password) {
-  const hashedPassword = makeHash(password);
+  const salt = genSaltSync();
+  const hashedPassword = hashSync(password, salt);
   return UserModel.findByIdAndUpdate(
     id,
     {

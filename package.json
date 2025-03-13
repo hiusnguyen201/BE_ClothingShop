@@ -24,8 +24,9 @@
     "test:watch": "cross-env NODE_ENV=test jest --watch --config",
     "build": "echo 'No build step required for Express.js'",
     "vercel-build": "npm run build",
-    "seed": "cross-env NODE_ENV=development --env-file=.env.development node ./src/database/seeders/seed-data.js",
-    "drop-db": "cross-env NODE_ENV=development --env-file=.env.development node ./src/database/drop-database.js"
+    "seed:dev": "cross-env NODE_ENV=development node --env-file=.env.development ./src/database/seeders/seed-data.js",
+    "seed:prod": "cross-env NODE_ENV=production node --env-file=.env.production ./src/database/seeders/seed-data.js",
+    "drop-db": "cross-env NODE_ENV=development  node --env-file=.env.development ./src/database/drop-database.js"
   },
   "dependencies": {
     "@faker-js/faker": "^9.3.0",

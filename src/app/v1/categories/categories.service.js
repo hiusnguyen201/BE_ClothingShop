@@ -1,6 +1,6 @@
 import { isValidObjectId } from 'mongoose';
 import { CategoryModel } from '#models/category.model';
-import { removeImageByPublicIdService, uploadImageBufferService } from '#src/modules/cloudinary/CloudinaryService';
+import { removeImageByPublicIdService, uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
 import { REGEX_PATTERNS } from '#core/constant';
 import { makeSlug } from '#utils/string.util';
 

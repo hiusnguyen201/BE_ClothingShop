@@ -17,7 +17,7 @@ import { calculatePagination } from '#utils/pagination.util';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { Dto } from '#src/core/dto/Dto';
 import { CustomerDto } from '#src/app/v1/customers/dtos/customer.dto';
-import { uploadImageBufferService } from '#src/modules/cloudinary/CloudinaryService';
+import { uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
 
 export const createCustomerController = async (req) => {
   const { email } = req.body;
@@ -34,7 +34,7 @@ export const createCustomerController = async (req) => {
   });
 
   if (req.file) {
-    const result = await uploadImageBufferService({ file: req.file, folderName: 'avatars' });
+    const result = await uploadImageBufferService({ buffer: req.file.buffer, folderName: 'avatars' });
     customer.avatar = result.url;
   }
 

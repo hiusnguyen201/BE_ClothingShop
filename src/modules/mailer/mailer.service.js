@@ -2,6 +2,7 @@ import nodemailer from 'nodemailer';
 import fs from 'fs';
 import path from 'path';
 import { ServiceUnavailableException } from '#src/core/exception/http-exception';
+import { viewRootDir } from '#src/views/viewRootDir';
 
 const mailerEmail = process.env.MAILER_AUTH_USER;
 
@@ -16,7 +17,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const getEmailTemplateToString = (fileName) => {
-  return fs.readFileSync(path.join(process.cwd(), '/public/email-templates', `${fileName}`)).toString();
+  return fs.readFileSync(path.join(viewRootDir, '/email-templates', `${fileName}`)).toString();
 };
 
 export const sendOtpCodeService = async (email, otpCode) => {
