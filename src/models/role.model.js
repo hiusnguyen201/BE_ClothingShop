@@ -42,5 +42,6 @@ const RoleSchema = new Schema(
 );
 
 RoleSchema.plugin(SoftDelete);
+
 const RoleModel = mongoose.model('Role', RoleSchema);
 export { RoleModel };

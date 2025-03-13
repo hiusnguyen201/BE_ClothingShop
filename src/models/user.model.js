@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
-import { genSalt, hash, compare } from 'bcrypt';
-import { UserConstant } from '#app/v2/users/UserConstant';
+import { USER_TYPE, GENDER, USER_STATUS } from '#app/v1/users/users.constant';
 import SoftDelete from '#core/plugins/soft-delete.plugin';
 const { Schema } = mongoose;
 
@@ -12,10 +11,9 @@ const UserSchema = new Schema(
       type: String,
       length: 50,
       required: true,
-      enum: Object.values(UserConstant.USER_TYPES),
-      default: UserConstant.USER_TYPES.CUSTOMER,
+      enum: Object.values(USER_TYPE),
+      default: USER_TYPE.CUSTOMER,
     },
-    // Info
     avatar: {
       type: String,
       required: false,
@@ -28,33 +26,44 @@ const UserSchema = new Schema(
       length: 100,
       index: true,
     },
-    phone: {
-      type: String,
-      required: true,
-      length: 15,
-    },
-    birthday: {
-      type: Date,
-      default: null,
-    },
-    gender: {
-      type: String,
-      required: false,
-      enum: Object.values(UserConstant.GENDER),
-      default: null,
-    },
-
-    // Account
     email: {
       type: String,
       required: true,
       length: 255,
       unique: true,
     },
+    phone: {
+      type: String,
+      required: true,
+      length: 15,
+    },
     password: {
       type: String,
       required: false,
       length: 100,
+    },
+    gender: {
+      type: String,
+      required: false,
+      enum: Object.values(GENDER),
+      default: null,
+    },
+    birthday: {
+      type: Date,
+      default: null,
+    },
+    googleId: {
+      type: String,
+      required: false,
+      default: null,
+    },
+
+    status: {
+      type: String,
+      require: true,
+      enum: Object.values(USER_STATUS),
+      default: USER_STATUS.INACTIVE,
+      length: 50,
     },
     isVerified: {
       type: Boolean,
@@ -66,20 +75,19 @@ const UserSchema = new Schema(
       required: false,
       default: null,
     },
-    googleId: {
-      type: String,
+    isLocked: {
+      type: Boolean,
       required: false,
-      default: null,
+      default: false,
     },
-    facebookId: {
-      type: String,
+    lockedAt: {
+      type: Date,
       required: false,
       default: null,
     },
 
     // Foreign key
     role: { type: Schema.Types.ObjectId, ref: 'Role' },
-    // permissions: [{ type: Schema.Types.ObjectId, ref: "Permission" }],
 
     vouchers: {
       type: [{ type: Schema.Types.ObjectId, ref: 'Voucher' }],
@@ -87,24 +95,13 @@ const UserSchema = new Schema(
     },
   },
   {
+    collection: USER_MODEL,
     versionKey: false,
     timestamps: true,
-    collection: USER_MODEL,
-    _id: true,
-    id: false,
   },
 );
 
 UserSchema.plugin(SoftDelete);
-
-UserSchema.methods.hashPassword = async function (password) {
-  const salt = await genSalt();
-  return hash(password, salt);
-};
-
-UserSchema.methods.comparePassword = async function (password, hash) {
-  return compare(password, hash);
-};
 
 const UserModel = mongoose.model('User', UserSchema);
 export { UserModel };

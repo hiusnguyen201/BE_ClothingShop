@@ -60,5 +60,6 @@ export const PermissionSchema = new Schema(
 );
 
 PermissionSchema.plugin(SoftDelete);
+
 const PermissionModel = mongoose.model('Permission', PermissionSchema);
 export { PermissionModel };

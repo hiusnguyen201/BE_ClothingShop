@@ -1,4 +1,3 @@
-import HttpStatus from 'http-status-codes';
 import { NotFoundException, ConflictException } from '#core/exception/http-exception';
 import {
   updateUserAvatarByIdService,
@@ -11,7 +10,7 @@ import {
   countAllUsersService,
   saveUserService,
 } from '#src/app/v1/users/users.service';
-import { UserConstant } from '#app/v2/users/UserConstant';
+import { USER_TYPE } from '#src/app/v1/users/users.constant';
 import { randomStr } from '#utils/string.util';
 import { sendPasswordService } from '#modules/mailer/mailer.service';
 import { calculatePagination } from '#utils/pagination.util';
@@ -28,21 +27,21 @@ export const createCustomerController = async (req) => {
   }
 
   const password = randomStr(32);
-  const newCustomer = await createUserService({
+  const customer = await createUserService({
     ...req.body,
     password,
-    type: UserConstant.USER_TYPES.CUSTOMER,
+    type: USER_TYPE.CUSTOMER,
   });
 
   if (req.file) {
     const result = await uploadImageBufferService({ file: req.file, folderName: 'avatars' });
-    newCustomer.avatar = result.url;
+    customer.avatar = result.url;
   }
 
-  await saveUserService(newCustomer);
-  await sendPasswordService(email, password);
+  await saveUserService(customer);
+  sendPasswordService(email, password);
 
-  const customersDto = Dto.new(CustomerDto, newCustomer.toObject());
+  const customersDto = Dto.new(CustomerDto, customer);
   return ApiResponse.success(customersDto, 'Create customer successfully');
 };
 
@@ -51,7 +50,7 @@ export const getAllCustomersController = async (req) => {
 
   const filterOptions = {
     $or: [{ name: { $regex: keyword, $options: 'i' } }, { email: { $regex: keyword, $options: 'i' } }],
-    type: UserConstant.USER_TYPES.CUSTOMER,
+    type: USER_TYPE.CUSTOMER,
   };
 
   const totalCount = await countAllUsersService(filterOptions);
@@ -81,7 +80,7 @@ export const getCustomerByIdController = async (req) => {
 export const updateCustomerByIdController = async (req) => {
   const { id } = req.params;
   const { email } = req.body;
-  const existCustomer = await getUserByIdService(id, 'id');
+  const existCustomer = await getUserByIdService(id);
   if (!existCustomer) {
     throw new NotFoundException('Customer not found');
   }
@@ -105,7 +104,7 @@ export const updateCustomerByIdController = async (req) => {
 
 export const removeCustomerByIdController = async (req) => {
   const { id } = req.params;
-  const existCustomer = await getUserByIdService(id, 'id');
+  const existCustomer = await getUserByIdService(id);
   if (!existCustomer) {
     throw new NotFoundException('Customer not found');
   }

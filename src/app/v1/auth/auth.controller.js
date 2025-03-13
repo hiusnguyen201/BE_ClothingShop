@@ -14,7 +14,6 @@ import {
   TooManyRequestException,
 } from '#core/exception/http-exception';
 import { generateToken } from '#utils/jwt.util';
-import { UserConstant } from '#app/v2/users/UserConstant';
 import {
   createUserOtpService,
   getCurrentUserOtpService,
@@ -34,6 +33,7 @@ import {
 import { compareSync } from 'bcrypt';
 import { uploadImageBufferService } from '#src/modules/cloudinary/CloudinaryService';
 import { ApiResponse } from '#src/core/api/ApiResponse';
+import { USER_TYPE } from '#src/app/v1/users/users.constant';
 
 export const registerController = async (req) => {
   const { email } = req.body;
@@ -45,7 +45,7 @@ export const registerController = async (req) => {
 
   const newCustomer = await createUserService({
     ...req.body,
-    type: UserConstant.USER_TYPES.CUSTOMER,
+    type: USER_TYPE.CUSTOMER,
   });
 
   if (req.file) {
@@ -72,7 +72,7 @@ export const registerController = async (req) => {
 export const loginController = async (req) => {
   const { email, password } = req.body;
 
-  const user = await getUserByIdService(email, 'id password name email isVerified type');
+  const user = await getUserByIdService(email);
 
   if (!user) {
     throw new UnauthorizedException('Invalid Credentials');
@@ -83,7 +83,7 @@ export const loginController = async (req) => {
     throw new UnauthorizedException('Invalid Credentials');
   }
 
-  const isNeed2Fa = !user.isVerified; // || user.type === UserConstant.USER_TYPES.USER;
+  const isNeed2Fa = !user.isVerified; // || user.type === USER_TYPE.USER;
 
   return ApiResponse.success(
     {
@@ -119,7 +119,7 @@ export const sendOtpViaEmailController = async (req) => {
 
 export const verifyOtpController = async (req) => {
   const { email, otp } = req.body;
-  const user = await getUserByIdService(email, 'id email name isVerified');
+  const user = await getUserByIdService(email);
   if (!user) {
     throw new NotFoundException('User not found');
   }

@@ -1,6 +1,6 @@
 import Joi from 'joi';
 import { REGEX_PATTERNS } from '#core/constant';
-import { UserConstant } from '#app/v2/users/UserConstant';
+import { GENDER } from '#app/v1/users/users.constant';
 import { replaceMultiSpacesToSingleSpace } from '#utils/string.util';
 
 export const UpdateUserDto = Joi.object({
@@ -9,7 +9,7 @@ export const UpdateUserDto = Joi.object({
     .max(100)
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
   email: Joi.string().email(),
-  gender: Joi.string().valid(...Object.values(UserConstant.GENDER)),
+  gender: Joi.string().valid(...Object.values(GENDER)),
   role: Joi.string(),
   phone: Joi.string().custom((value, helper) => {
     if (!value.match(REGEX_PATTERNS.PHONE_NUMBER['+84'])) {

@@ -2,11 +2,12 @@ import Joi from 'joi';
 import { isValidObjectId } from 'mongoose';
 
 Joi.objectId = function (overrideMessage) {
-  return Joi.custom((value, helpers) => {
+  return Joi.required().custom((value, helpers) => {
     if (!isValidObjectId(value)) {
-      return helpers.error('any.invalid', { message: overrideMessage || 'Invalid ObjectId' });
+      helpers.error('any.invalid', { message: overrideMessage || 'Invalid ObjectId' });
+    } else {
+      return value;
     }
-    return value;
   });
 };
 

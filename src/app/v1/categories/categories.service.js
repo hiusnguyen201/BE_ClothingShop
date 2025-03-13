@@ -102,8 +102,8 @@ export async function updateCategoryImageByIdService(id, file, currentImage) {
  * @param {*} id
  * @returns
  */
-export async function removeCategoryByIdService(id) {
-  return CategoryModel.findByIdAndSoftDelete(id).lean();
+export async function removeCategoryByIdService(id, removerId) {
+  return CategoryModel.findByIdAndSoftDelete(id, removerId).lean();
 }
 
 /**

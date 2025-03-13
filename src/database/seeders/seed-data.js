@@ -1,7 +1,7 @@
 'use strict';
 import dotenv from 'dotenv';
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
-import { UserConstant } from '#app/v2/users/UserConstant';
+import { USER_TYPE } from '#app/v1/users/users.constant';
 import { getOrCreateListPermissionServiceWithTransaction } from '#src/app/v1/permissions/permissions.service';
 import { getOrCreateRoleServiceWithTransaction } from '#src/app/v1/roles/roles.service';
 import { getOrCreateUserWithTransaction } from '#src/app/v1/users/users.service';
@@ -65,7 +65,7 @@ async function runSeeder() {
         isVerified: true,
         verifiedAt: new Date(),
         role: role._id,
-        type: UserConstant.USER_TYPES.USER,
+        type: USER_TYPE.USER,
       },
       session,
     );

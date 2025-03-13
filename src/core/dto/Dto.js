@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { BadRequestException } from '#src/core/exception/http-exception';
 
 const options = {
@@ -8,6 +9,10 @@ const options = {
 
 export class Dto {
   static new(schema, data) {
+    if (data && data instanceof mongoose.Document) {
+      data = data.toObject();
+    }
+
     const { error, value } = schema.validate(data, options);
     if (error) {
       const message = error.details.map((item) => item.message);

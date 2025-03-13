@@ -89,8 +89,8 @@ export async function updatePermissionInfoByIdService(id, data) {
  * @param {*} id
  * @returns
  */
-export async function removePermissionByIdService(id) {
-  return PermissionModel.findByIdAndSoftDelete(id).lean();
+export async function removePermissionByIdService(id, removerId) {
+  return PermissionModel.findByIdAndSoftDelete(id, removerId).lean();
 }
 
 /**

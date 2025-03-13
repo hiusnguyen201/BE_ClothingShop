@@ -3,8 +3,7 @@ import { UserModel } from '#models/user.model';
 import { removeImageByPublicIdService, uploadImageBufferService } from '#src/modules/cloudinary/CloudinaryService';
 import { REGEX_PATTERNS } from '#core/constant';
 import { genSalt, genSaltSync, hashSync } from 'bcrypt';
-
-const SELECTED_FIELDS = '_id avatar name email gender birthday isVerified verifiedAt createdAt updatedAt';
+import { SELECTED_FIELDS, USER_STATUS } from '#src/app/v1/users/users.constant';
 
 /**
  * Create user instance
@@ -14,7 +13,7 @@ const SELECTED_FIELDS = '_id avatar name email gender birthday isVerified verifi
 export async function createUserService(data) {
   const salt = genSaltSync();
   data.password = hashSync(data.password, salt);
-  return new UserModel({ ...data, isVerified: false, verifiedAt: null });
+  return new UserModel(data);
 }
 
 export async function saveUserService(user) {
@@ -44,11 +43,10 @@ export async function getOrCreateUserWithTransaction(data, session) {
 /**
  * Get all users
  * @param {*} query
- * @param {*} selectFields
  * @returns
  */
-export async function getAllUsersService({ filters, offset = 0, limit = 10, selectFields = SELECTED_FIELDS }) {
-  return UserModel.find(filters).skip(offset).limit(limit).select(selectFields).sort({ createdAt: -1 }).lean();
+export async function getAllUsersService({ filters, offset = 0, limit = 10 }) {
+  return UserModel.find(filters).skip(offset).limit(limit).select(SELECTED_FIELDS).sort({ createdAt: -1 }).lean();
 }
 
 /**
@@ -63,10 +61,9 @@ export async function countAllUsersService(filters) {
 /**
  * Get one user by id
  * @param {*} id
- * @param {*} selectFields
  * @returns
  */
-export async function getUserByIdService(id, selectFields = SELECTED_FIELDS) {
+export async function getUserByIdService(id) {
   if (!id) return null;
   const filter = {};
 
@@ -78,7 +75,7 @@ export async function getUserByIdService(id, selectFields = SELECTED_FIELDS) {
     return null;
   }
 
-  return UserModel.findOne(filter).select(selectFields).lean();
+  return UserModel.findOne(filter).select(SELECTED_FIELDS).lean();
 }
 
 /**
@@ -86,8 +83,8 @@ export async function getUserByIdService(id, selectFields = SELECTED_FIELDS) {
  * @param {*} id
  * @returns
  */
-export async function removeUserByIdService(id) {
-  return UserModel.findByIdAndSoftDelete(id).select(SELECTED_FIELDS).lean();
+export async function removeUserByIdService(id, removerId) {
+  return UserModel.findByIdAndSoftDelete(id, removerId).select(SELECTED_FIELDS).lean();
 }
 
 /**
@@ -119,6 +116,8 @@ export async function updateUserVerifiedByIdService(id) {
     id,
     {
       isVerified: true,
+      verifiedAt: new Date(),
+      status: USER_STATUS.ACTIVE,
     },
     { new: true },
   )

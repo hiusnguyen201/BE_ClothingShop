@@ -63,8 +63,8 @@ export async function updateVoucherByIdService(id, data) {
  * @param {*} id
  * @returns
  */
-export async function removeVoucherByIdService(id) {
-  return VoucherModel.findByIdAndSoftDelete(id).lean();
+export async function removeVoucherByIdService(id, removerId) {
+  return VoucherModel.findByIdAndSoftDelete(id, removerId).lean();
 }
 
 /**

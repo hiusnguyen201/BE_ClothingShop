@@ -1,4 +1,3 @@
-import HttpStatus from 'http-status-codes';
 import { ConflictException, NotFoundException, PreconditionFailedException } from '#core/exception/http-exception';
 
 import {

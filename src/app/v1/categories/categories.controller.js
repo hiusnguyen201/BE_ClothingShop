@@ -50,7 +50,7 @@ export const createCategoryController = async (req) => {
     level = nextCategoryLevel;
   }
 
-  const newCategory = await createCategoryService({
+  const category = await createCategoryService({
     ...req.body,
     level,
   });
@@ -58,12 +58,12 @@ export const createCategoryController = async (req) => {
   // Update Image
   if (req.file) {
     const result = await uploadImageBufferService({ file: req.file, folderName: 'categories-image' });
-    newCategory.image = result.url;
+    category.image = result.url;
   }
 
-  await saveCategoryService(newCategory);
+  await saveCategoryService(category);
 
-  const categoryDto = Dto.new(CategoryDto, newCategory.toObject());
+  const categoryDto = Dto.new(CategoryDto, category);
   return ApiResponse.success(categoryDto, 'Create category successfully');
 };
 

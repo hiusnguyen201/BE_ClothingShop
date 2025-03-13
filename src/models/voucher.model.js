@@ -82,5 +82,6 @@ const VoucherSchema = new Schema(
 );
 
 VoucherSchema.plugin(SoftDelete);
+
 const VoucherModel = mongoose.model('Voucher', VoucherSchema);
 export { VoucherModel };

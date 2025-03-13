@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { UserConstant } from '#app/v2/users/UserConstant';
+import { USER_TYPE } from '#app/v1/users/users.constant';
 import { createUserService } from '#app/v1/users/users.service';
 
 /** @type {import('#src/app/v1/users/models/user.model')} */
@@ -9,7 +9,7 @@ class UserFactory {
     this.default = {
       name: faker.internet.displayName(),
       email: faker.internet.email(),
-      type: UserConstant.USER_TYPES.USER,
+      type: USER_TYPE.USER,
       password: faker.internet.password(),
       isVerified: true,
       role: null,

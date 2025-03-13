@@ -1,4 +1,3 @@
-import HttpStatus from 'http-status-codes';
 import {
   createUserService,
   getAllUsersService,
@@ -13,7 +12,7 @@ import { getRoleByIdService } from '#app/v1/roles/roles.service';
 import { sendPasswordService } from '#modules/mailer/mailer.service';
 import { ConflictException, NotFoundException } from '#core/exception/http-exception';
 import { randomStr } from '#utils/string.util';
-import { UserConstant } from '#app/v2/users/UserConstant';
+import { USER_TYPE } from '#src/app/v1/users/users.constant';
 import { calculatePagination } from '#utils/pagination.util';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { Dto } from '#src/core/dto/Dto';
@@ -38,15 +37,15 @@ export const createUserController = async (req) => {
   const user = await createUserService({
     ...req.body,
     password,
-    type: UserConstant.USER_TYPES.USER,
+    type: USER_TYPE.USER,
   });
 
   await saveUserService(user);
 
   // Send password to mail for user
-  await sendPasswordService(email, password);
+  sendPasswordService(email, password);
 
-  const userDto = Dto.newList(UserDto, user);
+  const userDto = Dto.new(UserDto, user);
   return ApiResponse.success(userDto);
 };
 
@@ -55,7 +54,7 @@ export const getAllUsersController = async (req) => {
 
   const filterOptions = {
     $or: [{ name: { $regex: keyword, $options: 'i' } }, { email: { $regex: keyword, $options: 'i' } }],
-    type: UserConstant.USER_TYPES.USER,
+    type: USER_TYPE.USER,
   };
 
   const totalCount = await countAllUsersService(filterOptions);
@@ -85,7 +84,7 @@ export const getUserByIdController = async (req) => {
 export const updateUserByIdController = async (req) => {
   const { id } = req.params;
 
-  const existUser = await getUserByIdService(id, '_id');
+  const existUser = await getUserByIdService(id);
   if (!existUser) {
     throw new NotFoundException('User not found');
   }
