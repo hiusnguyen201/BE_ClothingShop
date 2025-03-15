@@ -5,27 +5,31 @@ const SHIPPING_ADDRESS_MODEL = 'shipping_addresses';
 
 const shippingAddressSchema = new Schema(
   {
+    customerName: {
+      type: String,
+      length: 255,
+      required: true,
+    },
+    customerPhone: {
+      type: String,
+      required: true,
+    },
     address: {
       type: String,
       length: 255,
       required: true,
     },
-    street: {
-      type: String,
-      length: 50,
-      required: true,
-    },
-    city: {
-      type: String,
-      length: 50,
-      required: true,
-    },
-    ward: {
+    province: {
       type: String,
       length: 50,
       required: true,
     },
     district: {
+      type: String,
+      length: 50,
+      required: true,
+    },
+    ward: {
       type: String,
       length: 50,
       required: true,
@@ -36,7 +40,7 @@ const shippingAddressSchema = new Schema(
     },
 
     // Foreign key
-    customer: {
+    customerId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
     },

@@ -31,9 +31,10 @@ import {
   getResetPasswordByTokenService,
 } from '#src/app/v1/reset-password/reset-password.service';
 import { compareSync } from 'bcrypt';
-import { uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
-import { ApiResponse } from '#src/core/api/ApiResponse';
+import { generateNumericOTP } from '#src/utils/string.util';
 import { USER_TYPE } from '#src/app/v1/users/users.constant';
+import { ApiResponse } from '#src/core/api/ApiResponse';
+import moment from 'moment-timezone';
 
 export const registerController = async (req) => {
   const { email } = req.body;
@@ -82,13 +83,13 @@ export const loginController = async (req) => {
   if (!isMatchPassword) {
     throw new UnauthorizedException('Invalid Credentials');
   }
-
   const isNeed2Fa = !user.isVerified; // || user.type === USER_TYPE.USER;
 
+  const token = generateToken({ _id: user._id });
   return ApiResponse.success(
     {
       isAuthenticated: !isNeed2Fa,
-      accessToken: isNeed2Fa ? null : generateToken({ _id: user._id }),
+      accessToken: token,
       is2FactorRequired: isNeed2Fa,
       user: { id: user._id, name: user.name, email: user.email },
     },

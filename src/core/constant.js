@@ -25,3 +25,16 @@ export const REGEX_PATTERNS = {
   BEARER_TOKEN: /^Bearer ((?:\.?(?:[A-Za-z0-9-_]+)){3})$/,
   COMMA_SEPARATED_LIST: /^[a-zA-Z0-9,]+$/,
 };
+
+export const ORDERS_STATUS = {
+  PENDING: 'Pending',
+  SHIPPING: 'Shipping',
+  DELIVERED: 'Delivered',
+  CANCELLED: 'Canceled',
+};
+
+export const PAYMENT_METHOD = {
+  COD: 'Cod',
+  VNPAY: 'Vnpay',
+  MOMO: 'Momo',
+};

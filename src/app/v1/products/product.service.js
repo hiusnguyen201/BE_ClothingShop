@@ -3,12 +3,13 @@ import { ProductVariantModel } from '#src/app/v1/products/product-variants.model
 
 export const getProductByIdService = async ({ productId }) => {
   const product = await ProductModel.findOne({ productId });
-  console.log(product, 'product');
   return product;
 };
 
-export const getVariantProductByIdService = async (variantproductId) => {
-  const variantProduct = await ProductVariantModel.find({ _id: variantproductId });
-  // console.log(variantProduct, 'variant product');
+export const getVariantProductByIdService = async (variantProductId) => {
+  const variantProduct = await ProductVariantModel.find({ _id: variantProductId }).populate({
+    path: 'productId',
+    model: 'Product',
+  });
   return variantProduct;
 };

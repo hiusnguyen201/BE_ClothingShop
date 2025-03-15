@@ -1,5 +1,4 @@
 import { PAYMENT_METHOD } from '#src/core/constant';
-import moment from 'moment-timezone';
 import mongoose from 'mongoose';
 const { Schema } = mongoose;
 

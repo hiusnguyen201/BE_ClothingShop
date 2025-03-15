@@ -11,6 +11,22 @@ export const orderSchema = new Schema(
       required: true,
       length: 14,
     },
+    provinceName: {
+      type: String,
+      required: true,
+    },
+    districtName: {
+      type: String,
+      required: true,
+    },
+    wardName: {
+      type: String,
+      required: true,
+    },
+    address: {
+      type: String,
+      required: true,
+    },
     customerName: {
       type: String,
       required: true,
@@ -23,13 +39,16 @@ export const orderSchema = new Schema(
       type: String,
       required: true,
     },
-    shippingAddress: {
-      type: String,
-      required: true,
-    },
+    shippingAddressId: [{ type: Schema.Types.ObjectId, ref: 'ShippingAddress', required: true }],
+
     orderDate: {
       type: Date,
       required: true,
+    },
+    shippingDate: {
+      type: Date,
+      required: false,
+      default: null,
     },
     quantity: {
       type: Number,
@@ -48,13 +67,18 @@ export const orderSchema = new Schema(
       type: Number,
       required: true,
     },
+    isPath: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
     status: {
       type: String,
       required: true,
       enum: [
         ORDERS_STATUS.PENDING,
         ORDERS_STATUS.PAID,
-        ORDERS_STATUS.SHIPPED,
+        ORDERS_STATUS.SHIPPING,
         ORDERS_STATUS.DELIVERED,
         ORDERS_STATUS.CANCELLED,
       ],

@@ -1,6 +1,6 @@
 import express from 'express';
 
-import { validateSchema } from '#src/core/validations/request.validation';
+import { validateBody } from '#src/core/validations/request.validation';
 import { createProductController, createProductVariantController } from '#src/app/v1/products/products.controller';
 
 const router = express.Router();

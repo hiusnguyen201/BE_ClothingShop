@@ -3,9 +3,10 @@ import { BadRequestException, NotFoundException } from '#src/core/exception/http
 import { getOrderByIdService, updateOrderByIdService } from '#src/app/v1/orders/orders.service';
 import HttpStatus from 'http-status-codes';
 import { createPaymentService, getPaymentByOrderIdService } from '#src/app/v1/payments/payments.service';
-// import { createMomoPayment } from '#src/utils/paymentMomo';
+import { createMomoPayment } from '#src/utils/paymentMomo';
 import { createVnpayPayment } from '#src/utils/paymentVnpay';
 import moment from 'moment-timezone';
+import { createGHNOrder } from '#src/modules/GHN/ghn.service';
 
 export const createPaymentController = async (req, res) => {
   const { orderId, paymentMethod } = req.body;
@@ -18,27 +19,27 @@ export const createPaymentController = async (req, res) => {
   let transactionId = null;
   let paymentUrl;
   let notes = '';
-  switch (paymentMethod) {
-    case PAYMENT_METHOD.MOMO:
-      transactionId = `${PAYMENT_METHOD.MOMO}_${orderExisted._id}`;
-      notes = `Payment via ${PAYMENT_METHOD.MOMO}`;
-      const momoResponse = await createMomoPayment(orderId, orderExisted.total, orderExisted.code);
-      paymentUrl = momoResponse.payUrl;
-      break;
 
-    case PAYMENT_METHOD.VNPAY:
-      transactionId = `${PAYMENT_METHOD.VNPAY}_${orderExisted._id}`;
-      notes = `Payment via ${PAYMENT_METHOD.VNPAY}`;
-      paymentUrl = await createVnpayPayment(orderId, orderExisted.total, orderExisted.code);
-      break;
+  if (!paymentMethod) {
+    throw new NotFoundException('Invalid payment method');
+  }
 
-    case PAYMENT_METHOD.COD:
-      transactionId = `${PAYMENT_METHOD.COD}_${orderExisted._id}`;
-      notes = 'Cash on Delivery';
-      break;
+  if (paymentMethod === PAYMENT_METHOD.MOMO) {
+    transactionId = `${PAYMENT_METHOD.MOMO}_${orderExisted._id}`;
+    notes = `Payment via ${PAYMENT_METHOD.MOMO}`;
+    const momoResponse = await createMomoPayment(orderId, orderExisted.total, orderExisted.code);
+    paymentUrl = momoResponse.payUrl;
+  }
 
-    default:
-      throw new BadRequestException('Invalid payment method');
+  if (paymentMethod === PAYMENT_METHOD.VNPAY) {
+    transactionId = `${PAYMENT_METHOD.VNPAY}_${orderExisted._id}`;
+    notes = `Payment via ${PAYMENT_METHOD.VNPAY}`;
+    paymentUrl = await createVnpayPayment(orderId, orderExisted.total, orderExisted.code);
+  }
+
+  if (paymentMethod === PAYMENT_METHOD.COD) {
+    transactionId = `${PAYMENT_METHOD.COD}_${orderExisted._id}`;
+    notes = 'Cash on Delivery';
   }
 
   const paidDate = moment().format('YYYY-MM-DD HH:mm:ss');
@@ -52,16 +53,16 @@ export const createPaymentController = async (req, res) => {
     paidDate,
   });
 
-  if (paymentMethod === PAYMENT_METHOD.COD) {
+  if (newPayment.paymentMethod === PAYMENT_METHOD.COD) {
     await updateOrderByIdService(orderExisted._id, {
-      status: ORDERS_STATUS.SHIPPED,
+      status: ORDERS_STATUS.SHIPPING,
       paymentId: newPayment._id,
     });
   }
 
   return {
     statusCode: HttpStatus.CREATED,
-    message: 'Create order successfully',
+    message: 'Create payment successfully',
     data: {
       newPayment,
       paymentUrl,
@@ -80,7 +81,8 @@ export const returnPaymentMomoController = async (req, res) => {
       }
 
       await updateOrderByIdService(orderId, {
-        status: ORDERS_STATUS.PAID,
+        isPath: true,
+        status: ORDERS_STATUS.SHIPPING,
         paymentId: paymentExited._id,
       });
 
@@ -124,7 +126,8 @@ export const returnPaymentVnPayController = async (req, res) => {
       }
 
       await updateOrderByIdService(vnp_TxnRef, {
-        status: ORDERS_STATUS.PAID,
+        isPath: true,
+        status: ORDERS_STATUS.SHIPPING,
         paymentId: paymentExited._id,
       });
       return {

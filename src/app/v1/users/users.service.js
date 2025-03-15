@@ -3,7 +3,9 @@ import { UserModel } from '#models/user.model';
 import { removeImageByPublicIdService, uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
 import { REGEX_PATTERNS } from '#core/constant';
 import { genSalt, genSaltSync, hashSync } from 'bcrypt';
-import { SELECTED_FIELDS, USER_STATUS } from '#src/app/v1/users/users.constant';
+import { USER_STATUS } from '#src/app/v1/users/users.constant';
+
+const SELECTED_FIELDS = '_id avatar name email phone password type gender createdAt updatedAt';
 
 /**
  * Create user instance

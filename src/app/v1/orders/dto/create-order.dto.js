@@ -8,8 +8,6 @@ import mongoose from 'mongoose';
  *  + provinceId
  *  + districtId
  *  + wardId
- * Bỏ shipping_fee
- * Sửa orderDetails -> productVariants (mảng id của product variant). Ex: [{variantId: "cascas", quantity: 2}]
  *
  *
  * Customer:
@@ -32,7 +30,12 @@ export const createOrderDto = Joi.object({
       }
       return value;
     }),
-  shippingAddress: Joi.string().required(),
+  shippingAddressId: Joi.string().custom((value, helpers) => {
+    if (!mongoose.Types.ObjectId.isValid(value)) {
+      return helpers.error('any.invalid');
+    }
+    return value;
+  }),
   voucherId: Joi.string()
     .custom((value, helpers) => {
       if (!mongoose.Types.ObjectId.isValid(value)) {
