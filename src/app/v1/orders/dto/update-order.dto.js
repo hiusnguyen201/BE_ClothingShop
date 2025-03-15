@@ -1,5 +1,6 @@
 import Joi from 'joi';
 import { REGEX_PATTERNS } from '#src/core/constant';
+import mongoose from 'mongoose';
 
 export const updateOrderDto = Joi.object({
   customerEmail: Joi.string().email(),
@@ -10,5 +11,4 @@ export const updateOrderDto = Joi.object({
     }
     return value;
   }),
-  shippingAddress: Joi.string(),
 });

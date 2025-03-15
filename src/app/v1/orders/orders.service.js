@@ -1,7 +1,5 @@
 import { OrderModel } from '#src/app/v1/orders/schema/orders.schema';
 
-const SELECTED_FIELDS = 'createdAt updatedAt';
-
 export async function createOrderService(data, session) {
   return await OrderModel.create(data);
 }

@@ -19,7 +19,7 @@ import {
   getShippingAddressByIdService,
   getShippingAddressByUserIdService,
 } from '#src/app/v1/shipping-address/shipping-address.service';
-import { createGHNOrder } from '#src/modules/GHN/ghn.service';
+import { createGHNOrder, getOrderGhnByClientOrderCode, removeOrderGhn } from '#src/modules/GHN/ghn.service';
 import { USER_TYPE } from '#src/app/v1/users/users.constant';
 import { calculatePagination } from '#src/utils/pagination.util';
 
@@ -90,11 +90,82 @@ export const createOrderController = async (req, res) => {
     }));
 
     // Thêm session
-    await createOrderDetailService(newOrderDetails);
+    await createOrderDetailService(newOrderDetails, session);
 
     return {
       statusCode: HttpStatus.CREATED,
       message: 'Create order successfully',
+      data: { newOrder, calculateOrderDetails },
+    };
+  });
+};
+
+/**
+ *  Tạo order từ customer
+ */
+export const createOrderCustomerController = async (req, res) => {
+  return TransactionalServiceWrapper.execute(async (session) => {
+    const { cartIds, voucherId, shippingAddressId } = req.body;
+
+    const customerExisted = await getUserByIdService(req.user._id);
+
+    if (!cartIds || cartIds.length === 0) {
+      throw new NotFoundException('Product not found');
+    }
+    const calculateOrderDetails = await calculateCartTotal(cartIds, voucherId);
+
+    const shippingAddressExisted = await getShippingAddressByIdService(shippingAddressId);
+
+    if (!shippingAddressExisted) {
+      throw new NotFoundException('Address not found');
+    }
+
+    const currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
+    const code = randomCodeOrder(14);
+
+    const createOrderRequirement = {
+      code,
+      provinceName: shippingAddressExisted.province,
+      districtName: shippingAddressExisted.district,
+      wardName: shippingAddressExisted.ward,
+      address: shippingAddressExisted.address,
+      customerId: customerExisted._id,
+      customerName: req.body.customerName || customerExisted.name,
+      customerEmail: req.body.customerEmail || customerExisted.email,
+      customerPhone: req.body.customerPhone || customerExisted.phone,
+      shippingAddressId: shippingAddressExisted._id,
+      quantity: calculateOrderDetails.totalQuantity,
+      subTotal: calculateOrderDetails.subTotal,
+      shippingFee: 0,
+      orderDate: currentDate,
+      total: calculateOrderDetails.total,
+      isPath: false,
+      status: ORDERS_STATUS.PENDING,
+      voucherId: voucherId || null,
+    };
+
+    const newOrder = await createOrderService(createOrderRequirement, session);
+
+    const userAddress = await getShippingAddressByUserIdService(customerExisted._id);
+
+    const newOrderGhn = await createGHNOrder(newOrder, customerExisted, userAddress, calculateOrderDetails);
+
+    if (!newOrderGhn) {
+      throw new BadRequestException('Can not create order by GHN');
+    }
+
+    const newOrderDetails = calculateOrderDetails.processedVariants.map((item) => ({
+      ...item,
+      totalPrice: calculateOrderDetails.total,
+      orderId: newOrder._id,
+    }));
+
+    // Thêm session
+    await createOrderDetailService(newOrderDetails, session);
+
+    return {
+      statusCode: HttpStatus.CREATED,
+      message: 'Create order customer successfully',
       data: { newOrder, calculateOrderDetails },
     };
   });
@@ -151,20 +222,20 @@ export const getAllOrdersByUserController = async (req, res) => {
 };
 
 export const getOrderByIdController = async (req, res) => {
-  const existOrder = await getOrderByIdService(req.params.id);
-  if (!existOrder) {
+  const orderExisted = await getOrderByIdService(req.params.id);
+  if (!orderExisted) {
     throw new NotFoundException('Order not found');
   }
   return {
     statusCode: HttpStatus.OK,
     message: 'Get one order successfully',
-    data: existOrder,
+    data: orderExisted,
   };
 };
 
 export const updateOrderByIdController = async (req, res) => {
-  const existOrder = await getOrderByIdService(req.params.id);
-  if (!existOrder) {
+  const orderExisted = await getOrderByIdService(req.params.id);
+  if (!orderExisted) {
     throw new NotFoundException('Order not found');
   }
 
@@ -177,10 +248,18 @@ export const updateOrderByIdController = async (req, res) => {
 };
 
 export const removeOrderByIdController = async (req, res) => {
-  const existOrder = await getOrderByIdService(req.params.id);
-  if (!existOrder) {
+  const orderExisted = await getOrderByIdService(req.params.id);
+  if (!orderExisted) {
     throw new NotFoundException('Order not found');
   }
+
+  const orderGhn = await getOrderGhnByClientOrderCode(orderExisted.code);
+  if (!orderGhn) {
+    throw new NotFoundException('Order not found');
+  }
+
+  await removeOrderGhn(orderGhn.order_code);
+
   await removeOrderByIdService(req.params.id);
   return {
     statusCode: HttpStatus.OK,

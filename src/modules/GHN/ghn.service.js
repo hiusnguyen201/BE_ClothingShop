@@ -1,6 +1,5 @@
 import axios from 'axios';
 import moment from 'moment-timezone';
-
 const ghnAPI = axios.create({
   baseURL: process.env.GHN_API_URL,
   headers: {
@@ -9,45 +8,7 @@ const ghnAPI = axios.create({
     'Content-Type': 'application/json',
   },
 });
-
-// Tính Phí giao hàng
-export const getCalculateShippingFee = async (
-  fromDistrictId,
-  toDistrictId,
-  fromWardCode,
-  toWardCode,
-  weight,
-  length,
-  width,
-  height,
-) => {
-  const response = await ghnAPI.post('/v2/shipping-order/fee', {
-    service_type_id: 2,
-    from_district_id: 1442,
-    from_ward_code: '21211',
-    to_district_id: 1820,
-    to_ward_code: '030712',
-    length: 10,
-    width: 20,
-    height: 15,
-    weight: 10,
-    insurance_value: 0,
-    coupon: null,
-    items: [
-      {
-        name: 'TEST1',
-        quantity: 1,
-        length: 200,
-        width: 200,
-        height: 200,
-        weight: 1000,
-      },
-    ],
-  });
-  return response.data.data;
-};
-
-// Tạo đơn hàng GHN
+// create order GHN
 export const createGHNOrder = async (order, user, userAddress, calculateOrderDetails) => {
   const pickupTime = moment().unix();
   const response = await ghnAPI.post(`/v2/shipping-order/create`, {
@@ -99,19 +60,34 @@ export const createGHNOrder = async (order, user, userAddress, calculateOrderDet
   return response.data;
 };
 
-// Lấy danh sách tỉnh/thành phố
+// get details by client_oder_code
+export const getOrderGhnByClientOrderCode = async (clientOrderCode) => {
+  const response = await ghnAPI.post('/v2/shipping-order/detail-by-client-code', {
+    client_order_code: clientOrderCode,
+  });
+  return response.data.data;
+};
+
+// remove order GHN
+export const removeOrderGhn = async (orderCode) => {
+  console.log(orderCode);
+  const response = await ghnAPI.post('/v2/switch-status/cancel', { order_codes: [orderCode] });
+  return response.data.data;
+};
+
+// get provinces
 export const getProvinces = async () => {
   const response = await ghnAPI.get('/master-data/province');
   return response.data.data;
 };
 
-// Lấy danh sách quận/huyện theo tỉnh
+// get districts
 export const getDistricts = async (provinceId) => {
   const response = await ghnAPI.get('/master-data/district', { params: { province_id: provinceId } });
   return response.data.data;
 };
 
-// Lấy danh sách phường/xã theo quận
+// get wards
 export const getWards = async (districtId) => {
   const response = await ghnAPI.get('/master-data/ward', { params: { district_id: districtId } });
   return response.data.data;
