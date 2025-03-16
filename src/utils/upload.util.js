@@ -1,4 +1,4 @@
-import { MAX_UPLOAD_FILE_SIZE } from '#core/constant';
+import { MAX_UPLOAD_FILE_SIZE } from '#src/core/constant';
 import { BadRequestException } from '#src/core/exception/http-exception';
 import multer from 'multer';
 

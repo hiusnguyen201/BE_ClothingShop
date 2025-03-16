@@ -8,10 +8,10 @@ import {
   activatePermissionByIdService,
   deactivatePermissionByIdService,
 } from '#src/app/v1/permissions/permissions.service';
-import { ConflictException, NotFoundException, PreconditionFailedException } from '#core/exception/http-exception';
-import { calculatePagination } from '#utils/pagination.util';
+import { ConflictException, NotFoundException, PreconditionFailedException } from '#src/core/exception/http-exception';
+import { calculatePagination } from '#src/utils/pagination.util';
 import { ApiResponse } from '#src/core/api/ApiResponse';
-import { Dto } from '#src/core/dto/Dto';
+import { ModelDto } from '#src/core/dto/ModelDto';
 import { PermissionDto } from '#src/app/v1/permissions/dtos/permission.dto';
 
 export const getAllPermissionsController = async (req) => {
@@ -36,7 +36,7 @@ export const getAllPermissionsController = async (req) => {
     limit: metaData.limit,
   });
 
-  const permissionDto = Dto.newList(PermissionDto, permissions);
+  const permissionDto = ModelDto.newList(PermissionDto, permissions);
   return ApiResponse.success({ meta: metaData, list: permissionDto }, 'Get all permissions successfully');
 };
 
@@ -47,7 +47,7 @@ export const getPermissionByIdController = async (req) => {
     throw new NotFoundException('Permission not found');
   }
 
-  const permissionDto = Dto.new(PermissionDto, permission);
+  const permissionDto = ModelDto.new(PermissionDto, permission);
   return ApiResponse.success(permissionDto, 'Get one permission successfully');
 };
 
@@ -68,7 +68,7 @@ export const updatePermissionByIdController = async (req) => {
 
   const updatedPermission = await updatePermissionInfoByIdService(id, req.body);
 
-  const permissionDto = Dto.new(PermissionDto, updatedPermission);
+  const permissionDto = ModelDto.new(PermissionDto, updatedPermission);
   return ApiResponse.success(permissionDto, 'Update permission successfully');
 };
 
@@ -85,7 +85,7 @@ export const removePermissionByIdController = async (req) => {
 
   const removedPermission = await removePermissionByIdService(id);
 
-  const permissionDto = Dto.new(PermissionDto, removedPermission);
+  const permissionDto = ModelDto.new(PermissionDto, removedPermission);
   return ApiResponse.success(permissionDto, 'Remove permission successfully');
 };
 

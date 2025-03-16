@@ -7,17 +7,24 @@ const options = {
   stripUnknown: true, //  when true, ignores unknown keys with a function value. Defaults to false.
 };
 
-export class Dto {
+export class ModelDto {
   static new(schema, data) {
     if (data && data instanceof mongoose.Document) {
       data = data.toObject();
     }
+    // Convert ObjectId to string
+    data._id = data._id.toString();
 
-    const { error, value } = schema.validate(data, options);
+    let { error, value } = schema.validate(data, options);
     if (error) {
       const message = error.details.map((item) => item.message);
       throw new BadRequestException(`Entity validation error`, message);
     }
+
+    // Convert _id to id
+    value = { id: value._id, ...value };
+    delete value._id;
+
     return value;
   }
 

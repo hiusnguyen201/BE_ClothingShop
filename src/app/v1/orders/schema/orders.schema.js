@@ -75,13 +75,7 @@ export const orderSchema = new Schema(
     status: {
       type: String,
       required: true,
-      enum: [
-        ORDERS_STATUS.PENDING,
-        ORDERS_STATUS.PAID,
-        ORDERS_STATUS.SHIPPING,
-        ORDERS_STATUS.DELIVERED,
-        ORDERS_STATUS.CANCELLED,
-      ],
+      enum: [ORDERS_STATUS.PENDING, ORDERS_STATUS.SHIPPING, ORDERS_STATUS.DELIVERED, ORDERS_STATUS.CANCELLED],
       default: ORDERS_STATUS.PENDING,
     },
 

@@ -1,6 +1,6 @@
 import moment from 'moment-timezone';
-import { UserOtpModel } from '#models/user-otp.model';
-import { generateNumericOTP } from '#utils/string.util';
+import { UserOtpModel } from '#src/models/user-otp.model';
+import { generateNumericOTP } from '#src/utils/string.util';
 
 /**
  * Create userOtp
@@ -8,21 +8,22 @@ import { generateNumericOTP } from '#utils/string.util';
  * @returns
  */
 export async function createUserOtpService(userId) {
-  return await UserOtpModel.create({
-    otp: generateNumericOTP(),
-    expireDate: moment().valueOf() + 60 * 1000 * (+process.env.OTP_EXPIRES || 5),
-    resendDate: moment().valueOf() + 60 * 1000 * (+process.env.RESEND_OTP_TIME || 2),
+  const otpCode = generateNumericOTP();
+  return UserOtpModel.create({
+    otp: otpCode,
     user: userId,
+    expireDate: moment().valueOf() + 60 * 1000 * +process.env.OTP_TTL_IN_MINUTES,
+    resendDate: moment().valueOf() + 60 * 1000 * +process.env.RESEND_OTP_AFTER_MINUTES,
   });
 }
 
 /**
- * Get userOtp by otp and userId
+ * Get valid userOtp by otp and userId
  * @param {*} otp
  * @param {*} userId
  * @returns
  */
-export async function getUserOtpByOtpAndUserIdService(otp, userId) {
+export async function getValidUserOtpInUserService(userId, otp) {
   return UserOtpModel.findOne({
     user: userId,
     otp,
@@ -30,10 +31,20 @@ export async function getUserOtpByOtpAndUserIdService(otp, userId) {
   }).lean();
 }
 
-export async function getCurrentUserOtpService(userId) {
-  return UserOtpModel.findOne({ user: userId }).lean();
+/**
+ * Check time left to resend OTP
+ * @param {*} otp
+ * @param {*} userId
+ * @returns
+ */
+export async function checkTimeLeftToResendOTPService(userId) {
+  const userOtp = await UserOtpModel.findOne({
+    user: userId,
+    resendDate: { $lt: moment().valueOf() },
+  }).lean();
+  return !userOtp ? 0 : moment(userOtp.resendDate).diff(moment(), 'seconds');
 }
 
-export async function removeUserOtpById(id) {
-  return UserOtpModel.findByIdAndDelete(id).lean();
+export async function removeUserOtpsInUserService(userId) {
+  return UserOtpModel.deleteMany({ user: userId });
 }

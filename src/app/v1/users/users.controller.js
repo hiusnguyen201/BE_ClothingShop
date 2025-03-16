@@ -8,15 +8,15 @@ import {
   updateUserInfoByIdService,
   countAllUsersService,
   saveUserService,
-} from '#app/v1/users/users.service';
-import { getRoleByIdService } from '#app/v1/roles/roles.service';
-import { sendPasswordService } from '#modules/mailer/mailer.service';
-import { ConflictException, NotFoundException } from '#core/exception/http-exception';
-import { randomStr } from '#utils/string.util';
+} from '#src/app/v1/users/users.service';
+import { getRoleByIdService } from '#src/app/v1/roles/roles.service';
+import { sendPasswordService } from '#src/modules/mailer/mailer.service';
+import { ConflictException, NotFoundException } from '#src/core/exception/http-exception';
+import { randomStr } from '#src/utils/string.util';
 import { USER_TYPE } from '#src/app/v1/users/users.constant';
-import { calculatePagination } from '#utils/pagination.util';
+import { calculatePagination } from '#src/utils/pagination.util';
 import { ApiResponse } from '#src/core/api/ApiResponse';
-import { Dto } from '#src/core/dto/Dto';
+import { ModelDto } from '#src/core/dto/ModelDto';
 import { UserDto } from '#src/app/v1/users/dtos/user.dto';
 
 export const createUserController = async (req) => {
@@ -46,7 +46,7 @@ export const createUserController = async (req) => {
   // Send password to mail for user
   sendPasswordService(email, password);
 
-  const userDto = Dto.new(UserDto, user);
+  const userDto = ModelDto.new(UserDto, user);
   return ApiResponse.success(userDto);
 };
 
@@ -67,7 +67,7 @@ export const getAllUsersController = async (req) => {
     limit: metaData.limit,
   });
 
-  const usersDto = Dto.newList(UserDto, users);
+  const usersDto = ModelDto.newList(UserDto, users);
   return ApiResponse.success({ meta: metaData, list: usersDto });
 };
 
@@ -78,7 +78,7 @@ export const getUserByIdController = async (req) => {
     throw new NotFoundException('User not found');
   }
 
-  const userDto = Dto.new(UserDto, user);
+  const userDto = ModelDto.new(UserDto, user);
   return ApiResponse.success(userDto);
 };
 
@@ -107,7 +107,7 @@ export const updateUserByIdController = async (req) => {
 
   const updatedUser = await updateUserInfoByIdService(id, req.body);
 
-  const userDto = Dto.new(UserDto, updatedUser);
+  const userDto = ModelDto.new(UserDto, updatedUser);
   return ApiResponse.success(userDto);
 };
 
@@ -121,7 +121,7 @@ export const removeUserByIdController = async (req) => {
 
   const removedUser = await removeUserByIdService(id);
 
-  const userDto = Dto.new(UserDto, removedUser);
+  const userDto = ModelDto.new(UserDto, removedUser);
   return ApiResponse.success(userDto);
 };
 

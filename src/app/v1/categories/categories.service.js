@@ -1,8 +1,7 @@
 import { isValidObjectId } from 'mongoose';
-import { CategoryModel } from '#models/category.model';
-import { removeImageByPublicIdService, uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
-import { REGEX_PATTERNS } from '#core/constant';
-import { makeSlug } from '#utils/string.util';
+import { CategoryModel } from '#src/models/category.model';
+import { REGEX_PATTERNS } from '#src/core/constant';
+import { makeSlug } from '#src/utils/string.util';
 
 /**
  * Create category instance
@@ -70,31 +69,6 @@ export async function updateCategoryInfoByIdService(id, data) {
   return CategoryModel.findByIdAndUpdate(id, data, {
     new: true,
   }).lean();
-}
-
-/**
- * Update image category by id
- * @param {*} id
- * @param {*} file
- * @returns
- */
-export async function updateCategoryImageByIdService(id, file, currentImage) {
-  if (currentImage) {
-    removeImageByPublicIdService(currentImage);
-  }
-
-  const result = await uploadImageBufferService({
-    file,
-    folderName: 'categories-image',
-  });
-
-  return CategoryModel.findByIdAndUpdate(
-    id,
-    {
-      image: result.public_id,
-    },
-    { new: true },
-  ).lean();
 }
 
 /**

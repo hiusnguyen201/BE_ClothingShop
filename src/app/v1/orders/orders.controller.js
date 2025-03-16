@@ -30,17 +30,34 @@ export const createOrderController = async (req, res) => {
   return TransactionalServiceWrapper.execute(async (session) => {
     const { productVariantIds, customerId, voucherId, shippingAddressId } = req.body;
 
-    const customerExisted = await getUserByIdService(customerId);
+    const customerExisted = await getUserByIdService(customerId); // getCustomerByIdService
 
     if (!customerExisted || customerExisted.type !== USER_TYPE.CUSTOMER) {
       throw new NotFoundException('User not found');
     }
 
+    // Saler (Lấy địa chỉ lấy hàng ở bảng settings)
+    /**
+     * [
+     *   {
+     *      "group": "company",
+     *      "key": "info",
+     *      "value": "{'name': "Clothing shop", "email": "clothingShop@gmail.com", "address": "Địa chỉ của công ty"}"
+     *    },
+     *   {
+     *     "group": "interface",
+     *     "key": "banner",
+     *     "value": "['Địa chỉ của hình ảnh']"
+     *   }
+     * ]
+     */
     const userExisted = await getUserByIdService(req.user._id);
 
     if (!productVariantIds || productVariantIds.length === 0) {
       throw new NotFoundException('Product not found');
     }
+    //  Check [] product variant
+    //  Hàm calculate ở service
     const calculateOrderDetails = await calculateCartTotal(productVariantIds, voucherId);
 
     const shippingAddressExisted = await getShippingAddressByIdService(shippingAddressId);

@@ -1,4 +1,4 @@
-import SoftDelete from '#core/plugins/soft-delete.plugin';
+import SoftDelete from '#src/core/plugins/soft-delete.plugin';
 import mongoose from 'mongoose';
 const { Schema } = mongoose;
 

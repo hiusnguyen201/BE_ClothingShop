@@ -1,9 +1,9 @@
 'use strict';
-import { USER_TYPE } from '#app/v1/users/users.constant';
+import { USER_TYPE } from '#src/app/v1/users/users.constant';
 import { getOrCreateListPermissionServiceWithTransaction } from '#src/app/v1/permissions/permissions.service';
 import { getOrCreateRoleServiceWithTransaction } from '#src/app/v1/roles/roles.service';
 import { getOrCreateUserWithTransaction } from '#src/app/v1/users/users.service';
-import { PERMISSIONS_LIST } from '#database/seeders/permissions-data';
+import { PERMISSIONS_LIST } from '#src/database/seeders/permissions-data';
 import Database from '#src/modules/database/init.database';
 import { TransactionalServiceWrapper } from '#src/core/transaction/TransactionalServiceWrapper';
 import { PERMISSION_MODEL } from '#src/models/permission.model';
@@ -67,6 +67,8 @@ async function runSeeder() {
       },
       session,
     );
+
+    // Settings
   });
 }
 

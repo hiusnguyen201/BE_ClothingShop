@@ -1,8 +1,9 @@
 import { OrderModel } from '#src/app/v1/orders/schema/orders.schema';
 
 export async function createOrderService(data, session) {
-  return await OrderModel.create(data);
+  return await OrderModel.create(data, { session });
 }
+
 export async function getAllOrdersByUserService({ filters, offset = 0, limit = 10, sortOptions }) {
   const orders = await OrderModel.find(filters).skip(offset).limit(limit).sort(sortOptions).lean();
   return orders;

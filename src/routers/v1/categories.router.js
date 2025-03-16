@@ -10,19 +10,19 @@ import {
   isExistCategoryNameController,
   showCategoryByIdController,
   hideCategoryByIdController,
-} from '#app/v1/categories/categories.controller';
-import { createCategoryDto } from '#app/v1/categories/dtos/create-category.dto';
-import { updateCategoryDto } from '#app/v1/categories/dtos/update-category.dto';
-import { checkExistCategoryNameDto } from '#app/v1/categories/dtos/check-exist-category-name.dto';
-import { validateBody, validateFile } from '#core/validations/request.validation';
-import { UploadUtils } from '#utils/upload.util';
-import { ALLOW_IMAGE_MIME_TYPES } from '#core/constant';
-import { isAuthorizedAndHasPermission } from '#middlewares/jwt-auth.middleware';
+} from '#src/app/v1/categories/categories.controller';
+import { CreateCategoryDto } from '#src/app/v1/categories/dtos/create-category.dto';
+import { UpdateCategoryDto } from '#src/app/v1/categories/dtos/update-category.dto';
+import { CheckExistCategoryNameDto } from '#src/app/v1/categories/dtos/check-exist-category-name.dto';
+import { validateBody, validateFile } from '#src/core/validations/request.validation';
+import { UploadUtils } from '#src/utils/upload.util';
+import { ALLOW_IMAGE_MIME_TYPES } from '#src/core/constant';
+import { isAuthorizedAndHasPermission } from '#src/middlewares/jwt-auth.middleware';
 const upload = UploadUtils.config({
   allowedMimeTypes: ALLOW_IMAGE_MIME_TYPES,
 });
 
-router.post('/is-exist-category-name', validateBody(checkExistCategoryNameDto), isExistCategoryNameController);
+router.post('/is-exist-category-name', validateBody(CheckExistCategoryNameDto), isExistCategoryNameController);
 
 router.use([isAuthorizedAndHasPermission]);
 router
@@ -31,13 +31,13 @@ router
   .post(
     '/create-category',
     validateFile(upload.single('image')),
-    validateBody(createCategoryDto),
+    validateBody(CreateCategoryDto),
     createCategoryController,
   )
   .patch(
     '/update-category-by-id/:id',
     validateFile(upload.single('image')),
-    validateBody(updateCategoryDto),
+    validateBody(UpdateCategoryDto),
     updateCategoryByIdController,
   )
   .delete('/remove-category-by-id/:id', removeCategoryByIdController)

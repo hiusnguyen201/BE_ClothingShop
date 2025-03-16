@@ -3,7 +3,7 @@ import {
   ConflictException,
   PreconditionFailedException,
   BadRequestException,
-} from '#core/exception/http-exception';
+} from '#src/core/exception/http-exception';
 import {
   createCategoryService,
   getAllCategoriesService,
@@ -17,13 +17,13 @@ import {
   saveCategoryService,
 } from '#src/app/v1/categories/categories.service';
 import { CategoryDto } from '#src/app/v1/categories/dtos/category.dto';
-import { makeSlug } from '#utils/string.util';
-import { calculatePagination } from '#utils/pagination.util';
+import { makeSlug } from '#src/utils/string.util';
+import { calculatePagination } from '#src/utils/pagination.util';
 import { ApiResponse } from '#src/core/api/ApiResponse';
-import { Dto } from '#src/core/dto/Dto';
+import { ModelDto } from '#src/core/dto/ModelDto';
 import { uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
 
-const MAX_LEVEL_CHILDREN = 2;
+const MAXIMUM_CHILDREN_CATEGORY_LEVEL = 2;
 
 export const createCategoryController = async (req) => {
   let { name, parent, level = 1 } = req.body;
@@ -44,7 +44,7 @@ export const createCategoryController = async (req) => {
     }
 
     const nextCategoryLevel = existParent.level + 1;
-    if (nextCategoryLevel > MAX_LEVEL_CHILDREN) {
+    if (nextCategoryLevel > MAXIMUM_CHILDREN_CATEGORY_LEVEL) {
       throw new BadRequestException('Parent category is reach limit');
     }
     level = nextCategoryLevel;
@@ -63,7 +63,7 @@ export const createCategoryController = async (req) => {
 
   await saveCategoryService(category);
 
-  const categoryDto = Dto.new(CategoryDto, category);
+  const categoryDto = ModelDto.new(CategoryDto, category);
   return ApiResponse.success(categoryDto, 'Create category successfully');
 };
 
@@ -84,7 +84,7 @@ export const getAllCategoriesController = async (req) => {
     limit: metaData.limit,
   });
 
-  const categoriesDto = Dto.newList(CategoryDto, categories);
+  const categoriesDto = ModelDto.newList(CategoryDto, categories);
   return ApiResponse.success(
     {
       meta: metaData,
@@ -101,7 +101,7 @@ export const getCategoryByIdController = async (req) => {
     throw new NotFoundException('Category not found');
   }
 
-  const categoryDto = Dto.newList(CategoryDto, category);
+  const categoryDto = ModelDto.newList(CategoryDto, category);
   return ApiResponse.success(categoryDto, 'Get one category successfully');
 };
 
@@ -128,7 +128,7 @@ export const updateCategoryByIdController = async (req) => {
 
   const updatedCategory = await updateCategoryInfoByIdService(id, req.body);
 
-  const categoryDto = Dto.newList(CategoryDto, updatedCategory);
+  const categoryDto = ModelDto.newList(CategoryDto, updatedCategory);
   return ApiResponse.success(categoryDto, 'Update category successfully');
 };
 
@@ -145,7 +145,7 @@ export const removeCategoryByIdController = async (req) => {
 
   const removedCategory = await removeCategoryByIdService(id);
 
-  const categoryDto = Dto.newList(CategoryDto, removedCategory);
+  const categoryDto = ModelDto.newList(CategoryDto, removedCategory);
   return ApiResponse.success(categoryDto, 'Remove category successfully');
 };
 

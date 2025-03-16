@@ -1,4 +1,4 @@
-import { ConflictException, NotFoundException, PreconditionFailedException } from '#core/exception/http-exception';
+import { ConflictException, NotFoundException, PreconditionFailedException } from '#src/core/exception/http-exception';
 import {
   createRoleService,
   getAllRolesService,
@@ -11,11 +11,11 @@ import {
   deactivateRoleByIdService,
   countAllRolesService,
 } from '#src/app/v1/roles/roles.service';
-import { makeSlug } from '#utils/string.util';
-import { calculatePagination } from '#utils/pagination.util';
+import { makeSlug } from '#src/utils/string.util';
+import { calculatePagination } from '#src/utils/pagination.util';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { RoleDto } from '#src/app/v1/roles/dtos/role.dto';
-import { Dto } from '#src/core/dto/Dto';
+import { ModelDto } from '#src/core/dto/ModelDto';
 
 export const createRoleController = async (req) => {
   const { name, permissions } = req.body;
@@ -34,7 +34,7 @@ export const createRoleController = async (req) => {
     await updateRolePermissionsByIdService(newRole._id, permissions);
   }
 
-  const roleDto = Dto.new(RoleDto, newRole);
+  const roleDto = ModelDto.new(RoleDto, newRole);
   return ApiResponse.success(roleDto, 'Create role successfully');
 };
 
@@ -55,7 +55,7 @@ export const getAllRolesController = async (req) => {
     limit: metaData.limit,
   });
 
-  const rolesDto = Dto.newList(RoleDto, roles);
+  const rolesDto = ModelDto.newList(RoleDto, roles);
   return ApiResponse.success({ meta: metaData, list: rolesDto }, 'Get all roles successfully');
 };
 
@@ -66,7 +66,7 @@ export const getRoleByIdController = async (req) => {
     throw new NotFoundException('Role not found');
   }
 
-  const roleDto = Dto.newList(RoleDto, role);
+  const roleDto = ModelDto.newList(RoleDto, role);
   return ApiResponse.success(roleDto, 'Get one role successfully');
 };
 
@@ -94,7 +94,7 @@ export const updateRoleByIdController = async (req) => {
     updatedRole = await updateRolePermissionsByIdService(id, permissions);
   }
 
-  const roleDto = Dto.newList(RoleDto, updatedRole);
+  const roleDto = ModelDto.newList(RoleDto, updatedRole);
   return ApiResponse.success(roleDto, 'Update role successfully');
 };
 
@@ -111,7 +111,7 @@ export const removeRoleByIdController = async (req) => {
 
   const removedRole = await removeRoleByIdService(id);
 
-  const roleDto = Dto.newList(RoleDto, removedRole);
+  const roleDto = ModelDto.newList(RoleDto, removedRole);
   return ApiResponse.success(roleDto, 'Remove role successfully');
 };
 

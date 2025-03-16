@@ -1,7 +1,7 @@
 import Joi from 'joi';
 
 export const UserDto = Joi.object({
-  _id: Joi.objectId(),
+  _id: Joi.string(),
   avatar: Joi.string().allow(null),
   name: Joi.string().required(),
   email: Joi.string().required(),

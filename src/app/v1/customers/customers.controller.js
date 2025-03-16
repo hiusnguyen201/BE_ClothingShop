@@ -1,6 +1,5 @@
-import { NotFoundException, ConflictException } from '#core/exception/http-exception';
+import { NotFoundException, ConflictException } from '#src/core/exception/http-exception';
 import {
-  updateUserAvatarByIdService,
   checkExistEmailService,
   createUserService,
   getUserByIdService,
@@ -11,13 +10,12 @@ import {
   saveUserService,
 } from '#src/app/v1/users/users.service';
 import { USER_TYPE } from '#src/app/v1/users/users.constant';
-import { randomStr } from '#utils/string.util';
-import { sendPasswordService } from '#modules/mailer/mailer.service';
-import { calculatePagination } from '#utils/pagination.util';
+import { randomStr } from '#src/utils/string.util';
+import { sendPasswordService } from '#src/modules/mailer/mailer.service';
+import { calculatePagination } from '#src/utils/pagination.util';
 import { ApiResponse } from '#src/core/api/ApiResponse';
-import { Dto } from '#src/core/dto/Dto';
+import { ModelDto } from '#src/core/dto/ModelDto';
 import { CustomerDto } from '#src/app/v1/customers/dtos/customer.dto';
-import { uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
 
 export const createCustomerController = async (req) => {
   const { email } = req.body;
@@ -33,15 +31,10 @@ export const createCustomerController = async (req) => {
     type: USER_TYPE.CUSTOMER,
   });
 
-  if (req.file) {
-    const result = await uploadImageBufferService({ buffer: req.file.buffer, folderName: 'avatars' });
-    customer.avatar = result.url;
-  }
-
   await saveUserService(customer);
   sendPasswordService(email, password);
 
-  const customersDto = Dto.new(CustomerDto, customer);
+  const customersDto = ModelDto.new(CustomerDto, customer);
   return ApiResponse.success(customersDto, 'Create customer successfully');
 };
 
@@ -62,7 +55,7 @@ export const getAllCustomersController = async (req) => {
     limit: metaData.limit,
   });
 
-  const customersDto = Dto.newList(CustomerDto, customers);
+  const customersDto = ModelDto.newList(CustomerDto, customers);
   return ApiResponse.success({ meta: metaData, list: customersDto }, 'Get all customers successfully');
 };
 
@@ -73,7 +66,7 @@ export const getCustomerByIdController = async (req) => {
     throw new NotFoundException('Customer not found');
   }
 
-  const customerDto = Dto.new(CustomerDto, customer);
+  const customerDto = ModelDto.new(CustomerDto, customer);
   return ApiResponse.success(customerDto, 'Get customer successfully');
 };
 
@@ -92,13 +85,9 @@ export const updateCustomerByIdController = async (req) => {
     }
   }
 
-  let updatedCustomer = await updateUserInfoByIdService(id, req.body);
+  const updatedCustomer = await updateUserInfoByIdService(id, req.body);
 
-  if (req.file) {
-    updatedCustomer = await updateUserAvatarByIdService(id, req.file, updatedCustomer?.avatar);
-  }
-
-  const customerDto = Dto.new(CustomerDto, updatedCustomer);
+  const customerDto = ModelDto.new(CustomerDto, updatedCustomer);
   return ApiResponse.success(customerDto, 'Update customer successfully');
 };
 
@@ -111,6 +100,6 @@ export const removeCustomerByIdController = async (req) => {
 
   const removedCustomer = await removeUserByIdService(id);
 
-  const customerDto = Dto.new(CustomerDto, removedCustomer);
+  const customerDto = ModelDto.new(CustomerDto, removedCustomer);
   return ApiResponse.success(customerDto, 'Remove customer successfully');
 };

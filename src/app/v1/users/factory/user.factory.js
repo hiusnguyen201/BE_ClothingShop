@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
-import { USER_TYPE } from '#app/v1/users/users.constant';
-import { createUserService } from '#app/v1/users/users.service';
+import { USER_TYPE } from '#src/app/v1/users/users.constant';
+import { createUserService } from '#src/app/v1/users/users.service';
 
 /** @type {import('#src/app/v1/users/models/user.model')} */
 

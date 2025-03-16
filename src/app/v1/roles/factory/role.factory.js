@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { createRoleService } from '#src/app/v1/roles/roles.service';
-import { makeSlug } from '#utils/string.util';
+import { makeSlug } from '#src/utils/string.util';
 
 /** @type {import('#src/models/role.model')} */
 

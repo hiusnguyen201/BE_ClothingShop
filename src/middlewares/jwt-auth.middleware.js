@@ -1,7 +1,8 @@
-import { REGEX_PATTERNS } from '#core/constant';
-import { BadRequestException, ForbiddenException, UnauthorizedException } from '#core/exception/http-exception';
-import { verifyToken } from '#utils/jwt.util';
+import { REGEX_PATTERNS } from '#src/core/constant';
+import { BadRequestException, ForbiddenException, UnauthorizedException } from '#src/core/exception/http-exception';
 import { checkUserHasPermissionByMethodAndEndpointService, getUserByIdService } from '#src/app/v1/users/users.service';
+import { USER_TYPE } from '#src/app/v1/users/users.constant';
+import { verifyTokenService } from '#src/app/v1/auth/auth.service';
 
 async function authorized(req, res, next) {
   let token = req.headers['x-access-token'] || req.headers['authorization'];
@@ -16,17 +17,18 @@ async function authorized(req, res, next) {
 
   token = token.split(' ')[1];
 
-  try {
-    const decoded = verifyToken(token);
-    if (!decoded || !(await getUserByIdService(decoded._id))) {
-      return next(new UnauthorizedException('Invalid or expired token'));
-    }
-
-    req.user = decoded;
-    next();
-  } catch (e) {
+  const decoded = await verifyTokenService(token);
+  if (!decoded) {
     return next(new UnauthorizedException('Invalid or expired token'));
   }
+
+  const user = await getUserByIdService(decoded.id);
+  if (!user || !user.isVerified) {
+    return next(new ForbiddenException('Unverified user'));
+  }
+
+  req.user = decoded;
+  next();
 }
 
 async function checkPermission(req, res, next) {
@@ -40,7 +42,7 @@ async function checkPermission(req, res, next) {
     endpoint = endpoint.replace(value, `:${key}`);
   });
 
-  const hasPermission = await checkUserHasPermissionByMethodAndEndpointService(req.user._id, {
+  const hasPermission = await checkUserHasPermissionByMethodAndEndpointService(req.user.id, {
     method: req.method,
     endpoint,
   });
@@ -48,5 +50,18 @@ async function checkPermission(req, res, next) {
   return hasPermission ? next() : next(new ForbiddenException("Don't have permission to access this resource"));
 }
 
+async function checkCustomer(req, res, next) {
+  if (!req?.user) {
+    return next(new UnauthorizedException('User not logged in'));
+  }
+
+  console.log(req?.user);
+
+  return req.user?.type === USER_TYPE.CUSTOMER
+    ? next()
+    : next(new ForbiddenException("Don't have permission to access this resource"));
+}
+
 export const isAuthorized = [authorized];
+export const isAuthorizedAndIsCustomer = [authorized, checkCustomer];
 export const isAuthorizedAndHasPermission = [authorized, checkPermission];

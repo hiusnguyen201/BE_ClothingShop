@@ -1,12 +1,12 @@
 import Joi from 'joi';
-import { replaceMultiSpacesToSingleSpace } from '#utils/string.util';
+import { replaceMultiSpacesToSingleSpace } from '#src/utils/string.util';
 
-export const createCategoryDto = Joi.object({
+export const CreateCategoryDto = Joi.object({
   name: Joi.string()
     .min(3)
     .max(120)
     .required()
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
-  parent: Joi.objectId(),
+  parent: Joi.string(),
   isHide: Joi.boolean().required(),
 });

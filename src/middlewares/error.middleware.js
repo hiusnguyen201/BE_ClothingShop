@@ -1,4 +1,4 @@
-import { NotFoundException } from '#core/exception/http-exception';
+import { NotFoundException } from '#src/core/exception/http-exception';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import chalk from 'chalk';
 import HttpStatus from 'http-status-codes';

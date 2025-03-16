@@ -2,7 +2,7 @@ import {
   BadRequestException,
   PayloadTooLargeException,
   UnsupportedMediaTypeException,
-} from '#core/exception/http-exception';
+} from '#src/core/exception/http-exception';
 
 /**
  * Ref: https://joi.dev/api - any.validate(value, [options])
