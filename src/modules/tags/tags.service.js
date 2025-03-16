@@ -109,10 +109,13 @@ export async function checkExistTagNameService(name, skipId) {
   return Boolean(tag);
 }
 
-export async function getOrCreateTagByName(name) {
+export async function getOrCreateTagByName(name, productId) {
   const tag = await getTagByIdService(name);
   if (!tag) {
-    const newTag = await createTagService(name);
+    const newTag = await createTagService({
+      name,
+      products: productId
+    });
     return newTag;
   }
   return tag;

@@ -1,0 +1,30 @@
+import mongoose from "mongoose";
+const { Schema } = mongoose;
+
+const OPTIONS_MODEL = "options";
+
+const OptionSchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      unique: true
+    },
+
+    // FK
+    option_values: [{
+      type: Schema.Types.ObjectId,
+      ref: "Option_Value"
+    }]
+  },
+  {
+    versionKey: false,
+    timestamps: true,
+    _id: true,
+    id: false,
+    collection: OPTIONS_MODEL,
+  }
+);
+
+const OptionModel = mongoose.model("Option", OptionSchema);
+export { OptionModel };

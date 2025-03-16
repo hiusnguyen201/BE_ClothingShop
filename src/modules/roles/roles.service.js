@@ -9,7 +9,7 @@ import { makeSlug } from "#src/utils/string.util";
 import { REGEX_PATTERNS } from "#src/core/constant";
 
 const SELECTED_FIELDS =
-  "_id icon name slug description isActive createdAt updatedAt";
+  "_id icon name slug description isActive permissions createdAt updatedAt";
 
 /**
  * Create role

@@ -2,26 +2,39 @@ import Joi from "joi";
 import { replaceMultiSpacesToSingleSpace } from "#src/utils/string.util";
 import { PRODUCT_STATUS } from "#src/core/constant";
 
-const createOptionValueDto = Joi.object({
-  name: Joi.string()
+const createVariantValueDto = Joi.object({
+  option: Joi.string()
     .required()
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
-  images: Joi.array()
-    .items(
-      Joi.string()
-        .max(300)
-    )
+  option_value: Joi.string()
+    .required()
+    .custom((value) => replaceMultiSpacesToSingleSpace(value))
 });
 
-const createProductOptionDto = Joi.object({
-  option_name: Joi.string()
-    .max(100)
-    .required(),
-  has_images: Joi.boolean()
-    .required(),
-  values: Joi.array()
+const createProductVariantDto = Joi.object({
+  quantity: Joi.number()
     .required()
-    .items(createOptionValueDto)
+    .min(1),
+  price: Joi.number()
+    .required()
+    .min(1000),
+  sku: Joi.string()
+    .min(3)
+    .max(100)
+    .custom((value) => replaceMultiSpacesToSingleSpace(value)),
+  variant_values: Joi.array()
+    .required()
+    .items(createVariantValueDto)
+    .custom((value, helper) => {
+      const optionIds = [];
+      value.map(item => {
+        if (optionIds.includes(item.option)) {
+          return helper.message("Duplicate option");
+        }
+        optionIds.push(item.option);
+      })
+      return value;
+    })
 });
 
 export const createProductDto = Joi.object({
@@ -30,8 +43,8 @@ export const createProductDto = Joi.object({
     .max(120)
     .required()
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
-  price: Joi.number()
-    .required(),
+  // price: Joi.number()
+  //   .required(),
   short_description: Joi.string()
     .min(3)
     .max(255)
@@ -50,15 +63,8 @@ export const createProductDto = Joi.object({
   sub_category: Joi.string(),
   tags: Joi.array().items(Joi.string()),
 
-  product_options: Joi.array()
+  product_variants: Joi.array()
     .required()
-    .items(createProductOptionDto)
-    .custom((value, helper) => {
-      const count = value.filter(productOption => productOption.hasImages === true).length;
-      if (count > 1) {
-        return helper.message("Only allows 1 option have image");
-      }
-      return value;
-    }),
+    .items(createProductVariantDto)
 });
 

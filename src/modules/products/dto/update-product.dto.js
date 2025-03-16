@@ -2,26 +2,49 @@ import Joi from "joi";
 import { replaceMultiSpacesToSingleSpace } from "#src/utils/string.util";
 import { PRODUCT_STATUS } from "#src/core/constant";
 
-const updateOptionValueDto = Joi.object({
+const createOptionSizeDto = Joi.object({
   name: Joi.string()
-    .min(3)
-    .max(50)
     .required()
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
-  images: Joi.array()
-    .items(Joi.string())
+  quantity: Joi.number()
+    .min(0)
+    .required(),
+  price: Joi.number()
+    .required()
+});
+
+const createProductOptionDto = Joi.object({
+  color: Joi.string()
+    .max(100)
+    .required()
+    .custom((value) => replaceMultiSpacesToSingleSpace(value)),
+  image: Joi.string()
+    .max(300),
+  option_sizes: Joi.array()
+    .required()
+    .items(createOptionSizeDto)
+});
+
+const updateOptionSizeDto = Joi.object({
+  _id: Joi.string()
+    .required(),
+  name: Joi.string()
+    .custom((value) => replaceMultiSpacesToSingleSpace(value)),
+  quantity: Joi.number()
+    .min(0),
+  price: Joi.number()
 });
 
 const updateProductOptionDto = Joi.object({
-  option_name: Joi.string()
-    .min(3)
+  _id: Joi.string()
+    .required(),
+  color: Joi.string()
     .max(100)
-    .required(),
-  hasImages: Joi.boolean()
-    .required(),
-  values: Joi.array()
-    .required()
-    .items(updateOptionValueDto)
+    .custom((value) => replaceMultiSpacesToSingleSpace(value)),
+  image: Joi.string()
+    .max(300),
+  option_sizes: Joi.array()
+    .items(updateOptionSizeDto)
 });
 
 export const updateProductDto = Joi.object({
@@ -46,14 +69,26 @@ export const updateProductDto = Joi.object({
   category: Joi.string(),
   sub_category: Joi.string(),
   tags: Joi.array().items(Joi.string()),
+  tags_to_delete: Joi.array().items(Joi.string()),
 
   product_options: Joi.array()
-    .items(updateProductOptionDto)
-    .custom((value, helper) => {
-      const count = value.filter(productOption => productOption.hasImages === true).length;
-      if (count > 1) {
-        return helper.message("Only allows 1 option have image");
-      }
-      return value;
-    }),
+    .items(createProductOptionDto),
+
+  // update_data: Joi.array()
+  //   .items(Joi.object({
+  //     product_options: Joi.array()
+  //       .items(updateProductOptionDto),
+  //     option_sizes: Joi.array()
+  //       .items(updateOptionSizeDto)
+  //   }))
+  update_product_options: Joi.array()
+    .items(updateProductOptionDto),
+  detele_product_options: Joi.array()
+    .items(Joi.string()),
+  delete_option_sizes: Joi.array()
+    .items(Joi.object({
+      product_option_id: Joi.string(),
+      option_sizes: Joi.array()
+        .items(Joi.string())
+    })),
 });

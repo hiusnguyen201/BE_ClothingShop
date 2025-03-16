@@ -1,8 +1,8 @@
 import { isValidObjectId } from "mongoose";
-import { ProductVariantModel } from "#src/modules/product_variants/schemas/product_variants.schema";
+import { ProductVariantModel } from "#src/modules/product-variants/schemas/product-variants.schema";
 
 const SELECTED_FIELDS =
-  "_id available quantity price option1 option2 option3 sold createdAt updatedAt";
+  "_id quantity price sku image sold createdAt updatedAt";
 
 /**
  * Create product variant
@@ -32,14 +32,14 @@ export async function getAllProductVariantsService({
     .sort({ createdAt: -1 });
 }
 
-/**
- * Count all products variants
- * @param {*} filters
- * @returns
- */
-export async function countAllProductVariantsService(filters) {
-  return ProductVariantModel.countDocuments(filters);
-}
+// /**
+//  * Count all products variants
+//  * @param {*} filters
+//  * @returns
+//  */
+// export async function countAllProductVariantsService(filters) {
+//   return ProductVariantModel.countDocuments(filters);
+// }
 
 /**
  * Find one product variant by id
@@ -82,4 +82,18 @@ export async function updateProductVariantByIdService(id, data) {
  */
 export async function removeProductVariantByIdService(id) {
   return await ProductVariantModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
+}
+
+/**
+ * Update product variant value by id
+ * @param {*} id
+ * @param {*} data
+ * @returns
+ */
+export async function updateProductVariantValueByIdService(id, data) {
+  return await ProductVariantModel.findByIdAndUpdate(id, {
+    $push: { variant_values: data }
+  }, {
+    new: true,
+  }).select(SELECTED_FIELDS);
 }

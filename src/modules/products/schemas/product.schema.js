@@ -15,10 +15,10 @@ const productSchema = new Schema(
       required: true,
       length: 200,
     },
-    price: {
-      type: Number,
-      required: true,
-    },
+    // price: {
+    //   type: Number,
+    //   required: true,
+    // },
     short_description: {
       type: String,
       length: 255,
@@ -70,9 +70,9 @@ const productSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Tag"
     }],
-    product_options: [{
+    product_variants: [{
       type: Schema.Types.ObjectId,
-      ref: "Product_Option"
+      ref: "Product_Variant"
     }]
   },
   {
