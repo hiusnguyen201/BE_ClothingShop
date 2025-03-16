@@ -1,4 +1,4 @@
-import { ConflictException, NotFoundException, PreconditionFailedException } from '#core/exception/http-exception';
+import { ConflictException, NotFoundException, PreconditionFailedException } from '#src/core/exception/http-exception';
 
 import {
   createVoucherService,
@@ -9,9 +9,9 @@ import {
   checkExistVoucherCodeService,
   countAllVouchersService,
 } from '#src/app/v1/vouchers/vouchers.service';
-import { calculatePagination } from '#utils/pagination.util';
+import { calculatePagination } from '#src/utils/pagination.util';
 import { ApiResponse } from '#src/core/api/ApiResponse';
-import { Dto } from '#src/core/dto/Dto';
+import { ModelDto } from '#src/core/dto/ModelDto';
 import { VoucherDto } from '#src/app/v1/vouchers/dtos/voucher.dto';
 
 export const createVoucherController = async (req) => {
@@ -23,7 +23,7 @@ export const createVoucherController = async (req) => {
 
   const newVoucher = await createVoucherService(req.body);
 
-  const voucherDto = Dto.new(VoucherDto, newVoucher);
+  const voucherDto = ModelDto.new(VoucherDto, newVoucher);
   return ApiResponse.success(voucherDto, 'Create voucher successfully');
 };
 
@@ -43,7 +43,7 @@ export const getAllVouchersController = async (req) => {
     limit: metaData.limit,
   });
 
-  const vouchersDto = Dto.newList(VoucherDto, vouchers);
+  const vouchersDto = ModelDto.newList(VoucherDto, vouchers);
   return ApiResponse.success(
     {
       meta: metaData,
@@ -60,7 +60,7 @@ export const getVoucherByIdController = async (req) => {
     throw new ConflictException('Voucher code already exist');
   }
 
-  const voucherDto = Dto.new(VoucherDto, voucher);
+  const voucherDto = ModelDto.new(VoucherDto, voucher);
   return ApiResponse.success(voucherDto, 'Get one voucher successfully');
 };
 
@@ -77,7 +77,7 @@ export const updateVoucherByIdController = async (req) => {
   }
   const updatedVoucher = await updateVoucherByIdService(id, req.body);
 
-  const voucherDto = Dto.new(VoucherDto, updatedVoucher);
+  const voucherDto = ModelDto.new(VoucherDto, updatedVoucher);
   return ApiResponse.success(voucherDto, 'Update voucher successfully');
 };
 
@@ -90,7 +90,7 @@ export const removeVoucherByIdController = async (req) => {
 
   const removeVoucher = await removeVoucherByIdService(id);
 
-  const voucherDto = Dto.new(VoucherDto, removeVoucher);
+  const voucherDto = ModelDto.new(VoucherDto, removeVoucher);
   return ApiResponse.success(voucherDto, 'Remove voucher successfully');
 };
 

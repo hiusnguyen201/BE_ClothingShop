@@ -1,6 +1,6 @@
-import SoftDelete from '#core/plugins/soft-delete.plugin';
+import SoftDelete from '#src/core/plugins/soft-delete.plugin';
 import mongoose from 'mongoose';
-import { ALLOW_METHODS } from '#core/constant';
+import { ALLOW_METHODS } from '#src/core/constant';
 const { Schema } = mongoose;
 
 export const PERMISSION_MODEL = 'permissions';

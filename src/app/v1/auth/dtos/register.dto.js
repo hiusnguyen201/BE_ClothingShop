@@ -1,8 +1,8 @@
 import Joi from 'joi';
-import { replaceMultiSpacesToSingleSpace } from '#utils/string.util';
+import { replaceMultiSpacesToSingleSpace } from '#src/utils/string.util';
 import { GENDER } from '#src/app/v1/users/users.constant';
 
-export const registerDto = Joi.object({
+export const RegisterDto = Joi.object({
   name: Joi.string()
     .required()
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),

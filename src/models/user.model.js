@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
-import { USER_TYPE, GENDER, USER_STATUS } from '#app/v1/users/users.constant';
-import SoftDelete from '#core/plugins/soft-delete.plugin';
+import { USER_TYPE, GENDER, USER_STATUS } from '#src/app/v1/users/users.constant';
+import SoftDelete from '#src/core/plugins/soft-delete.plugin';
 const { Schema } = mongoose;
 
 export const USER_MODEL = 'users';
@@ -53,6 +53,11 @@ const UserSchema = new Schema(
       default: null,
     },
     googleId: {
+      type: String,
+      required: false,
+      default: null,
+    },
+    refreshToken: {
       type: String,
       required: false,
       default: null,

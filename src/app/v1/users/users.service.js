@@ -1,9 +1,8 @@
 import { isValidObjectId } from 'mongoose';
-import { UserModel } from '#models/user.model';
-import { removeImageByPublicIdService, uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
-import { REGEX_PATTERNS } from '#core/constant';
 import { genSalt, genSaltSync, hashSync } from 'bcrypt';
-import { SELECTED_FIELDS, USER_STATUS } from '#src/app/v1/users/users.constant';
+import { UserModel } from '#src/models/user.model';
+import { REGEX_PATTERNS } from '#src/core/constant';
+import { USER_SELECTED_FIELDS, USER_STATUS } from '#src/app/v1/users/users.constant';
 
 /**
  * Create user instance
@@ -46,7 +45,7 @@ export async function getOrCreateUserWithTransaction(data, session) {
  * @returns
  */
 export async function getAllUsersService({ filters, offset = 0, limit = 10 }) {
-  return UserModel.find(filters).skip(offset).limit(limit).select(SELECTED_FIELDS).sort({ createdAt: -1 }).lean();
+  return UserModel.find(filters).skip(offset).limit(limit).select(USER_SELECTED_FIELDS).sort({ createdAt: -1 }).lean();
 }
 
 /**
@@ -75,7 +74,7 @@ export async function getUserByIdService(id) {
     return null;
   }
 
-  return UserModel.findOne(filter).select(SELECTED_FIELDS).lean();
+  return UserModel.findOne(filter).select(USER_SELECTED_FIELDS).lean();
 }
 
 /**
@@ -84,7 +83,7 @@ export async function getUserByIdService(id) {
  * @returns
  */
 export async function removeUserByIdService(id, removerId) {
-  return UserModel.findByIdAndSoftDelete(id, removerId).select(SELECTED_FIELDS).lean();
+  return UserModel.findByIdAndSoftDelete(id, removerId).select(USER_SELECTED_FIELDS).lean();
 }
 
 /**
@@ -121,52 +120,7 @@ export async function updateUserVerifiedByIdService(id) {
     },
     { new: true },
   )
-    .select(SELECTED_FIELDS)
-    .lean();
-}
-
-/**
- * Change password by id
- * @param {*} id
- * @param {*} password
- * @returns
- */
-export async function changePasswordByIdService(id, password) {
-  const salt = genSaltSync();
-  const hashedPassword = hashSync(password, salt);
-  return UserModel.findByIdAndUpdate(
-    id,
-    {
-      password: hashedPassword,
-      resetPasswordToken: null,
-      resetPasswordExpiresAt: null,
-    },
-    { new: true },
-  )
-    .select(SELECTED_FIELDS)
-    .lean();
-}
-
-/**
- * Update avatar by id
- * @param {*} id
- * @param {*} file
- * @returns
- */
-export async function updateUserAvatarByIdService(id, file, currentAvatar) {
-  if (currentAvatar) {
-    removeImageByPublicIdService(currentAvatar);
-  }
-
-  const result = await uploadImageBufferService({
-    file,
-    folderName: 'avatars',
-  });
-
-  return UserModel.findByIdAndUpdate(id, {
-    avatar: result.public_id,
-  })
-    .select(SELECTED_FIELDS)
+    .select(USER_SELECTED_FIELDS)
     .lean();
 }
 
@@ -179,7 +133,7 @@ export async function updateUserInfoByIdService(id, data) {
   return UserModel.findByIdAndUpdate(id, data, {
     new: true,
   })
-    .select(SELECTED_FIELDS)
+    .select(USER_SELECTED_FIELDS)
     .lean();
 }
 

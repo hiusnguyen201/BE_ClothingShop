@@ -2,13 +2,12 @@ import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
 import { v2 as cloudinary } from 'cloudinary';
 import moment from 'moment-timezone';
-import { CloudinaryConfig } from '#config/CloudinaryConfig';
-import { ServiceUnavailableException } from '#core/exception/http-exception';
+import { ServiceUnavailableException } from '#src/core/exception/http-exception';
 
 cloudinary.config({
-  api_key: CloudinaryConfig.CLOUDINARY_API_KEY,
-  api_secret: CloudinaryConfig.CLOUDINARY_API_SECRET,
-  cloud_name: CloudinaryConfig.CLOUDINARY_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: process.env.CLOUDINARY_NAME,
 });
 
 /**

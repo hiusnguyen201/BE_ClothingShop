@@ -5,28 +5,19 @@
   "version": "0.0.0",
   "private": true,
   "imports": {
-    "#src/*": "./src/*.js",
-    "#app/*": "./src/app/*.js",
-    "#models/*": "./src/models/*.js",
-    "#core/*": "./src/core/*.js",
-    "#config/*": "./src/config/*.js",
-    "#database/*": "./src/database/*.js",
-    "#middlewares/*": "./src/middlewares/*.js",
-    "#modules/*": "./src/modules/*.js",
-    "#routers/*": "./src/routers/*.js",
-    "#utils/*": "./src/utils/*.js"
+    "#src/*": "./src/*.js"
   },
   "scripts": {
-    "start": "cross-env NODE_ENV=production  node --env-file=.env.production ./src/main.js ",
-    "dev": "cross-env NODE_ENV=development nodemon --env-file=.env.development ./src/main.js",
-    "test": "cross-env NODE_ENV=test jest --config --env-file=.env.test",
+    "start": "cross-env NODE_ENV=production  node --env-file=env/.env.production ./src/main.js ",
+    "dev": "cross-env NODE_ENV=development nodemon --env-file=env/.env.development ./src/main.js",
+    "test": "cross-env NODE_ENV=test jest --config --env-file=env/.env.test",
     "test:silent": "cross-env NODE_ENV=test jest --config --silent",
     "test:watch": "cross-env NODE_ENV=test jest --watch --config",
     "build": "echo 'No build step required for Express.js'",
     "vercel-build": "npm run build",
-    "seed:dev": "cross-env NODE_ENV=development node --env-file=.env.development ./src/database/seeders/seed-data.js",
-    "seed:prod": "cross-env NODE_ENV=production node --env-file=.env.production ./src/database/seeders/seed-data.js",
-    "drop-db": "cross-env NODE_ENV=development  node --env-file=.env.development ./src/database/drop-database.js"
+    "seed:dev": "cross-env NODE_ENV=development node --env-file=env/.env.development ./src/database/seeders/seed-data.js",
+    "seed:prod": "cross-env NODE_ENV=production node --env-file=env/.env.production ./src/database/seeders/seed-data.js",
+    "drop-db": "cross-env NODE_ENV=development  node --env-file=env/.env.development ./src/database/drop-database.js"
   },
   "dependencies": {
     "@faker-js/faker": "^9.3.0",

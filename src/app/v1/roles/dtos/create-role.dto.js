@@ -1,7 +1,7 @@
 import Joi from 'joi';
-import { replaceMultiSpacesToSingleSpace } from '#utils/string.util';
+import { replaceMultiSpacesToSingleSpace } from '#src/utils/string.util';
 
-export const createRoleDto = Joi.object({
+export const CreateRoleDto = Joi.object({
   name: Joi.string()
     .required()
     .min(3)

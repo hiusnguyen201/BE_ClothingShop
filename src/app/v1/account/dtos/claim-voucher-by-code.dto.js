@@ -1,5 +1,5 @@
-import Joi from "joi";
+import Joi from 'joi';
 
-export const claimVoucherByCodeDto = Joi.object({
+export const ClaimVoucherByCodeDto = Joi.object({
   voucherCode: Joi.string().uppercase().required().length(9),
 });

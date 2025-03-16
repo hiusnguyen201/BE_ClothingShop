@@ -1,6 +1,6 @@
 import Joi from 'joi';
 
-export const loginDto = Joi.object({
+export const LoginDto = Joi.object({
   email: Joi.string().required().email(),
   password: Joi.string().required(),
 });

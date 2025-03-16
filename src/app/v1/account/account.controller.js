@@ -1,6 +1,6 @@
-import { Dto } from '#src/core/dto/Dto';
+import { ModelDto } from '#src/core/dto/ModelDto';
 import { ApiResponse } from '#src/core/api/ApiResponse';
-import { NotFoundException } from '#core/exception/http-exception';
+import { NotFoundException, UnauthorizedException } from '#src/core/exception/http-exception';
 import {
   addVoucherToCustomerService,
   checkClaimedVoucherService,
@@ -9,17 +9,56 @@ import {
 } from '#src/app/v1/customers/customers.service';
 import { getVoucherByCodeService } from '#src/app/v1/vouchers/vouchers.service';
 import { VoucherDto } from '#src/app/v1/vouchers/dtos/voucher.dto';
+import { checkExistEmailService, getUserByIdService, updateUserInfoByIdService } from '#src/app/v1/users/users.service';
+import { UserDto } from '#src/app/v1/users/dtos/user.dto';
+import { comparePasswordService } from '#src/app/v1/account/account.service';
+import { changePasswordByIdService } from '#src/app/v1/auth/auth.service';
+
+export const getProfileController = async (req) => {
+  const user = await getUserByIdService(req.user.id);
+  const userDto = ModelDto.new(UserDto, user);
+  return ApiResponse.success(userDto);
+};
+
+export const editProfileController = async (req) => {
+  const userId = req.user.id;
+  const { email } = req.body;
+
+  const isExistEmail = await checkExistEmailService(email, userId);
+  if (isExistEmail) {
+    throw new ConflictException('Email already exist');
+  }
+
+  const updatedUser = await updateUserInfoByIdService(userId, req.body);
+
+  const userDto = ModelDto.new(UserDto, updatedUser);
+  return ApiResponse.success(userDto);
+};
+
+export const changePasswordController = async (req) => {
+  const userId = req.user.id;
+  const { password, newPassword } = req.body;
+
+  const isMatch = await comparePasswordService(userId, password);
+  if (!isMatch) {
+    throw new UnauthorizedException('Current password is not correct');
+  }
+
+  await changePasswordByIdService(userId, newPassword);
+
+  return ApiResponse.success(true);
+};
 
 export const claimVoucherByCodeController = async (req) => {
+  const userId = req.user.id;
   const { voucherCode } = req.body;
-  const userId = req.user._id;
 
   const voucher = await getVoucherByCodeService(voucherCode);
   if (!voucher) {
     throw new NotFoundException('Voucher not found');
   }
 
-  const isClaimed = await checkClaimedVoucherService(userId, 'vouchers');
+  const isClaimed = await checkClaimedVoucherService(userId, voucher._id);
   if (isClaimed) {
     throw new ConflictException('Voucher already claim');
   }
@@ -30,7 +69,7 @@ export const claimVoucherByCodeController = async (req) => {
 };
 
 export const getAllVoucherFromCustomerController = async (req) => {
-  const userId = req.user._id;
+  const userId = req.user.id;
 
   const totalCount = await countAllVouchersInCustomerService(userId);
   const metaData = calculatePagination(page, limit, totalCount);
@@ -40,7 +79,7 @@ export const getAllVoucherFromCustomerController = async (req) => {
     limit: metaData.limit,
   });
 
-  const vouchersDto = Dto.newList(VoucherDto, vouchers);
+  const vouchersDto = ModelDto.newList(VoucherDto, vouchers);
   return ApiResponse.success(
     {
       meta: metaData,

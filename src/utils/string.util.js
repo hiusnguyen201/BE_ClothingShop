@@ -1,4 +1,4 @@
-import { REGEX_PATTERNS } from '#core/constant';
+import { REGEX_PATTERNS } from '#src/core/constant';
 import slugifyLib from 'slugify';
 
 export const generateNumericOTP = (length = 6) => {

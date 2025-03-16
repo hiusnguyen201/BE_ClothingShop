@@ -1,4 +1,4 @@
-import { UserModel } from '#models/user.model';
+import { UserModel } from '#src/models/user.model';
 
 export async function addVoucherToCustomerService(userId, voucherId) {
   return UserModel.findByIdAndUpdate(userId, { $push: { vouchers: voucherId } }, { new: true }).lean();
@@ -15,7 +15,9 @@ export async function checkClaimedVoucherService(userId, voucherId) {
     vouchers: {
       $elemMatch: { _id: voucherId },
     },
-  }).lean();
+  })
+    .select('_id')
+    .lean();
 }
 
 export async function getAllVouchersInCustomerService(id, { offset, limit }) {

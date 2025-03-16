@@ -1,7 +1,7 @@
 import request from 'supertest';
 import HttpStatus from 'http-status-codes';
 import app from '#app';
-import { generateToken } from '#utils/jwt.util';
+import { generateToken } from '#src/utils/jwt.util';
 import userFactory from '#src/app/v1/users/factory/user.factory';
 import permissionFactory from '#src/app/v1/permissions/factory/permission.factory';
 import roleFactory from '#src/app/v1/roles/factory/role.factory';

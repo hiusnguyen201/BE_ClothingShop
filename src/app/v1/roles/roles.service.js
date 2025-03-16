@@ -1,8 +1,8 @@
 import { isValidObjectId } from 'mongoose';
 import { RoleModel } from '#src/models/role.model';
 import { getPermissionByIdService } from '#src/app/v1/permissions/permissions.service';
-import { makeSlug } from '#utils/string.util';
-import { REGEX_PATTERNS } from '#core/constant';
+import { makeSlug } from '#src/utils/string.util';
+import { REGEX_PATTERNS } from '#src/core/constant';
 
 /**
  * Create role
@@ -103,9 +103,9 @@ export async function checkExistRoleNameService(name, skipId) {
  * @returns
  */
 export async function checkExistRoleByIdService(id) {
-  const result = await RoleModel.exists({
-    id: id,
-  });
+  const result = await RoleModel.findOne({
+    _id: id,
+  }).select('_id');
   return !!result;
 }
 
