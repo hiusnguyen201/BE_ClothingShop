@@ -93,15 +93,13 @@ export async function removeUserByIdService(id, removerId) {
  * @returns
  */
 export async function checkExistEmailService(email, skipId) {
-  const user = await UserModel.findOne(
-    {
-      _id: { $ne: skipId },
-      email,
-    },
-    '_id',
-    { withDeleted: true },
-  ).lean();
+  const filters = { email };
 
+  if (skipId) {
+    filters._id = { $ne: skipId };
+  }
+
+  const user = await UserModel.findOne(filters, '_id', { withDeleted: true }).lean();
   return !!user;
 }
 

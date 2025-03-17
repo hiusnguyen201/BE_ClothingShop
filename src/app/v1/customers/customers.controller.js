@@ -1,4 +1,5 @@
-import { NotFoundException, ConflictException } from '#src/core/exception/http-exception';
+'use strict';
+import { HttpException } from '#src/core/exception/http-exception';
 import {
   checkExistEmailService,
   createUserService,
@@ -16,12 +17,13 @@ import { calculatePagination } from '#src/utils/pagination.util';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { CustomerDto } from '#src/app/v1/customers/dtos/customer.dto';
+import { Code } from '#src/core/code/Code';
 
 export const createCustomerController = async (req) => {
   const { email } = req.body;
   const isExistEmail = await checkExistEmailService(email);
   if (isExistEmail) {
-    throw new ConflictException('Email already exist');
+    throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Email already exist' });
   }
 
   const password = randomStr(32);
@@ -63,7 +65,7 @@ export const getCustomerByIdController = async (req) => {
   const { id } = req.params;
   const customer = await getUserByIdService(id);
   if (!customer) {
-    throw new NotFoundException('Customer not found');
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Customer not found' });
   }
 
   const customerDto = ModelDto.new(CustomerDto, customer);
@@ -75,13 +77,13 @@ export const updateCustomerByIdController = async (req) => {
   const { email } = req.body;
   const existCustomer = await getUserByIdService(id);
   if (!existCustomer) {
-    throw new NotFoundException('Customer not found');
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Customer not found' });
   }
 
   if (email) {
     const isExistEmail = await checkExistEmailService(email, id);
     if (isExistEmail) {
-      throw new ConflictException('Email already exist');
+      throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Email already exist' });
     }
   }
 
@@ -95,7 +97,7 @@ export const removeCustomerByIdController = async (req) => {
   const { id } = req.params;
   const existCustomer = await getUserByIdService(id);
   if (!existCustomer) {
-    throw new NotFoundException('Customer not found');
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Customer not found' });
   }
 
   const removedCustomer = await removeUserByIdService(id);

@@ -1,5 +1,5 @@
-import { ConflictException, NotFoundException, PreconditionFailedException } from '#src/core/exception/http-exception';
-
+'use strict';
+import { HttpException } from '#src/core/exception/http-exception';
 import {
   createVoucherService,
   getAllVouchersService,
@@ -13,12 +13,13 @@ import { calculatePagination } from '#src/utils/pagination.util';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { VoucherDto } from '#src/app/v1/vouchers/dtos/voucher.dto';
+import { Code } from '#src/core/code/Code';
 
 export const createVoucherController = async (req) => {
   const { code } = req.body;
   const isExistVoucherCode = await checkExistVoucherCodeService(code);
   if (isExistVoucherCode) {
-    throw new NotFoundException('Voucher code already exist');
+    throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Voucher code already exist' });
   }
 
   const newVoucher = await createVoucherService(req.body);
@@ -57,7 +58,7 @@ export const getVoucherByIdController = async (req) => {
   const { id } = req.params;
   const voucher = await getVoucherByIdService(id);
   if (!voucher) {
-    throw new ConflictException('Voucher code already exist');
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Voucher not found' });
   }
 
   const voucherDto = ModelDto.new(VoucherDto, voucher);
@@ -68,12 +69,15 @@ export const updateVoucherByIdController = async (req) => {
   const { id } = req.params;
   const existVoucher = await getVoucherByIdService(id, 'id uses');
   if (!existVoucher) {
-    throw new ConflictException('Voucher code already exist');
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Voucher not found' });
   }
 
   const { maxUses } = req.body;
   if (maxUses < existVoucher.uses) {
-    throw new PreconditionFailedException(`maxUses must be greater than the number of ${existVoucher.uses} `);
+    throw HttpException.new({
+      code: Code.BAD_REQUEST,
+      overrideMessage: `maxUses must be greater than the number of ${existVoucher.uses}`,
+    });
   }
   const updatedVoucher = await updateVoucherByIdService(id, req.body);
 
@@ -85,7 +89,7 @@ export const removeVoucherByIdController = async (req) => {
   const { id } = req.params;
   const existVoucher = await getVoucherByIdService(id, 'id');
   if (!existVoucher) {
-    throw new ConflictException('Voucher code already exist');
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Voucher not found' });
   }
 
   const removeVoucher = await removeVoucherByIdService(id);

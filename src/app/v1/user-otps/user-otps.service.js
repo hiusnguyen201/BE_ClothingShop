@@ -40,7 +40,7 @@ export async function getValidUserOtpInUserService(userId, otp) {
 export async function checkTimeLeftToResendOTPService(userId) {
   const userOtp = await UserOtpModel.findOne({
     user: userId,
-    resendDate: { $lt: moment().valueOf() },
+    resendDate: { $gt: moment().valueOf() },
   }).lean();
   return !userOtp ? 0 : moment(userOtp.resendDate).diff(moment(), 'seconds');
 }

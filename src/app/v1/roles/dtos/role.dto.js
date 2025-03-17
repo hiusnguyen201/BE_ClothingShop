@@ -6,4 +6,6 @@ export const RoleDto = Joi.object({
   slug: Joi.string(),
   description: Joi.string(),
   isActive: Joi.boolean(),
+  createdAt: Joi.date().required(),
+  updatedAt: Joi.date().required(),
 });

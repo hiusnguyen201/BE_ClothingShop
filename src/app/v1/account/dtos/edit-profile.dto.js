@@ -13,5 +13,5 @@ export const EditProfileDto = Joi.object({
   gender: Joi.string()
     .required()
     .valid(...Object.values(GENDER)),
-  birthday: Joi.date().iso(),
+  birthday: Joi.date(),
 });

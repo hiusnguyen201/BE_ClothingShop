@@ -85,14 +85,13 @@ export async function removeRoleByIdService(id, removerId) {
  * @returns
  */
 export async function checkExistRoleNameService(name, skipId) {
-  const result = await RoleModel.findOne(
-    {
-      $or: [{ name }, { slug: makeSlug(name) }],
-      id: { $ne: skipId },
-    },
-    '_id',
-    { withDeleted: true },
-  ).lean();
+  const filters = { $or: [{ name }, { slug: makeSlug(name) }] };
+
+  if (skipId) {
+    filters._id = { $ne: skipId };
+  }
+
+  const result = await RoleModel.findOne(filters, '_id', { withDeleted: true }).lean();
   return !!result;
 }
 

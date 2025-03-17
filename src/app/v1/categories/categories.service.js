@@ -87,21 +87,22 @@ export async function removeCategoryByIdService(id, removerId) {
  * @returns
  */
 export async function checkExistCategoryNameService(name, skipId) {
-  const result = await CategoryModel.findOne(
-    {
-      _id: { $ne: skipId },
-      $or: [
-        {
-          name,
-        },
-        {
-          slug: makeSlug(name),
-        },
-      ],
-    },
-    '_id',
-    { withDeleted: true },
-  ).lean();
+  const filters = {
+    $or: [
+      {
+        name,
+      },
+      {
+        slug: makeSlug(name),
+      },
+    ],
+  };
+
+  if (skipId) {
+    filters._id = { $ne: skipId };
+  }
+
+  const result = await CategoryModel.findOne(filters, '_id', { withDeleted: true }).lean();
   return !!result;
 }
 

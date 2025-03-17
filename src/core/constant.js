@@ -22,6 +22,5 @@ export const REGEX_PATTERNS = {
   PHONE_NUMBER: {
     VN: /(84|0[3|5|7|8|9])+([0-9]{8})\b/g,
   },
-  BEARER_TOKEN: /^Bearer ((?:\.?(?:[A-Za-z0-9-_]+)){3})$/,
   COMMA_SEPARATED_LIST: /^[a-zA-Z0-9,]+$/,
 };

@@ -1,5 +1,8 @@
+'use strict';
 import moment from 'moment-timezone';
 import { connectToMongoDb } from '#src/modules/database/mongodb.database';
+import { HttpException } from '#src/core/exception/http-exception';
+import { Code } from '#src/core/code/Code';
 
 const databaseStrategies = {
   mongodb: connectToMongoDb,
@@ -28,7 +31,10 @@ class Database {
     if (connectStrategy) {
       this.connection = connectStrategy(options);
     } else {
-      throw new Error(`The database "${options?.type}" not found`);
+      throw HttpException.new({
+        code: Code.DATABASE_TYPE_NOT_SUPPORT,
+        overrideMessage: `The database "${options?.type}" not found`,
+      });
     }
   }
 

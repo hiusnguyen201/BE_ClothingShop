@@ -1,4 +1,5 @@
-import { ConflictException, NotFoundException, PreconditionFailedException } from '#src/core/exception/http-exception';
+'use strict';
+import { HttpException } from '#src/core/exception/http-exception';
 import {
   createRoleService,
   getAllRolesService,
@@ -16,12 +17,13 @@ import { calculatePagination } from '#src/utils/pagination.util';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { RoleDto } from '#src/app/v1/roles/dtos/role.dto';
 import { ModelDto } from '#src/core/dto/ModelDto';
+import { Code } from '#src/core/code/Code';
 
 export const createRoleController = async (req) => {
   const { name, permissions } = req.body;
   const isExistName = await checkExistRoleNameService(name);
   if (isExistName) {
-    throw new ConflictException('Role name already exist');
+    throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Role name already exists' });
   }
 
   const newRole = await createRoleService({
@@ -63,7 +65,7 @@ export const getRoleByIdController = async (req) => {
   const { id } = req.params;
   const role = await getRoleByIdService(id);
   if (!role) {
-    throw new NotFoundException('Role not found');
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' });
   }
 
   const roleDto = ModelDto.newList(RoleDto, role);
@@ -74,14 +76,14 @@ export const updateRoleByIdController = async (req) => {
   const { id } = req.params;
   const existRole = await getRoleByIdService(id, 'id');
   if (!existRole) {
-    throw new NotFoundException('Role not found');
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' });
   }
 
   const { name, permissions } = req.body;
   if (name) {
     const isExistName = await checkExistRoleNameService(name, id);
     if (isExistName) {
-      throw new ConflictException('Role name already exist');
+      throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Role name already exist' });
     }
     req.body.slug = makeSlug(name);
   }
@@ -102,11 +104,11 @@ export const removeRoleByIdController = async (req) => {
   const { id } = req.params;
   const existRole = await getRoleByIdService(id);
   if (!existRole) {
-    throw new NotFoundException('Role not found');
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' });
   }
 
   if (existRole.isActive) {
-    throw new PreconditionFailedException('Role is active');
+    throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Role is active' });
   }
 
   const removedRole = await removeRoleByIdService(id);
@@ -117,6 +119,7 @@ export const removeRoleByIdController = async (req) => {
 
 export const isExistRoleNameController = async (req) => {
   const { name } = req.body;
+
   const existRoleName = await checkExistRoleNameService(name);
 
   return ApiResponse.success(existRoleName, existRoleName ? 'Role name exists' : 'Role name does not exist');
@@ -126,7 +129,7 @@ export const activateRoleByIdController = async (req) => {
   const { id } = req.params;
   const existRole = await getRoleByIdService(id, 'id');
   if (!existRole) {
-    throw new NotFoundException('Role not found');
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' });
   }
 
   await activateRoleByIdService(id);
@@ -138,7 +141,7 @@ export const deactivateRoleByIdController = async (req) => {
   const { id } = req.params;
   const existRole = await getRoleByIdService(id, 'id');
   if (!existRole) {
-    throw new NotFoundException('Role not found');
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' });
   }
 
   await deactivateRoleByIdService(id);

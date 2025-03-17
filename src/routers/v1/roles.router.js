@@ -19,14 +19,13 @@ import { isAuthorizedAndHasPermission } from '#src/middlewares/jwt-auth.middlewa
 
 router.post('/is-exist-role-name', validateBody(CheckExistRoleNameDto), isExistRoleNameController);
 
-router.use([isAuthorizedAndHasPermission]);
 router
-  .get('/get-roles', getAllRolesController)
-  .get('/get-role-by-id/:id', getRoleByIdController)
-  .post('/create-role', validateBody(CreateRoleDto), createRoleController)
-  .patch('/update-role-by-id/:id', validateBody(UpdateRoleDto), updateRoleByIdController)
-  .delete('/remove-role-by-id/:id', removeRoleByIdController)
-  .patch('/activate-role-by-id/:id', activateRoleByIdController)
-  .patch('/deactivate-role-by-id/:id', deactivateRoleByIdController);
+  .post('/create-role', isAuthorizedAndHasPermission, validateBody(CreateRoleDto), createRoleController)
+  .get('/get-roles', isAuthorizedAndHasPermission, getAllRolesController)
+  .get('/get-role-by-id/:id', isAuthorizedAndHasPermission, getRoleByIdController)
+  .patch('/update-role-by-id/:id', isAuthorizedAndHasPermission, validateBody(UpdateRoleDto), updateRoleByIdController)
+  .delete('/remove-role-by-id/:id', isAuthorizedAndHasPermission, removeRoleByIdController)
+  .patch('/activate-role-by-id/:id', isAuthorizedAndHasPermission, activateRoleByIdController)
+  .patch('/deactivate-role-by-id/:id', isAuthorizedAndHasPermission, deactivateRoleByIdController);
 
 export default router;

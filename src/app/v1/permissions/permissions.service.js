@@ -100,14 +100,13 @@ export async function removePermissionByIdService(id, removerId) {
  * @returns
  */
 export async function checkExistPermissionNameService(name, skipId) {
-  const result = await PermissionModel.findOne(
-    {
-      name,
-      id: { $ne: skipId },
-    },
-    '_id',
-    { withDeleted: true },
-  ).lean();
+  const filters = { name };
+
+  if (skipId) {
+    filters._id = { $ne: skipId };
+  }
+
+  const result = await PermissionModel.findOne(filters, '_id', { withDeleted: true }).lean();
   return !!result;
 }
 

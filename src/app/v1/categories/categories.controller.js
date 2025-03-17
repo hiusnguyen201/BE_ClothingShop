@@ -1,9 +1,5 @@
-import {
-  NotFoundException,
-  ConflictException,
-  PreconditionFailedException,
-  BadRequestException,
-} from '#src/core/exception/http-exception';
+'use strict';
+import { HttpException } from '#src/core/exception/http-exception';
 import {
   createCategoryService,
   getAllCategoriesService,
@@ -22,6 +18,7 @@ import { calculatePagination } from '#src/utils/pagination.util';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
+import { Code } from '#src/core/code/Code';
 
 const MAXIMUM_CHILDREN_CATEGORY_LEVEL = 2;
 
@@ -29,31 +26,28 @@ export const createCategoryController = async (req) => {
   let { name, parent, level = 1 } = req.body;
   const isExistName = await checkExistCategoryNameService(name);
   if (isExistName) {
-    throw new ConflictException('Category name already exist');
+    throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Category name already exist' });
   }
 
   if (parent) {
     const existParent = await getCategoryByIdService(parent);
 
     if (!existParent) {
-      throw new NotFoundException('Parent category not found');
+      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Parent category not found' });
     }
 
     if (existParent.isHide) {
-      throw new BadRequestException('Parent category is hidden');
+      throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Parent category is hidden' });
     }
 
     const nextCategoryLevel = existParent.level + 1;
     if (nextCategoryLevel > MAXIMUM_CHILDREN_CATEGORY_LEVEL) {
-      throw new BadRequestException('Parent category is reach limit');
+      throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Parent category is reach limit' });
     }
     level = nextCategoryLevel;
   }
 
-  const category = await createCategoryService({
-    ...req.body,
-    level,
-  });
+  const category = await createCategoryService({ ...req.body, level });
 
   // Update Image
   if (req.file) {
@@ -98,7 +92,7 @@ export const getCategoryByIdController = async (req) => {
   const { id } = req.params;
   const category = await getCategoryByIdService(id);
   if (!category) {
-    throw new NotFoundException('Category not found');
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Category not found' });
   }
 
   const categoryDto = ModelDto.newList(CategoryDto, category);
@@ -109,14 +103,14 @@ export const updateCategoryByIdController = async (req) => {
   const { id } = req.params;
   const existCategory = await getCategoryByIdService(id, 'id');
   if (!existCategory) {
-    throw new NotFoundException('Category not found');
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Category not found' });
   }
 
   const { name } = req.body;
   if (name) {
     const isExistName = await checkExistCategoryNameService(name, existCategory._id);
     if (isExistName) {
-      throw new ConflictException('Category name already exist');
+      throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Category name already exist' });
     }
     req.body.slug = makeSlug(name);
   }
@@ -136,11 +130,11 @@ export const removeCategoryByIdController = async (req) => {
   const { id } = req.params;
   const existCategory = await getCategoryByIdService(id);
   if (!existCategory) {
-    throw new NotFoundException('Category not found');
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Category not found' });
   }
 
   if (!existCategory.isHide) {
-    throw new PreconditionFailedException('Category is public');
+    throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Category is public' });
   }
 
   const removedCategory = await removeCategoryByIdService(id);
@@ -160,7 +154,7 @@ export const showCategoryByIdController = async (req) => {
   const { id } = req.params;
   const existCategory = await getCategoryByIdService(id, 'id');
   if (!existCategory) {
-    throw new NotFoundException('Category not found');
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Category not found' });
   }
 
   await showCategoryService(id);
@@ -172,7 +166,7 @@ export const hideCategoryByIdController = async (req) => {
   const { id } = req.params;
   const existCategory = await getCategoryByIdService(id, 'id');
   if (!existCategory) {
-    throw new NotFoundException('Category not found');
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Category not found' });
   }
 
   await hideCategoryService(id);

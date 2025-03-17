@@ -8,7 +8,7 @@ export const UpdateCustomerDto = Joi.object({
     .max(30)
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
   email: Joi.string().email(),
-  birthday: Joi.date().iso(),
+  birthday: Joi.date(),
   gender: Joi.string().valid(...Object.values(GENDER)),
   phone: Joi.phoneNumber('VN').required(),
 });

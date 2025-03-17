@@ -7,8 +7,8 @@ export const CreateVoucherDto = Joi.object({
   description: Joi.string(),
   maxUses: Joi.number().required(),
   maxUsesPerUser: Joi.number().required(),
-  startDate: Joi.date().iso().required().min(moment().valueOf()),
-  endDate: Joi.date().iso().required().greater(Joi.ref('startDate')),
+  startDate: Joi.date().required().min(moment().valueOf()),
+  endDate: Joi.date().required().greater(Joi.ref('startDate')),
   discount: Joi.number()
     .required()
     .custom((value, helper) => {

@@ -1,8 +1,10 @@
+'use strict';
 import nodemailer from 'nodemailer';
 import fs from 'fs';
 import path from 'path';
-import { ServiceUnavailableException } from '#src/core/exception/http-exception';
+import { HttpException } from '#src/core/exception/http-exception';
 import { viewRootDir } from '#src/views/viewRootDir';
+import { Code } from '#src/core/code/Code';
 
 const mailerEmail = process.env.MAILER_AUTH_USER;
 
@@ -31,7 +33,7 @@ export const sendOtpCodeService = async (email, otpCode) => {
       html,
     });
   } catch (err) {
-    throw new ServiceUnavailableException('Send OTP failed');
+    throw HttpException.new({ code: Code.SEND_MAIL_ERROR, overrideMessage: 'Send OTP failed' });
   }
 };
 
@@ -46,7 +48,7 @@ export const sendWelcomeEmailService = async (email, name) => {
       html,
     });
   } catch (err) {
-    throw new ServiceUnavailableException('Send welcome email failed');
+    throw HttpException.new({ code: Code.SEND_MAIL_ERROR, overrideMessage: 'Send welcome email failed' });
   }
 };
 
@@ -61,7 +63,7 @@ export const sendResetPasswordRequestService = async (email, resetURL) => {
       html,
     });
   } catch (err) {
-    throw new ServiceUnavailableException('Send link reset password failed');
+    throw HttpException.new({ code: Code.SEND_MAIL_ERROR, overrideMessage: 'Send link reset password failed' });
   }
 };
 
@@ -76,7 +78,10 @@ export const sendResetPasswordSuccessService = async (email) => {
       html,
     });
   } catch (err) {
-    throw new ServiceUnavailableException('Send reset password success email failed');
+    throw HttpException.new({
+      code: Code.SEND_MAIL_ERROR,
+      overrideMessage: 'Send reset password success email failed',
+    });
   }
 };
 
@@ -91,6 +96,6 @@ export const sendPasswordService = async (email, password) => {
       html,
     });
   } catch (err) {
-    throw new ServiceUnavailableException('Send password failed');
+    throw HttpException.new({ code: Code.SEND_MAIL_ERROR, overrideMessage: 'Send password failed' });
   }
 };

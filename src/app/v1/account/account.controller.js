@@ -1,6 +1,7 @@
+'use strict';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { ApiResponse } from '#src/core/api/ApiResponse';
-import { NotFoundException, UnauthorizedException } from '#src/core/exception/http-exception';
+import { HttpException } from '#src/core/exception/http-exception';
 import {
   addVoucherToCustomerService,
   checkClaimedVoucherService,
@@ -13,6 +14,7 @@ import { checkExistEmailService, getUserByIdService, updateUserInfoByIdService }
 import { UserDto } from '#src/app/v1/users/dtos/user.dto';
 import { comparePasswordService } from '#src/app/v1/account/account.service';
 import { changePasswordByIdService } from '#src/app/v1/auth/auth.service';
+import { Code } from '#src/core/code/Code';
 
 export const getProfileController = async (req) => {
   const user = await getUserByIdService(req.user.id);
@@ -26,7 +28,7 @@ export const editProfileController = async (req) => {
 
   const isExistEmail = await checkExistEmailService(email, userId);
   if (isExistEmail) {
-    throw new ConflictException('Email already exist');
+    throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Email already exist' });
   }
 
   const updatedUser = await updateUserInfoByIdService(userId, req.body);
@@ -41,7 +43,7 @@ export const changePasswordController = async (req) => {
 
   const isMatch = await comparePasswordService(userId, password);
   if (!isMatch) {
-    throw new UnauthorizedException('Current password is not correct');
+    throw HttpException.new({ code: Code.UNAUTHORIZED, overrideMessage: 'Password is not correct' });
   }
 
   await changePasswordByIdService(userId, newPassword);
@@ -55,12 +57,12 @@ export const claimVoucherByCodeController = async (req) => {
 
   const voucher = await getVoucherByCodeService(voucherCode);
   if (!voucher) {
-    throw new NotFoundException('Voucher not found');
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Voucher not found' });
   }
 
   const isClaimed = await checkClaimedVoucherService(userId, voucher._id);
   if (isClaimed) {
-    throw new ConflictException('Voucher already claim');
+    throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Voucher already claimed' });
   }
 
   await addVoucherToCustomerService(userId, voucher._id);
