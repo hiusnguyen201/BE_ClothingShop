@@ -80,7 +80,7 @@ export async function checkExistVoucherCodeService(code, skipId) {
     filters._id = { $ne: skipId };
   }
 
-  const result = await VoucherModel.findOne(filters, '_id', { withDeleted: true });
+  const result = await VoucherModel.findOne(filters, '_id', { withRemoved: true });
   return !!result;
 }
 

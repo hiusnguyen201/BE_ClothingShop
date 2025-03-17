@@ -2,7 +2,7 @@ import { isValidObjectId } from 'mongoose';
 import { genSalt, genSaltSync, hashSync } from 'bcrypt';
 import { UserModel } from '#src/models/user.model';
 import { REGEX_PATTERNS } from '#src/core/constant';
-import { USER_SELECTED_FIELDS, USER_STATUS } from '#src/app/v1/users/users.constant';
+import { USER_SELECTED_FIELDS, USER_STATUS, USER_TYPE } from '#src/app/v1/users/users.constant';
 
 /**
  * Create user instance
@@ -12,11 +12,8 @@ import { USER_SELECTED_FIELDS, USER_STATUS } from '#src/app/v1/users/users.const
 export async function createUserService(data) {
   const salt = genSaltSync();
   data.password = hashSync(data.password, salt);
-  return new UserModel(data);
-}
-
-export async function saveUserService(user) {
-  return user.save();
+  data.type = USER_TYPE.USER;
+  return UserModel.create(data);
 }
 
 /**
@@ -44,8 +41,13 @@ export async function getOrCreateUserWithTransaction(data, session) {
  * @param {*} query
  * @returns
  */
-export async function getAllUsersService({ filters, offset = 0, limit = 10 }) {
-  return UserModel.find(filters).skip(offset).limit(limit).select(USER_SELECTED_FIELDS).sort({ createdAt: -1 }).lean();
+export async function getAllUsersService({ filters, offset, limit, sortBy, sortOrder }) {
+  return UserModel.find(filters)
+    .skip(offset)
+    .limit(limit)
+    .select(USER_SELECTED_FIELDS)
+    .sort({ [sortBy]: sortOrder })
+    .lean();
 }
 
 /**
@@ -64,17 +66,19 @@ export async function countAllUsersService(filters) {
  */
 export async function getUserByIdService(id) {
   if (!id) return null;
-  const filter = {};
+  const filters = {
+    type: USER_TYPE.USER,
+  };
 
   if (isValidObjectId(id)) {
-    filter._id = id;
+    filters._id = id;
   } else if (id.match(REGEX_PATTERNS.EMAIL)) {
-    filter.email = id;
+    filters.email = id;
   } else {
     return null;
   }
 
-  return UserModel.findOne(filter).select(USER_SELECTED_FIELDS).lean();
+  return UserModel.findOne(filters).select(USER_SELECTED_FIELDS).lean();
 }
 
 /**
@@ -99,7 +103,7 @@ export async function checkExistEmailService(email, skipId) {
     filters._id = { $ne: skipId };
   }
 
-  const user = await UserModel.findOne(filters, '_id', { withDeleted: true }).lean();
+  const user = await UserModel.findOne(filters, '_id', { withRemoved: true }).lean();
   return !!user;
 }
 
@@ -151,6 +155,5 @@ export async function checkUserHasPermissionByMethodAndEndpointService(id, { met
         },
       },
     });
-
   return Boolean(user?.role?.permissions?.length > 0);
 }

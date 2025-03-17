@@ -46,9 +46,14 @@ curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/a
     "isAuthenticated": true,
     "is2FactorRequired": false,
     "user": {
-      "id": "67d7b8fadbb3f8fdb61352c1",
+      "id": "67d85c19284c7c3933f9823f",
       "name": "example",
-      "email": "example@gmail.com"
+      "slug": "example",
+      "status": "active",
+      "description": "This is example",
+      "isActive": true,
+      "createdAt": "2025-03-17T17:30:01.529Z",
+      "updatedAt": "2025-03-17T17:30:06.621Z"
     },
     "tokens": {
       "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZDJhMzMyYzhhMjEzYjA1MDI4MzNjNiIsInR5cGUiOiJVc2VyIiwiaWF0IjoxNzQyMjAxMDU5LCJleHAiOjE3NDIyMDE5NTl9.gsqLAzSlJKDPU3D9gvKg_I42NJ3NhI2d5svf-MYywDo",
@@ -67,7 +72,14 @@ curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/a
 | user              |          | Object  | User                                   |
 | id                |          | String  | User ID                                |
 | name              |          | String  | User name                              |
-| email             |          | String  | User email                             |
+| email             |          | String  | Email                                  |
+| phone             |          | String  | Phone number                           |
+| gender            | x        | String  | Gender                                 |
+| status            |          | String  | Status                                 |
+| isVerified        |          | boolean | Is verified account                    |
+| verifiedAt        | x        | String  | Verified at                            |
+| createdAt         |          | String  | Created at                             |
+| updatedAt         |          | String  | Updated at                             |
 | tokens            | x        | Object  | Contain access token and refresh token |
 | accessToken       |          | String  | Access token                           |
 | refreshToken      |          | String  | Refresh token                          |

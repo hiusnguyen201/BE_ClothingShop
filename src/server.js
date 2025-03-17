@@ -1,10 +1,8 @@
 'use strict';
-import 'dotenv/config';
 import http from 'http';
 import app from '#src/app';
 
 const PORT = process.env.PORT || 3000;
-
 const serverApi = http.createServer(app);
 
 serverApi.listen(PORT, () => {
@@ -17,6 +15,6 @@ serverApi.listen(PORT, () => {
     ███████║███████╗██║  ██║ ╚████╔╝ ███████╗██║  ██║    ███████║   ██║   ██║  ██║██║  ██║   ██║██╗██╗██╗
     ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚══════╝╚═╝  ╚═╝    ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝╚═╝╚═╝╚═╝
     `);
-    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`🌍 Server is running on: http://localhost:${PORT} 🌍`);
   }
 });

@@ -1,3 +1,4 @@
+import { ROLE_STATUS } from '#src/app/v1/roles/roles.constant';
 import SoftDelete from '#src/core/plugins/soft-delete.plugin';
 import mongoose from 'mongoose';
 const { Schema } = mongoose;
@@ -18,15 +19,16 @@ const RoleSchema = new Schema(
       unique: true,
       required: true,
     },
+    status: {
+      type: String,
+      length: 100,
+      required: true,
+      enum: [...Object.values(ROLE_STATUS)],
+    },
     description: {
       type: String,
-      required: false,
+      required: true,
       length: 255,
-    },
-    isActive: {
-      type: Boolean,
-      required: false,
-      default: false,
     },
 
     // Foreign Key

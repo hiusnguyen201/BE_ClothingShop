@@ -40,7 +40,7 @@ curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/a
   "codeMessage": "SUCCESS",
   "message": "Send otp via email successfully",
   "timestamp": 1742200311115,
-  "data": true
+  "data": null
 }
 ```
 

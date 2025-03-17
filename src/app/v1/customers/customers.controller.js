@@ -8,7 +8,6 @@ import {
   updateUserInfoByIdService,
   removeUserByIdService,
   countAllUsersService,
-  saveUserService,
 } from '#src/app/v1/users/users.service';
 import { USER_TYPE } from '#src/app/v1/users/users.constant';
 import { randomStr } from '#src/utils/string.util';
@@ -33,7 +32,6 @@ export const createCustomerController = async (req) => {
     type: USER_TYPE.CUSTOMER,
   });
 
-  await saveUserService(customer);
   sendPasswordService(email, password);
 
   const customersDto = ModelDto.new(CustomerDto, customer);

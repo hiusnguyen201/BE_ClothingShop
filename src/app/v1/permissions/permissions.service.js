@@ -85,15 +85,6 @@ export async function updatePermissionInfoByIdService(id, data) {
 }
 
 /**
- * Remove permission by id
- * @param {*} id
- * @returns
- */
-export async function removePermissionByIdService(id, removerId) {
-  return PermissionModel.findByIdAndSoftDelete(id, removerId).lean();
-}
-
-/**
  * Check exist permission name
  * @param {*} name
  * @param {*} skipId
@@ -106,7 +97,7 @@ export async function checkExistPermissionNameService(name, skipId) {
     filters._id = { $ne: skipId };
   }
 
-  const result = await PermissionModel.findOne(filters, '_id', { withDeleted: true }).lean();
+  const result = await PermissionModel.findOne(filters, '_id', { withRemoved: true }).lean();
   return !!result;
 }
 

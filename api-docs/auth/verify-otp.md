@@ -46,9 +46,14 @@ curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/a
     "isAuthenticated": true,
     "is2FactorRequired": false,
     "user": {
-      "id": "67d2a332c8a213b0502833c6",
-      "name": "Admin 123",
-      "email": "admin123@gmail.com"
+      "id": "67d85c19284c7c3933f9823f",
+      "name": "example",
+      "slug": "example",
+      "status": "active",
+      "description": "This is example",
+      "isActive": true,
+      "createdAt": "2025-03-17T17:30:01.529Z",
+      "updatedAt": "2025-03-17T17:30:06.621Z"
     },
     "tokens": {
       "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZDJhMzMyYzhhMjEzYjA1MDI4MzNjNiIsInR5cGUiOiJVc2VyIiwiaWF0IjoxNzQyMjAxMDU5LCJleHAiOjE3NDIyMDE5NTl9.gsqLAzSlJKDPU3D9gvKg_I42NJ3NhI2d5svf-MYywDo",
@@ -60,17 +65,21 @@ curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/a
 
 ### Structure Data Response
 
-| Field             | Nullable | Type    | Description                            |
-| ----------------- | -------- | ------- | -------------------------------------- |
-| isAuthenticated   |          | Boolean | Authenticated                          |
-| is2FactorRequired |          | Boolean | Two-Factor required                    |
-| user              |          | Object  | User                                   |
-| id                |          | String  | User ID                                |
-| name              |          | String  | User name                              |
-| email             |          | String  | User email                             |
-| tokens            |          | Object  | Contain access token and refresh token |
-| accessToken       |          | String  | Access token                           |
-| refreshToken      |          | String  | Refresh token                          |
+| Field             | Nullable | Type    | Description         |
+| ----------------- | -------- | ------- | ------------------- |
+| isAuthenticated   |          | Boolean | Authenticated       |
+| is2FactorRequired |          | Boolean | Two-Factor required |
+| user              |          | Object  | User                |
+| id                |          | String  | User ID             |
+| name              |          | String  | User name           |
+| email             |          | String  | Email               |
+| phone             |          | String  | Phone number        |
+| gender            | x        | String  | Gender              |
+| status            |          | String  | Status              |
+| isVerified        |          | boolean | Is verified account |
+| verifiedAt        | x        | String  | Verified at         |
+| createdAt         |          | String  | Created at          |
+| updatedAt         |          | String  | Updated at          |
 
 ### Bad Request (400)
 

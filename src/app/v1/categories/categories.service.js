@@ -102,7 +102,7 @@ export async function checkExistCategoryNameService(name, skipId) {
     filters._id = { $ne: skipId };
   }
 
-  const result = await CategoryModel.findOne(filters, '_id', { withDeleted: true }).lean();
+  const result = await CategoryModel.findOne(filters, '_id', { withRemoved: true }).lean();
   return !!result;
 }
 

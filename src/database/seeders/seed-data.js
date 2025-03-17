@@ -1,5 +1,5 @@
 'use strict';
-import { USER_TYPE } from '#src/app/v1/users/users.constant';
+import { USER_STATUS, USER_TYPE } from '#src/app/v1/users/users.constant';
 import { getOrCreateListPermissionServiceWithTransaction } from '#src/app/v1/permissions/permissions.service';
 import { getOrCreateRoleServiceWithTransaction } from '#src/app/v1/roles/roles.service';
 import { getOrCreateUserWithTransaction } from '#src/app/v1/users/users.service';
@@ -9,6 +9,7 @@ import { TransactionalServiceWrapper } from '#src/core/transaction/Transactional
 import { PERMISSION_MODEL } from '#src/models/permission.model';
 import { ROLE_MODEL } from '#src/models/role.model';
 import { USER_MODEL } from '#src/models/user.model';
+import { ROLE_STATUS } from '#src/app/v1/roles/roles.constant';
 
 Database.getInstance({ type: 'mongodb', logging: process.env.NODE_ENV === 'development' });
 /**
@@ -44,6 +45,8 @@ async function runSeeder() {
       {
         name: 'Admin',
         isActive: true,
+        status: ROLE_STATUS.ACTIVE,
+        description: 'This is admin',
         permissions: permissions.map((p) => p._id),
       },
       session,
@@ -62,6 +65,7 @@ async function runSeeder() {
         phone: '0383460015',
         isVerified: true,
         verifiedAt: new Date(),
+        status: USER_STATUS.ACTIVE,
         role: role._id,
         type: USER_TYPE.USER,
       },

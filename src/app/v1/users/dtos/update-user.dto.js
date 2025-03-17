@@ -4,11 +4,14 @@ import { replaceMultiSpacesToSingleSpace } from '#src/utils/string.util';
 
 export const UpdateUserDto = Joi.object({
   name: Joi.string()
+    .required()
     .min(3)
     .max(100)
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
-  email: Joi.string().email(),
-  gender: Joi.string().valid(...Object.values(GENDER)),
-  role: Joi.string(),
-  phone: Joi.phoneNumber('VN'),
+  email: Joi.string().required().email(),
+  gender: Joi.string()
+    .required()
+    .valid(...Object.values(GENDER)),
+  roleId: Joi.string(),
+  phone: Joi.phoneNumber('VN').required(),
 });

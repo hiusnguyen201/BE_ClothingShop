@@ -35,6 +35,12 @@ export class Code {
     message: 'File too large',
   };
 
+  static WRONG_TOKEN_FORMAT = {
+    status: 400,
+    codeMessage: 'INVALID_TOKEN',
+    message: 'Invalid token format. Please follow: Bearer [token]',
+  };
+
   static TOO_MANY_OPEN_FILES = {
     status: 400,
     codeMessage: 'TOO_MANY_OPEN_FILES',

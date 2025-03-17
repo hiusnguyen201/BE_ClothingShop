@@ -1,28 +1,28 @@
-## API Check Exist Role Name
+## API Check Exist Email
 
-This endpoint is used to check if a role name already exists.
+This endpoint is used to check if a email already exists.
 
 [POST](#)
 
 #### Production
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/roles/is-exist-role-name
+https://server-clothes-store.vercel.app/api/v1/users/is-exist-email
 ```
 
 #### Test
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/roles/is-exist-role-name
+https://server-clothes-store.vercel.app/api/v1/users/is-exist-email
 ```
 
 #### Curl
 
 ```bash
-curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/roles/is-exist-role-name' \
+curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/users/is-exist-email' \
 --header 'Content-Type: application/json' \
 --data-raw '{
-    "name": "example",
+    "email": "example@gmail.com",
 }'
 ```
 
@@ -30,7 +30,7 @@ curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/r
 
 | Param | Require | Path | Type   | Description |
 | ----- | ------- | ---- | ------ | ----------- |
-| name  | x       | body | String | Role name   |
+| email | x       | body | String | Email       |
 
 ### Success (200)
 
@@ -38,17 +38,17 @@ curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/r
 {
   "code": 200,
   "codeMessage": "SUCCESS",
-  "message": "Role name does not exist",
-  "timestamp": 1742201662104,
+  "message": "Success",
+  "timestamp": 1742234976321,
   "data": false
 }
 ```
 
 ### Structure Data Response
 
-| Field | Nullable | Type    | Description        |
-| ----- | -------- | ------- | ------------------ |
-| data  |          | Boolean | Is exist role name |
+| Field | Nullable | Type    | Description    |
+| ----- | -------- | ------- | -------------- |
+| data  |          | Boolean | Is exist email |
 
 ### Invalid Data (400)
 
@@ -57,11 +57,11 @@ curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/r
   "code": 400,
   "codeMessage": "INVALID_DATA",
   "message": "Request validation error",
-  "timestamp": 1742201621988,
+  "timestamp": 1742235046446,
   "data": [
     {
-      "path": "name",
-      "message": "\"name\" is required"
+      "path": "email",
+      "message": "\"email\" is required"
     }
   ]
 }

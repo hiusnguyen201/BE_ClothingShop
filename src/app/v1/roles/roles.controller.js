@@ -18,9 +18,10 @@ import { ApiResponse } from '#src/core/api/ApiResponse';
 import { RoleDto } from '#src/app/v1/roles/dtos/role.dto';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { Code } from '#src/core/code/Code';
+import { ROLE_STATUS } from '#src/app/v1/roles/roles.constant';
 
 export const createRoleController = async (req) => {
-  const { name, permissions } = req.body;
+  const { name, isActive } = req.body;
   const isExistName = await checkExistRoleNameService(name);
   if (isExistName) {
     throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Role name already exists' });
@@ -28,24 +29,20 @@ export const createRoleController = async (req) => {
 
   const newRole = await createRoleService({
     ...req.body,
+    status: isActive === true ? ROLE_STATUS.ACTIVE : ROLE_STATUS.INACTIVE,
     slug: makeSlug(name),
   });
-
-  // Update permissions
-  if (permissions && permissions.length > 0) {
-    await updateRolePermissionsByIdService(newRole._id, permissions);
-  }
 
   const roleDto = ModelDto.new(RoleDto, newRole);
   return ApiResponse.success(roleDto, 'Create role successfully');
 };
 
 export const getAllRolesController = async (req) => {
-  let { keyword = '', limit = 10, page = 1, isActive } = req.query;
+  const { keyword, limit, page, status, sortBy, sortOrder } = req.query;
 
   const filterOptions = {
-    $or: [{ name: { $regex: keyword, $options: 'i' } }],
-    ...(isActive ? { isActive } : {}),
+    $or: [{ name: { $regex: keyword, $options: 'i' }, description: { $regex: keyword, $options: 'i' } }],
+    ...(status ? { status } : {}),
   };
 
   const totalCount = await countAllRolesService(filterOptions);
@@ -55,6 +52,8 @@ export const getAllRolesController = async (req) => {
     filters: filterOptions,
     offset: metaData.offset,
     limit: metaData.limit,
+    sortBy,
+    sortOrder,
   });
 
   const rolesDto = ModelDto.newList(RoleDto, roles);
@@ -62,59 +61,55 @@ export const getAllRolesController = async (req) => {
 };
 
 export const getRoleByIdController = async (req) => {
-  const { id } = req.params;
-  const role = await getRoleByIdService(id);
+  const { roleId } = req.params;
+
+  const role = await getRoleByIdService(roleId);
   if (!role) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' });
   }
 
-  const roleDto = ModelDto.newList(RoleDto, role);
+  const roleDto = ModelDto.new(RoleDto, role);
   return ApiResponse.success(roleDto, 'Get one role successfully');
 };
 
 export const updateRoleByIdController = async (req) => {
-  const { id } = req.params;
-  const existRole = await getRoleByIdService(id, 'id');
+  const { roleId } = req.params;
+  const { name, isActive } = req.body;
+
+  const existRole = await getRoleByIdService(roleId);
   if (!existRole) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' });
   }
 
-  const { name, permissions } = req.body;
-  if (name) {
-    const isExistName = await checkExistRoleNameService(name, id);
-    if (isExistName) {
-      throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Role name already exist' });
-    }
-    req.body.slug = makeSlug(name);
+  const isExistName = await checkExistRoleNameService(name, roleId);
+  if (isExistName) {
+    throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Role name already exist' });
   }
 
-  // Update basic info
-  let updatedRole = await updateRoleInfoByIdService(id, req.body);
+  const updatedRole = await updateRoleInfoByIdService(roleId, {
+    ...req.body,
+    status: isActive === true ? ROLE_STATUS.ACTIVE : ROLE_STATUS.INACTIVE,
+    slug: makeSlug(name),
+  });
 
-  // Update permissions
-  if (permissions && permissions.length > 0) {
-    updatedRole = await updateRolePermissionsByIdService(id, permissions);
-  }
-
-  const roleDto = ModelDto.newList(RoleDto, updatedRole);
+  const roleDto = ModelDto.new(RoleDto, updatedRole);
   return ApiResponse.success(roleDto, 'Update role successfully');
 };
 
 export const removeRoleByIdController = async (req) => {
-  const { id } = req.params;
-  const existRole = await getRoleByIdService(id);
+  const { roleId } = req.params;
+  const existRole = await getRoleByIdService(roleId);
   if (!existRole) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' });
   }
 
   if (existRole.isActive) {
-    throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Role is active' });
+    throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Role is activating' });
   }
 
-  const removedRole = await removeRoleByIdService(id);
+  await removeRoleByIdService(roleId);
 
-  const roleDto = ModelDto.newList(RoleDto, removedRole);
-  return ApiResponse.success(roleDto, 'Remove role successfully');
+  return ApiResponse.success(null, 'Remove role successfully');
 };
 
 export const isExistRoleNameController = async (req) => {
@@ -126,25 +121,27 @@ export const isExistRoleNameController = async (req) => {
 };
 
 export const activateRoleByIdController = async (req) => {
-  const { id } = req.params;
-  const existRole = await getRoleByIdService(id, 'id');
+  const { roleId } = req.params;
+  const existRole = await getRoleByIdService(roleId);
   if (!existRole) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' });
   }
 
-  await activateRoleByIdService(id);
+  const updatedRole = await activateRoleByIdService(roleId);
 
-  return ApiResponse.success(true, 'Activate role successfully');
+  const roleDto = ModelDto.new(RoleDto, updatedRole);
+  return ApiResponse.success(roleDto, 'Activate role successfully');
 };
 
 export const deactivateRoleByIdController = async (req) => {
-  const { id } = req.params;
-  const existRole = await getRoleByIdService(id, 'id');
+  const { roleId } = req.params;
+  const existRole = await getRoleByIdService(roleId);
   if (!existRole) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' });
   }
 
-  await deactivateRoleByIdService(id);
+  const updatedRole = await deactivateRoleByIdService(roleId);
 
-  return ApiResponse.success(true, 'Deactivate role successfully');
+  const roleDto = ModelDto.new(RoleDto, updatedRole);
+  return ApiResponse.success(roleDto, 'Deactivate role successfully');
 };

@@ -13,19 +13,25 @@ import {
 } from '#src/app/v1/roles/roles.controller';
 import { CreateRoleDto } from '#src/app/v1/roles/dtos/create-role.dto';
 import { UpdateRoleDto } from '#src/app/v1/roles/dtos/update-role.dto';
-import { validateBody } from '#src/core/validations/request.validation';
+import { validateBody, validateQuery } from '#src/core/validations/request.validation';
 import { CheckExistRoleNameDto } from '#src/app/v1/roles/dtos/check-exist-role-name.dto';
 import { isAuthorizedAndHasPermission } from '#src/middlewares/jwt-auth.middleware';
+import { GetListRoleDto } from '#src/app/v1/roles/dtos/get-list-role.dto';
 
 router.post('/is-exist-role-name', validateBody(CheckExistRoleNameDto), isExistRoleNameController);
 
 router
   .post('/create-role', isAuthorizedAndHasPermission, validateBody(CreateRoleDto), createRoleController)
-  .get('/get-roles', isAuthorizedAndHasPermission, getAllRolesController)
-  .get('/get-role-by-id/:id', isAuthorizedAndHasPermission, getRoleByIdController)
-  .patch('/update-role-by-id/:id', isAuthorizedAndHasPermission, validateBody(UpdateRoleDto), updateRoleByIdController)
-  .delete('/remove-role-by-id/:id', isAuthorizedAndHasPermission, removeRoleByIdController)
-  .patch('/activate-role-by-id/:id', isAuthorizedAndHasPermission, activateRoleByIdController)
-  .patch('/deactivate-role-by-id/:id', isAuthorizedAndHasPermission, deactivateRoleByIdController);
+  .get('/get-roles', isAuthorizedAndHasPermission, validateQuery(GetListRoleDto), getAllRolesController)
+  .get('/get-role-by-id/:roleId', isAuthorizedAndHasPermission, getRoleByIdController)
+  .put(
+    '/update-role-by-id/:roleId',
+    isAuthorizedAndHasPermission,
+    validateBody(UpdateRoleDto),
+    updateRoleByIdController,
+  )
+  .delete('/remove-role-by-id/:roleId', isAuthorizedAndHasPermission, removeRoleByIdController)
+  .patch('/activate-role-by-id/:roleId', isAuthorizedAndHasPermission, activateRoleByIdController)
+  .patch('/deactivate-role-by-id/:roleId', isAuthorizedAndHasPermission, deactivateRoleByIdController);
 
 export default router;

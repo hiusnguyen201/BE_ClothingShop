@@ -20,6 +20,7 @@ export const randomStr = (length) => {
   }
   return result;
 };
+
 export const makeSlug = (str) => {
   return slugifyLib(str, {
     replacement: '-', // replace spaces with replacement character, defaults to `-`

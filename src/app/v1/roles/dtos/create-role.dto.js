@@ -8,9 +8,7 @@ export const CreateRoleDto = Joi.object({
     .max(50)
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
   description: Joi.string()
-    .min(3)
-    .max(255)
+    .required()
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
   isActive: Joi.boolean().required(),
-  permissions: Joi.array().items(Joi.string()),
 });

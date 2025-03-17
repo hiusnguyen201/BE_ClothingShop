@@ -3,6 +3,7 @@ import { RoleModel } from '#src/models/role.model';
 import { getPermissionByIdService } from '#src/app/v1/permissions/permissions.service';
 import { makeSlug } from '#src/utils/string.util';
 import { REGEX_PATTERNS } from '#src/core/constant';
+import { ROLE_STATUS } from '#src/app/v1/roles/roles.constant';
 
 /**
  * Create role
@@ -10,7 +11,7 @@ import { REGEX_PATTERNS } from '#src/core/constant';
  * @returns
  */
 export async function createRoleService(data) {
-  return RoleModel.create(data);
+  return RoleModel.create({ ...data, status: data.isActive ? ROLE_STATUS.ACTIVE : ROLE_STATUS.INACTIVE });
 }
 
 /**
@@ -36,8 +37,12 @@ export async function getOrCreateRoleServiceWithTransaction(data, session) {
  * @param {*} query
  * @returns
  */
-export async function getAllRolesService({ filters, offset = 0, limit = 10 }) {
-  return RoleModel.find(filters).skip(offset).limit(limit).sort({ createdAt: -1 }).lean();
+export async function getAllRolesService({ filters, offset, limit, sortBy, sortOrder }) {
+  return RoleModel.find(filters)
+    .skip(offset)
+    .limit(limit)
+    .sort({ [sortBy]: sortOrder })
+    .lean();
 }
 
 /**
@@ -91,7 +96,7 @@ export async function checkExistRoleNameService(name, skipId) {
     filters._id = { $ne: skipId };
   }
 
-  const result = await RoleModel.findOne(filters, '_id', { withDeleted: true }).lean();
+  const result = await RoleModel.findOne(filters, '_id', { withRemoved: true }).lean();
   return !!result;
 }
 
@@ -152,6 +157,7 @@ export async function activateRoleByIdService(id) {
     id,
     {
       isActive: true,
+      status: ROLE_STATUS.ACTIVE,
     },
     { new: true },
   ).lean();
@@ -167,6 +173,7 @@ export async function deactivateRoleByIdService(id) {
     id,
     {
       isActive: false,
+      status: ROLE_STATUS.INACTIVE,
     },
     { new: true },
   ).lean();

@@ -42,7 +42,7 @@ curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/a
   "codeMessage": "SUCCESS",
   "message": "Required Forgot Password Success",
   "timestamp": 1742198710085,
-  "data": true
+  "data": null
 }
 ```
 

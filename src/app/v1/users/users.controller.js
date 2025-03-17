@@ -7,7 +7,6 @@ import {
   checkExistEmailService,
   updateUserInfoByIdService,
   countAllUsersService,
-  saveUserService,
 } from '#src/app/v1/users/users.service';
 import { getRoleByIdService } from '#src/app/v1/roles/roles.service';
 import { sendPasswordService } from '#src/modules/mailer/mailer.service';
@@ -21,15 +20,15 @@ import { UserDto } from '#src/app/v1/users/dtos/user.dto';
 import { Code } from '#src/core/code/Code';
 
 export const createUserController = async (req) => {
-  const { email, role } = req.body;
+  const { email, roleId } = req.body;
 
   const isExistEmail = await checkExistEmailService(email);
   if (isExistEmail) {
     throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Email already exist' });
   }
 
-  if (role) {
-    const existRole = await getRoleByIdService(role);
+  if (roleId) {
+    const existRole = await getRoleByIdService(roleId);
     if (!existRole) {
       throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' });
     }
@@ -39,10 +38,7 @@ export const createUserController = async (req) => {
   const user = await createUserService({
     ...req.body,
     password,
-    type: USER_TYPE.USER,
   });
-
-  await saveUserService(user);
 
   // Send password to mail for user
   sendPasswordService(email, password);
@@ -52,10 +48,16 @@ export const createUserController = async (req) => {
 };
 
 export const getAllUsersController = async (req) => {
-  let { keyword = '', limit = 10, page = 1 } = req.query;
+  const { keyword, limit, page, status, sortBy, sortOrder, gender } = req.query;
 
   const filterOptions = {
-    $or: [{ name: { $regex: keyword, $options: 'i' } }, { email: { $regex: keyword, $options: 'i' } }],
+    $or: [
+      { name: { $regex: keyword, $options: 'i' } },
+      { email: { $regex: keyword, $options: 'i' } },
+      { phone: { $regex: keyword, $options: 'i' } },
+    ],
+    ...(status ? { status } : {}),
+    ...(gender ? { gender } : {}),
     type: USER_TYPE.USER,
   };
 
@@ -66,6 +68,8 @@ export const getAllUsersController = async (req) => {
     filters: filterOptions,
     offset: metaData.offset,
     limit: metaData.limit,
+    sortBy,
+    sortOrder,
   });
 
   const usersDto = ModelDto.newList(UserDto, users);
@@ -73,8 +77,8 @@ export const getAllUsersController = async (req) => {
 };
 
 export const getUserByIdController = async (req) => {
-  const { id } = req.params;
-  const user = await getUserByIdService(id);
+  const { userId } = req.params;
+  const user = await getUserByIdService(userId);
   if (!user) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'User not found' });
   }
@@ -84,46 +88,43 @@ export const getUserByIdController = async (req) => {
 };
 
 export const updateUserByIdController = async (req) => {
-  const { id } = req.params;
+  const { userId } = req.params;
+  const { email, roleId } = req.body;
 
-  const existUser = await getUserByIdService(id);
+  const existUser = await getUserByIdService(userId);
   if (!existUser) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'User not found' });
   }
 
-  const { email, role } = req.body;
-  if (email) {
-    const isExistEmail = await checkExistEmailService(email, id);
-    if (isExistEmail) {
-      throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Email already exist' });
-    }
+  const isExistEmail = await checkExistEmailService(email, userId);
+  if (isExistEmail) {
+    throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Email already exist' });
   }
 
-  if (role) {
-    const existRole = await getRoleByIdService(role);
+  if (roleId) {
+    const existRole = await getRoleByIdService(roleId);
     if (!existRole) {
       throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' });
     }
   }
 
-  const updatedUser = await updateUserInfoByIdService(id, req.body);
+  const updatedUser = await updateUserInfoByIdService(userId, req.body);
 
   const userDto = ModelDto.new(UserDto, updatedUser);
   return ApiResponse.success(userDto);
 };
 
 export const removeUserByIdController = async (req) => {
-  const { id } = req.params;
+  const { userId } = req.params;
 
-  const existUser = await getUserByIdService(id);
+  const existUser = await getUserByIdService(userId);
   if (!existUser) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'User not found' });
   }
 
-  const removedUser = await removeUserByIdService(id);
+  await removeUserByIdService(userId);
 
-  const userDto = ModelDto.new(UserDto, removedUser);
-  return ApiResponse.success(userDto);
+  return ApiResponse.success();
 };
 
 export const checkExistEmailController = async (req) => {

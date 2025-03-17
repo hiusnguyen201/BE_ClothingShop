@@ -5,7 +5,6 @@ import {
   getAllPermissionsController,
   getPermissionByIdController,
   updatePermissionByIdController,
-  removePermissionByIdController,
   isExistPermissionNameController,
   activatePermissionByIdController,
   deactivatePermissionByIdController,
@@ -20,10 +19,9 @@ router.post('/is-exist-permission-name', validateBody(CheckExistPermissionNameDt
 router.use([isAuthorizedAndHasPermission]);
 router
   .get('/get-permissions', getAllPermissionsController)
-  .get('/get-permission-by-id/:id', getPermissionByIdController)
-  .patch('/update-permission-by-id/:id', validateBody(UpdatePermissionDto), updatePermissionByIdController)
-  .delete('/remove-permission-by-id/:id', removePermissionByIdController)
-  .patch('/activate-permission-by-id/:id', activatePermissionByIdController)
-  .patch('/deactivate-permission-by-id/:id', deactivatePermissionByIdController);
+  .get('/get-permission-by-id/:permissionId', getPermissionByIdController)
+  .put('/update-permission-by-id/:permissionId', validateBody(UpdatePermissionDto), updatePermissionByIdController)
+  .patch('/activate-permission-by-id/:permissionId', activatePermissionByIdController)
+  .patch('/deactivate-permission-by-id/:permissionId', deactivatePermissionByIdController);
 
 export default router;

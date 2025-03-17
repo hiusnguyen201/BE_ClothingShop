@@ -1,10 +1,10 @@
-import mongoose from "mongoose";
+// import mongoose from "mongoose";
 
-beforeEach(async () => {
-  await mongoose.connect(process.env.MONGO_URI);
-});
+// beforeEach(async () => {
+//   await mongoose.connect(process.env.MONGO_URI);
+// });
 
-afterEach(async () => {
-  await mongoose.connection.db?.dropDatabase();
-  await mongoose.connection.close();
-});
+// afterEach(async () => {
+//   await mongoose.connection.db?.dropDatabase();
+//   await mongoose.connection.close();
+// });

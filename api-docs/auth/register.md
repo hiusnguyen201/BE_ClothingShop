@@ -56,9 +56,14 @@ curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/a
     "isAuthenticated": false,
     "is2FactorRequired": true,
     "user": {
-      "id": "67d7d2354e8b258e3a820934",
+      "id": "67d85c19284c7c3933f9823f",
       "name": "example",
-      "email": "example32@gmail.com"
+      "slug": "example",
+      "status": "active",
+      "description": "This is example",
+      "isActive": true,
+      "createdAt": "2025-03-17T17:30:01.529Z",
+      "updatedAt": "2025-03-17T17:30:06.621Z"
     }
   }
 }
@@ -73,7 +78,14 @@ curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/a
 | user              |          | Object  | User                |
 | id                |          | String  | User ID             |
 | name              |          | String  | User name           |
-| email             |          | String  | User email          |
+| email             |          | String  | Email               |
+| phone             |          | String  | Phone number        |
+| gender            | x        | String  | Gender              |
+| status            |          | String  | Status              |
+| isVerified        |          | boolean | Is verified account |
+| verifiedAt        | x        | String  | Verified at         |
+| createdAt         |          | String  | Created at          |
+| updatedAt         |          | String  | Updated at          |
 
 ### Invalid Data (400)
 
@@ -118,13 +130,13 @@ curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/a
 {
   "code": 409,
   "codeMessage": "ALREADY_EXISTS",
-  "message": "Email already exist",
+  "message": "Email already exists",
   "timestamp": 1742197357175,
   "data": null
 }
 ```
 
-### Too Many Request(429)
+### Too Many Request (429)
 
 ```json
 {

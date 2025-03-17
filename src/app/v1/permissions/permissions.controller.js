@@ -2,7 +2,6 @@
 import {
   getAllPermissionsService,
   getPermissionByIdService,
-  removePermissionByIdService,
   updatePermissionInfoByIdService,
   checkExistPermissionNameService,
   countAllPermissionsService,
@@ -43,8 +42,8 @@ export const getAllPermissionsController = async (req) => {
 };
 
 export const getPermissionByIdController = async (req) => {
-  const { id } = req.params;
-  const permission = await getPermissionByIdService(id);
+  const { permissionId } = req.params;
+  const permission = await getPermissionByIdService(permissionId);
   if (!permission) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Permission not found' });
   }
@@ -54,41 +53,23 @@ export const getPermissionByIdController = async (req) => {
 };
 
 export const updatePermissionByIdController = async (req) => {
-  const { id } = req.params;
-  const existPermission = await getPermissionByIdService(id, 'id');
+  const { permissionId } = req.params;
+  const { name } = req.body;
+
+  const existPermission = await getPermissionByIdService(permissionId);
   if (!existPermission) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Permission not found' });
   }
 
-  const { name } = req.body;
-  if (name) {
-    const isExistName = await checkExistPermissionNameService(name, id);
-    if (isExistName) {
-      throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Permission name is exist' });
-    }
+  const isExistName = await checkExistPermissionNameService(name, permissionId);
+  if (isExistName) {
+    throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Permission name is exist' });
   }
 
   const updatedPermission = await updatePermissionInfoByIdService(id, req.body);
 
   const permissionDto = ModelDto.new(PermissionDto, updatedPermission);
   return ApiResponse.success(permissionDto, 'Update permission successfully');
-};
-
-export const removePermissionByIdController = async (req) => {
-  const { id } = req.params;
-  const existPermission = await getPermissionByIdService(id, 'id');
-  if (!existPermission) {
-    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Permission not found' });
-  }
-
-  if (existPermission.isActive) {
-    throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Permission is active' });
-  }
-
-  const removedPermission = await removePermissionByIdService(id);
-
-  const permissionDto = ModelDto.new(PermissionDto, removedPermission);
-  return ApiResponse.success(permissionDto, 'Remove permission successfully');
 };
 
 export const isExistPermissionNameController = async (req) => {
@@ -102,25 +83,25 @@ export const isExistPermissionNameController = async (req) => {
 };
 
 export const activatePermissionByIdController = async (req) => {
-  const { id } = req.params;
-  const existPermission = await getPermissionByIdService(id, 'id');
+  const { permissionId } = req.params;
+  const existPermission = await getPermissionByIdService(permissionId);
   if (!existPermission) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Permission not found' });
   }
 
-  await activatePermissionByIdService(id);
+  await activatePermissionByIdService(permissionId);
 
   return ApiResponse.success(true, 'Activate permission successfully');
 };
 
 export const deactivatePermissionByIdController = async (req) => {
-  const { id } = req.params;
-  const existPermission = await getPermissionByIdService(id, 'id');
+  const { permissionId } = req.params;
+  const existPermission = await getPermissionByIdService(permissionId);
   if (!existPermission) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Permission not found' });
   }
 
-  await deactivatePermissionByIdService(id);
+  await deactivatePermissionByIdService(permissionId);
 
   return ApiResponse.success(true, 'Deactivate permission successfully');
 };

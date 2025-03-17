@@ -5,7 +5,6 @@ import {
   getUserByIdService,
   checkExistEmailService,
   updateUserVerifiedByIdService,
-  saveUserService,
 } from '#src/app/v1/users/users.service';
 import {
   authenticateUserService,
@@ -30,6 +29,8 @@ import { ApiResponse } from '#src/core/api/ApiResponse';
 import { USER_TYPE } from '#src/app/v1/users/users.constant';
 import { generateTokensService } from '#src/app/v1/auth/auth.service';
 import { Code } from '#src/core/code/Code';
+import { UserDto } from '#src/app/v1/users/dtos/user.dto';
+import { ModelDto } from '#src/core/dto/ModelDto';
 
 export const loginController = async (req) => {
   const { email, password } = req.body;
@@ -49,10 +50,11 @@ export const loginController = async (req) => {
     });
   }
 
+  const userDto = ModelDto.new(UserDto, user);
   return ApiResponse.success({
     isAuthenticated: !isNeed2Fa,
     is2FactorRequired: isNeed2Fa,
-    user: { id: user._id, name: user.name, email: user.email },
+    user: userDto,
     tokens,
   });
 };
@@ -70,12 +72,11 @@ export const registerController = async (req) => {
     type: USER_TYPE.CUSTOMER,
   });
 
-  await saveUserService(customer);
-
+  const userDto = ModelDto.new(UserDto, customer);
   return ApiResponse.success({
     isAuthenticated: false,
     is2FactorRequired: true,
-    user: { id: customer._id, name: customer.name, email: customer.email },
+    user: userDto,
   });
 };
 
@@ -91,7 +92,7 @@ export const forgotPasswordController = async (req) => {
   const resetURL = path.join(callbackUrl, token);
   await sendResetPasswordRequestService(email, resetURL);
 
-  return ApiResponse.success(true, 'Required Forgot Password Success');
+  return ApiResponse.success(null, 'Required Forgot Password Success');
 };
 
 export const resetPasswordController = async (req) => {
@@ -106,7 +107,7 @@ export const resetPasswordController = async (req) => {
 
   sendResetPasswordSuccessService(updatedUser.email);
 
-  return ApiResponse.success(true, 'Reset password successfully');
+  return ApiResponse.success(null, 'Reset password successfully');
 };
 
 export const sendOtpViaEmailController = async (req) => {
@@ -130,7 +131,7 @@ export const sendOtpViaEmailController = async (req) => {
   const userOtp = await createUserOtpService(user._id);
   sendOtpCodeService(user.email, userOtp.otp);
 
-  return ApiResponse.success(true, 'Send otp via email successfully');
+  return ApiResponse.success(null, 'Send otp via email successfully');
 };
 
 export const verifyOtpController = async (req) => {
@@ -158,11 +159,12 @@ export const verifyOtpController = async (req) => {
     type: user.type,
   });
 
+  const userDto = ModelDto.new(UserDto, user);
   return ApiResponse.success(
     {
       isAuthenticated: true,
       is2FactorRequired: false,
-      user: { id: user._id, name: user.name, email: user.email },
+      user: userDto,
       tokens,
     },
     'Verify otp successfully',

@@ -1,6 +1,7 @@
 import SoftDelete from '#src/core/plugins/soft-delete.plugin';
 import mongoose from 'mongoose';
 import { ALLOW_METHODS } from '#src/core/constant';
+import { PERMISSION_STATUS } from '#src/app/v1/permissions/permissions.constant';
 const { Schema } = mongoose;
 
 export const PERMISSION_MODEL = 'permissions';
@@ -44,6 +45,12 @@ export const PermissionSchema = new Schema(
       type: Boolean,
       required: false,
       default: false,
+    },
+    status: {
+      type: String,
+      length: 100,
+      required: true,
+      enum: [...Object.values(PERMISSION_STATUS)],
     },
 
     // Foreign Key

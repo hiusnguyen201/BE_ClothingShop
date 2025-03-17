@@ -100,19 +100,17 @@ export const getCategoryByIdController = async (req) => {
 };
 
 export const updateCategoryByIdController = async (req) => {
-  const { id } = req.params;
-  const existCategory = await getCategoryByIdService(id, 'id');
+  const { categoryId } = req.params;
+  const { name } = req.body;
+
+  const existCategory = await getCategoryByIdService(categoryId);
   if (!existCategory) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Category not found' });
   }
 
-  const { name } = req.body;
-  if (name) {
-    const isExistName = await checkExistCategoryNameService(name, existCategory._id);
-    if (isExistName) {
-      throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Category name already exist' });
-    }
-    req.body.slug = makeSlug(name);
+  const isExistName = await checkExistCategoryNameService(name, categoryId);
+  if (isExistName) {
+    throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Category name already exist' });
   }
 
   if (req.file) {
@@ -120,15 +118,15 @@ export const updateCategoryByIdController = async (req) => {
     req.body.image = result.url;
   }
 
-  const updatedCategory = await updateCategoryInfoByIdService(id, req.body);
+  const updatedCategory = await updateCategoryInfoByIdService(id, { ...req.body, slug: makeSlug(name) });
 
   const categoryDto = ModelDto.newList(CategoryDto, updatedCategory);
   return ApiResponse.success(categoryDto, 'Update category successfully');
 };
 
 export const removeCategoryByIdController = async (req) => {
-  const { id } = req.params;
-  const existCategory = await getCategoryByIdService(id);
+  const { categoryId } = req.params;
+  const existCategory = await getCategoryByIdService(categoryId);
   if (!existCategory) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Category not found' });
   }
@@ -137,7 +135,7 @@ export const removeCategoryByIdController = async (req) => {
     throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Category is public' });
   }
 
-  const removedCategory = await removeCategoryByIdService(id);
+  const removedCategory = await removeCategoryByIdService(categoryId);
 
   const categoryDto = ModelDto.newList(CategoryDto, removedCategory);
   return ApiResponse.success(categoryDto, 'Remove category successfully');
@@ -151,25 +149,25 @@ export const isExistCategoryNameController = async (req) => {
 };
 
 export const showCategoryByIdController = async (req) => {
-  const { id } = req.params;
-  const existCategory = await getCategoryByIdService(id, 'id');
+  const { categoryId } = req.params;
+  const existCategory = await getCategoryByIdService(categoryId);
   if (!existCategory) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Category not found' });
   }
 
-  await showCategoryService(id);
+  await showCategoryService(categoryId);
 
-  return ApiResponse.success(true, 'Show category successfully');
+  return ApiResponse.success(null, 'Show category successfully');
 };
 
 export const hideCategoryByIdController = async (req) => {
-  const { id } = req.params;
-  const existCategory = await getCategoryByIdService(id, 'id');
+  const { categoryId } = req.params;
+  const existCategory = await getCategoryByIdService(categoryId);
   if (!existCategory) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Category not found' });
   }
 
-  await hideCategoryService(id);
+  await hideCategoryService(categoryId);
 
-  return ApiResponse.success(true, 'Hide category successfully');
+  return ApiResponse.success(null, 'Hide category successfully');
 };

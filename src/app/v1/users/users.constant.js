@@ -1,20 +1,20 @@
 export const USER_TYPE = {
-  CUSTOMER: 'Customer',
-  USER: 'User',
+  CUSTOMER: 'customer',
+  USER: 'user',
 };
 
 export const GENDER = {
-  MALE: 'Male',
-  FEMALE: 'Female',
-  OTHER: 'Other',
+  MALE: 'male',
+  FEMALE: 'female',
+  OTHER: 'other',
 };
 
 export const USER_STATUS = {
-  ACTIVE: 'Active',
-  INACTIVE: 'Inactive',
-  BANNED: 'Banned',
-  LOCKED: 'Locked',
-  REMOVED: 'Removed',
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  BANNED: 'banned',
+  LOCKED: 'locked',
+  REMOVED: 'removed',
 };
 
 export const USER_SELECTED_FIELDS = {

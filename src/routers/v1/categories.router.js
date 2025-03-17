@@ -27,21 +27,21 @@ router.post('/is-exist-category-name', validateBody(CheckExistCategoryNameDto), 
 router.use([isAuthorizedAndHasPermission]);
 router
   .get('/get-categories', getAllCategoriesController)
-  .get('/get-category-by-id/:id', getCategoryByIdController)
+  .get('/get-category-by-id/:categoryId', getCategoryByIdController)
   .post(
     '/create-category',
     validateFile(upload.single('image')),
     validateBody(CreateCategoryDto),
     createCategoryController,
   )
-  .patch(
-    '/update-category-by-id/:id',
+  .put(
+    '/update-category-by-id/:categoryId',
     validateFile(upload.single('image')),
     validateBody(UpdateCategoryDto),
     updateCategoryByIdController,
   )
-  .delete('/remove-category-by-id/:id', removeCategoryByIdController)
-  .patch('/show-category-by-id/:id', showCategoryByIdController)
-  .patch('/hide-category-by-id/:id', hideCategoryByIdController);
+  .delete('/remove-category-by-id/:categoryId', removeCategoryByIdController)
+  .patch('/show-category-by-id/:categoryId', showCategoryByIdController)
+  .patch('/hide-category-by-id/:categoryId', hideCategoryByIdController);
 
 export default router;
