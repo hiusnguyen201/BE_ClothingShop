@@ -1,8 +1,8 @@
 import { ORDERS_STATUS, PAYMENT_METHOD } from '#src/core/constant';
 import { BadRequestException, NotFoundException } from '#src/core/exception/http-exception';
-import { getOrderByIdService, updateOrderByIdService } from '#src/app/v1/orders/orders.service';
+import { getOrderByIdService, updateOrderByIdService } from '#src/app/orders/orders.service';
 import HttpStatus from 'http-status-codes';
-import { createPaymentService, getPaymentByOrderIdService } from '#src/app/v1/payments/payments.service';
+import { createPaymentService, getPaymentByOrderIdService } from '#src/app/payments/payments.service';
 import { createMomoPayment } from '#src/utils/paymentMomo';
 import { createVnpayPayment } from '#src/utils/paymentVnpay';
 import moment from 'moment-timezone';

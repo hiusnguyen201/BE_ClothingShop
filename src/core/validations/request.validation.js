@@ -1,8 +1,6 @@
-import {
-  BadRequestException,
-  PayloadTooLargeException,
-  UnsupportedMediaTypeException,
-} from '#src/core/exception/http-exception';
+'use strict';
+import { HttpException } from '#src/core/exception/http-exception';
+import { Code } from '#src/core/code/Code';
 
 /**
  * Ref: https://joi.dev/api - any.validate(value, [options])
@@ -17,8 +15,18 @@ const validateSchema = (schema, payloadPath = 'body') => {
   return (req, res, next) => {
     const { error, value } = schema.validate(req[payloadPath], options);
     if (error) {
-      const message = error.details.map((item) => item.message);
-      return next(new BadRequestException('Request validation error', message));
+      let details = error.details.map((item) => ({
+        path: item.path[0],
+        message: item.message,
+      }));
+
+      if (error.details[0].type === 'object.min') {
+        details = details[0].message;
+      }
+
+      return next(
+        HttpException.new({ code: Code.INVALID_DATA, overrideMessage: 'Request validation error', data: details }),
+      );
     }
 
     req[payloadPath] = value;
@@ -31,21 +39,3 @@ export const validateBody = (schema) => validateSchema(schema, 'body');
 export const validateParams = (schema) => validateSchema(schema, 'params');
 
 export const validateQuery = (schema) => validateSchema(schema, 'query');
-
-export const validateFile = (multerUpload) => {
-  return (req, res, next) => {
-    multerUpload(req, res, (err) => {
-      if (!err) {
-        return next();
-      }
-
-      if (err.code === 'LIMIT_FILE_SIZE') {
-        return next(new PayloadTooLargeException('File too large'));
-      } else if (err.code === 'LIMIT_FILE_COUNT') {
-        return next(new BadRequestException('Too many files'));
-      } else {
-        return next(new UnsupportedMediaTypeException('Invalid file type'));
-      }
-    });
-  };
-};

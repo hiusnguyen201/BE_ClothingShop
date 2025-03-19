@@ -1,5 +1,7 @@
+'use strict';
 import { rateLimit } from 'express-rate-limit';
-import { TooManyRequestException } from '#src/core/exception/http-exception';
+import { HttpException } from '#src/core/exception/http-exception';
+import { Code } from '#src/core/code/Code';
 
 export const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -7,6 +9,6 @@ export const limiter = rateLimit({
   standardHeaders: 'draft-7', // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
   // store: ... , // Redis, Memcached, etc. See below.
-  handler: (req, res, next) => next(new TooManyRequestException()),
+  handler: (req, res, next) => next(HttpException.new({ code: Code.TOO_MANY_REQUESTS })),
   validate: { trustProxy: false },
 });

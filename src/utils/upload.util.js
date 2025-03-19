@@ -1,48 +1,54 @@
-import { MAX_UPLOAD_FILE_SIZE } from '#src/core/constant';
-import { BadRequestException } from '#src/core/exception/http-exception';
+'use strict';
+import { Code } from '#src/core/code/Code';
+import { ALLOW_IMAGE_MIME_TYPES, MAX_UPLOAD_FILE_SIZE } from '#src/core/constant';
+import { HttpException } from '#src/core/exception/http-exception';
 import multer from 'multer';
 
 export class UploadUtils {
-  static config({ allowedMimeTypes = [], maxFiles = 1 }) {
+  static single({ field, allowedMimeTypes = ALLOW_IMAGE_MIME_TYPES }) {
     const storage = multer.memoryStorage();
 
-    return multer({
+    const multerUpload = multer({
       storage,
-      limits: { files: maxFiles, fileSize: MAX_UPLOAD_FILE_SIZE },
+      limits: { files: 1, fileSize: MAX_UPLOAD_FILE_SIZE },
       fileFilter: (req, file, cb) => {
-        if (allowedMimeTypes.length > 0) {
-          allowedMimeTypes.includes(file.mimetype) ? cb(null, true) : cb(new Error('Invalid file type'));
-        } else {
-          cb(null, true);
+        if (!allowedMimeTypes.includes(file.mimetype)) {
+          return cb(new Error('Invalid file type'));
         }
+        cb(null, true);
       },
-    });
-  }
-
-  static single(field) {
-    const storage = multer.memoryStorage();
-
-    const upload = multer({ storage, limits: { fileSize: MAX_UPLOAD_FILE_SIZE } });
+    }).single(field);
 
     return (req, res, next) => {
-      upload.array(field)(req, res, (err) => {
-        if (err) return next(new BadRequestException(err.message));
-        req.body[field] = req.files[0].buffer;
-        next();
-      });
-    };
-  }
+      multerUpload(req, res, (err) => {
+        if (!err || err.code === 'MISSING_FIELD_NAME') {
+          if (req.file) req.body[field] = req?.file?.buffer;
+          return next();
+        }
 
-  static array(field) {
-    const storage = multer.memoryStorage();
-
-    const upload = multer({ storage, limits: { fileSize: MAX_UPLOAD_FILE_SIZE } });
-
-    return (req, res, next) => {
-      upload.array(field)(req, res, (err) => {
-        if (err) return next(new BadRequestException(err.message));
-        req.body[field] = req.files.map((file) => file.buffer);
-        next();
+        switch (err.code) {
+          case 'LIMIT_FILE_SIZE':
+            return next(
+              HttpException.new({
+                code: Code.FILE_TOO_LARGE,
+                overrideMessage: `File too large! Maximum size is ${MAX_UPLOAD_FILE_SIZE / (1024 * 1024)}MB`,
+              }),
+            );
+          case 'LIMIT_FILE_SIZE':
+            return next(
+              HttpException.new({
+                code: Code.TOO_MANY_FILES,
+                overrideMessage: `Too many files! Only 1 file is allowed`,
+              }),
+            );
+          default:
+            return next(
+              HttpException.new({
+                code: Code.BAD_FILE_TYPE,
+                overrideMessage: `Invalid file type! Support ${JSON.stringify(ALLOW_IMAGE_MIME_TYPES)}`,
+              }),
+            );
+        }
       });
     };
   }

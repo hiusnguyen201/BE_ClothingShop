@@ -8,16 +8,17 @@ const SoftDelete = (schema) => {
   });
 
   schema.pre(['find', 'findOne', 'findById', 'findOneAndUpdate', 'update', 'countDocuments', 'aggregate'], function () {
-    this.where({ isRemoved: false });
+    if (!this.getOptions().withRemoved) {
+      this.where({ isRemoved: false });
+    }
   });
 
-  schema.statics.findByIdAndSoftDelete = function (id, removerId) {
+  schema.statics.findByIdAndSoftDelete = function (id) {
     return this.findByIdAndUpdate(
       id,
       {
         isRemoved: true,
         removedAt: new Date(),
-        removedBy: removerId,
       },
       { new: true },
     );

@@ -1,8 +1,10 @@
+'use strict';
 import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
 import { v2 as cloudinary } from 'cloudinary';
 import moment from 'moment-timezone';
-import { ServiceUnavailableException } from '#src/core/exception/http-exception';
+import { HttpException } from '#src/core/exception/http-exception';
+import { Code } from '#src/core/code/Code';
 
 cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -26,7 +28,7 @@ export async function uploadImageBufferService({ buffer, folderName }) {
       },
       (err, result) => {
         if (err) {
-          return reject(new ServiceUnavailableException('Upload image failed'));
+          return reject(HttpException.new({ code: Code.FILE_STORAGE_ERROR, overrideMessage: 'Upload image failed' }));
         }
         resolve(result);
       },
@@ -43,7 +45,7 @@ export async function uploadImageBufferService({ buffer, folderName }) {
 export const removeImageByPublicIdService = async (publicId) => {
   return cloudinary.uploader.destroy(publicId, { resource_type: 'image' }, (err, result) => {
     if (err) {
-      return reject(new ServiceUnavailableException('Remove image failed'));
+      return reject(HttpException.new({ code: Code.FILE_STORAGE_ERROR, overrideMessage: 'Remove image failed' }));
     }
     resolve(result);
   });

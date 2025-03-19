@@ -1,4 +1,4 @@
-import { getUserByIdService } from '#src/app/v1/users/users.service';
+import { getUserByIdService } from '#src/app/users/users.service';
 import {
   createOrderService,
   getAllOrdersByUserService,
@@ -6,10 +6,10 @@ import {
   updateOrderByIdService,
   removeOrderByIdService,
   countAllOrdersService,
-} from '#src/app/v1/orders/orders.service';
+} from '#src/app/orders/orders.service';
 import HttpStatus from 'http-status-codes';
 import { BadRequestException, NotFoundException } from '#src/core/exception/http-exception';
-import { createOrderDetailService } from '#src/app/v1/orderDetails/order-details.service';
+import { createOrderDetailService } from '#src/app/orderDetails/order-details.service';
 import { ORDERS_STATUS } from '#src/core/constant';
 import { TransactionalServiceWrapper } from '#src/core/transaction/TransactionalServiceWrapper';
 import { calculateCartTotal } from '#src/utils/calculateCareTotal';
@@ -18,9 +18,9 @@ import { randomCodeOrder } from '#src/utils/string.util';
 import {
   getShippingAddressByIdService,
   getShippingAddressByUserIdService,
-} from '#src/app/v1/shipping-address/shipping-address.service';
+} from '#src/app/shipping-address/shipping-address.service';
 import { createGHNOrder, getOrderGhnByClientOrderCode, removeOrderGhn } from '#src/modules/GHN/ghn.service';
-import { USER_TYPE } from '#src/app/v1/users/users.constant';
+import { USER_TYPE } from '#src/app/users/users.constant';
 import { calculatePagination } from '#src/utils/pagination.util';
 
 /**

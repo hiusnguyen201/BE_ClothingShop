@@ -1,5 +1,7 @@
+'use strict';
 import mongoose from 'mongoose';
-import { BadRequestException } from '#src/core/exception/http-exception';
+import { HttpException } from '#src/core/exception/http-exception';
+import { Code } from '#src/core/code/Code';
 
 const options = {
   abortEarly: false, // when true, stops validation on the first error, otherwise returns all the errors found. Defaults to true.
@@ -18,7 +20,7 @@ export class ModelDto {
     let { error, value } = schema.validate(data, options);
     if (error) {
       const message = error.details.map((item) => item.message);
-      throw new BadRequestException(`Entity validation error`, message);
+      throw HttpException.new({ code: Code.ENTITY_VALIDATION_FAILED, overrideMessage: message });
     }
 
     // Convert _id to id

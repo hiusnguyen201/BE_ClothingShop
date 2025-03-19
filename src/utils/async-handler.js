@@ -6,7 +6,7 @@ const asyncHandler = (fn) => async (req, res, next) => {
   try {
     const result = await fn(req, res, next);
     res.set('Content-Type', 'application/json');
-    res.status(result?.statusCode || HttpStatus.OK).json(result);
+    res.status(result?.code || HttpStatus.OK).json(result);
   } catch (err) {
     next(err);
   }

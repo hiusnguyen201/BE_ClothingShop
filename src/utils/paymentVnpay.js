@@ -25,7 +25,7 @@ export const createVnpayPayment = async (orderId, amountOder, orderCode) => {
   var tmnCode = '6XI6FQXW';
   var secretKey = 'WE2L54LT84O1DSEHRXQLVMUH037ZM19K';
   var vnpUrl = 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html';
-  var returnUrl = 'http://localhost:3000/api/v1/payments/return-payment-vnpay';
+  var returnUrl = 'http://localhost:3000/api//payments/return-payment-vnpay';
 
   var date = new Date();
 

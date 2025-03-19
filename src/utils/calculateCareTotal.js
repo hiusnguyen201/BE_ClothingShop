@@ -1,6 +1,6 @@
-import { getVariantProductByIdService } from '#src/app/v1/products/product.service';
-import { getVoucherByIdService } from '#src/app/v1/vouchers/vouchers.service';
-import { NotFoundException } from '#src/core/exception/http-exception';
+import { getVariantProductByIdService } from '#src/app/products/product.service';
+import { getVoucherByIdService } from '#src/app/vouchers/vouchers.service';
+import { HttpException } from '#src/core/exception/http-exception';
 
 export const calculateCartTotal = async (productVariantIds, voucherId) => {
   let subTotal = 0;
