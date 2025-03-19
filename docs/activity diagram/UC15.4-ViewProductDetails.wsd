@@ -1,0 +1,34 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC15.4: View product details
+
+|User|
+start
+note left
+    User is logged in  
+    User must have permission
+    In UC15.1
+end note
+
+|User|
+:Select a product from the list and 
+clicks to option “View details”;
+
+|System|
+:Redirect the product to the details page;
+:Check the product exists;
+
+if(Product exists?) then(yes)    
+    :Display the details of the selected product;
+    stop
+else(no)
+    :Display error message "Not found";
+    stop
+endif
+
+
+@enduml

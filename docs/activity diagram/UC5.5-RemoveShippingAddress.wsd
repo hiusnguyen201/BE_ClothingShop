@@ -1,0 +1,41 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+|User|
+
+title UC5.4: Remove shipping address
+
+start
+note left
+    In UC5.1
+end note
+
+|User|
+:Selects a shipping address from the list to remove;
+:Clicks the "Remove" option;
+
+|System|
+:Checks the selected address exists;
+if(Is exist?) then (yes)
+    :Removes the selected address from the database;
+    if(Was the removed address the default?) then(yes)
+        :Updates another address set as default;
+    else(no)
+    endif
+
+    stop
+    note left
+        Go to UC5.1
+    end note
+else(no)
+    :Show error message;
+    stop
+endif
+
+
+
+
+@enduml

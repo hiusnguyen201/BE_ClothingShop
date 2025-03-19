@@ -1,0 +1,43 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC6.3: Update quantity in cart
+
+|User|
+start
+note left
+    User is logged in
+    Product must be available in stock
+end note
+
+|User|
+:Click "Add to cart" button/icon on a 
+product listing or product details page;
+
+|System|
+:Check for product existence;
+
+if(Is exist?) then (yes)
+    :Check product availability in stock;
+    if(Available stock?) then(yes)
+        :Check the product exist in shopping cart;
+        if(Is exist in cart?) then(yes)
+            :Update the quantity in the dabase;
+        else(no)
+            :Adds new product to the user's 
+            shopping cart in the database;
+        endif
+    else(no)
+        :Show error message;
+    endif
+    stop
+else(no)
+    :Show error message;
+    stop
+endif
+
+
+@enduml

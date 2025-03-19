@@ -1,27 +1,25 @@
-import { NotFoundException } from "#src/core/exception/http-exception";
-import HttpStatus from "http-status-codes";
-import moment from "moment-timezone";
+'use strict';
+import { HttpException } from '#src/core/exception/http-exception';
+import { ApiResponse } from '#src/core/api/ApiResponse';
+import chalk from 'chalk';
+import HttpStatus from 'http-status-codes';
+import { Code } from '#src/core/code/Code';
 
-export const handleError = (err, req, res, next) => {
-  const status = err.status || HttpStatus.INTERNAL_SERVER_ERROR;
+export const handleError = (err, req, res, _) => {
+  const status = err.code || HttpStatus.INTERNAL_SERVER_ERROR;
+  const message = process.env.NODE_ENV === 'development' ? err.message : HttpStatus.getStatusText(status);
+  const codeMessage = err.codeMessage || 'SERVER_ERROR';
+  const apiResponse = ApiResponse.error(status, codeMessage, message, err.data);
 
-  const response = {
-    status: status,
-    error: err.error || HttpStatus.getStatusText(status),
-    ...(err.message ? { message: err.message } : {}),
-    timestamp: moment().valueOf(),
-    url: req.originalUrl,
-    ip: req.ipv4,
-  };
-
-  if (process.env.NODE_ENV === "development") {
-    console.log({ ...response, stack: err.stack });
+  if (process.env.NODE_ENV === 'development') {
+    console.error(chalk.red(`ERROR [HTTP_TRAFFIC] {${req.method} ${req.url}} ${err.message}`));
+    console.log({ ...apiResponse, stack: err.stack });
   }
 
-  res.set("Content-Type", "application/json");
-  return res.status(status).json(response);
+  res.set('Content-Type', 'application/json');
+  res.status(status).json(apiResponse);
 };
 
 export const notFound = (req, res, next) => {
-  handleError(new NotFoundException(), req, res, next);
+  handleError(HttpException.new({ code: Code.ENDPOINT_NOT_FOUND }), req, res, next);
 };

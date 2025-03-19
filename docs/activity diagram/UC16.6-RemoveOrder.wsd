@@ -1,0 +1,51 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC16.6: Remove order
+
+|User|
+start
+note left
+    User is logged in  
+    User must have permission
+    In UC16.4
+end note
+
+
+|User|
+:Click to remove button in 
+view order details page;
+
+|System|
+:Display a confirmation prompt;
+
+|User|
+if(User clicks "Remove") then(yes)
+else(no)
+    stop
+endif
+
+|System|
+:Check the order exists;
+if(Exist order?) then(yes)
+    :Check order status;
+    if(Shipping or Completed?) then(yes)
+        :Display error message;
+        stop
+    else(no)
+        :Update the order as removed in the database;
+        :Display success message;
+        stop
+        note right
+            Go to UC16.1
+        end note
+    endif
+else(no)
+    :Display error message;
+    stop
+endif
+
+@enduml

@@ -1,0 +1,31 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC14.1: View payment list
+
+|User|
+start
+note left
+    User is logged in  
+    User must have permission
+end note
+
+|User|
+:Navigate to the "Payments management" section;
+
+|System|
+:Retrieve the list of payments from the database;
+:Check the results;
+
+if(Results available?) then(yes)
+    :Display the list of payments;
+else(no)
+    :Display a message "No results found";
+endif
+
+stop
+
+@enduml

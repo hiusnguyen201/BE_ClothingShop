@@ -1,0 +1,49 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC18.3: Create customer
+
+|User|
+start
+note left
+    User is logged in  
+    User must have permission
+    In UC18.1
+end note
+
+|User|
+:Click to the "Create customer" button;
+
+|System|
+:Display a form for creating;
+
+repeat 
+    repeat
+        |User|
+        :Enter the required fields;
+        :Submit the form;
+
+        |System|
+        :Validate the input;
+
+        backward :Show detailed error;
+    repeat while(Is valid?) is(no) not(yes)
+
+    |System|
+    :Check email exists;
+
+    backward :Display error message;
+repeat while(Exist email?) is(yes) not(no)
+
+:Create a new customer in the database;
+:Display a success message;
+
+stop
+note right
+    Go to UC18.1
+end note
+
+@enduml

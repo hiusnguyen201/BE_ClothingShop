@@ -1,0 +1,29 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC5.3: View shipping address details
+
+|User|
+start
+note left
+    In UC5.1
+end note
+:Select a specific shipping address from the list;
+:Click the "Update" button;
+
+|System|
+:Retrieve the details of the selected address from the database;
+:Check the result;
+if(Have result?) then (Yes)
+    :Display a form with full details of the shipping address;
+    stop
+else(No)
+    :Redirect the user to the "Not Found" page;
+    stop
+endif
+
+
+@enduml

@@ -1,0 +1,33 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC13.2: Search user
+
+|User|
+start
+note left
+    User is logged in  
+    User must have permission
+    In UC13.1
+end note
+
+|User|
+:Enter a keyword into the search bar or apply filters;
+
+|System|
+:Retrieve the list of users from the 
+database based on the provided query;
+:Check the results;
+
+if(Results available?) then(yes)
+    :Display the list of users that match the search criteria;
+else(no)
+    :Display a message "No results found";
+endif
+
+stop
+
+@enduml

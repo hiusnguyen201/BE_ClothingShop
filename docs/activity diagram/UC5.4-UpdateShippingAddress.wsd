@@ -1,0 +1,37 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC5.4: Update shipping address
+
+|User|
+start
+note left
+    In UC5.3
+end note
+
+|User|
+repeat :Modify the desired fields;
+:Submit the updated information;
+
+|System|
+:Validate the input;
+backward :Show detailed error;
+repeat while(Is valid?) is (no) not (yes)
+:Check the selected address exists;
+
+if(Is exist?) then (yes)
+    :Update the shipping address in the database;
+    stop
+    note left
+        Go to UC5.1
+    end note
+else(no)
+    :Show error message;
+    stop
+endif
+
+
+@enduml

@@ -1,49 +1,45 @@
-import { REGEX_PATTERNS } from "#src/core/constant";
-import {
-  BadRequestException,
-  ForbiddenException,
-  UnauthorizedException,
-} from "#src/core/exception/http-exception";
-import { verifyToken } from "#src/utils/jwt.util";
-import {
-  checkUserHasPermissionByMethodAndEndpointService,
-  getUserByIdService,
-} from "#src/modules/users/users.service";
+'use strict';
+import { HttpException } from '#src/core/exception/http-exception';
+import { checkUserHasPermissionByMethodAndEndpointService, getUserByIdService } from '#src/app/users/users.service';
+import { USER_TYPE } from '#src/app/users/users.constant';
+import { verifyTokenService } from '#src/app/auth/auth.service';
+import { Code } from '#src/core/code/Code';
+import { REGEX_PATTERNS } from '#src/core/constant';
 
 async function authorized(req, res, next) {
-  let token =
-    req.headers["x-access-token"] || req.headers["authorization"];
+  let token = req.headers['x-access-token'] || req.headers['authorization'];
 
   if (!token) {
-    return next(new UnauthorizedException("No token provided"));
+    return next(HttpException.new({ code: Code.TOKEN_REQUIRED }));
   }
 
   if (!token.match(REGEX_PATTERNS.BEARER_TOKEN)) {
-    return next(
-      new BadRequestException(
-        "Invalid token format. Format is Authorization: Bearer [token]"
-      )
-    );
+    return next(HttpException.new({ code: Code.WRONG_TOKEN_FORMAT }));
   }
 
-  token = token.split(" ")[1];
+  token = token.split(' ')[1];
 
-  try {
-    const decoded = verifyToken(token);
-    if (!decoded || !(await getUserByIdService(decoded._id))) {
-      return next(new UnauthorizedException("Invalid or expired token"));
-    }
-
-    req.user = decoded;
-    next();
-  } catch (e) {
-    return next(new UnauthorizedException("Invalid or expired token"));
+  const decoded = await verifyTokenService(token);
+  if (!decoded) {
+    return next(HttpException.new({ code: Code.INVALID_TOKEN }));
   }
+
+  const user = await getUserByIdService(decoded.id);
+  if (!user) {
+    return next(HttpException.new({ code: Code.INVALID_TOKEN }));
+  }
+
+  if (!user.verifiedAt) {
+    return next(HttpException.new({ code: Code.ACCESS_DENIED }));
+  }
+
+  req.user = decoded;
+  next();
 }
 
 async function checkPermission(req, res, next) {
-  if (!req?.user) {
-    next(new UnauthorizedException("User not logged in"));
+  if (!req.user || req.user.type === USER_TYPE.CUSTOMER) {
+    return next(HttpException.new({ code: Code.ACCESS_DENIED }));
   }
 
   // Convert to dynamic path
@@ -52,20 +48,22 @@ async function checkPermission(req, res, next) {
     endpoint = endpoint.replace(value, `:${key}`);
   });
 
-  const hasPermission =
-    await checkUserHasPermissionByMethodAndEndpointService(req.user._id, {
-      method: req.method,
-      endpoint,
-    });
+  if (endpoint.includes('?')) {
+    endpoint = endpoint.split('?')[0];
+  }
 
-  return hasPermission
-    ? next()
-    : next(
-        new ForbiddenException(
-          "Don't have permission to access this resource"
-        )
-      );
+  const hasPermission = await checkUserHasPermissionByMethodAndEndpointService(req.user.id, {
+    method: req.method,
+    endpoint,
+  });
+
+  return hasPermission ? next() : next(HttpException.new({ code: Code.ACCESS_DENIED }));
+}
+
+async function checkCustomer(req, res, next) {
+  return req.user?.type === USER_TYPE.CUSTOMER ? next() : next(HttpException.new({ code: Code.ACCESS_DENIED }));
 }
 
 export const isAuthorized = [authorized];
+export const isAuthorizedAndIsCustomer = [authorized, checkCustomer];
 export const isAuthorizedAndHasPermission = [authorized, checkPermission];

@@ -1,0 +1,40 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC10.2: Update user profile
+
+|User|
+start
+note left
+    User is logged in
+    In UC10.1
+end note
+
+|User|
+:Click to the "Update information" button;
+
+|System|
+:Display a form modal;
+
+|User|
+
+repeat :Modify their profile information;
+:Submit the change;
+
+|System|
+:Validate the input;
+backward :Show detailed error;
+repeat while(Is valid?) is(no) not(yes)
+
+:Save the updated information in the database;
+:Display a success message;
+
+stop
+note right
+    Go to UC10.1
+end note
+
+@enduml

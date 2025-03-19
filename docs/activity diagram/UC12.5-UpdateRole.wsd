@@ -1,0 +1,49 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC12.5: Update role
+
+|User|
+start
+note left
+    User is logged in  
+    User must have permission
+    In UC12.4
+end note
+
+
+repeat
+    repeat 
+        |User|
+        :Modify the necessary fields;
+        :Submit the changes;
+
+        |System|
+        :Validate the entered data;
+
+        backward :Show detailed error;
+    repeat while(Is valid?) is(no) not(yes)
+
+    :Check role exist;
+    if(Role exists?) then(yes)
+    else(no)
+        :Display error message;
+        stop
+    endif
+
+    backward :Display error message;
+    :Check role name exist;
+repeat while(Role name exists?) is(yes) not(no)
+
+:Update the role in the database;
+:Display a success message;
+stop
+note right
+    Go to UC12.4
+end note
+
+
+@enduml

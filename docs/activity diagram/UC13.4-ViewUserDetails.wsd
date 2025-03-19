@@ -1,0 +1,34 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC13.4: View user details
+
+|User|
+start
+note left
+    User is logged in  
+    User must have permission
+    In UC13.1
+end note
+
+|User|
+:Select a user from the list and 
+clicks to option “View details”;
+
+|System|
+:Redirect the user to the details page;
+:Check the user exists;
+
+if(Is exist user?) then(yes)    
+    :Display the details of the selected user;
+    stop
+else(no)
+    :Display error message "Not found";
+    stop
+endif
+
+
+@enduml

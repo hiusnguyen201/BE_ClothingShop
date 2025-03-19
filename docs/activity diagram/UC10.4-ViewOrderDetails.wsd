@@ -1,0 +1,30 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC10.4: View order details
+
+|User|
+start
+note left
+    User is logged in
+    In UC10.3
+end note
+
+|User|
+:Click to specific order in the order history page;
+
+|System|
+:Retrieve the selected order’s details from the database;
+:Check the order exists;
+if(Is exist?) then(yes)  
+    :Display detailed information;
+else(no)
+    :Redirect the user to "Not Found" page;
+endif
+
+stop
+
+@enduml

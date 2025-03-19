@@ -1,0 +1,29 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC10.3: View order history
+
+|User|
+start
+note left
+    User is logged in
+end note
+
+|User|
+:Navigate to the "Order" section;
+
+|System|
+:Retrieve the user's order history from the database;
+:Check the results;
+if(Have result?) then(yes)  
+    :Display the user's order history;
+else(no)
+    :Display a message "No results found";
+endif
+
+stop
+
+@enduml

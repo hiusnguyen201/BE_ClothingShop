@@ -1,0 +1,30 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC6.1: View cart
+
+|User|
+start
+note left
+    User is logged in
+end note
+
+|User|
+:Click on the "Cart" icon or navigate to the cart page;
+
+|System|
+:Retrieve the items currently in the user's cart from the database;
+:Check the results;
+
+if(Have results?) then (yes)
+    :Display the cart contents;
+else(no)
+    :Display a message "Your cart is empty";
+endif
+
+stop
+
+@enduml

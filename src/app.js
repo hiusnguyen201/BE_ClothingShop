@@ -1,63 +1,55 @@
-import "dotenv/config";
-import express from "express";
-import mongoose from "mongoose";
-import logger from "morgan";
-import cors from "cors";
-import moment from "moment-timezone";
-import cookieParser from "cookie-parser";
-import HttpStatus from "http-status-codes";
+'use strict';
+import express from 'express';
+import morgan from 'morgan';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import HttpStatus from 'http-status-codes';
+import helmet from 'helmet';
+import compression from 'compression';
 
-import routerV1 from "#src/routes/v1/index";
-import { handleError, notFound } from "#src/middlewares/error.middleware";
-import { limiter } from "#src/middlewares/rate-limit.middleware";
-import { swaggerUiSetup } from "#src/middlewares/swagger.middleware";
-import { enhanceRouter } from "#src/utils/async-handler";
+import '#src/core/validations/index';
+import router from '#src/routers/index';
+import { handleError, notFound } from '#src/middlewares/error.middleware';
+import { limiter } from '#src/middlewares/rate-limit.middleware';
+import { enhanceRouter } from '#src/utils/async-handler';
+import Database from '#src/modules/database/init.database';
 
-moment.tz("Asia/Ho_Chi_Minh").format();
-
-// Connect MongoDb
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log("Connected successfully to MongoDB");
-  })
-  .catch((err) => {
-    console.error("Connect to MongoDB failed", err);
-  });
-
-mongoose.set("debug", false);
+// Connect to Database
+Database.getInstance({
+  type: 'mongodb',
+  logging: process.env.NODE_ENV === 'development',
+  timezone: 'Asia/Ho_Chi_Minh',
+});
 
 const app = express();
-app.set("trust proxy", true);
-app.use(logger("dev"));
-app.use(express.json({ limit: "5mb" }));
-app.use(express.urlencoded({ extended: true, limit: "5mb" }));
+app.use(helmet());
+app.use(compression());
+app.set('trust proxy', true);
+
+app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'combined'));
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 app.use(cookieParser());
 app.use(cors());
 app.use(limiter);
 
 // Add ipv4 to req
 app.use((req, res, next) => {
-  req.ipv4 =
-    req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+  req.ipv4 = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
   next();
 });
 
 // Ignore favicon request
-app.get("/favicon.ico", (req, res) =>
-  res.status(HttpStatus.NO_CONTENT).end()
-);
+app.get('/favicon.ico', (req, res) => res.status(HttpStatus.NO_CONTENT).end());
 
-// Api Docs - Must use swagger-ui-express v4.6.3
-app.use("/api-docs", swaggerUiSetup);
+app.use('/docs', (req, res) => res.redirect(process.env.POSTMAN_URL_DOCS));
 
 // Api version 1
-app.use("/api/v1", enhanceRouter(routerV1));
+app.use('/api', enhanceRouter(router));
 
 // Catch 404
 app.use(notFound);
 
-// Handler Error
 app.use(handleError);
 
 export default app;
