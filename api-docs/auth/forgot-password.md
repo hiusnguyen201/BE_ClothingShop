@@ -7,19 +7,19 @@ This endpoint is used to initiate the process of resetting a customer's password
 #### Production
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/auth/forgot-password
+https://server-clothes-store.vercel.app/api/auth/forgot-password
 ```
 
 #### Test
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/auth/forgot-password
+https://server-clothes-store.vercel.app/api/auth/forgot-password
 ```
 
 #### Curl
 
 ```bash
-curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/auth/forgot-password' \
+curl --request POST 'https://server-clothes-store.vercel.app/api/auth/forgot-password' \
 --header 'Content-Type: application/json' \
 --data-raw '{
     "email": "example@gmail.com",

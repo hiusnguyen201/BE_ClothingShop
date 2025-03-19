@@ -7,19 +7,19 @@ This endpoint is used to verify the OTP (One-Time Password) for a user's authent
 #### Production
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/auth/verify-otp
+https://server-clothes-store.vercel.app/api/auth/verify-otp
 ```
 
 #### Test
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/auth/verify-otp
+https://server-clothes-store.vercel.app/api/auth/verify-otp
 ```
 
 #### Curl
 
 ```bash
-curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/auth/verify-otp' \
+curl --request POST 'https://server-clothes-store.vercel.app/api/auth/verify-otp' \
 --header 'Content-Type: application/json' \
 --data-raw '{
     "userId": "67d7b8fadbb3f8fdb61352c1",
@@ -46,14 +46,9 @@ curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/a
     "isAuthenticated": true,
     "is2FactorRequired": false,
     "user": {
-      "id": "67d85c19284c7c3933f9823f",
-      "name": "example",
-      "slug": "example",
-      "status": "active",
-      "description": "This is example",
-      "isActive": true,
-      "createdAt": "2025-03-17T17:30:01.529Z",
-      "updatedAt": "2025-03-17T17:30:06.621Z"
+      "id": "67d944d742e52209d72a1fde",
+      "name": "Norma Schmitt",
+      "email": "Mayra.Pfannerstill@gmail.com"
     },
     "tokens": {
       "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZDJhMzMyYzhhMjEzYjA1MDI4MzNjNiIsInR5cGUiOiJVc2VyIiwiaWF0IjoxNzQyMjAxMDU5LCJleHAiOjE3NDIyMDE5NTl9.gsqLAzSlJKDPU3D9gvKg_I42NJ3NhI2d5svf-MYywDo",
@@ -65,21 +60,17 @@ curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/a
 
 ### Structure Data Response
 
-| Field             | Nullable | Type    | Description         |
-| ----------------- | -------- | ------- | ------------------- |
-| isAuthenticated   |          | Boolean | Authenticated       |
-| is2FactorRequired |          | Boolean | Two-Factor required |
-| user              |          | Object  | User                |
-| id                |          | String  | User ID             |
-| name              |          | String  | User name           |
-| email             |          | String  | Email               |
-| phone             |          | String  | Phone number        |
-| gender            | x        | String  | Gender              |
-| status            |          | String  | Status              |
-| isVerified        |          | boolean | Is verified account |
-| verifiedAt        | x        | String  | Verified at         |
-| createdAt         |          | String  | Created at          |
-| updatedAt         |          | String  | Updated at          |
+| Field             | Nullable | Type    | Description                            |
+| ----------------- | -------- | ------- | -------------------------------------- |
+| isAuthenticated   |          | Boolean | Authenticated                          |
+| is2FactorRequired |          | Boolean | Two-Factor required                    |
+| user              |          | Object  | User                                   |
+| id                |          | String  | User ID                                |
+| name              |          | String  | User name                              |
+| email             |          | String  | Email                                  |
+| tokens            | x        | Object  | Contain access token and refresh token |
+| accessToken       |          | String  | Access token                           |
+| refreshToken      |          | String  | Refresh token                          |
 
 ### Bad Request (400)
 

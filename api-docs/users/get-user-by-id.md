@@ -7,19 +7,19 @@ This endpoint is used to retrieve a specific user by its ID.
 #### Production
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/users/get-user-by-id/:userId
+https://server-clothes-store.vercel.app/api/users/get-user-by-id/:userId
 ```
 
 #### Test
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/users/get-user-by-id/:userId
+https://server-clothes-store.vercel.app/api/users/get-user-by-id/:userId
 ```
 
 #### Curl
 
 ```bash
-curl --location --request GET 'https://server-clothes-store.vercel.app/api/v1/users/get-user-by-id/67d7e61b5114396a4af8b95d' \
+curl --request GET 'https://server-clothes-store.vercel.app/api/users/get-user-by-id/67d7e61b5114396a4af8b95d' \
 --header 'Content-Type: application/json' \
 --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZDJhMzMyYzhhMjEzYjA1MDI4MzNjNiIsInR5cGUiOiJVc2VyIiwiaWF0IjoxNzQyMjAxMDU5LCJleHAiOjE3NDIyMDE5NTl9.gsqLAzSlJKDPU3D9gvKg_I42NJ3NhI2d5svf-MYywDo' \
 ```
@@ -47,7 +47,6 @@ curl --location --request GET 'https://server-clothes-store.vercel.app/api/v1/us
     "phone": "0383460015",
     "gender": "female",
     "status": "inactive",
-    "isVerified": false,
     "verifiedAt": null,
     "createdAt": "2025-03-17T20:12:06.109Z",
     "updatedAt": "2025-03-17T20:12:06.109Z"
@@ -66,7 +65,6 @@ curl --location --request GET 'https://server-clothes-store.vercel.app/api/v1/us
 | phone      |          | String  | Phone          |
 | gender     |          | String  | Gender         |
 | status     |          | String  | Status account |
-| isVerified |          | Boolean | Is verified    |
 | verifiedAt | x        | Boolean | Verified At    |
 | createdAt  |          | String  | Created At     |
 | updatedAt  |          | String  | Updated At     |

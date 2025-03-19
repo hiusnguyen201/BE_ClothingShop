@@ -7,19 +7,19 @@ This endpoint is used to create a new user by submitting data to the specified A
 #### Production
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/users/create-user
+https://server-clothes-store.vercel.app/api/users/create-user
 ```
 
 #### Test
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/users/create-user
+https://server-clothes-store.vercel.app/api/users/create-user
 ```
 
 #### Curl
 
 ```bash
-curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/users/create-user' \
+curl --request POST 'https://server-clothes-store.vercel.app/api/users/create-user' \
 --header 'Content-Type: application/json' \
 --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZDJhMzMyYzhhMjEzYjA1MDI4MzNjNiIsInR5cGUiOiJVc2VyIiwiaWF0IjoxNzQyMjAxMDU5LCJleHAiOjE3NDIyMDE5NTl9.gsqLAzSlJKDPU3D9gvKg_I42NJ3NhI2d5svf-MYywDo' \
 --data-raw '{
@@ -57,7 +57,6 @@ curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/u
     "phone": "0383460015",
     "gender": "male",
     "status": "inactive",
-    "isVerified": false,
     "verifiedAt": null,
     "createdAt": "2025-03-17T18:34:06.875Z",
     "updatedAt": "2025-03-17T18:34:06.875Z"
@@ -76,7 +75,6 @@ curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/u
 | phone      |          | String  | Phone          |
 | gender     |          | String  | Gender         |
 | status     |          | String  | Status account |
-| isVerified |          | Boolean | Is verified    |
 | verifiedAt | x        | Boolean | Verified At    |
 | createdAt  |          | String  | Created At     |
 | updatedAt  |          | String  | Updated At     |

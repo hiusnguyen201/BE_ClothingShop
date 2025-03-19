@@ -7,36 +7,36 @@ This endpoint is used to create a new role by submitting data to the specified A
 #### Production
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/roles/create-role
+https://server-clothes-store.vercel.app/api/roles/create-role
 ```
 
 #### Test
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/roles/create-role
+https://server-clothes-store.vercel.app/api/roles/create-role
 ```
 
 #### Curl
 
 ```bash
-curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/roles/create-role' \
+curl --request POST 'https://server-clothes-store.vercel.app/api/roles/create-role' \
 --header 'Content-Type: application/json' \
 --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZDJhMzMyYzhhMjEzYjA1MDI4MzNjNiIsInR5cGUiOiJVc2VyIiwiaWF0IjoxNzQyMjAxMDU5LCJleHAiOjE3NDIyMDE5NTl9.gsqLAzSlJKDPU3D9gvKg_I42NJ3NhI2d5svf-MYywDo' \
 --data-raw '{
     "name": "example",
     "description": "This is example"
-    "isActive": true
+    "status": "active"
 }'
 ```
 
 ### Parameter
 
-| Param       | Require | Path   | Type    | Description |
-| ----------- | ------- | ------ | ------- | ----------- |
-| token       | x       | header | String  | Token       |
-| name        | x       | body   | String  | Role name   |
-| description | x       | body   | String  | Description |
-| isActive    | x       | body   | Boolean | Status      |
+| Param       | Require | Path   | Type    | Description                            |
+| ----------- | ------- | ------ | ------- | -------------------------------------- |
+| token       | x       | header | String  | Token                                  |
+| name        | x       | body   | String  | Role name                              |
+| description | x       | body   | String  | Description                            |
+| status      | x       | body   | Boolean | Status<br>Enum: ["active", "inactive"] |
 
 ### Success (200)
 
@@ -52,7 +52,6 @@ curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/r
     "slug": "exampl4e232333343",
     "status": "active",
     "description": "a",
-    "isActive": true,
     "createdAt": "2025-03-17T12:08:12.097Z",
     "updatedAt": "2025-03-17T12:08:12.097Z"
   }
@@ -61,16 +60,15 @@ curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/r
 
 ### Structure Data Response
 
-| Field       | Nullable | Type    | Description |
-| ----------- | -------- | ------- | ----------- |
-| id          |          | String  | Role Id     |
-| name        |          | String  | Role name   |
-| slug        |          | String  | Role slug   |
-| status      |          | String  | Status      |
-| description |          | String  | Description |
-| isActive    |          | Boolean | Is active   |
-| createdAt   |          | String  | Created At  |
-| updatedAt   |          | String  | Updated At  |
+| Field       | Nullable | Type   | Description |
+| ----------- | -------- | ------ | ----------- |
+| id          |          | String | Role Id     |
+| name        |          | String | Role name   |
+| slug        |          | String | Role slug   |
+| status      |          | String | Status      |
+| description |          | String | Description |
+| createdAt   |          | String | Created At  |
+| updatedAt   |          | String | Updated At  |
 
 ### Invalid Data (400)
 
@@ -86,8 +84,8 @@ curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/r
       "message": "\"name\" is required"
     },
     {
-      "path": "isActive",
-      "message": "\"isActive\" is required"
+      "path": "status",
+      "message": "\"status\" is required"
     }
   ]
 }

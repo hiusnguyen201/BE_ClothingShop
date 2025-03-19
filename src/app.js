@@ -8,7 +8,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 
 import '#src/core/validations/index';
-import routerV1 from '#src/routers/v1/index';
+import router from '#src/routers/index';
 import { handleError, notFound } from '#src/middlewares/error.middleware';
 import { limiter } from '#src/middlewares/rate-limit.middleware';
 import { enhanceRouter } from '#src/utils/async-handler';
@@ -45,7 +45,7 @@ app.get('/favicon.ico', (req, res) => res.status(HttpStatus.NO_CONTENT).end());
 app.use('/docs', (req, res) => res.redirect(process.env.POSTMAN_URL_DOCS));
 
 // Api version 1
-app.use('/api/v1', enhanceRouter(routerV1));
+app.use('/api', enhanceRouter(router));
 
 // Catch 404
 app.use(notFound);

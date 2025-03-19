@@ -1,8 +1,8 @@
 'use strict';
 import { HttpException } from '#src/core/exception/http-exception';
-import { checkUserHasPermissionByMethodAndEndpointService, getUserByIdService } from '#src/app/v1/users/users.service';
-import { USER_TYPE } from '#src/app/v1/users/users.constant';
-import { verifyTokenService } from '#src/app/v1/auth/auth.service';
+import { checkUserHasPermissionByMethodAndEndpointService, getUserByIdService } from '#src/app/users/users.service';
+import { USER_TYPE } from '#src/app/users/users.constant';
+import { verifyTokenService } from '#src/app/auth/auth.service';
 import { Code } from '#src/core/code/Code';
 import { REGEX_PATTERNS } from '#src/core/constant';
 
@@ -29,8 +29,8 @@ async function authorized(req, res, next) {
     return next(HttpException.new({ code: Code.INVALID_TOKEN }));
   }
 
-  if (!user.isVerified) {
-    return next(HttpException.new({ code: Code.UNVERIFIED }));
+  if (!user.verifiedAt) {
+    return next(HttpException.new({ code: Code.ACCESS_DENIED }));
   }
 
   req.user = decoded;
@@ -38,6 +38,10 @@ async function authorized(req, res, next) {
 }
 
 async function checkPermission(req, res, next) {
+  if (!req.user || req.user.type === USER_TYPE.CUSTOMER) {
+    return next(HttpException.new({ code: Code.ACCESS_DENIED }));
+  }
+
   // Convert to dynamic path
   let endpoint = req.originalUrl;
   Object.entries(req.params).map(([key, value]) => {

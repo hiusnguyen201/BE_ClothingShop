@@ -7,19 +7,19 @@ This endpoint is used to check if a role name already exists.
 #### Production
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/roles/is-exist-role-name
+https://server-clothes-store.vercel.app/api/roles/is-exist-role-name
 ```
 
 #### Test
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/roles/is-exist-role-name
+https://server-clothes-store.vercel.app/api/roles/is-exist-role-name
 ```
 
 #### Curl
 
 ```bash
-curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/roles/is-exist-role-name' \
+curl --request POST 'https://server-clothes-store.vercel.app/api/roles/is-exist-role-name' \
 --header 'Content-Type: application/json' \
 --data-raw '{
     "name": "example",

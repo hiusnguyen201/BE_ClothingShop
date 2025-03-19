@@ -2,24 +2,24 @@
 
 This endpoint is used to update a user by its ID.
 
-[PUT](#)
+[PATCH](#)
 
 #### Production
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/users/update-user-by-id/:userId
+https://server-clothes-store.vercel.app/api/users/update-user-by-id/:userId
 ```
 
 #### Test
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/users/update-user-by-id/:userId
+https://server-clothes-store.vercel.app/api/users/update-user-by-id/:userId
 ```
 
 #### Curl
 
 ```bash
-curl --location --request PUT 'https://server-clothes-store.vercel.app/api/v1/users/update-user-by-id/67d7e61b5114396a4af8b95d' \
+curl --request PATCH 'https://server-clothes-store.vercel.app/api/users/update-user-by-id/67d7e61b5114396a4af8b95d' \
 --header 'Content-Type: application/json' \
 --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZDJhMzMyYzhhMjEzYjA1MDI4MzNjNiIsInR5cGUiOiJVc2VyIiwiaWF0IjoxNzQyMjAxMDU5LCJleHAiOjE3NDIyMDE5NTl9.gsqLAzSlJKDPU3D9gvKg_I42NJ3NhI2d5svf-MYywDo' \
 --data-raw '{
@@ -36,10 +36,10 @@ curl --location --request PUT 'https://server-clothes-store.vercel.app/api/v1/us
 | ------ | ------- | ------ | ------ | ------------------------------------------------------------ |
 | token  | x       | header | String | Token                                                        |
 | userId | x       | params | String | User ID                                                      |
-| name   | x       | body   | String | User name                                                    |
-| email  | x       | body   | String | Email                                                        |
-| gender | x       | body   | String | Gender<br>Enum: ["male", "female", "other"]<br>Default: null |
-| phone  | x       | body   | String | Phone number with region 'VN'                                |
+| name   |        | body   | String | User name                                                    |
+| email  |        | body   | String | Email                                                        |
+| gender |        | body   | String | Gender<br>Enum: ["male", "female", "other"]<br>Default: null |
+| phone  |        | body   | String | Phone number with region 'VN'                                |
 | roleId |         | body   | String | Role ID                                                      |
 
 ### Success (200)
@@ -58,7 +58,6 @@ curl --location --request PUT 'https://server-clothes-store.vercel.app/api/v1/us
     "phone": "0912345678",
     "gender": "male",
     "status": "inactive",
-    "isVerified": false,
     "verifiedAt": null,
     "createdAt": "2025-03-17T20:12:06.109Z",
     "updatedAt": "2025-03-17T20:29:43.043Z"
@@ -77,7 +76,6 @@ curl --location --request PUT 'https://server-clothes-store.vercel.app/api/v1/us
 | phone      |          | String  | Phone          |
 | gender     |          | String  | Gender         |
 | status     |          | String  | Status account |
-| isVerified |          | Boolean | Is verified    |
 | verifiedAt | x        | Boolean | Verified At    |
 | createdAt  |          | String  | Created At     |
 | updatedAt  |          | String  | Updated At     |

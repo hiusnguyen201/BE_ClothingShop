@@ -7,19 +7,19 @@ This endpoint is used to check if a email already exists.
 #### Production
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/users/is-exist-email
+https://server-clothes-store.vercel.app/api/users/is-exist-email
 ```
 
 #### Test
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/users/is-exist-email
+https://server-clothes-store.vercel.app/api/users/is-exist-email
 ```
 
 #### Curl
 
 ```bash
-curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/users/is-exist-email' \
+curl --request POST 'https://server-clothes-store.vercel.app/api/users/is-exist-email' \
 --header 'Content-Type: application/json' \
 --data-raw '{
     "email": "example@gmail.com",

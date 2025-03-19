@@ -15,10 +15,15 @@ const validateSchema = (schema, payloadPath = 'body') => {
   return (req, res, next) => {
     const { error, value } = schema.validate(req[payloadPath], options);
     if (error) {
-      const details = error.details.map((item) => ({
+      let details = error.details.map((item) => ({
         path: item.path[0],
         message: item.message,
       }));
+
+      if (error.details[0].type === 'object.min') {
+        details = details[0].message;
+      }
+
       return next(
         HttpException.new({ code: Code.INVALID_DATA, overrideMessage: 'Request validation error', data: details }),
       );
@@ -34,21 +39,3 @@ export const validateBody = (schema) => validateSchema(schema, 'body');
 export const validateParams = (schema) => validateSchema(schema, 'params');
 
 export const validateQuery = (schema) => validateSchema(schema, 'query');
-
-export const validateFile = (multerUpload) => {
-  return (req, res, next) => {
-    multerUpload(req, res, (err) => {
-      if (!err) {
-        return next();
-      }
-
-      if (err.code === 'LIMIT_FILE_SIZE') {
-        return next(HttpException.new({ code: Code.FILE_TOO_LARGE }));
-      } else if (err.code === 'LIMIT_FILE_COUNT') {
-        return next(HttpException.new({ code: Code.TOO_MANY_OPEN_FILES }));
-      } else {
-        return next(HttpException.new({ code: Code.BAD_FILE_TYPE }));
-      }
-    });
-  };
-};

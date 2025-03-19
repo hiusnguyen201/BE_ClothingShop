@@ -41,9 +41,9 @@ export class Code {
     message: 'Invalid token format. Please follow: Bearer [token]',
   };
 
-  static TOO_MANY_OPEN_FILES = {
+  static TOO_MANY_FILES = {
     status: 400,
-    codeMessage: 'TOO_MANY_OPEN_FILES',
+    codeMessage: 'TOO_MANY_FILES',
     message: 'Too many files',
   };
 

@@ -7,19 +7,19 @@ This endpoint is used to reset the password by providing the reset token and the
 #### Production
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/auth/reset-password/:token
+https://server-clothes-store.vercel.app/api/auth/reset-password/:token
 ```
 
 #### Test
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/auth/reset-password/:token
+https://server-clothes-store.vercel.app/api/auth/reset-password/:token
 ```
 
 #### Curl
 
 ```bash
-curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/auth/reset-password/:token' \
+curl --request POST 'https://server-clothes-store.vercel.app/api/auth/reset-password/:token' \
 --header 'Content-Type: application/json' \
 --data-raw '{
     "password": "1234",

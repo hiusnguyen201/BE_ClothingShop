@@ -13,13 +13,12 @@ const SoftDelete = (schema) => {
     }
   });
 
-  schema.statics.findByIdAndSoftDelete = function (id, removerId) {
+  schema.statics.findByIdAndSoftDelete = function (id) {
     return this.findByIdAndUpdate(
       id,
       {
         isRemoved: true,
         removedAt: new Date(),
-        removedBy: removerId,
       },
       { new: true },
     );

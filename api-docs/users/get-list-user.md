@@ -7,19 +7,19 @@ This endpoint is used to retrieve a list of users based on the provided keyword,
 #### Production
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/users/get-users
+https://server-clothes-store.vercel.app/api/users/get-users
 ```
 
 #### Test
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/users/get-users
+https://server-clothes-store.vercel.app/api/users/get-users
 ```
 
 #### Curl
 
 ```bash
-curl --location --request GET 'https://server-clothes-store.vercel.app/api/v1/users/get-users' \
+curl --request GET 'https://server-clothes-store.vercel.app/api/users/get-users' \
 --header 'Content-Type: application/json' \
 --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZDJhMzMyYzhhMjEzYjA1MDI4MzNjNiIsInR5cGUiOiJVc2VyIiwiaWF0IjoxNzQyMjAxMDU5LCJleHAiOjE3NDIyMDE5NTl9.gsqLAzSlJKDPU3D9gvKg_I42NJ3NhI2d5svf-MYywDo' \
 ```
@@ -66,7 +66,6 @@ curl --location --request GET 'https://server-clothes-store.vercel.app/api/v1/us
         "phone": "0912345678",
         "gender": null,
         "status": "inactive",
-        "isVerified": false,
         "verifiedAt": "2025-03-17T20:05:22.760Z",
         "createdAt": "2025-03-17T20:05:22.805Z",
         "updatedAt": "2025-03-17T20:05:33.249Z"
@@ -78,29 +77,29 @@ curl --location --request GET 'https://server-clothes-store.vercel.app/api/v1/us
 
 ### Structure Data Response
 
-| Field      | Nullable | Type    | Description         |
-| ---------- | -------- | ------- | ------------------- |
-| meta       |          | Object  | Meta                |
-| page       |          | Number  | Current page        |
-| limit      |          | Number  | Limit per page      |
-| totalCount |          | Number  | Total count         |
-| offset     |          | Number  | Skip                |
-| totalPage  |          | Number  | Total page          |
-| isNext     |          | Boolean | Is next             |
-| isPrevious |          | Boolean | Is previous         |
-| isFirst    |          | Boolean | Is first            |
-| isLast     |          | Boolean | Is last             |
-| list       |          | Array   | Array of users      |
-| id         |          | String  | User ID             |
-| name       |          | String  | User name           |
-| email      |          | String  | Email               |
-| phone      |          | String  | Phone number        |
-| gender     | x        | String  | Gender              |
-| status     |          | String  | Status              |
-| isVerified |          | boolean | Is verified account |
-| verifiedAt | x        | String  | Verified at         |
-| createdAt  |          | String  | Created at          |
-| updatedAt  |          | String  | Updated at          |
+| Field      | Nullable | Type    | Description    |
+| ---------- | -------- | ------- | -------------- |
+| meta       |          | Object  | Meta           |
+| page       |          | Number  | Current page   |
+| limit      |          | Number  | Limit per page |
+| totalCount |          | Number  | Total count    |
+| offset     |          | Number  | Skip           |
+| totalPage  |          | Number  | Total page     |
+| isNext     |          | Boolean | Is next        |
+| isPrevious |          | Boolean | Is previous    |
+| isFirst    |          | Boolean | Is first       |
+| isLast     |          | Boolean | Is last        |
+| list       |          | Array   | Array of users |
+| id         |          | String  | User ID        |
+| avatar     | x        | String  | Avatar         |
+| name       |          | String  | User name      |
+| email      |          | String  | Email          |
+| phone      |          | String  | Phone number   |
+| gender     |          | String  | Gender         |
+| status     |          | String  | Status         |
+| verifiedAt | x        | String  | Verified at    |
+| createdAt  |          | String  | Created at     |
+| updatedAt  |          | String  | Updated at     |
 
 ### Invalid Data (400)
 

@@ -7,19 +7,19 @@ This endpoint is used to retrieve a list of roles based on the provided keyword,
 #### Production
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/roles/get-roles
+https://server-clothes-store.vercel.app/api/roles/get-roles
 ```
 
 #### Test
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/roles/get-roles
+https://server-clothes-store.vercel.app/api/roles/get-roles
 ```
 
 #### Curl
 
 ```bash
-curl --location --request GET 'https://server-clothes-store.vercel.app/api/v1/roles/get-roles' \
+curl --request GET 'https://server-clothes-store.vercel.app/api/roles/get-roles' \
 --header 'Content-Type: application/json' \
 --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZDJhMzMyYzhhMjEzYjA1MDI4MzNjNiIsInR5cGUiOiJVc2VyIiwiaWF0IjoxNzQyMjAxMDU5LCJleHAiOjE3NDIyMDE5NTl9.gsqLAzSlJKDPU3D9gvKg_I42NJ3NhI2d5svf-MYywDo' \
 ```
@@ -63,7 +63,6 @@ curl --location --request GET 'https://server-clothes-store.vercel.app/api/v1/ro
         "slug": "exampl4e2323333",
         "status": "active",
         "description": "a",
-        "isActive": true,
         "createdAt": "2025-03-17T11:30:02.722Z",
         "updatedAt": "2025-03-17T11:30:02.722Z"
       }
@@ -92,7 +91,6 @@ curl --location --request GET 'https://server-clothes-store.vercel.app/api/v1/ro
 | slug        |          | String  | Role slug      |
 | status      |          | String  | Role status    |
 | description |          | String  | Description    |
-| isActive    |          | Boolean | Is role active |
 | createdAt   |          | String  | Created At     |
 | updatedAt   |          | String  | Updated At     |
 

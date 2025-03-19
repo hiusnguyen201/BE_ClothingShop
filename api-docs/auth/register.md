@@ -7,19 +7,19 @@ This endpoint is used to register a new customer.
 #### Production
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/auth/register
+https://server-clothes-store.vercel.app/api/auth/register
 ```
 
 #### Test
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/auth/register
+https://server-clothes-store.vercel.app/api/auth/register
 ```
 
 #### Curl
 
 ```bash
-curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/auth/register' \
+curl --request POST 'https://server-clothes-store.vercel.app/api/auth/register' \
 --header 'Content-Type: application/json' \
 --data-raw '{
     "name": "example",
@@ -56,14 +56,9 @@ curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/a
     "isAuthenticated": false,
     "is2FactorRequired": true,
     "user": {
-      "id": "67d85c19284c7c3933f9823f",
-      "name": "example",
-      "slug": "example",
-      "status": "active",
-      "description": "This is example",
-      "isActive": true,
-      "createdAt": "2025-03-17T17:30:01.529Z",
-      "updatedAt": "2025-03-17T17:30:06.621Z"
+      "id": "67d944d742e52209d72a1fde",
+      "name": "Norma Schmitt",
+      "email": "Mayra.Pfannerstill@gmail.com"
     }
   }
 }
@@ -79,13 +74,6 @@ curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/a
 | id                |          | String  | User ID             |
 | name              |          | String  | User name           |
 | email             |          | String  | Email               |
-| phone             |          | String  | Phone number        |
-| gender            | x        | String  | Gender              |
-| status            |          | String  | Status              |
-| isVerified        |          | boolean | Is verified account |
-| verifiedAt        | x        | String  | Verified at         |
-| createdAt         |          | String  | Created at          |
-| updatedAt         |          | String  | Updated at          |
 
 ### Invalid Data (400)
 

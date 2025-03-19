@@ -7,19 +7,19 @@ This endpoint is used to send a one-time password (OTP) to the provided email ad
 #### Production
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/auth/send-otp-via-email
+https://server-clothes-store.vercel.app/api/auth/send-otp-via-email
 ```
 
 #### Test
 
 ```bash
-https://server-clothes-store.vercel.app/api/v1/auth/send-otp-via-email
+https://server-clothes-store.vercel.app/api/auth/send-otp-via-email
 ```
 
 #### Curl
 
 ```bash
-curl --location --request POST 'https://server-clothes-store.vercel.app/api/v1/auth/send-otp-via-email' \
+curl --request POST 'https://server-clothes-store.vercel.app/api/auth/send-otp-via-email' \
 --header 'Content-Type: application/json' \
 --data-raw '{
     "email": "example@gmail.com",
