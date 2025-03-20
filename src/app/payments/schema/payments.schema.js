@@ -30,7 +30,7 @@ export const paymentSchema = new Schema(
       required: false,
     },
     // Foreign Key
-    orderId: [{ type: Schema.Types.ObjectId, ref: 'Order' }],
+    orderId: { type: Schema.Types.ObjectId, ref: 'Order' },
   },
   {
     versionKey: false,

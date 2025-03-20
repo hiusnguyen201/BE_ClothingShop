@@ -6,10 +6,10 @@ export const getProductByIdService = async ({ productId }) => {
   return product;
 };
 
-export const getVariantProductByIdService = async (variantProductId) => {
-  const variantProduct = await ProductVariantModel.find({ _id: variantProductId }).populate({
+export const getVariantProductByIdService = async (productVariantIds) => {
+  const productVariants = await ProductVariantModel.find({ _id: { $in: productVariantIds } }).populate({
     path: 'productId',
     model: 'Product',
   });
-  return variantProduct;
+  return productVariants;
 };

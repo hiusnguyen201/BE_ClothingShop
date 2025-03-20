@@ -9,23 +9,24 @@ const ghnAPI = axios.create({
   },
 });
 // create order GHN
-export const createGHNOrder = async (order, user, userAddress, calculateOrderDetails) => {
+export const createGHNOrder = async (order, calculateOrderDetails) => {
+  console.log(calculateOrderDetails);
   const pickupTime = moment().unix();
   const response = await ghnAPI.post(`/v2/shipping-order/create`, {
     payment_type_id: 1,
     note: '',
     required_note: 'KHONGCHOXEMHANG',
-    return_phone: userAddress.customerPhone,
-    return_address: userAddress.address,
+    return_phone: '0398779258',
+    return_address: 'so 10 ngo 47 mai dich cau giay ha noi',
     return_district_id: null,
     return_ward_code: '',
     client_order_code: order.code,
-    from_name: userAddress.customerName,
-    from_phone: userAddress.customerPhone,
-    from_address: userAddress.address,
-    from_ward_name: userAddress.ward,
-    from_district_name: userAddress.district,
-    from_province_name: userAddress.province,
+    from_name: 'vuong',
+    from_phone: '0398779258',
+    from_address: 'so 10 ngo 47 mai dich cau giay ha noi',
+    from_ward_name: 'mai dich',
+    from_district_name: 'cau giay',
+    from_province_name: 'ha noi',
     to_name: order.customerName,
     to_phone: order.customerPhone,
     to_address: order.address,
@@ -70,7 +71,6 @@ export const getOrderGhnByClientOrderCode = async (clientOrderCode) => {
 
 // remove order GHN
 export const removeOrderGhn = async (orderCode) => {
-  console.log(orderCode);
   const response = await ghnAPI.post('/v2/switch-status/cancel', { order_codes: [orderCode] });
   return response.data.data;
 };

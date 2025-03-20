@@ -6,64 +6,62 @@ import {
   updateOrderByIdService,
   removeOrderByIdService,
   countAllOrdersService,
+  calculateOrderTotalService,
 } from '#src/app/orders/orders.service';
 import HttpStatus from 'http-status-codes';
 import { HttpException } from '#src/core/exception/http-exception';
 import { createOrderDetailService } from '#src/app/orderDetails/order-details.service';
 import { ORDERS_STATUS } from '#src/core/constant';
 import { TransactionalServiceWrapper } from '#src/core/transaction/TransactionalServiceWrapper';
-import { calculateCartTotal } from '#src/utils/calculateCareTotal';
 import moment from 'moment-timezone';
 import { randomCodeOrder } from '#src/utils/string.util';
-import {
-  getShippingAddressByIdService,
-  getShippingAddressByUserIdService,
-} from '#src/app/shipping-address/shipping-address.service';
+import { getShippingAddressByIdService } from '#src/app/shipping-address/shipping-address.service';
 import { createGHNOrder, getOrderGhnByClientOrderCode, removeOrderGhn } from '#src/modules/GHN/ghn.service';
-import { USER_TYPE } from '#src/app/users/users.constant';
 import { calculatePagination } from '#src/utils/pagination.util';
+import { getCustomerByIdService } from '#src/app/customers/customers.service';
+import { getVariantProductByIdService } from '#src/app/products/product.service';
+import { getVoucherByIdService } from '#src/app/vouchers/vouchers.service';
+import { Code } from '#src/core/code/Code';
 
 /**
  *  Tạo order từ quản trị
  */
 export const createOrderController = async (req, res) => {
   return TransactionalServiceWrapper.execute(async (session) => {
-    const { productVariantIds, customerId, voucherId, shippingAddressId } = req.body;
+    const { productVariants, customerId, voucherId, shippingAddressId } = req.body;
 
-    const customerExisted = await getUserByIdService(customerId); // getCustomerByIdService
-
-    if (!customerExisted || customerExisted.type !== USER_TYPE.CUSTOMER) {
-      throw new NotFoundException('User not found');
+    const customerExisted = await getCustomerByIdService(customerId);
+    if (!customerExisted) {
+      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Customer not found' });
     }
 
-    // Saler (Lấy địa chỉ lấy hàng ở bảng settings)
-    /**
-     * [
-     *   {
-     *      "group": "company",
-     *      "key": "info",
-     *      "value": "{'name': "Clothing shop", "email": "clothingShop@gmail.com", "address": "Địa chỉ của công ty"}"
-     *    },
-     *   {
-     *     "group": "interface",
-     *     "key": "banner",
-     *     "value": "['Địa chỉ của hình ảnh']"
-     *   }
-     * ]
-     */
-    const userExisted = await getUserByIdService(req.user._id);
+    const variantIds = productVariants.map((item) => item.variantId);
 
-    if (!productVariantIds || productVariantIds.length === 0) {
-      throw new NotFoundException('Product not found');
+    const productVariantsExited = await getVariantProductByIdService(variantIds);
+
+    if (!productVariantsExited) {
+      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product not found' });
     }
-    //  Check [] product variant
-    //  Hàm calculate ở service
-    const calculateOrderDetails = await calculateCartTotal(productVariantIds, voucherId);
+
+    const productVariantDetails = productVariants.map((item) => {
+      const variant = productVariantsExited.find((v) => v._id.toString() === item.variantId);
+      return {
+        variantId: variant._id,
+        productId: variant.productId._id,
+        unitPrice: variant.price,
+        sku: variant.sku,
+        quantity: item.quantity,
+      };
+    });
+
+    const voucherExisted = await getVoucherByIdService(voucherId);
+
+    const calculateOrderDetails = await calculateOrderTotalService(productVariantDetails, voucherExisted);
 
     const shippingAddressExisted = await getShippingAddressByIdService(shippingAddressId);
 
     if (!shippingAddressExisted) {
-      throw new NotFoundException('Address not found');
+      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Address not found' });
     }
 
     const currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
@@ -71,15 +69,15 @@ export const createOrderController = async (req, res) => {
 
     const createOrderRequirement = {
       code,
-      provinceName: shippingAddressExisted.province,
-      districtName: shippingAddressExisted.district,
-      wardName: shippingAddressExisted.ward,
-      address: shippingAddressExisted.address,
+      provinceName: req.body.provinceName || shippingAddressExisted.province,
+      districtName: req.body.districtName || shippingAddressExisted.district,
+      wardName: req.body.wardName || shippingAddressExisted.ward,
+      address: req.body.address || shippingAddressExisted.address,
       customerId: customerExisted._id,
       customerName: req.body.customerName || customerExisted.name,
       customerEmail: req.body.customerEmail || customerExisted.email,
       customerPhone: req.body.customerPhone || customerExisted.phone,
-      shippingAddressId: shippingAddressExisted._id,
+      shippingAddressId: req.body.shippingAddressId || shippingAddressExisted._id,
       quantity: calculateOrderDetails.totalQuantity,
       subTotal: calculateOrderDetails.subTotal,
       shippingFee: 0,
@@ -92,22 +90,19 @@ export const createOrderController = async (req, res) => {
 
     const newOrder = await createOrderService(createOrderRequirement, session);
 
-    const userAddress = await getShippingAddressByUserIdService(userExisted._id);
-
-    const newOrderGhn = await createGHNOrder(newOrder, userExisted, userAddress, calculateOrderDetails);
-
-    if (!newOrderGhn) {
-      throw new BadRequestException('Can not create order by GHN');
-    }
-
-    const newOrderDetails = calculateOrderDetails.processedVariants.map((item) => ({
+    const newOrderDetails = calculateOrderDetails.orderDetails.map((item) => ({
       ...item,
-      totalPrice: calculateOrderDetails.total,
       orderId: newOrder._id,
     }));
 
-    // Thêm session
     await createOrderDetailService(newOrderDetails, session);
+
+    // if (newOrder.paymentId) {
+    //   const newOrderGhn = await createGHNOrder(newOrder, calculateOrderDetails);
+    //   if (!newOrderGhn) {
+    //     throw new BadRequestException('Can not create order by GHN');
+    //   }
+    // }
 
     return {
       statusCode: HttpStatus.CREATED,
@@ -122,19 +117,39 @@ export const createOrderController = async (req, res) => {
  */
 export const createOrderCustomerController = async (req, res) => {
   return TransactionalServiceWrapper.execute(async (session) => {
-    const { cartIds, voucherId, shippingAddressId } = req.body;
+    const { cartIds, customerId, voucherId, shippingAddressId } = req.body;
 
-    const customerExisted = await getUserByIdService(req.user._id);
-
-    if (!cartIds || cartIds.length === 0) {
-      throw new NotFoundException('Product not found');
+    const customerExisted = await getCustomerByIdService(customerId);
+    if (!customerExisted) {
+      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Customer not found' });
     }
-    const calculateOrderDetails = await calculateCartTotal(cartIds, voucherId);
+
+    const variantIds = cartIds.map((item) => item.variantId);
+
+    const productVariantsExited = await getVariantProductByIdService(variantIds);
+
+    if (!productVariantsExited) {
+      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product not found' });
+    }
+    const productVariantDetails = cartIds.map((item) => {
+      const variant = productVariantsExited.find((v) => v._id.toString() === item.variantId);
+      return {
+        variantId: variant._id,
+        productId: variant.productId._id,
+        unitPrice: variant.price,
+        sku: variant.sku,
+        quantity: item.quantity,
+      };
+    });
+
+    const voucherExisted = await getVoucherByIdService(voucherId);
+
+    const calculateOrderDetails = await calculateOrderTotalService(productVariantDetails, voucherExisted);
 
     const shippingAddressExisted = await getShippingAddressByIdService(shippingAddressId);
 
     if (!shippingAddressExisted) {
-      throw new NotFoundException('Address not found');
+      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Address not found' });
     }
 
     const currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
@@ -142,15 +157,15 @@ export const createOrderCustomerController = async (req, res) => {
 
     const createOrderRequirement = {
       code,
-      provinceName: shippingAddressExisted.province,
-      districtName: shippingAddressExisted.district,
-      wardName: shippingAddressExisted.ward,
-      address: shippingAddressExisted.address,
+      provinceName: req.body.provinceName || shippingAddressExisted.province,
+      districtName: req.body.districtName || shippingAddressExisted.district,
+      wardName: req.body.wardName || shippingAddressExisted.ward,
+      address: req.body.address || shippingAddressExisted.address,
       customerId: customerExisted._id,
       customerName: req.body.customerName || customerExisted.name,
       customerEmail: req.body.customerEmail || customerExisted.email,
       customerPhone: req.body.customerPhone || customerExisted.phone,
-      shippingAddressId: shippingAddressExisted._id,
+      shippingAddressId: req.body.shippingAddressId || shippingAddressExisted._id,
       quantity: calculateOrderDetails.totalQuantity,
       subTotal: calculateOrderDetails.subTotal,
       shippingFee: 0,
@@ -163,35 +178,28 @@ export const createOrderCustomerController = async (req, res) => {
 
     const newOrder = await createOrderService(createOrderRequirement, session);
 
-    const userAddress = await getShippingAddressByUserIdService(customerExisted._id);
-
-    const newOrderGhn = await createGHNOrder(newOrder, customerExisted, userAddress, calculateOrderDetails);
-
-    if (!newOrderGhn) {
-      throw new BadRequestException('Can not create order by GHN');
-    }
-
-    const newOrderDetails = calculateOrderDetails.processedVariants.map((item) => ({
+    const newOrderDetails = calculateOrderDetails.orderDetails.map((item) => ({
       ...item,
-      totalPrice: calculateOrderDetails.total,
       orderId: newOrder._id,
     }));
 
-    // Thêm session
     await createOrderDetailService(newOrderDetails, session);
+
+    // if (newOrder.paymentId) {
+    //   const newOrderGhn = await createGHNOrder(newOrder, calculateOrderDetails);
+    //   if (!newOrderGhn) {
+    //     throw new BadRequestException('Can not create order by GHN');
+    //   }
+    // }
 
     return {
       statusCode: HttpStatus.CREATED,
-      message: 'Create order customer successfully',
+      message: 'Create order successfully',
       data: { newOrder, calculateOrderDetails },
     };
   });
 };
 
-/**
- * lấy tất cả order bên quản trị
- * Thêm sắp xếp (mới nhất, cũ nhất, theo khoảng thời gian tính theo orderDate) và lọc (status)
- */
 export const getAllOrdersByUserController = async (req, res) => {
   let { keyword = '', limit = 10, page = 1, status, startDate, endDate, sortBy } = req.query;
 
@@ -241,7 +249,7 @@ export const getAllOrdersByUserController = async (req, res) => {
 export const getOrderByIdController = async (req, res) => {
   const orderExisted = await getOrderByIdService(req.params.id);
   if (!orderExisted) {
-    throw new NotFoundException('Order not found');
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
   }
   return {
     statusCode: HttpStatus.OK,
@@ -253,7 +261,7 @@ export const getOrderByIdController = async (req, res) => {
 export const updateOrderByIdController = async (req, res) => {
   const orderExisted = await getOrderByIdService(req.params.id);
   if (!orderExisted) {
-    throw new NotFoundException('Order not found');
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
   }
 
   const orderUpdated = await updateOrderByIdService(req.params.id, req.body);
@@ -267,12 +275,12 @@ export const updateOrderByIdController = async (req, res) => {
 export const removeOrderByIdController = async (req, res) => {
   const orderExisted = await getOrderByIdService(req.params.id);
   if (!orderExisted) {
-    throw new NotFoundException('Order not found');
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
   }
 
   const orderGhn = await getOrderGhnByClientOrderCode(orderExisted.code);
   if (!orderGhn) {
-    throw new NotFoundException('Order not found');
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order Ghn not found' });
   }
 
   await removeOrderGhn(orderGhn.order_code);

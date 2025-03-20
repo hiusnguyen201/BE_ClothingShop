@@ -5,7 +5,7 @@ const PRODUCT_VARIANT_MODEL = 'productVariants';
 
 export const productVariantSchema = new Schema(
   {
-    productId: [{ type: Schema.Types.ObjectId, ref: 'Product', required: true }],
+    productId: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
     quantity: {
       type: Number,
       required: true,

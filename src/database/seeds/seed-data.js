@@ -71,6 +71,10 @@ async function runSeed() {
     );
 
     // Settings
+    const settingCollections = await Database.instance.connection.db.listCollections({ name: SETTING_MODEL }).toArray();
+    if (userCollections.length === 0) {
+      await Database.instance.connection.createCollection(SETTING_MODEL);
+    }
   });
 }
 

@@ -9,17 +9,15 @@ export const createOrderDto = Joi.object({
     }
     return value;
   }),
+  provinceName: Joi.string().min(3).max(50),
+  districtName: Joi.string().min(3).max(50),
+  wardName: Joi.string().min(3).max(50),
+  address: Joi.string().min(3).max(255),
   customerName: Joi.string().min(3).max(100).required(),
   customerEmail: Joi.string().email().required(),
   customerPhone: Joi.phoneNumber('VN').required(),
-  shippingAddressId: Joi.string().custom((value, helpers) => {
-    // required la dc
-    if (!mongoose.Types.ObjectId.isValid(value)) {
-      return helpers.error('any.invalid');
-    }
-    return value;
-  }),
-  voucherId: Joi.string() // check string
+  shippingAddressId: Joi.string().required(),
+  voucherId: Joi.string()
     .custom((value, helpers) => {
       if (!mongoose.Types.ObjectId.isValid(value)) {
         return helpers.error('any.invalid');
@@ -27,7 +25,7 @@ export const createOrderDto = Joi.object({
       return value;
     })
     .optional(),
-  productVariantIds: Joi.array() // [{variantId: 'string'}] => [variantId1, variantId2, variantId3]
+  productVariants: Joi.array()
     .items(
       Joi.object({
         variantId: Joi.string().custom((value, helpers) => {
@@ -36,7 +34,7 @@ export const createOrderDto = Joi.object({
           }
           return value;
         }),
-        // Thêm trường quantity
+        quantity: Joi.number().required(),
       }),
     )
     .min(1)
@@ -44,22 +42,20 @@ export const createOrderDto = Joi.object({
 });
 
 export const createOrderCustomerDto = Joi.object({
-  customerName: Joi.string().min(3).max(100).required(),
-  customerEmail: Joi.string().email().required(),
-  customerPhone: Joi.string()
-    .required()
-    .custom((value, helper) => {
-      if (!value.match(REGEX_PATTERNS.PHONE_VIETNAM)) {
-        return helper.message('Invalid vietnam phone number');
-      }
-      return value;
-    }),
-  shippingAddressId: Joi.string().custom((value, helpers) => {
+  customerId: Joi.string().custom((value, helpers) => {
     if (!mongoose.Types.ObjectId.isValid(value)) {
       return helpers.error('any.invalid');
     }
     return value;
   }),
+  provinceName: Joi.string().min(3).max(50),
+  districtName: Joi.string().min(3).max(50),
+  wardName: Joi.string().min(3).max(50),
+  address: Joi.string().min(3).max(255),
+  customerName: Joi.string().min(3).max(100).required(),
+  customerEmail: Joi.string().email().required(),
+  customerPhone: Joi.phoneNumber('VN').required(),
+  shippingAddressId: Joi.string().required(),
   voucherId: Joi.string()
     .custom((value, helpers) => {
       if (!mongoose.Types.ObjectId.isValid(value)) {
@@ -77,6 +73,13 @@ export const createOrderCustomerDto = Joi.object({
           }
           return value;
         }),
+        productId: Joi.string().custom((value, helpers) => {
+          if (!mongoose.Types.ObjectId.isValid(value)) {
+            return helpers.error('any.invalid');
+          }
+          return value;
+        }),
+        quantity: Joi.number().required(),
       }),
     )
     .min(1)

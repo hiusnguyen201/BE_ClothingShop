@@ -7,32 +7,35 @@ import {
   getShippingAddressByUserIdService,
   updateShippingAddressByIdService,
 } from '#src/app/shipping-address/shipping-address.service';
-
+import { Code } from '#src/core/code/Code';
 export const createShippingAddressController = async (req, res) => {
   const { customerName, customerPhone, address, province, district, ward, isDefault } = req.body;
 
-  const customerExisted = await getUserByIdService(req.user._id);
+  const customerExisted = await getUserByIdService(req.user.id);
 
   // Lấy danh sách tỉnh/thành từ GHN
   const provinces = await getProvinces();
-  const provinceData = provinces.find((p) => p.ProvinceName === province);
+  const provinceData = provinces.find((p) =>
+    p.NameExtension.some((name) => name.toLowerCase() === province.toLowerCase()),
+  );
   if (!provinceData) {
-    throw new NotFoundException('Provinces not found');
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Province not found' });
   }
 
   // Lấy danh sách quận/huyện theo tỉnh
   const districts = await getDistricts(provinceData.ProvinceID);
-
-  const districtData = districts.find((d) => d.DistrictName === district);
+  const districtData = districts.find((p) =>
+    p.NameExtension.some((name) => name.toLowerCase() === district.toLowerCase()),
+  );
   if (!districtData) {
-    throw new NotFoundException('districts not found');
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'District not found' });
   }
 
   // Lấy danh sách phường/xã theo huyện
   const wards = await getWards(districtData.DistrictID);
-  const wardData = wards.find((w) => w.WardName === ward);
+  const wardData = wards.find((p) => p.NameExtension.some((name) => name.toLowerCase() === ward.toLowerCase()));
   if (!wardData) {
-    throw new NotFoundException('wards not found');
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Ward not found' });
   }
 
   const createShippingAddressRequirement = {

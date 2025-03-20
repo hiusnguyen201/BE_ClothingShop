@@ -39,7 +39,7 @@ export const orderSchema = new Schema(
       type: String,
       required: true,
     },
-    shippingAddressId: [{ type: Schema.Types.ObjectId, ref: 'ShippingAddress', required: true }],
+    shippingAddressId: { type: Schema.Types.ObjectId, ref: 'ShippingAddress', required: true },
 
     orderDate: {
       type: Date,
@@ -81,27 +81,21 @@ export const orderSchema = new Schema(
 
     // Foreign Key
     // roles: [{ type: Schema.Types.ObjectId, ref: "Role" }],
-    paymentId: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: 'Payment',
-        required: true,
-        default: null,
-      },
-    ],
-    customerId: [{ type: Schema.Types.ObjectId, ref: 'User', required: true }],
+    customerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    paymentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Payment',
+      default: null,
+    },
+    employeeId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
     voucherId: [
       {
         type: Schema.Types.ObjectId,
         ref: 'Voucher',
-        required: true,
-        default: null,
-      },
-    ],
-    employeeId: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: 'User',
         required: true,
         default: null,
       },

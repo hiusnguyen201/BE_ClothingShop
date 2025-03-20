@@ -13,7 +13,6 @@ const router = express.Router();
 router.post('/create-payment', validateBody(createPaymentDto), createPaymentController);
 
 // thanh toans Momo xong => Get tới endpoint api /return-payment-momo?resultCode=0
-
 router.get('/return-payment-momo', returnPaymentMomoController);
 router.get('/return-payment-vnpay', returnPaymentVnPayController);
 
