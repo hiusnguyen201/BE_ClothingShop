@@ -1,14 +1,11 @@
 import Joi from 'joi';
 import mongoose from 'mongoose';
 
-export const createPaymentDto = Joi.object({
+export const createOrderGhnDto = Joi.object({
   orderId: Joi.string().custom((value, helpers) => {
     if (!mongoose.Types.ObjectId.isValid(value)) {
       return helpers.error('any.invalid');
     }
     return value;
-  }),
-  paymentMethod: Joi.string().valid('Cod', 'Momo', 'Vnpay').required().messages({
-    'any.only': 'Payment method must be one of: Cod, Momo, Vnpay',
   }),
 });

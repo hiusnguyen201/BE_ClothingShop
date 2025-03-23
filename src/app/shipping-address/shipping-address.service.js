@@ -1,25 +1,23 @@
-import { ShippingAddressModel } from '#src/models/shipping-address.model';
+import { ShippingAddressModel } from '#src/app/shipping-address/model/shipping-address.model';
 
 export const createShippingAddressService = async (data) => {
   return await ShippingAddressModel.create(data);
 };
 
-export const getShippingAddressByIdService = async ({ shippingAddressId }) => {
-  const address = await ShippingAddressModel.findOne({ shippingAddressId }).populate({
+export const getShippingAddressByIdService = async (shippingAddressId) => {
+  return await ShippingAddressModel.findOne({ _id: shippingAddressId }).populate({
     path: 'customerId',
     model: 'User',
     select: '-password',
   });
-  return address;
 };
 
-export const getShippingAddressByUserIdService = async ({ userId }) => {
-  const address = await ShippingAddressModel.findOne({ userId, isDefault: true }).populate({
+export const getShippingAddressByUserIdService = async (userId) => {
+  return await ShippingAddressModel.findOne({ _id: userId, isDefault: true }).populate({
     path: 'customerId',
     model: 'User',
     select: '-password',
   });
-  return address;
 };
 
 export async function updateShippingAddressByIdService(shippingAddressId, data) {

@@ -21,9 +21,10 @@ export const REGEX_PATTERNS = {
 
 export const ORDERS_STATUS = {
   PENDING: 'Pending',
+  PROCESSING: 'Processing',
   SHIPPING: 'Shipping',
   DELIVERED: 'Delivered',
-  CANCELLED: 'Canceled',
+  CANCELLED: 'Cancelled',
 };
 
 export const PAYMENT_METHOD = {

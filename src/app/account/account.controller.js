@@ -15,6 +15,8 @@ import { UserDto } from '#src/app/users/dtos/user.dto';
 import { comparePasswordService } from '#src/app/account/account.service';
 import { changePasswordByIdService } from '#src/app/auth/auth.service';
 import { Code } from '#src/core/code/Code';
+import { handleCreateOrder } from '#src/utils/handle-create-order';
+import { TransactionalServiceWrapper } from '#src/core/transaction/TransactionalServiceWrapper';
 
 export const getProfileController = async (req) => {
   const user = await getUserByIdService(req.user.id);
@@ -91,4 +93,15 @@ export const getAllVoucherFromCustomerController = async (req) => {
     },
     'Get all vouchers successfully',
   );
+};
+
+// create order by customer
+export const createOrderCustomerController = async (req, res) => {
+  return TransactionalServiceWrapper.execute(async (session) => {
+    const newOderByCustomer = await handleCreateOrder(req.body.cartIds, req, session);
+    return {
+      message: 'Create order by customer successfully',
+      data: newOderByCustomer,
+    };
+  });
 };

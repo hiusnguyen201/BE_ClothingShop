@@ -28,5 +28,5 @@ export const productVariantSchema = new Schema(
   },
 );
 
-const ProductVariantModel = mongoose.model('productVariant', productVariantSchema);
+const ProductVariantModel = mongoose.model('ProductVariant', productVariantSchema);
 export { ProductVariantModel };

@@ -9,8 +9,7 @@ const ghnAPI = axios.create({
   },
 });
 // create order GHN
-export const createGHNOrder = async (order, calculateOrderDetails) => {
-  console.log(calculateOrderDetails);
+export const createGhnOrder = async (order, orderDetails) => {
   const pickupTime = moment().unix();
   const response = await ghnAPI.post(`/v2/shipping-order/create`, {
     payment_type_id: 1,
@@ -47,11 +46,11 @@ export const createGHNOrder = async (order, calculateOrderDetails) => {
     coupon: null,
     pickup_time: pickupTime,
     pick_shift: [2],
-    items: calculateOrderDetails.processedVariants.map((item) => ({
-      name: item.name,
-      code: item.sku,
+    items: orderDetails.map((item) => ({
+      name: item.variantId.sku,
+      code: item.productId,
       quantity: item.quantity,
-      price: item.price,
+      price: item.unitPrice,
       length: 12,
       width: 12,
       height: 12,

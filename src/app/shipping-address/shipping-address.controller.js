@@ -15,25 +15,31 @@ export const createShippingAddressController = async (req, res) => {
 
   // Lấy danh sách tỉnh/thành từ GHN
   const provinces = await getProvinces();
-  const provinceData = provinces.find((p) =>
-    p.NameExtension.some((name) => name.toLowerCase() === province.toLowerCase()),
+
+  const provinceData = provinces.find(
+    (p) =>
+      Array.isArray(p.NameExtension) && p.NameExtension.some((name) => name.toLowerCase() === province.toLowerCase()),
   );
+
   if (!provinceData) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Province not found' });
   }
 
   // Lấy danh sách quận/huyện theo tỉnh
   const districts = await getDistricts(provinceData.ProvinceID);
-  const districtData = districts.find((p) =>
-    p.NameExtension.some((name) => name.toLowerCase() === district.toLowerCase()),
+  const districtData = districts.find(
+    (p) =>
+      Array.isArray(p.NameExtension) && p.NameExtension.some((name) => name.toLowerCase() === district.toLowerCase()),
   );
   if (!districtData) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'District not found' });
   }
 
-  // Lấy danh sách phường/xã theo huyện
+  // // Lấy danh sách phường/xã theo huyện
   const wards = await getWards(districtData.DistrictID);
-  const wardData = wards.find((p) => p.NameExtension.some((name) => name.toLowerCase() === ward.toLowerCase()));
+  const wardData = wards.find(
+    (p) => Array.isArray(p.NameExtension) && p.NameExtension.some((name) => name.toLowerCase() === ward.toLowerCase()),
+  );
   if (!wardData) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Ward not found' });
   }
@@ -51,10 +57,11 @@ export const createShippingAddressController = async (req, res) => {
 
   if (isDefault) {
     const addressUser = await getShippingAddressByUserIdService(customerExisted._id, isDefault);
-
-    await updateShippingAddressByIdService(addressUser._id, {
-      isDefault: false,
-    });
+    if (addressUser) {
+      await updateShippingAddressByIdService(addressUser._id, {
+        isDefault: false,
+      });
+    }
   }
 
   const newShippingAddress = await createShippingAddressService(createShippingAddressRequirement);

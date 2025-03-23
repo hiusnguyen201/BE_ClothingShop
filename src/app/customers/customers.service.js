@@ -1,5 +1,6 @@
 import { UserModel } from '#src/app/users/models/user.model';
 import { USER_SELECTED_FIELDS, USER_TYPE } from '#src/app/users/users.constant';
+import { REGEX_PATTERNS } from '#src/core/constant';
 import { isValidObjectId } from 'mongoose';
 
 export async function addVoucherToCustomerService(userId, voucherId) {

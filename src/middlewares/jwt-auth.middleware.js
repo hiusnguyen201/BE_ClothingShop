@@ -47,7 +47,6 @@ async function checkPermission(req, res, next) {
   Object.entries(req.params).map(([key, value]) => {
     endpoint = endpoint.replace(value, `:${key}`);
   });
-
   if (endpoint.includes('?')) {
     endpoint = endpoint.split('?')[0];
   }
@@ -56,7 +55,6 @@ async function checkPermission(req, res, next) {
     method: req.method,
     endpoint,
   });
-
   return hasPermission ? next() : next(HttpException.new({ code: Code.ACCESS_DENIED }));
 }
 

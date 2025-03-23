@@ -1,14 +1,15 @@
 import Joi from 'joi';
-import { REGEX_PATTERNS } from '#src/core/constant';
 import mongoose from 'mongoose';
 
+const objectIdValidator = (value, helpers) => {
+  if (!mongoose.Types.ObjectId.isValid(value)) {
+    return helpers.error('any.invalid');
+  }
+  return value;
+};
+
 export const createOrderDto = Joi.object({
-  customerId: Joi.string().custom((value, helpers) => {
-    if (!mongoose.Types.ObjectId.isValid(value)) {
-      return helpers.error('any.invalid');
-    }
-    return value;
-  }),
+  customerId: Joi.string().custom(objectIdValidator),
   provinceName: Joi.string().min(3).max(50),
   districtName: Joi.string().min(3).max(50),
   wardName: Joi.string().min(3).max(50),
@@ -17,23 +18,11 @@ export const createOrderDto = Joi.object({
   customerEmail: Joi.string().email().required(),
   customerPhone: Joi.phoneNumber('VN').required(),
   shippingAddressId: Joi.string().required(),
-  voucherId: Joi.string()
-    .custom((value, helpers) => {
-      if (!mongoose.Types.ObjectId.isValid(value)) {
-        return helpers.error('any.invalid');
-      }
-      return value;
-    })
-    .optional(),
+  voucherId: Joi.string().custom(objectIdValidator).optional(),
   productVariants: Joi.array()
     .items(
       Joi.object({
-        variantId: Joi.string().custom((value, helpers) => {
-          if (!mongoose.Types.ObjectId.isValid(value)) {
-            return helpers.error('any.invalid');
-          }
-          return value;
-        }),
+        variantId: Joi.string().custom(objectIdValidator),
         quantity: Joi.number().required(),
       }),
     )
@@ -42,12 +31,7 @@ export const createOrderDto = Joi.object({
 });
 
 export const createOrderCustomerDto = Joi.object({
-  customerId: Joi.string().custom((value, helpers) => {
-    if (!mongoose.Types.ObjectId.isValid(value)) {
-      return helpers.error('any.invalid');
-    }
-    return value;
-  }),
+  customerId: Joi.string().custom(objectIdValidator),
   provinceName: Joi.string().min(3).max(50),
   districtName: Joi.string().min(3).max(50),
   wardName: Joi.string().min(3).max(50),
@@ -56,29 +40,12 @@ export const createOrderCustomerDto = Joi.object({
   customerEmail: Joi.string().email().required(),
   customerPhone: Joi.phoneNumber('VN').required(),
   shippingAddressId: Joi.string().required(),
-  voucherId: Joi.string()
-    .custom((value, helpers) => {
-      if (!mongoose.Types.ObjectId.isValid(value)) {
-        return helpers.error('any.invalid');
-      }
-      return value;
-    })
-    .optional(),
+  voucherId: Joi.string().custom(objectIdValidator).optional(),
   cartIds: Joi.array()
     .items(
       Joi.object({
-        variantId: Joi.string().custom((value, helpers) => {
-          if (!mongoose.Types.ObjectId.isValid(value)) {
-            return helpers.error('any.invalid');
-          }
-          return value;
-        }),
-        productId: Joi.string().custom((value, helpers) => {
-          if (!mongoose.Types.ObjectId.isValid(value)) {
-            return helpers.error('any.invalid');
-          }
-          return value;
-        }),
+        variantId: Joi.string().custom(objectIdValidator),
+        productId: Joi.string().custom(objectIdValidator),
         quantity: Joi.number().required(),
       }),
     )

@@ -2,7 +2,7 @@ import SoftDelete from '#src/core/plugins/soft-delete.plugin';
 import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
-export const SETTING_MODEL = 'roles';
+export const SETTING_MODEL = 'settings';
 
 const SettingSchema = new Schema(
   {

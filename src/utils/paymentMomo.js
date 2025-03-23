@@ -4,14 +4,14 @@ import moment from 'moment';
 
 // ✅ Tạo thanh toán Momo
 export const createMomoPayment = async (order_id, amount) => {
-  var partnerCode = 'MOMO';
-  var accessKey = 'F8BBA842ECF85';
-  var secretkey = 'K951B6PE1waDMi640xX08PD3vg6EkVlz';
+  var partnerCode = process.env.MOMO_PARTNER_CODE;
+  var accessKey = process.env.MOMO_ACCESS_KEY;
+  var secretKey = process.env.MOMO_SECRET_KEY;
   var requestId = `${partnerCode}_${moment().format('YYYYMMDDHHmmss')}`;
-  var orderId = `${partnerCode}_${order_id}`;
-  var orderInfo = `Pay Order: ${order_id}`;
-  var redirectUrl = 'http://localhost:3000/api//payments/check-payment-return-momo';
-  var ipnUrl = 'http://localhost:3000/api//payments/notify-momo';
+  var orderId = `${order_id}`;
+  var orderInfo = `Pay Momo for Order: ${order_id}`;
+  var redirectUrl = 'http://localhost:3000/api/payments/return-payment-momo';
+  var ipnUrl = 'http://localhost:3000/api/payments/notify-momo';
   var amount = amount;
   var requestType = 'captureWallet';
   var extraData = '';
@@ -39,7 +39,7 @@ export const createMomoPayment = async (order_id, amount) => {
     requestType;
 
   //signature
-  var signature = crypto.createHmac('sha256', secretkey).update(rawSignature).digest('hex');
+  var signature = crypto.createHmac('sha256', secretKey).update(rawSignature).digest('hex');
 
   //json object send to MoMo endpoint
   const requestBody = JSON.stringify({

@@ -67,7 +67,7 @@ export const orderSchema = new Schema(
       type: Number,
       required: true,
     },
-    isPath: {
+    isPaid: {
       type: Boolean,
       required: true,
       default: false,
@@ -90,14 +90,12 @@ export const orderSchema = new Schema(
     employeeId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
-      default: null,
     },
     voucherId: [
       {
         type: Schema.Types.ObjectId,
         ref: 'Voucher',
-        required: true,
-        default: null,
+        required: false,
       },
     ],
   },
@@ -110,5 +108,5 @@ export const orderSchema = new Schema(
   },
 );
 
-const OrderModel = mongoose.model('Orders', orderSchema);
+const OrderModel = mongoose.model('Order', orderSchema);
 export { OrderModel };

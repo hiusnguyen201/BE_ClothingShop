@@ -1,201 +1,28 @@
-import { getUserByIdService } from '#src/app/users/users.service';
 import {
-  createOrderService,
   getAllOrdersByUserService,
   getOrderByIdService,
   updateOrderByIdService,
   removeOrderByIdService,
   countAllOrdersService,
-  calculateOrderTotalService,
 } from '#src/app/orders/orders.service';
 import HttpStatus from 'http-status-codes';
 import { HttpException } from '#src/core/exception/http-exception';
-import { createOrderDetailService } from '#src/app/orderDetails/order-details.service';
-import { ORDERS_STATUS } from '#src/core/constant';
 import { TransactionalServiceWrapper } from '#src/core/transaction/TransactionalServiceWrapper';
 import moment from 'moment-timezone';
-import { randomCodeOrder } from '#src/utils/string.util';
-import { getShippingAddressByIdService } from '#src/app/shipping-address/shipping-address.service';
-import { createGHNOrder, getOrderGhnByClientOrderCode, removeOrderGhn } from '#src/modules/GHN/ghn.service';
+import { createGhnOrder, getOrderGhnByClientOrderCode, removeOrderGhn } from '#src/modules/GHN/ghn.service';
 import { calculatePagination } from '#src/utils/pagination.util';
-import { getCustomerByIdService } from '#src/app/customers/customers.service';
-import { getVariantProductByIdService } from '#src/app/products/product.service';
-import { getVoucherByIdService } from '#src/app/vouchers/vouchers.service';
 import { Code } from '#src/core/code/Code';
+import { handleCreateOrder } from '#src/utils/handle-create-order';
+import { ORDERS_STATUS } from '#src/core/constant';
+import { getOrderDetailsByOrderIdService } from '#src/app/orderDetails/order-details.service';
 
-/**
- *  Tạo order từ quản trị
- */
 export const createOrderController = async (req, res) => {
   return TransactionalServiceWrapper.execute(async (session) => {
-    const { productVariants, customerId, voucherId, shippingAddressId } = req.body;
-
-    const customerExisted = await getCustomerByIdService(customerId);
-    if (!customerExisted) {
-      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Customer not found' });
-    }
-
-    const variantIds = productVariants.map((item) => item.variantId);
-
-    const productVariantsExited = await getVariantProductByIdService(variantIds);
-
-    if (!productVariantsExited) {
-      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product not found' });
-    }
-
-    const productVariantDetails = productVariants.map((item) => {
-      const variant = productVariantsExited.find((v) => v._id.toString() === item.variantId);
-      return {
-        variantId: variant._id,
-        productId: variant.productId._id,
-        unitPrice: variant.price,
-        sku: variant.sku,
-        quantity: item.quantity,
-      };
-    });
-
-    const voucherExisted = await getVoucherByIdService(voucherId);
-
-    const calculateOrderDetails = await calculateOrderTotalService(productVariantDetails, voucherExisted);
-
-    const shippingAddressExisted = await getShippingAddressByIdService(shippingAddressId);
-
-    if (!shippingAddressExisted) {
-      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Address not found' });
-    }
-
-    const currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
-    const code = randomCodeOrder(14);
-
-    const createOrderRequirement = {
-      code,
-      provinceName: req.body.provinceName || shippingAddressExisted.province,
-      districtName: req.body.districtName || shippingAddressExisted.district,
-      wardName: req.body.wardName || shippingAddressExisted.ward,
-      address: req.body.address || shippingAddressExisted.address,
-      customerId: customerExisted._id,
-      customerName: req.body.customerName || customerExisted.name,
-      customerEmail: req.body.customerEmail || customerExisted.email,
-      customerPhone: req.body.customerPhone || customerExisted.phone,
-      shippingAddressId: req.body.shippingAddressId || shippingAddressExisted._id,
-      quantity: calculateOrderDetails.totalQuantity,
-      subTotal: calculateOrderDetails.subTotal,
-      shippingFee: 0,
-      orderDate: currentDate,
-      total: calculateOrderDetails.total,
-      isPath: false,
-      status: ORDERS_STATUS.PENDING,
-      voucherId: voucherId || null,
-    };
-
-    const newOrder = await createOrderService(createOrderRequirement, session);
-
-    const newOrderDetails = calculateOrderDetails.orderDetails.map((item) => ({
-      ...item,
-      orderId: newOrder._id,
-    }));
-
-    await createOrderDetailService(newOrderDetails, session);
-
-    // if (newOrder.paymentId) {
-    //   const newOrderGhn = await createGHNOrder(newOrder, calculateOrderDetails);
-    //   if (!newOrderGhn) {
-    //     throw new BadRequestException('Can not create order by GHN');
-    //   }
-    // }
-
+    const newOrder = await handleCreateOrder(req.body.productVariants, req, session);
     return {
       statusCode: HttpStatus.CREATED,
       message: 'Create order successfully',
-      data: { newOrder, calculateOrderDetails },
-    };
-  });
-};
-
-/**
- *  Tạo order từ customer
- */
-export const createOrderCustomerController = async (req, res) => {
-  return TransactionalServiceWrapper.execute(async (session) => {
-    const { cartIds, customerId, voucherId, shippingAddressId } = req.body;
-
-    const customerExisted = await getCustomerByIdService(customerId);
-    if (!customerExisted) {
-      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Customer not found' });
-    }
-
-    const variantIds = cartIds.map((item) => item.variantId);
-
-    const productVariantsExited = await getVariantProductByIdService(variantIds);
-
-    if (!productVariantsExited) {
-      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product not found' });
-    }
-    const productVariantDetails = cartIds.map((item) => {
-      const variant = productVariantsExited.find((v) => v._id.toString() === item.variantId);
-      return {
-        variantId: variant._id,
-        productId: variant.productId._id,
-        unitPrice: variant.price,
-        sku: variant.sku,
-        quantity: item.quantity,
-      };
-    });
-
-    const voucherExisted = await getVoucherByIdService(voucherId);
-
-    const calculateOrderDetails = await calculateOrderTotalService(productVariantDetails, voucherExisted);
-
-    const shippingAddressExisted = await getShippingAddressByIdService(shippingAddressId);
-
-    if (!shippingAddressExisted) {
-      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Address not found' });
-    }
-
-    const currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
-    const code = randomCodeOrder(14);
-
-    const createOrderRequirement = {
-      code,
-      provinceName: req.body.provinceName || shippingAddressExisted.province,
-      districtName: req.body.districtName || shippingAddressExisted.district,
-      wardName: req.body.wardName || shippingAddressExisted.ward,
-      address: req.body.address || shippingAddressExisted.address,
-      customerId: customerExisted._id,
-      customerName: req.body.customerName || customerExisted.name,
-      customerEmail: req.body.customerEmail || customerExisted.email,
-      customerPhone: req.body.customerPhone || customerExisted.phone,
-      shippingAddressId: req.body.shippingAddressId || shippingAddressExisted._id,
-      quantity: calculateOrderDetails.totalQuantity,
-      subTotal: calculateOrderDetails.subTotal,
-      shippingFee: 0,
-      orderDate: currentDate,
-      total: calculateOrderDetails.total,
-      isPath: false,
-      status: ORDERS_STATUS.PENDING,
-      voucherId: voucherId || null,
-    };
-
-    const newOrder = await createOrderService(createOrderRequirement, session);
-
-    const newOrderDetails = calculateOrderDetails.orderDetails.map((item) => ({
-      ...item,
-      orderId: newOrder._id,
-    }));
-
-    await createOrderDetailService(newOrderDetails, session);
-
-    // if (newOrder.paymentId) {
-    //   const newOrderGhn = await createGHNOrder(newOrder, calculateOrderDetails);
-    //   if (!newOrderGhn) {
-    //     throw new BadRequestException('Can not create order by GHN');
-    //   }
-    // }
-
-    return {
-      statusCode: HttpStatus.CREATED,
-      message: 'Create order successfully',
-      data: { newOrder, calculateOrderDetails },
+      data: newOrder,
     };
   });
 };
@@ -290,5 +117,32 @@ export const removeOrderByIdController = async (req, res) => {
     statusCode: HttpStatus.OK,
     message: 'Remove order successfully',
     data: {},
+  };
+};
+
+export const createOrderGhnController = async (req, res) => {
+  const { orderId } = req.body;
+  const orderExisted = await getOrderByIdService(orderId);
+
+  if (!orderExisted || !orderExisted.paymentId) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found ' });
+  }
+
+  const orderDetails = await getOrderDetailsByOrderIdService(orderExisted._id);
+
+  const newOrderGhn = await createGhnOrder(orderExisted, orderDetails);
+
+  if (!newOrderGhn) {
+    throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Create order ghn false' });
+  }
+
+  await updateOrderByIdService(orderExisted._id, {
+    status: ORDERS_STATUS.PROCESSING,
+  });
+
+  return {
+    statusCode: HttpStatus.OK,
+    message: 'Create order ghn successfully',
+    data: { newOrderGhn },
   };
 };

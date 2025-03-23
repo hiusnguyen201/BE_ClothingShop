@@ -1,6 +1,7 @@
 import moment from 'moment-timezone';
 import crypto from 'crypto';
 import querystring from 'qs';
+import { PAYMENT_METHOD } from '#src/core/constant';
 
 function sortObject(obj) {
   let sorted = {};
@@ -22,18 +23,17 @@ function sortObject(obj) {
 export const createVnpayPayment = async (orderId, amountOder, orderCode) => {
   var ipAddr = '127.0.0.1';
 
-  var tmnCode = '6XI6FQXW';
-  var secretKey = 'WE2L54LT84O1DSEHRXQLVMUH037ZM19K';
-  var vnpUrl = 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html';
-  var returnUrl = 'http://localhost:3000/api//payments/return-payment-vnpay';
+  var tmnCode = process.env.VNPAY_TMN_CODE;
+  var secretKey = process.env.VNPAY_SECRET_KEY;
+  var vnpUrl = process.env.VNPAY_URL;
+  var returnUrl = process.env.VNPAY_RETURN_URL;
 
   var date = new Date();
 
   var createDate = moment(date).format('YYYYMMDDHHmmss');
-  var orderId = orderId;
   var amount = amountOder;
 
-  var orderInfo = `${orderCode}`;
+  var orderInfo = `Payment via ${PAYMENT_METHOD.VNPAY} ${orderCode}`;
   var orderType = 'other';
 
   var currCode = 'VND';

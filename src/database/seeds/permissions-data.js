@@ -230,6 +230,16 @@ const VOUCHERS_PERMISSIONS = [
   },
 ];
 
+const ORDER_PERMISSIONS = [
+  {
+    name: 'create:order',
+    description: 'Create order',
+    module: 'orders',
+    endpoint: '/api/orders/create-order',
+    method: 'POST',
+  },
+];
+
 export const PERMISSIONS_LIST = [
   ...USERS_PERMISSIONS,
   ...ROLES_PERMISSIONS,
@@ -237,4 +247,5 @@ export const PERMISSIONS_LIST = [
   ...CATEGORIES_PERMISSIONS,
   ...CUSTOMERS_PERMISSIONS,
   ...VOUCHERS_PERMISSIONS,
+  ...ORDER_PERMISSIONS,
 ];
