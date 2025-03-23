@@ -27,7 +27,7 @@ import { ApiResponse } from '#src/core/api/ApiResponse';
 import { USER_TYPE } from '#src/app/users/users.constant';
 import { generateTokensService } from '#src/app/auth/auth.service';
 import { Code } from '#src/core/code/Code';
-import { UserAuthDto } from '#src/app/auth/dtos/user-auth.dto';
+import { UserDto } from '#src/app/users/dtos/user.dto';
 import { ModelDto } from '#src/core/dto/ModelDto';
 
 export const loginController = async (req) => {
@@ -48,11 +48,11 @@ export const loginController = async (req) => {
     });
   }
 
-  const userAuthDto = ModelDto.new(UserAuthDto, user);
+  const userDto = ModelDto.new(UserDto, user);
   return ApiResponse.success({
     isAuthenticated: !isNeed2Fa,
     is2FactorRequired: isNeed2Fa,
-    user: userAuthDto,
+    user: userDto,
     tokens,
   });
 };
@@ -70,11 +70,11 @@ export const registerController = async (req) => {
     type: USER_TYPE.CUSTOMER,
   });
 
-  const userAuthDto = ModelDto.new(UserAuthDto, customer);
+  const userDto = ModelDto.new(UserDto, customer);
   return ApiResponse.success({
     isAuthenticated: false,
     is2FactorRequired: true,
-    user: userAuthDto,
+    user: userDto,
   });
 };
 
@@ -157,12 +157,12 @@ export const verifyOtpController = async (req) => {
     type: user.type,
   });
 
-  const userAuthDto = ModelDto.new(UserAuthDto, user);
+  const userDto = ModelDto.new(UserDto, user);
   return ApiResponse.success(
     {
       isAuthenticated: true,
       is2FactorRequired: false,
-      user: userAuthDto,
+      user: userDto,
       tokens,
     },
     'Verify otp successfully',
