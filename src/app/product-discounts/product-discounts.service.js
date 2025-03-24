@@ -2,7 +2,7 @@ import { isValidObjectId } from "mongoose";
 import { ProductDiscountModel } from "#src/app/product-discounts/schemas/product-discount.schema";
 
 const SELECTED_FIELDS =
-  "_id name amount is_fixed end_date product createdAt updatedAt";
+  "_id name amount is_fixed end_date product_variant createdAt updatedAt";
 
 /**
  * Create product discount
@@ -81,6 +81,9 @@ export async function updateProductDiscountByIdService(id, data) {
  * @returns
  */
 export async function removeProductDiscountByIdService(id) {
-  return await ProductDiscountModel.findByIdAndDelete(id)
-    .select(SELECTED_FIELDS)
+  return ProductDiscountModel.findByIdAndUpdate(id, {
+    removedAt: new Date()
+  }, {
+    new: true,
+  }).select(SELECTED_FIELDS);
 }

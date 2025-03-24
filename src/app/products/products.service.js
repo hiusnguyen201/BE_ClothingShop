@@ -5,7 +5,7 @@ import { getAllTagsService } from "#src/app/tags/tags.service";
 import { getAllProductReviewsService } from "#src/app/product-reviews/product-reviews.service";
 
 const SELECTED_FIELDS =
-  "_id name slug short_description content status is_hidden is_featured is_new avg_rating total_review category sub_category discount tags product_variants createdAt updatedAt";
+  "_id name slug short_description content status is_hidden is_featured is_new avg_rating total_review category sub_category discount tags product_variants createdAt updatedAt removedAt";
 
 /**
  * Create product
@@ -73,16 +73,18 @@ export async function getProductByIdService(
         model: 'Product_Variant'
       }
     })
-    .populate('product_discount')
     .select(selectFields);
 
   const tags = await getAllTagsService({
     filters: {
-      "products": id
+      products: id
     },
     selectFields: "_id"
   });
-  product.tags = tags.map(tag => tag._id);
+
+  if (tags && tags.length) {
+    product.tags = tags.map(tag => tag._id);
+  }
   return product;
 }
 
@@ -104,7 +106,9 @@ export async function updateProductByIdService(id, data) {
  * @returns
  */
 export async function removeProductByIdService(id) {
-  return await ProductModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
+  return await ProductModel.findByIdAndUpdate(id, {
+    removedAt: new Date()
+  }, { new: true }).select(SELECTED_FIELDS);
 }
 
 /**
@@ -159,22 +163,6 @@ export async function hideProductService(id) {
 }
 
 /**
- * Update product discount by productId
- * @param {*} id
- * @param {*} data
- * @returns
- */
-export async function updateProductDiscountByProductIdService(id, data) {
-  return await ProductModel.findByIdAndUpdate(
-    id,
-    {
-      product_discount: data
-    },
-    { new: true }
-  ).select(SELECTED_FIELDS);
-}
-
-/**
  * Update product rating by productId
  * @param {*} id
  * @returns
@@ -205,34 +193,16 @@ export async function updateProductRatingAndTotalReviewByProductIdService(id) {
 }
 
 /**
- * Update product tags by productId
+ * Update product variant by productId
  * @param {*} id
- * @param {*} newTags
+ * @param {*} productVariantIds
  * @returns
  */
-export async function updateProductTagsByProductIdService(id, newTags) {
+export async function updateProductVariantsByProductIdService(id, productVariantIds) {
   return await ProductModel.findByIdAndUpdate(
     id,
     {
-      $addToSet: { tags: { $each: newTags } }
-    },
-    { new: true }
-  ).select(SELECTED_FIELDS);
-}
-
-/**
- * Delete product tags by productId
- * @param {*} id
- * @param {*} tagsToDelete
- * @returns
- */
-export async function deleteProductTagsByProductIdService(id, tagsToDelete) {
-  const validObjectIds = tagsToDelete.filter(tag => isValidObjectId(tag));
-
-  return await ProductModel.findByIdAndUpdate(
-    id,
-    {
-      $pull: { tags: { $in: validObjectIds } }
+      $addToSet: { product_variants: { $each: productVariantIds } }
     },
     { new: true }
   ).select(SELECTED_FIELDS);
@@ -251,22 +221,6 @@ export async function deleteProductOptionsByProductIdService(id, productOptionsT
     id,
     {
       $pull: { product_options: { $in: validObjectIds } }
-    },
-    { new: true }
-  ).select(SELECTED_FIELDS);
-}
-
-/**
- * Update product options by productId
- * @param {*} id
- * @param {*} productOptions
- * @returns
- */
-export async function updateProductOptionsByProductIdService(id, productOptions) {
-  return await ProductModel.findByIdAndUpdate(
-    id,
-    {
-      $addToSet: { product_options: { $each: productOptions } }
     },
     { new: true }
   ).select(SELECTED_FIELDS);

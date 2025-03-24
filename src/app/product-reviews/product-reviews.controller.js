@@ -1,4 +1,3 @@
-import HttpStatus from "http-status-codes";
 import {
   HttpException,
 } from "#src/core/exception/http-exception";
@@ -13,6 +12,9 @@ import {
 } from "#src/app/product-reviews/product-reviews.service"
 import { calculatePagination } from "#src/utils/pagination.util";
 import { updateProductRatingAndTotalReviewByProductIdService } from "#src/app/products/products.service";
+import { ApiResponse } from "#src/core/api/ApiResponse";
+import { ModelDto } from "#src/core/dto/ModelDto";
+import { ProductReviewDto } from "#src/app/product-reviews/dtos/product-review.dto";
 
 export const createProductReviewController = async (req) => {
   const userId = req.user?._id ?? "674c2acaee49e3618bb6a9ff";
@@ -24,11 +26,8 @@ export const createProductReviewController = async (req) => {
   });
   updateProductRatingAndTotalReviewByProductIdService(product);
 
-  return {
-    statusCode: HttpStatus.CREATED,
-    message: "Create product review successfully",
-    data: newProductReview,
-  };
+  const productReviewDto = ModelDto.new(ProductReviewDto, newProductReview);
+  return ApiResponse.success(productReviewDto);
 };
 
 export const getAllProductReviewsController = async (req) => {
@@ -49,22 +48,16 @@ export const getAllProductReviewsController = async (req) => {
     limit: metaData.limit,
   });
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: "Get all product views successfully",
-    data: {
-      meta: metaData,
-      list: productReviews,
-    },
-  };
+  const productReviewsDto = ModelDto.newList(ProductReviewDto, productReviews);
+  return ApiResponse.success({ meta: metaData, list: productReviewsDto });
 };
 
 export const getAllProductReviewsByProductIdController = async (req) => {
-  const { id } = req.params;
+  const { productId } = req.params;
   let { limit = 10, page = 1 } = req.query;
 
   const filterOptions = {
-    product: id
+    product: productId
   };
 
   const totalCount = await countAllProductReviewsService(filterOptions);
@@ -76,17 +69,11 @@ export const getAllProductReviewsByProductIdController = async (req) => {
     limit: metaData.limit,
   });
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: "Get all product views by productId successfully",
-    data: {
-      meta: metaData,
-      list: productReviews,
-    },
-  };
+  const productReviewsDto = ModelDto.newList(ProductReviewDto, productReviews);
+  return ApiResponse.success({ meta: metaData, list: productReviewsDto });
 };
 
-export const getProductReviewByCustomerIdController = async (req) => {
+export const getProductReviewsByCustomerIdController = async (req) => {
   const userId = req.user?._id ?? "674c2acaee49e3618bb6a9ff";
   let { limit = 10, page = 1 } = req.query;
 
@@ -103,14 +90,8 @@ export const getProductReviewByCustomerIdController = async (req) => {
     limit: metaData.limit,
   });
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: "Get all product views by customerId successfully",
-    data: {
-      meta: metaData,
-      list: productReviews,
-    },
-  };
+  const productReviewsDto = ModelDto.newList(ProductReviewDto, productReviews);
+  return ApiResponse.success({ meta: metaData, list: productReviewsDto });
 };
 
 export const getProductReviewByIdController = async (req) => {
@@ -119,14 +100,11 @@ export const getProductReviewByIdController = async (req) => {
 
   const existProductReview = await getProductReviewByIdService(id, userId);
   if (!existProductReview) {
-    throw new NotFoundException("Product review not found");
+    throw HttpException.new({ code: Code.NotFoundException, overrideMessage: "Product review not found" });
   }
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: "Get one product review successfully",
-    data: existProductReview,
-  };
+  const productReviewsDto = ModelDto.new(ProductReviewDto, existProductReview);
+  return ApiResponse.success(productReviewsDto);
 };
 
 export const updateProductReviewByIdController = async (req) => {
@@ -135,16 +113,14 @@ export const updateProductReviewByIdController = async (req) => {
 
   const existProductReview = await getProductReviewByIdService(id, userId, "_id product");
   if (!existProductReview) {
-    throw new NotFoundException("Product review not found");
+    throw HttpException.new({ code: Code.NotFoundException, overrideMessage: "Product review not found" });
   }
 
   const updatedProductReview = await updateProductReviewByIdService(id, req.body);
   updateProductRatingAndTotalReviewByProductIdService(existProductReview.product);
-  return {
-    statusCode: HttpStatus.OK,
-    message: "Update product review successfully",
-    data: updatedProductReview,
-  };
+
+  const productReviewsDto = ModelDto.new(ProductReviewDto, updatedProductReview);
+  return ApiResponse.success(productReviewsDto);
 };
 
 export const removeProductReviewByIdController = async (req) => {
@@ -152,14 +128,10 @@ export const removeProductReviewByIdController = async (req) => {
   const { id } = req.params;
   const existProductReview = await getProductReviewByIdService(id, userId, "_id");
   if (!existProductReview) {
-    throw new NotFoundException("Product review not found");
+    throw HttpException.new({ code: Code.NotFoundException, overrideMessage: "Product review not found" });
   }
 
-  const removedProductReview = await removeProductReviewByIdService(id);
+  await removeProductReviewByIdService(id);
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: "Remove product review successfully",
-    data: removedProductReview,
-  };
+  return ApiResponse.success();
 };

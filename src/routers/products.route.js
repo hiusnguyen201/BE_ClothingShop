@@ -11,14 +11,15 @@ import {
     showProductByIdController,
     hideProductByIdController,
 } from "#src/app/products/products.controller";
-import { CreateProductDto } from "#src/app/products/dto/create-product.dto";
-import { updateProductDto } from "#src/app/products/dto/update-product.dto";
-import { checkExistProductNameDto } from "#src/app/products/dto/check-exist-product-name.dto";
+import { CreateProductDto } from "#src/app/products/dtos/create-product.dto";
+import { updateProductDto } from "#src/app/products/dtos/update-product.dto";
+import { checkExistProductNameDto } from "#src/app/products/dtos/check-exist-product-name.dto";
 import {
     validateBody,
     validateQuery
 } from "#src/core/validations/request.validation";
 import { isAuthorizedAndHasPermission } from "#src/middlewares/jwt-auth.middleware";
+import { GetListProductDto } from "#src/app/products/dtos/get-list-product.dto";
 
 router.post(
     "/is-exist-product-name",
@@ -28,18 +29,19 @@ router.post(
 
 router
     .get("/get-products",
+        validateQuery(GetListProductDto),
         getAllProductsController)
     .get("/get-product-by-id/:id",
         getProductByIdController)
     .post(
         "/create-product",
-        isAuthorizedAndHasPermission,
+        // isAuthorizedAndHasPermission,
         validateBody(CreateProductDto),
         createProductController
     )
     .patch(
         "/update-product-by-id/:id",
-        isAuthorizedAndHasPermission,
+        // isAuthorizedAndHasPermission,
         validateBody(updateProductDto),
         updateProductByIdController
     )

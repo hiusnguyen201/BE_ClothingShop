@@ -1,4 +1,3 @@
-import HttpStatus from "http-status-codes";
 import {
   HttpException,
 } from "#src/core/exception/http-exception";
@@ -12,6 +11,9 @@ import {
   countAllReviewFeedbacksService,
 } from "#src/app/review-feedbacks/review-feedbacks.service"
 import { calculatePagination } from "#src/utils/pagination.util";
+import { ModelDto } from "#src/core/dto/ModelDto";
+import { ApiResponse } from "#src/core/api/ApiResponse";
+import { ReviewFeedbackDto } from "#src/app/review-feedbacks/dtos/review-feedback.dto";
 
 export const createReviewFeedbackController = async (req) => {
   const userId = req.user?._id ?? "674c2acaee49e3618bb6a9ff";
@@ -21,11 +23,8 @@ export const createReviewFeedbackController = async (req) => {
     user: userId
   });
 
-  return {
-    statusCode: HttpStatus.CREATED,
-    message: "Create review feedback successfully",
-    data: newReviewFeedback,
-  };
+  const reviewFeedbackDto = ModelDto.new(ReviewFeedbackDto, newReviewFeedback);
+  return ApiResponse.success(reviewFeedbackDto);
 };
 
 export const getAllReviewFeedbacksController = async (req) => {
@@ -46,14 +45,8 @@ export const getAllReviewFeedbacksController = async (req) => {
     limit: metaData.limit,
   });
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: "Get all review feedbacks successfully",
-    data: {
-      meta: metaData,
-      list: reviewFeedbacks,
-    },
-  };
+  const reviewFeedbacksDto = ModelDto.newList(ReviewFeedbackDto, reviewFeedbacks);
+  return ApiResponse.success({ meta: metaData, list: reviewFeedbacksDto });
 };
 
 export const getReviewFeedbackByUserIdController = async (req) => {
@@ -73,14 +66,8 @@ export const getReviewFeedbackByUserIdController = async (req) => {
     limit: metaData.limit,
   });
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: "Get all review feedbacks by customerId successfully",
-    data: {
-      meta: metaData,
-      list: reviewFeedbacks,
-    },
-  };
+  const reviewFeedbacksDto = ModelDto.newList(ReviewFeedbackDto, reviewFeedbacks);
+  return ApiResponse.success({ meta: metaData, list: reviewFeedbacksDto });
 };
 
 export const getReviewFeedbackByIdController = async (req) => {
@@ -89,14 +76,11 @@ export const getReviewFeedbackByIdController = async (req) => {
 
   const existReviewFeedback = await getReviewFeedbackByIdService(id, userId);
   if (!existReviewFeedback) {
-    throw new NotFoundException("Review feedback not found");
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Review feedback not found' });
   }
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: "Get one review feedback successfully",
-    data: existReviewFeedback,
-  };
+  const reviewFeedbackDto = ModelDto.new(ReviewFeedbackDto, existReviewFeedback);
+  return ApiResponse.success(reviewFeedbackDto);
 };
 
 export const updateReviewFeedbackByIdController = async (req) => {
@@ -105,16 +89,13 @@ export const updateReviewFeedbackByIdController = async (req) => {
 
   const existReviewFeedback = await getReviewFeedbackByIdService(id, userId, "_id");
   if (!existReviewFeedback) {
-    throw new NotFoundException("Review feedback not found");
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Review feedback not found' });
   }
 
   const updatedReviewFeedback = await updateReviewFeedbackByIdService(id, req.body);
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: "Update review feedback successfully",
-    data: updatedReviewFeedback,
-  };
+  const reviewFeedbackDto = ModelDto.new(ReviewFeedbackDto, updatedReviewFeedback);
+  return ApiResponse.success(reviewFeedbackDto);
 };
 
 export const removeReviewFeedbackByIdController = async (req) => {
@@ -122,14 +103,11 @@ export const removeReviewFeedbackByIdController = async (req) => {
   const { id } = req.params;
   const existReviewFeedback = await getReviewFeedbackByIdService(id, userId, "_id");
   if (!existReviewFeedback) {
-    throw new NotFoundException("Review feedback not found");
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Review feedback not found' });
   }
 
-  const removedReviewFeedback = await removeReviewFeedbackByIdService(id);
+  await removeReviewFeedbackByIdService(id);
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: "Remove review feedback successfully",
-    data: removedReviewFeedback,
-  };
+  return ApiResponse.success();
+
 };

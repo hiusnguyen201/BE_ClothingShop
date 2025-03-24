@@ -12,5 +12,12 @@ export const updateProductDiscountDto = Joi.object({
     .iso(),
   end_date: Joi.date()
     .iso(),
-  product: Joi.string(),
+}).custom((value, helper) => {
+  const start = new Date(value.start_date).getTime();
+  const end = new Date(value.end_date).getTime();
+
+  if (start > end) {
+    return helper.message("Start date cannot be greater than end date")
+  }
+  return value;
 });

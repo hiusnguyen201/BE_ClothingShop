@@ -25,11 +25,15 @@ const productDiscountSchema = new Schema(
       type: Date,
       required: true
     },
+    removedAt: {
+      type: Date,
+      required: true
+    },
 
     // FK
-    product: {
+    product_variant: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Product'
+      ref: 'Product_Variant'
     },
   },
   {

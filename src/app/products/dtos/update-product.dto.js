@@ -1,14 +1,11 @@
 import Joi from "joi";
 import { replaceMultiSpacesToSingleSpace } from "#src/utils/string.util";
-import { PRODUCT_STATUS } from "#src/core/constant";
 
 const createVariantValueDto = Joi.object({
   option: Joi.string()
-    .required()
-    .custom((value) => replaceMultiSpacesToSingleSpace(value)),
+    .required(),
   option_value: Joi.string()
     .required()
-    .custom((value) => replaceMultiSpacesToSingleSpace(value))
 });
 
 const createProductVariantDto = Joi.object({
@@ -26,22 +23,36 @@ const createProductVariantDto = Joi.object({
     .required()
     .items(createVariantValueDto)
     .custom((value, helper) => {
-      const optionIds = [];
-      value.map(item => {
-        if (optionIds.includes(item.option)) {
+      const optionIds = new Set();
+
+      for (let item of value) {
+        if (optionIds.has(item.option)) {
           return helper.message("Duplicate option");
         }
-        optionIds.push(item.option);
-      })
+        optionIds.add(item.option);
+      }
+
       return value;
     })
 });
 
-export const CreateProductDto = Joi.object({
+const updateProductVariantDto = Joi.object({
+  _id: Joi.string()
+    .required(),
+  quantity: Joi.number()
+    .min(1),
+  price: Joi.number()
+    .min(1000),
+  sku: Joi.string()
+    .min(3)
+    .max(100)
+    .custom((value) => replaceMultiSpacesToSingleSpace(value)),
+});
+
+export const updateProductDto = Joi.object({
   name: Joi.string()
     .min(3)
     .max(120)
-    .required()
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
   // price: Joi.number()
   //   .required(),
@@ -53,18 +64,18 @@ export const CreateProductDto = Joi.object({
     .min(3)
     .max(255)
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
-  status: Joi.string()
-    .required()
-    .valid(...PRODUCT_STATUS),
-  is_hidden: Joi.boolean().required(),
-  is_featured: Joi.boolean().required(),
-  is_new: Joi.boolean().required(),
-  category: Joi.string().required(),
+  category: Joi.string(),
   sub_category: Joi.string(),
   tags: Joi.array().items(Joi.string()),
+  tagsToDelete: Joi.array().items(Joi.string()),
 
   product_variants: Joi.array()
-    .required()
-    .items(createProductVariantDto)
+    .items(createProductVariantDto),
+
+  productVariantsToUpdate: Joi.array()
+    .items(updateProductVariantDto),
+
+  productVariantsToDelete: Joi.array()
+    .items(Joi.string())
 });
 

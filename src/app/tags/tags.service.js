@@ -89,7 +89,7 @@ export async function removeTagByIdService(id) {
 }
 
 /**
- * Check exist tag
+ * Check exist tag name
  * @param {*} name
  * @param {*} skipId
  * @returns
@@ -109,6 +109,12 @@ export async function checkExistTagNameService(name, skipId) {
   return Boolean(tag);
 }
 
+/**
+ * Get or create new tag
+ * @param {*} name
+ * @param {*} productId
+ * @returns
+ */
 export async function getOrCreateTagByName(name, productId) {
   const tag = await getTagByIdService(name);
   if (!tag) {
@@ -121,10 +127,33 @@ export async function getOrCreateTagByName(name, productId) {
   return tag;
 }
 
+/**
+ * Update product tag by id
+ * @param {*} id
+ * @param {*} productId
+ * @returns
+ */
 export async function updateProductTagByIdService(id, productId) {
   return await TagModel.findByIdAndUpdate(id,
     {
       $addToSet: {
+        products: productId
+      }
+    }, {
+    new: true,
+  }).select(SELECTED_FIELDS);
+}
+
+/**
+ * Remove product tag by id
+ * @param {*} id
+ * @param {*} productId
+ * @returns
+ */
+export async function removeProductTagByIdService(id, productId) {
+  return await TagModel.findByIdAndUpdate(id,
+    {
+      $pull: {
         products: productId
       }
     }, {

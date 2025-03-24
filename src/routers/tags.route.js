@@ -9,9 +9,9 @@ import {
     removeTagByIdController,
     isExistTagNameController,
 } from "#src/app/tags/tags.controller";
-import { createTagDto } from "#src/app/tags/dto/create-tag.dto";
-import { updateTagDto } from "#src/app/tags/dto/update-tag.dto";
-import { checkExistTagNameDto } from "#src/app/tags/dto/check-exist-tag-name.dto";
+import { createTagDto } from "#src/app/tags/dtos/create-tag.dto";
+import { updateTagDto } from "#src/app/tags/dtos/update-tag.dto";
+import { checkExistTagNameDto } from "#src/app/tags/dtos/check-exist-tag-name.dto";
 import {
     validateBody,
 } from "#src/core/validations/request.validation";

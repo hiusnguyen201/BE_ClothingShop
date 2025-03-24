@@ -2,7 +2,7 @@ import { isValidObjectId } from "mongoose";
 import { ProductVariantModel } from "#src/app/product-variants/schemas/product-variants.schema";
 
 const SELECTED_FIELDS =
-  "_id quantity price sku image sold createdAt updatedAt";
+  "_id quantity price sku image sold variant_values product product_discount createdAt updatedAt";
 
 /**
  * Create product variant
@@ -57,7 +57,7 @@ export async function getProductVariantByIdService(
   if (isValidObjectId(id)) {
     filter._id = id;
   } else {
-    return null;
+    filter.product;
   }
 
   return await ProductVariantModel.findOne(filter).select(selectFields);
@@ -96,4 +96,20 @@ export async function updateProductVariantValueByIdService(id, data) {
   }, {
     new: true,
   }).select(SELECTED_FIELDS);
+}
+
+/**
+ * Update product discount by product variant id
+ * @param {*} id
+ * @param {*} productDiscountId
+ * @returns
+ */
+export async function updateProductDiscountByProductVariantIdService(id, productDiscountId) {
+  return await ProductVariantModel.findByIdAndUpdate(
+    id,
+    {
+      product_discount: productDiscountId
+    },
+    { new: true }
+  ).select(SELECTED_FIELDS);
 }

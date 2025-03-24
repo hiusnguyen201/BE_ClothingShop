@@ -1,4 +1,3 @@
-import HttpStatus from "http-status-codes";
 import {
   HttpException,
 } from "#src/core/exception/http-exception";
@@ -12,34 +11,37 @@ import {
   removeProductDiscountByIdService,
 } from "#src/app/product-discounts/product-discounts.service"
 import { calculatePagination } from "#src/utils/pagination.util";
+import { Code } from "#src/core/code/Code";
+import { ApiResponse } from "#src/core/api/ApiResponse";
+import { ModelDto } from "#src/core/dto/ModelDto";
+import { ProductDiscountDto } from "#src/app/product-discounts/dtos/product-discount.dto";
 import {
-  getProductByIdService,
-  updateProductDiscountByProductIdService
-} from "#src/app/products/products.service";
+  getProductVariantByIdService,
+  updateProductDiscountByProductVariantIdService
+} from "#src/app/product-variants/product-variants.service";
 
 export const createProductDiscountController = async (req) => {
-  const { amount, is_fixed, product } = req.body;
+  const { amount, is_fixed, productVariant } = req.body;
   if (is_fixed) {
     if (amount < 1 || amount > 99) {
-      throw new ConflictException("Discounts ranging from 1 to 99 percent")
+      throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Discounts ranging from 1 to 99 percent' });
     }
   }
-  const getProduct = await getProductByIdService(product);
-  if (!getProduct) {
-    throw new NotFoundException("Product not found")
+  const getProductVariant = await getProductVariantByIdService(productVariant);
+  if (!getProductVariant) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product variant not found' });
   }
+  req.body.product_variant = getProductVariant._id;
 
-  if (getProduct.price < amount) {
-    throw new ConflictException("The product price must be greater than the discount price")
+  if (getProductVariant.price < amount) {
+    throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'The product price must be greater than the discount price' });
   }
 
   const newProductDiscount = await createProductDiscountService(req.body);
-  await updateProductDiscountByProductIdService(product, newProductDiscount._id)
-  return {
-    statusCode: HttpStatus.CREATED,
-    message: "Create product discount successfully",
-    data: newProductDiscount,
-  };
+  await updateProductDiscountByProductVariantIdService(getProductVariant._id, newProductDiscount._id)
+
+  const productDiscountDto = ModelDto.new(ProductDiscountDto, newProductDiscount);
+  return ApiResponse.success(productDiscountDto);
 };
 
 export const getAllProductDiscountsController = async (req) => {
@@ -60,72 +62,56 @@ export const getAllProductDiscountsController = async (req) => {
     limit: metaData.limit,
   });
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: "Get all product discounts successfully",
-    data: {
-      meta: metaData,
-      list: productDiscounts,
-    },
-  };
+  const productDiscountsDto = ModelDto.newList(ProductDiscountDto, productDiscounts);
+  return ApiResponse.success({ meta: metaData, list: productDiscountsDto });
 };
 
 export const getProductDiscountByIdController = async (req) => {
   const { id } = req.params;
   const existProductDiscount = await getProductDiscountByIdService(id);
   if (!existProductDiscount) {
-    throw new NotFoundException("Product discount not found");
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product discount not found' });
   }
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: "Get one product discount successfully",
-    data: existProductDiscount,
-  };
+  const productDiscountDto = ModelDto.new(ProductDiscountDto, existProductDiscount);
+  return ApiResponse.success(productDiscountDto);
 };
 
 export const updateProductDiscountByIdController = async (req) => {
   const { id } = req.params;
-  const existProductDiscount = await getProductDiscountByIdService(id, "_id product");
+  const existProductDiscount = await getProductDiscountByIdService(id, "_id product_variant");
   if (!existProductDiscount) {
-    throw new NotFoundException("Product discount not found");
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product discount not found' });
   }
 
   const { amount, is_fixed } = req.body;
   if (is_fixed) {
     if (amount < 1 || amount > 99) {
-      throw new ConflictException("Discounts ranging from 1 to 99 percent")
+      throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Discounts ranging from 1 to 99 percent' });
     }
   }
-  const getProduct = await getProductByIdService(existProductDiscount.product);
-  if (!getProduct) {
-    throw new NotFoundException("Product not found")
+  const getProductVariant = await getProductVariantByIdService(existProductDiscount.product_variant);
+  if (!getProductVariant) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product variant not found' });
   }
 
-  if (getProduct.price < amount) {
-    throw new ConflictException("The product price must be greater than the discount price")
+  if (getProductVariant.price < amount) {
+    throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'The product price must be greater than the discount price' });
   }
 
   const updatedProductDiscount = await updateProductDiscountByIdService(id, req.body);
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: "Update product discount successfully",
-    data: updatedProductDiscount,
-  };
+  const productDiscountDto = ModelDto.new(ProductDiscountDto, updatedProductDiscount);
+  return ApiResponse.success(productDiscountDto);
 };
 
 export const removeProductDiscountByIdController = async (req) => {
   const { id } = req.params;
   const existProductDiscount = await getProductDiscountByIdService(id, "_id");
   if (!existProductDiscount) {
-    throw new NotFoundException("Product discount not found");
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product discount not found' });
   }
-  const removedProductDiscount = await removeProductDiscountByIdService(id);
+  await removeProductDiscountByIdService(id);
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: "Remove product discount successfully",
-    data: removedProductDiscount,
-  };
+  return ApiResponse.success();
 };

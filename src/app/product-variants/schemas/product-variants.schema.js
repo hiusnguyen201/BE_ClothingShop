@@ -26,11 +26,6 @@ const productVariantSchema = new Schema(
     },
 
     // Foreign Key
-    // product: {
-    //   type: Schema.Types.ObjectId,
-    //   ref: "Product",
-    //   required: true,
-    // },
     variant_values: [{
       option: {
         type: Schema.Types.ObjectId,
@@ -40,7 +35,17 @@ const productVariantSchema = new Schema(
         type: Schema.Types.ObjectId,
         ref: "Option_Value"
       }
-    }]
+    }],
+
+    product: {
+      type: Schema.Types.ObjectId,
+      ref: "Product",
+      required: true,
+    },
+    product_discount: {
+      type: Schema.Types.ObjectId,
+      ref: "Product_Discount"
+    },
   },
   {
     versionKey: false,

@@ -1,4 +1,3 @@
-import HttpStatus from "http-status-codes";
 import {
   HttpException,
 } from "#src/core/exception/http-exception";
@@ -14,13 +13,17 @@ import {
 } from "#src/app/tags/tags.service"
 import { calculatePagination } from "#src/utils/pagination.util";
 import { makeSlug } from "#src/utils/string.util";
+import { Code } from "#src/core/code/Code";
+import { ApiResponse } from "#src/core/api/ApiResponse";
+import { ModelDto } from "#src/core/dto/ModelDto";
+import { TagDto } from "#src/app/tags/dtos/tag-dto";
 
 export const createTagController = async (req) => {
   const { name } = req.body;
   const isExistTag = await checkExistTagNameService(name);
 
   if (isExistTag) {
-    throw new ConflictException("Tag already exist");
+    throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Tag already exist' });
   }
 
   const newTag = await createTagService({
@@ -28,11 +31,8 @@ export const createTagController = async (req) => {
     slug: makeSlug(name),
   });
 
-  return {
-    statusCode: HttpStatus.CREATED,
-    message: "Create tag successfully",
-    data: newTag,
-  };
+  const tagDto = ModelDto.new(TagDto, newTag);
+  return ApiResponse.success(tagDto);
 };
 
 export const getAllTagsController = async (req) => {
@@ -53,28 +53,19 @@ export const getAllTagsController = async (req) => {
     limit: metaData.limit,
   });
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: "Get all tags successfully",
-    data: {
-      meta: metaData,
-      list: tags,
-    },
-  };
+  const tagsDto = ModelDto.newList(TagDto, tags);
+  return ApiResponse.success({ meta: metaData, list: tagsDto });
 };
 
 export const getTagByIdController = async (req) => {
   const { id } = req.params;
   const existTag = await getTagByIdService(id);
   if (!existTag) {
-    throw new NotFoundException("Tag not found");
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Tag not found' });
   }
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: "Get one tag successfully",
-    data: existTag,
-  };
+  const tagDto = ModelDto.new(TagDto, existTag);
+  return ApiResponse.success(tagDto);
 };
 
 export const updateTagByIdController = async (req) => {
@@ -82,51 +73,38 @@ export const updateTagByIdController = async (req) => {
   const { name } = req.body;
   const existTag = await getTagByIdService(id, "_id");
   if (!existTag) {
-    throw new NotFoundException("Tag not found");
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Tag not found' });
   }
 
   if (name) {
     const isExistTagName = await checkExistTagNameService(name, existTag._id);
     if (isExistTagName) {
-      throw new ConflictException("Tag name already exist");
+      throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Tag name already exist' });
     }
     req.body.slug = makeSlug(name);
   }
 
   const updatedTag = await updateTagByIdService(id, req.body);
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: "Update tag successfully",
-    data: updatedTag,
-  };
+  const tagDto = ModelDto.new(TagDto, updatedTag);
+  return ApiResponse.success(tagDto);
 };
 
 export const removeTagByIdController = async (req) => {
   const { id } = req.params;
   const existTag = await getTagByIdService(id, "_id");
   if (!existTag) {
-    throw new NotFoundException("Tag not found");
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Tag not found' });
   }
 
-  const removedTag = await removeTagByIdService(id);
+  await removeTagByIdService(id);
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: "Remove tag successfully",
-    data: removedTag,
-  };
+  return ApiResponse.success();
 };
 
 export const isExistTagNameController = async (req) => {
   const { name } = req.body;
   const isExistTag = await checkExistTagNameService(name);
 
-  return {
-    statusCode: HttpStatus.OK,
-    message: isExistTag
-      ? "Tag name exists"
-      : "Tag name does not exist",
-    data: isExistTag,
-  };
+  return ApiResponse.success(isExistTag);
 };

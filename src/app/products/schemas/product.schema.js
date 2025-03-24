@@ -15,32 +15,13 @@ const productSchema = new Schema(
       required: true,
       length: 200,
     },
-    // price: {
-    //   type: Number,
-    //   required: true,
-    // },
     short_description: {
       type: String,
-      length: 255,
+      default: null
     },
     content: {
       type: String,
-    },
-    status: {
-      type: String,
-      required: true,
-    },
-    is_hidden: {
-      type: Boolean,
-      default: true,
-    },
-    is_featured: {
-      type: Boolean,
-      default: false,
-    },
-    is_new: {
-      type: Boolean,
-      default: false,
+      default: null
     },
     avg_rating: {
       type: Number,
@@ -49,6 +30,9 @@ const productSchema = new Schema(
     total_review: {
       type: Number,
       default: 0,
+    },
+    removedAt: {
+      type: Date,
     },
 
     // Foreign Key
@@ -61,15 +45,6 @@ const productSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Category"
     },
-    product_discount: {
-      type: Schema.Types.ObjectId,
-      ref: "Product_Discount"
-    },
-
-    tags: [{
-      type: Schema.Types.ObjectId,
-      ref: "Tag"
-    }],
     product_variants: [{
       type: Schema.Types.ObjectId,
       ref: "Product_Variant"
