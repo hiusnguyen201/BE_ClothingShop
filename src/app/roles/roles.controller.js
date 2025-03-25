@@ -12,7 +12,6 @@ import {
   deactivateRoleByIdService,
   countAllRolesService,
 } from '#src/app/roles/roles.service';
-import { makeSlug } from '#src/utils/string.util';
 import { calculatePagination } from '#src/utils/pagination.util';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { RoleDto } from '#src/app/roles/dtos/role.dto';
