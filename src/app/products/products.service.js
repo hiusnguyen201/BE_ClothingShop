@@ -1,5 +1,5 @@
 import { isValidObjectId } from "mongoose";
-import { ProductModel } from "#src/app/products/schemas/product.schema";
+import { ProductModel } from "#src/app/products/models/product.model";
 import { makeSlug } from "#src/utils/string.util";
 import { getAllTagsService } from "#src/app/tags/tags.service";
 import { getAllProductReviewsService } from "#src/app/product-reviews/product-reviews.service";
@@ -73,18 +73,27 @@ export async function getProductByIdService(
         model: 'Product_Variant'
       }
     })
+    .populate({
+      path: 'product_variants',
+      populate: {
+        path: 'product_discount',
+        model: 'Product_Discount',
+        select: '-product_variant'
+      }
+    })
     .select(selectFields);
 
-  const tags = await getAllTagsService({
-    filters: {
-      products: id
-    },
-    selectFields: "_id"
-  });
+  // const tags = await getAllTagsService({
+  //   filters: {
+  //     products: id
+  //   },
+  //   selectFields: "_id"
+  // });
 
-  if (tags && tags.length) {
-    product.tags = tags.map(tag => tag._id);
-  }
+  // if (tags && tags.length) {
+  //   product.tags = tags.map(tag => tag._id);
+  // }
+
   return product;
 }
 
@@ -209,18 +218,16 @@ export async function updateProductVariantsByProductIdService(id, productVariant
 }
 
 /**
- * Delete product options by productId
+ * Remove product variant by productId
  * @param {*} id
- * @param {*} productOptionsToDelete
+ * @param {*} productVariantId
  * @returns
  */
-export async function deleteProductOptionsByProductIdService(id, productOptionsToDelete) {
-  const validObjectIds = productOptionsToDelete.filter(tag => isValidObjectId(tag));
-
+export async function removeProductVariantsByProductIdService(id, productVariantId) {
   return await ProductModel.findByIdAndUpdate(
     id,
     {
-      $pull: { product_options: { $in: validObjectIds } }
+      $pull: { product_variants: productVariantId }
     },
     { new: true }
   ).select(SELECTED_FIELDS);

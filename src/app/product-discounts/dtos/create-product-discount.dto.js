@@ -17,7 +17,7 @@ export const createProductDiscountDto = Joi.object({
   end_date: Joi.date()
     .iso()
     .required(),
-  productariant: Joi.string()
+  productVariant: Joi.string()
     .required(),
 }).custom((value, helper) => {
   const start = new Date(value.start_date).getTime();

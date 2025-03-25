@@ -11,6 +11,7 @@ import {
   showProductService,
   hideProductService,
   updateProductVariantsByProductIdService,
+  removeProductVariantsByProductIdService,
 } from "#src/app/products/products.service";
 import { calculatePagination } from "#src/utils/pagination.util";
 import { makeSlug } from "#src/utils/string.util";
@@ -31,14 +32,19 @@ import {
   getAllProductVariantsService,
   getProductVariantByIdService,
   removeProductVariantByIdService,
-  updateProductVariantValueByIdService
+  updateProductVariantByIdService,
+  updateProductVariantValueByIdService,
 } from "#src/app/product-variants/product-variants.service";
 import { Code } from "#src/core/code/Code";
 import { ProductDto } from "#src/app/products/dtos/product.dto";
+import { GetProductDto } from "#src/app/products/dtos/get-product.dto";
 import { ApiResponse } from "#src/core/api/ApiResponse";
 import { ModelDto } from "#src/core/dto/ModelDto";
 import { getCategoryByIdService } from "#src/app/categories/categories.service";
-import { isVariantValuesDuplicated, uniqueProductVariants } from "#src/utils/object.util";
+import {
+  isVariantValuesDuplicated,
+  uniqueProductVariants
+} from "#src/utils/object.util";
 
 export const createProductController = async (req) => {
   let { name, tags, product_variants, category } = req.body;
@@ -46,16 +52,15 @@ export const createProductController = async (req) => {
   delete req.body.product_variants;
   delete req.body.tags;
 
+  const isExistProduct = await checkExistProductNameService(name);
+  if (isExistProduct) {
+    throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: "Product name already exist" });
+  }
 
-  // const isExistProduct = await checkExistProductNameService(name);
-  // if (isExistProduct) {
-  //   throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: "Product name already exist" });
-  // }
-
-  // const isExistCategory = await getCategoryByIdService(category);
-  // if (!isExistCategory) {
-  //   throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: "Category not found" });
-  // }
+  const isExistCategory = await getCategoryByIdService(category);
+  if (!isExistCategory) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: "Category not found" });
+  }
 
   const newProduct = await createProductService({
     ...req.body,
@@ -165,11 +170,12 @@ export const getAllProductsController = async (req) => {
 export const getProductByIdController = async (req) => {
   const { id } = req.params;
   const existProduct = await getProductByIdService(id);
+
   if (!existProduct) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: "Product not found" });
   }
 
-  const productDto = ModelDto.new(ProductDto, existProduct);
+  const productDto = ModelDto.new(GetProductDto, existProduct);
   return ApiResponse.success(productDto);
 };
 
@@ -181,12 +187,15 @@ export const updateProductByIdController = async (req) => {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: "Product not found" });
   }
 
-  // const isExistCategory = await getCategoryByIdService(category);
-  // if (!isExistCategory) {
-  //   throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: "Category not found" });
-  // }
+  let { name, category, tags, tagsToDelete, product_variants, productVariantsToUpdate, productVariantsToDelete } = req.body;
 
-  let { name, tags, tagsToDelete, product_variants, productVariantsToUpdate, productVariantsToDelete } = req.body;
+  if (category) {
+    const isExistCategory = await getCategoryByIdService(category);
+    if (!isExistCategory) {
+      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: "Category not found" });
+    }
+  }
+
   delete req.body.product_options;
   delete req.body.tags;
   delete req.body.product_variants;
@@ -271,15 +280,18 @@ export const updateProductByIdController = async (req) => {
     await Promise.all(
       productVariantsToUpdate.map(async (productVariant) => {
         const getProductVariant = await getProductVariantByIdService(productVariant._id);
-        if (getProductVariant) await updateProductVariantValueByIdService(getProductVariant._id, productVariant)
+        if (getProductVariant) await updateProductVariantByIdService(getProductVariant._id, productVariant)
       })
     )
   }
 
   if (productVariantsToDelete && productVariantsToDelete.length > 0) {
     await Promise.all(
-      productVariantsToDelete.map(async (id) => {
-        await removeProductVariantByIdService(id);
+      productVariantsToDelete.map(async (productVariantId) => {
+        const removedVariant = await removeProductVariantByIdService(id);
+        if (removedVariant) {
+          await removeProductVariantsByProductIdService(existProduct._id, productVariantId)
+        }
       })
     )
   }

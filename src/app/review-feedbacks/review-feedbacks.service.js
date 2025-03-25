@@ -1,5 +1,5 @@
 import { isValidObjectId } from "mongoose";
-import { ReviewFeedbackModel } from "#src/app/review-feedbacks/schemas/review-feedback.schema";
+import { ReviewFeedbackModel } from "#src/app/review-feedbacks/models/review-feedback.model";
 
 const SELECTED_FIELDS =
   "_id comment review user createdAt updatedAt";

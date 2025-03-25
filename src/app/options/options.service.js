@@ -1,5 +1,5 @@
 import { isValidObjectId } from "mongoose";
-import { OptionModel } from "#src/app/options/schemas/option.schema";
+import { OptionModel } from "#src/app/options/models/option.model";
 
 const SELECTED_FIELDS =
   "_id name option_values createdAt updatedAt";

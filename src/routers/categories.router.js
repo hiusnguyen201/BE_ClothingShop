@@ -24,12 +24,14 @@ router.post('/is-exist-category-name', validateBody(CheckExistCategoryNameDto), 
 router
   .post(
     '/create-category',
-    isAuthorizedAndHasPermission,
+    // isAuthorizedAndHasPermission,
     UploadUtils.single({ field: 'image' }),
     validateBody(CreateCategoryDto),
     createCategoryController,
   )
-  .get('/get-categories', isAuthorizedAndHasPermission, validateQuery(GetListCategoryDto), getAllCategoriesController)
+  .get('/get-categories',
+    //  isAuthorizedAndHasPermission, 
+    validateQuery(GetListCategoryDto), getAllCategoriesController)
   .get('/get-category-by-id/:categoryId', isAuthorizedAndHasPermission, getCategoryByIdController)
   .patch(
     '/update-category-by-id/:categoryId',

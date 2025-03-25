@@ -1,5 +1,5 @@
 import { isValidObjectId } from "mongoose";
-import { ProductVariantModel } from "#src/app/product-variants/schemas/product-variants.schema";
+import { ProductVariantModel } from "#src/app/product-variants/models/product-variants.model";
 
 const SELECTED_FIELDS =
   "_id quantity price sku image sold variant_values product product_discount createdAt updatedAt";

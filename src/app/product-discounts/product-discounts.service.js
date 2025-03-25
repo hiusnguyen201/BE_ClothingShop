@@ -1,5 +1,5 @@
 import { isValidObjectId } from "mongoose";
-import { ProductDiscountModel } from "#src/app/product-discounts/schemas/product-discount.schema";
+import { ProductDiscountModel } from "#src/app/product-discounts/models/product-discount.model";
 
 const SELECTED_FIELDS =
   "_id name amount is_fixed end_date product_variant createdAt updatedAt";

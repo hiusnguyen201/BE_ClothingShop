@@ -1,5 +1,5 @@
 import { isValidObjectId } from "mongoose";
-import { TagModel } from "#src/app/tags/schemas/tag.schema";
+import { TagModel } from "#src/app/tags/models/tag.model";
 import { makeSlug } from "#src/utils/string.util";
 
 const SELECTED_FIELDS =

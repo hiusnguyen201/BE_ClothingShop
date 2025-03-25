@@ -27,7 +27,7 @@ const productDiscountSchema = new Schema(
     },
     removedAt: {
       type: Date,
-      required: true
+      default: null
     },
 
     // FK

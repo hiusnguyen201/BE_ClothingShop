@@ -27,7 +27,7 @@ router
         getProductDiscountByIdController)
     .post(
         "/create-product-discount",
-        isAuthorizedAndHasPermission,
+        // isAuthorizedAndHasPermission,
         validateBody(createProductDiscountDto),
         createProductDiscountController
     )

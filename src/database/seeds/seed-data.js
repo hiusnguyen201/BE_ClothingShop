@@ -10,7 +10,7 @@ import { PERMISSION_MODEL } from '#src/app/permissions/models/permission.model';
 import { ROLE_MODEL } from '#src/app/roles/models/role.model';
 import { USER_MODEL } from '#src/app/users/models/user.model';
 import { ROLE_STATUS } from '#src/app/roles/roles.constant';
-import { OPTIONS_MODEL } from '#src/app/options/schemas/option.schema';
+import { OPTIONS_MODEL } from '#src/app/options/models/option.model';
 import { OPTIONS_DATA } from '#src/database/seeds/options-data';
 import { createOptionValuesWithinTransactionService } from '#src/app/option-values/option-values.service';
 import { createOptionService, updateOptionByIdService } from '#src/app/options/options.service';

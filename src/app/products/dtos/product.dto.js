@@ -8,8 +8,8 @@ export const ProductDto = Joi.object({
   content: Joi.string().allow(null),
   category: Joi.any().required(),
   sub_category: Joi.string().allow(null),
-  product_variants: Joi.array().items(Joi.object()).allow(null),
-  tags: Joi.array().items(Joi.string()).allow(null),
+  product_variants: Joi.array().items(Joi.any()).allow(null),
+  tags: Joi.array().items(Joi.any()).allow(null),
   createdAt: Joi.date().required(),
   updatedAt: Joi.date().required(),
 });
