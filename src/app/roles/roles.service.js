@@ -37,7 +37,7 @@ export async function getOrCreateRoleServiceWithTransaction(data, session) {
  * @param {*} query
  * @returns
  */
-export async function getAllRolesService({ filters, offset, limit, sortBy, sortOrder }) {
+export async function getAllRolesService({ filters, page, limit, sortBy, sortOrder }) {
   const offset = (page - 1) * limit;
   return RoleModel.find(filters)
     .skip(offset)

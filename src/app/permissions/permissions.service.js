@@ -29,7 +29,7 @@ export async function getOrCreateListPermissionServiceWithTransaction(data = [],
  * @param {*} param0
  * @returns
  */
-export async function getAllPermissionsService({ filters, offset, limit, sortBy, sortOrder }) {
+export async function getAllPermissionsService({ filters, page, limit, sortBy, sortOrder }) {
   const offset = (page - 1) * limit;
   return PermissionModel.find(filters)
     .skip(offset)

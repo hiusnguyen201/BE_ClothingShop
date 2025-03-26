@@ -10,7 +10,9 @@ import categoriesRouter from '#src/routers/categories.router';
 import vouchersRouter from '#src/routers/vouchers.router';
 import accountRouter from '#src/routers/account.router';
 
-router.get('/ping', () => 'Hello world! PING 1');
+router.get('/ping', () => {
+  return 'Hello world! PING 1';
+});
 
 router.use('/auth', authRouter);
 

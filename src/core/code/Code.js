@@ -142,4 +142,10 @@ export class Code {
     codeMessage: 'FILE_STORAGE_ERROR',
     message: 'File storage error',
   };
+
+  static TIMEOUT_API_RESPONSE = {
+    status: 504,
+    codeMessage: 'TIMEOUT_API_RESPONSE',
+    message: 'Timeout api response',
+  };
 }

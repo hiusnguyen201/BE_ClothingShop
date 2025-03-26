@@ -13,6 +13,9 @@ import { handleError, notFound } from '#src/middlewares/error.middleware';
 import { limiter } from '#src/middlewares/rate-limit.middleware';
 import { enhanceRouter } from '#src/utils/async-handler';
 import Database from '#src/modules/database/init.database';
+import { handleTimeout } from '#src/middlewares/timeout.middleware';
+import { HttpException } from '#src/core/exception/http-exception';
+import { Code } from '#src/core/code/Code';
 
 // Connect to Database
 Database.getInstance({
@@ -39,6 +42,8 @@ app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'combined'));
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 app.use(cookieParser());
+
+app.use(handleTimeout);
 
 // Add ipv4 to req
 app.use((req, res, next) => {
