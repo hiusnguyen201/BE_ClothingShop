@@ -12,8 +12,6 @@ import {
   countAllCategoriesService,
 } from '#src/app/categories/categories.service';
 import { CategoryDto } from '#src/app/categories/dtos/category.dto';
-import { makeSlug } from '#src/utils/string.util';
-import { calculatePagination } from '#src/utils/pagination.util';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
@@ -66,18 +64,17 @@ export const createCategoryController = async (req) => {
 export const getAllCategoriesController = async (req) => {
   const { keyword, status, limit, page, sortBy, sortOrder } = req.query;
 
-  const filterOptions = {
+  const filters = {
     $or: [{ name: { $regex: keyword, $options: 'i' } }],
     ...(status ? { status } : {}),
   };
 
-  const totalCount = await countAllCategoriesService(filterOptions);
-  const metaData = calculatePagination(page, limit, totalCount);
+  const totalCount = await countAllCategoriesService(filters);
 
   const categories = await getAllCategoriesService({
-    filters: filterOptions,
-    offset: metaData.offset,
-    limit: metaData.limit,
+    filters,
+    page,
+    limit,
     sortBy,
     sortOrder,
   });
@@ -85,7 +82,7 @@ export const getAllCategoriesController = async (req) => {
   const categoriesDto = ModelDto.newList(CategoryDto, categories);
   return ApiResponse.success(
     {
-      meta: metaData,
+      totalCount,
       list: categoriesDto,
     },
     'Get all categories successfully',

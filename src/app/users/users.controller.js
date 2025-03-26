@@ -13,7 +13,6 @@ import { sendPasswordService } from '#src/modules/mailer/mailer.service';
 import { HttpException } from '#src/core/exception/http-exception';
 import { randomStr } from '#src/utils/string.util';
 import { USER_TYPE } from '#src/app/users/users.constant';
-import { calculatePagination } from '#src/utils/pagination.util';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { UserDto } from '#src/app/users/dtos/user.dto';
@@ -62,18 +61,17 @@ export const getAllUsersController = async (req) => {
   };
 
   const totalCount = await countAllUsersService(filterOptions);
-  const metaData = calculatePagination(page, limit, totalCount);
 
   const users = await getAllUsersService({
     filters: filterOptions,
-    offset: metaData.offset,
-    limit: metaData.limit,
+    page,
+    limit,
     sortBy,
     sortOrder,
   });
 
   const usersDto = ModelDto.newList(UserDto, users);
-  return ApiResponse.success({ meta: metaData, list: usersDto });
+  return ApiResponse.success({ totalCount, list: usersDto });
 };
 
 export const getUserByIdController = async (req) => {

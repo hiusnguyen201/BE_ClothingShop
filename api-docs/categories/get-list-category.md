@@ -45,17 +45,7 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/categories/get-c
   "message": "Get all categories successfully",
   "timestamp": 1742373058243,
   "data": {
-    "meta": {
-      "page": 1,
-      "limit": 10,
-      "totalCount": 1,
-      "offset": 0,
-      "totalPage": 1,
-      "isNext": false,
-      "isPrevious": false,
-      "isFirst": false,
-      "isLast": false
-    },
+    "totalCount": 1,
     "list": [
       {
         "id": "67da7fa684daebe31786e7c9",
@@ -74,27 +64,19 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/categories/get-c
 
 ### Structure Data Response
 
-| Field      | Nullable | Type    | Description         |
-| ---------- | -------- | ------- | ------------------- |
-| meta       |          | Object  | Meta                |
-| page       |          | Number  | Current page        |
-| limit      |          | Number  | Limit per page      |
-| totalCount |          | Number  | Total count         |
-| offset     |          | Number  | Skip                |
-| totalPage  |          | Number  | Total page          |
-| isNext     |          | Boolean | Is next             |
-| isPrevious |          | Boolean | Is previous         |
-| isFirst    |          | Boolean | Is first            |
-| isLast     |          | Boolean | Is last             |
-| list       |          | Array   | Array of categories |
-| id         |          | String  | Category ID         |
-| image      | x        | String  | Category image      |
-| name       |          | String  | Category name       |
-| slug       |          | String  | Slug                |
-| status     |          | String  | Status              |
-| level      |          | String  | Level of category   |
-| createdAt  |          | String  | Created at          |
-| updatedAt  |          | String  | Updated at          |
+| Field      | Nullable | Type   | Description         |
+| ---------- | -------- | ------ | ------------------- |
+| data       |          | Object | Data response       |
+| totalCount |          | Number | Total count         |
+| list       |          | Array  | Array of categories |
+| id         |          | String | Category ID         |
+| image      |          | String | Category image      |
+| name       |          | String | Category name       |
+| slug       |          | String | Slug                |
+| status     |          | String | Status              |
+| level      |          | String | Level of category   |
+| createdAt  |          | String | Created at          |
+| updatedAt  |          | String | Updated at          |
 
 ### Invalid Data (400)
 

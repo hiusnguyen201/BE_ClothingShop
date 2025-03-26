@@ -40,7 +40,8 @@ export async function getOrCreateUserWithTransaction(data, session) {
  * @param {*} query
  * @returns
  */
-export async function getAllUsersService({ filters = {}, offset, limit, sortBy, sortOrder }) {
+export async function getAllUsersService({ filters, page, limit, sortBy, sortOrder }) {
+  const offset = (page - 1) * limit;
   return UserModel.find(filters)
     .skip(offset)
     .limit(limit)

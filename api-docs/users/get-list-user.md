@@ -46,17 +46,7 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/users/get-users'
   "message": "Get all roles successfully",
   "timestamp": 1742209827162,
   "data": {
-    "meta": {
-      "page": 1,
-      "limit": 0,
-      "totalCount": 7,
-      "offset": 0,
-      "totalPage": null,
-      "isNext": true,
-      "isPrevious": false,
-      "isFirst": false,
-      "isLast": true
-    },
+    "totalCount": 1,
     "list": [
       {
         "id": "67d8808243fc71745a3807a2",
@@ -77,29 +67,22 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/users/get-users'
 
 ### Structure Data Response
 
-| Field      | Nullable | Type    | Description    |
-| ---------- | -------- | ------- | -------------- |
-| meta       |          | Object  | Meta           |
-| page       |          | Number  | Current page   |
-| limit      |          | Number  | Limit per page |
-| totalCount |          | Number  | Total count    |
-| offset     |          | Number  | Skip           |
-| totalPage  |          | Number  | Total page     |
-| isNext     |          | Boolean | Is next        |
-| isPrevious |          | Boolean | Is previous    |
-| isFirst    |          | Boolean | Is first       |
-| isLast     |          | Boolean | Is last        |
-| list       |          | Array   | Array of users |
-| id         |          | String  | User ID        |
-| avatar     | x        | String  | Avatar         |
-| name       |          | String  | User name      |
-| email      |          | String  | Email          |
-| phone      |          | String  | Phone number   |
-| gender     |          | String  | Gender         |
-| status     |          | String  | Status         |
-| verifiedAt | x        | String  | Verified at    |
-| createdAt  |          | String  | Created at     |
-| updatedAt  |          | String  | Updated at     |
+| Field      | Nullable | Type   | Description    |
+| ---------- | -------- | ------ | -------------- |
+| data       |          | Object | Data response  |
+| totalCount |          | Number | Total count    |
+| list       |          | Array  | Array of users |
+| id         |          | String | User ID        |
+| avatar     | x        | String | Avatar         |
+| name       |          | String | User name      |
+| email      |          | String | Email          |
+| phone      |          | String | Phone number   |
+| gender     |          | String | Gender         |
+| birthday   | x        | String | Birthday       |
+| status     |          | String | Status         |
+| verifiedAt | x        | String | Verified at    |
+| createdAt  |          | String | Created at     |
+| updatedAt  |          | String | Updated at     |
 
 ### Invalid Data (400)
 

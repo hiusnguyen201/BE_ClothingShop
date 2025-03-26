@@ -15,8 +15,13 @@ export async function createVoucherService(data) {
  * @param {*} query
  * @returns
  */
-export async function getAllVouchersService({ filters, offset = 0, limit = 10 }) {
-  return VoucherModel.find(filters).skip(offset).limit(limit).sort({ createdAt: -1 }).lean();
+export async function getAllVouchersService({ filters, page, limit, sortBy, sortOrder }) {
+  const offset = (page - 1) * limit;
+  return VoucherModel.find(filters)
+    .skip(offset)
+    .limit(limit)
+    .sort({ [sortBy]: sortOrder })
+    .lean();
 }
 
 /**
