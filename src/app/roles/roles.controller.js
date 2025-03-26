@@ -12,7 +12,6 @@ import {
   deactivateRoleByIdService,
   countAllRolesService,
 } from '#src/app/roles/roles.service';
-import { calculatePagination } from '#src/utils/pagination.util';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { RoleDto } from '#src/app/roles/dtos/role.dto';
 import { ModelDto } from '#src/core/dto/ModelDto';
@@ -42,18 +41,17 @@ export const getAllRolesController = async (req) => {
   };
 
   const totalCount = await countAllRolesService(filterOptions);
-  const metaData = calculatePagination(page, limit, totalCount);
 
   const roles = await getAllRolesService({
     filters: filterOptions,
-    offset: metaData.offset,
-    limit: metaData.limit,
+    page,
+    limit,
     sortBy,
     sortOrder,
   });
 
   const rolesDto = ModelDto.newList(RoleDto, roles);
-  return ApiResponse.success({ meta: metaData, list: rolesDto }, 'Get all roles successfully');
+  return ApiResponse.success({ totalCount, list: rolesDto }, 'Get all roles successfully');
 };
 
 export const getRoleByIdController = async (req) => {

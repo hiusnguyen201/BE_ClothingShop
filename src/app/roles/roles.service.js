@@ -38,6 +38,7 @@ export async function getOrCreateRoleServiceWithTransaction(data, session) {
  * @returns
  */
 export async function getAllRolesService({ filters, offset, limit, sortBy, sortOrder }) {
+  const offset = (page - 1) * limit;
   return RoleModel.find(filters)
     .skip(offset)
     .limit(limit)
