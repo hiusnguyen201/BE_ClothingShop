@@ -18,7 +18,8 @@ export async function createCategoryService(data) {
  * @param {*} query
  * @returns
  */
-export async function getAllCategoriesService({ filters, offset, limit, sortBy, sortOrder }) {
+export async function getAllCategoriesService({ filters, page, limit, sortBy, sortOrder }) {
+  const offset = (page - 1) * limit;
   return CategoryModel.find(filters)
     .skip(offset)
     .limit(limit)

@@ -20,14 +20,15 @@ export async function checkClaimedVoucherService(userId, voucherId) {
     .lean();
 }
 
-export async function getAllVouchersInCustomerService(id, { offset, limit }) {
+export async function getAllVouchersInCustomerService(id, { page, limit, sortBy, sortOrder }) {
+  const offset = (page - 1) * limit;
   const user = await UserModel.findById(id)
     .populate({
       path: 'vouchers',
       options: {
         skip: offset,
         limit: limit,
-        sort: { createdAt: -1 },
+        sort: { [sortBy]: sortOrder },
       },
     })
     .select('vouchers')

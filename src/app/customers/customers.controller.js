@@ -12,7 +12,6 @@ import {
 import { USER_TYPE } from '#src/app/users/users.constant';
 import { randomStr } from '#src/utils/string.util';
 import { sendPasswordService } from '#src/modules/mailer/mailer.service';
-import { calculatePagination } from '#src/utils/pagination.util';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { CustomerDto } from '#src/app/customers/dtos/customer.dto';
@@ -41,7 +40,7 @@ export const createCustomerController = async (req) => {
 export const getAllCustomersController = async (req) => {
   const { keyword, limit, page, status, sortBy, sortOrder, gender } = req.query;
 
-  const filterOptions = {
+  const filters = {
     $or: [
       { name: { $regex: keyword, $options: 'i' } },
       { email: { $regex: keyword, $options: 'i' } },
@@ -52,19 +51,18 @@ export const getAllCustomersController = async (req) => {
     type: USER_TYPE.CUSTOMER,
   };
 
-  const totalCount = await countAllUsersService(filterOptions);
-  const metaData = calculatePagination(page, limit, totalCount);
+  const totalCount = await countAllUsersService(filters);
 
   const customers = await getAllUsersService({
-    filters: filterOptions,
-    offset: metaData.offset,
-    limit: metaData.limit,
+    filters,
+    page,
+    limit,
     sortBy,
     sortOrder,
   });
 
   const customersDto = ModelDto.newList(CustomerDto, customers);
-  return ApiResponse.success({ meta: metaData, list: customersDto }, 'Get all customers successfully');
+  return ApiResponse.success({ totalCount, list: customersDto }, 'Get all customers successfully');
 };
 
 export const getCustomerByIdController = async (req) => {
