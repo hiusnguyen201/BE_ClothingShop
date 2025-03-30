@@ -16,7 +16,9 @@ import reviewFeedbacksRouter from '#src/routers/review-feedbacks.route';
 // import tagsRouter from "#src/routers/tags.route";
 import { OptionValueModel } from "#src/app/option-values/models/option-value.model";
 
-router.get('/ping', () => 'Hello world! PING 1');
+router.get('/ping', () => {
+  return 'Hello world! PING 1';
+});
 
 router.use('/auth', authRouter);
 

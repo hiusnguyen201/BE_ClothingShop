@@ -56,7 +56,6 @@ curl --request POST 'https://server-clothes-store.vercel.app/api/users/create-us
     "email": "Jimmy_Wuckert55@yahoo.com",
     "phone": "0383460015",
     "gender": "male",
-    "status": "inactive",
     "verifiedAt": null,
     "createdAt": "2025-03-17T18:34:06.875Z",
     "updatedAt": "2025-03-17T18:34:06.875Z"
@@ -66,18 +65,17 @@ curl --request POST 'https://server-clothes-store.vercel.app/api/users/create-us
 
 ### Structure Data Response
 
-| Field      | Nullable | Type    | Description    |
-| ---------- | -------- | ------- | -------------- |
-| id         |          | String  | User Id        |
-| avatar     | x        | String  | Avatar         |
-| name       |          | String  | User name      |
-| email      |          | String  | Email          |
-| phone      |          | String  | Phone          |
-| gender     |          | String  | Gender         |
-| status     |          | String  | Status account |
-| verifiedAt | x        | Boolean | Verified At    |
-| createdAt  |          | String  | Created At     |
-| updatedAt  |          | String  | Updated At     |
+| Field      | Nullable | Type    | Description |
+| ---------- | -------- | ------- | ----------- |
+| id         |          | String  | User Id     |
+| avatar     | x        | String  | Avatar      |
+| name       |          | String  | User name   |
+| email      |          | String  | Email       |
+| phone      |          | String  | Phone       |
+| gender     |          | String  | Gender      |
+| verifiedAt | x        | Boolean | Verified At |
+| createdAt  |          | String  | Created At  |
+| updatedAt  |          | String  | Updated At  |
 
 ### Invalid Data (400)
 

@@ -34,8 +34,7 @@ curl --location --request GET 'https://server-clothes-store.vercel.app/api/custo
 | limit     |         | query  | Number | Limit<br>Default: 10                                                 |
 | sortBy    |         | query  | String | Sort by<br>Enum: ["name","email", "createdAt"]<br>Default: createdAt |
 | sortOrder |         | query  | String | Sort order<br>Enum: ["asc", "desc"]<br>Default: desc                 |
-| status    |         | query  | String | Status<br>Enum: ["active", "inactive"]                               |
-| gender    |         | query  | String | Status<br>Enum: ["male", "female", "other"]                          |
+| gender    |         | query  | String | Gender<br>Enum: ["male", "female", "other"]                          |
 
 ### Success (200)
 
@@ -46,17 +45,7 @@ curl --location --request GET 'https://server-clothes-store.vercel.app/api/custo
   "message": "Get all customers successfully",
   "timestamp": 1742292503798,
   "data": {
-    "meta": {
-      "page": 1,
-      "limit": 10,
-      "totalCount": 2,
-      "offset": 0,
-      "totalPage": 1,
-      "isNext": false,
-      "isPrevious": false,
-      "isFirst": false,
-      "isLast": false
-    },
+    "totalCount": 1,
     "list": [
       {
         "id": "67d944d742e52209d72a1fde",
@@ -65,8 +54,6 @@ curl --location --request GET 'https://server-clothes-store.vercel.app/api/custo
         "email": "Mayra.Pfannerstill@gmail.com",
         "phone": "0383460015",
         "gender": "male",
-        "birthday": null,
-        "status": "inactive",
         "verifiedAt": null,
         "createdAt": "2025-03-18T10:03:03.278Z",
         "updatedAt": "2025-03-18T10:03:03.278Z"
@@ -78,30 +65,20 @@ curl --location --request GET 'https://server-clothes-store.vercel.app/api/custo
 
 ### Structure Data Response
 
-| Field      | Nullable | Type    | Description        |
-| ---------- | -------- | ------- | ------------------ |
-| meta       |          | Object  | Meta               |
-| page       |          | Number  | Current page       |
-| limit      |          | Number  | Limit per page     |
-| totalCount |          | Number  | Total count        |
-| offset     |          | Number  | Skip               |
-| totalPage  |          | Number  | Total page         |
-| isNext     |          | Boolean | Is next            |
-| isPrevious |          | Boolean | Is previous        |
-| isFirst    |          | Boolean | Is first           |
-| isLast     |          | Boolean | Is last            |
-| list       |          | Array   | Array of customers |
-| id         |          | String  | Customer ID        |
-| avatar     | x        | String  | Avatar             |
-| name       |          | String  | Customer name      |
-| email      |          | String  | Email              |
-| phone      |          | String  | Phone number       |
-| gender     |          | String  | Gender             |
-| birthday   | x        | String  | Birthday           |
-| status     |          | String  | Status             |
-| verifiedAt | x        | String  | Verified at        |
-| createdAt  |          | String  | Created at         |
-| updatedAt  |          | String  | Updated at         |
+| Field      | Nullable | Type   | Description        |
+| ---------- | -------- | ------ | ------------------ |
+| data       |          | Object | Data response      |
+| totalCount |          | Number | Total count        |
+| list       |          | Array  | Array of customers |
+| id         |          | String | Customer ID        |
+| avatar     | x        | String | Avatar             |
+| name       |          | String | Customer name      |
+| email      |          | String | Email              |
+| phone      |          | String | Phone number       |
+| gender     |          | String | Gender             |
+| verifiedAt | x        | String | Verified at        |
+| createdAt  |          | String | Created at         |
+| updatedAt  |          | String | Updated at         |
 
 ### Invalid Data (400)
 
@@ -127,10 +104,6 @@ curl --location --request GET 'https://server-clothes-store.vercel.app/api/custo
     {
       "path": "sortOrder",
       "message": "\"sortOrder\" must be one of [asc, desc]"
-    },
-    {
-      "path": "status",
-      "message": "\"status\" must be one of [active, inactive]"
     },
     {
       "path": "gender",

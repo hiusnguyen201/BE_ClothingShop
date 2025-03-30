@@ -7,7 +7,10 @@ export const connectToMongoDb = (options) => {
   }
 
   mongoose
-    .connect(process.env.MONGO_URI)
+    .connect(process.env.MONGO_URI, {
+      serverSelectionTimeoutMS: 30000,
+      minPoolSize: 10,
+    })
     .then(() => {
       console.log('Connected successfully to MongoDB');
     })

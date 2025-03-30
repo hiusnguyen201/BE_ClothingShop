@@ -43,18 +43,6 @@ curl --request DELETE 'https://server-clothes-store.vercel.app/api/categories/re
 }
 ```
 
-### Category Is Active (400)
-
-```json
-{
-  "code": 400,
-  "codeMessage": "BAD_REQUEST",
-  "message": "Category is active",
-  "timestamp": 1742233056577,
-  "data": null
-}
-```
-
 ### Category Not Found (404)
 
 ```json

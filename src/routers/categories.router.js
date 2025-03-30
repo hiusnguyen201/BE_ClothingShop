@@ -8,8 +8,6 @@ import {
   updateCategoryByIdController,
   removeCategoryByIdController,
   isExistCategoryNameController,
-  activateCategoryByIdController,
-  deactivateCategoryByIdController,
 } from '#src/app/categories/categories.controller';
 import { CreateCategoryDto } from '#src/app/categories/dtos/create-category.dto';
 import { UpdateCategoryDto } from '#src/app/categories/dtos/update-category.dto';
@@ -40,8 +38,6 @@ router
     validateBody(UpdateCategoryDto),
     updateCategoryByIdController,
   )
-  .delete('/remove-category-by-id/:categoryId', isAuthorizedAndHasPermission, removeCategoryByIdController)
-  .patch('/activate-category-by-id/:categoryId', isAuthorizedAndHasPermission, activateCategoryByIdController)
-  .patch('/deactivate-category-by-id/:categoryId', isAuthorizedAndHasPermission, deactivateCategoryByIdController);
+  .delete('/remove-category-by-id/:categoryId', isAuthorizedAndHasPermission, removeCategoryByIdController);
 
 export default router;

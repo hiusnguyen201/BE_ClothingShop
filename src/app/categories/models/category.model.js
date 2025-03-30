@@ -1,4 +1,3 @@
-import { CATEGORY_STATUS } from '#src/app/categories/categories.constant';
 import SoftDelete from '#src/core/plugins/soft-delete.plugin';
 import mongoose from 'mongoose';
 const { Schema } = mongoose;
@@ -24,12 +23,6 @@ const CategorySchema = new Schema(
       length: 150,
       required: true,
       unique: true,
-    },
-    status: {
-      type: String,
-      length: 50,
-      required: true,
-      enum: CATEGORY_STATUS,
     },
     level: {
       type: Number,

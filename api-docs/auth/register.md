@@ -28,7 +28,6 @@ curl --request POST 'https://server-clothes-store.vercel.app/api/auth/register' 
     "password": "1234",
     "confirmPassword": "1234",
     "gender": "Male",
-    "birthday": 1742196837168
 }'
 ```
 
@@ -42,7 +41,6 @@ curl --request POST 'https://server-clothes-store.vercel.app/api/auth/register' 
 | password        | x       | body | String | Password                             |
 | confirmPassword | x       | body | String | Confirm password                     |
 | gender          | x       | body | String | Gender <br>Enum: Male, Female, Other |
-| birthday        |         | body | String | Birthday <br>Default: null           |
 
 ### Success (200)
 

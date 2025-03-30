@@ -1,8 +1,23 @@
-import { isValidObjectId } from "mongoose";
-import { OptionModel } from "#src/app/options/models/option.model";
+import { isValidObjectId } from 'mongoose';
+import { OptionModel } from '#src/app/options/models/option.model';
 
-const SELECTED_FIELDS =
-  "_id name optionValues createdAt updatedAt";
+const SELECTED_FIELDS = '_id name optionValues createdAt updatedAt';
+
+/**
+ * Create option within transaction
+ * @param {*} data
+ * @returns
+ */
+export async function getOrCreateOptionService(data, session) {
+  const existOption = await OptionModel.findOne({ name: data.name });
+
+  if (existOption) {
+    return existOption;
+  }
+
+  const [option] = await OptionModel.insertMany([data], { session });
+  return option;
+}
 
 /**
  * Create option
@@ -10,12 +25,6 @@ const SELECTED_FIELDS =
  * @returns
  */
 export async function createOptionService(data) {
-  const existOption = await OptionModel.findOne({ name: data.name })
-
-  if (existOption) {
-    return existOption
-  }
-
   return OptionModel.create(data);
 }
 
@@ -24,10 +33,7 @@ export async function createOptionService(data) {
  * @param {*} id
  * @returns
  */
-export async function getOptionByIdService(
-  id,
-  extraFilters
-) {
+export async function getOptionByIdService(id, extraFilters) {
   if (!id) return null;
   const filter = {};
 
@@ -38,8 +44,8 @@ export async function getOptionByIdService(
   }
 
   return OptionModel.findOne(filter).select(SELECTED_FIELDS).populate({
-    path: "optionValues",
-    match: extraFilters
+    path: 'optionValues',
+    match: extraFilters,
   });
 }
 
@@ -61,8 +67,7 @@ export async function updateOptionByIdService(id, data) {
  * @returns
  */
 export async function removeOptionByIdService(id) {
-  return await OptionModel.findByIdAndDelete(id)
-    .select(SELECTED_FIELDS)
+  return await OptionModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
 }
 
 /**
@@ -75,9 +80,9 @@ export async function updateOptionSizesByIdService(id, optionSizes) {
   return await OptionModel.findByIdAndUpdate(
     id,
     {
-      $addToSet: { option_sizes: { $each: optionSizes } }
+      $addToSet: { option_sizes: { $each: optionSizes } },
     },
-    { new: true }
+    { new: true },
   ).select(SELECTED_FIELDS);
 }
 
@@ -91,8 +96,8 @@ export async function removeOptionSizesByIdService(id, optionSizes) {
   return await OptionModel.findByIdAndUpdate(
     id,
     {
-      $pull: { option_sizes: { $each: optionSizes } }
+      $pull: { option_sizes: { $each: optionSizes } },
     },
-    { new: true }
+    { new: true },
   ).select(SELECTED_FIELDS);
 }

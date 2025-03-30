@@ -36,10 +36,10 @@ curl --request PATCH 'https://server-clothes-store.vercel.app/api/users/update-u
 | ------ | ------- | ------ | ------ | ------------------------------------------------------------ |
 | token  | x       | header | String | Token                                                        |
 | userId | x       | params | String | User ID                                                      |
-| name   |        | body   | String | User name                                                    |
-| email  |        | body   | String | Email                                                        |
-| gender |        | body   | String | Gender<br>Enum: ["male", "female", "other"]<br>Default: null |
-| phone  |        | body   | String | Phone number with region 'VN'                                |
+| name   |         | body   | String | User name                                                    |
+| email  |         | body   | String | Email                                                        |
+| gender |         | body   | String | Gender<br>Enum: ["male", "female", "other"]<br>Default: null |
+| phone  |         | body   | String | Phone number with region 'VN'                                |
 | roleId |         | body   | String | Role ID                                                      |
 
 ### Success (200)
@@ -57,7 +57,6 @@ curl --request PATCH 'https://server-clothes-store.vercel.app/api/users/update-u
     "email": "example@yahoo.com",
     "phone": "0912345678",
     "gender": "male",
-    "status": "inactive",
     "verifiedAt": null,
     "createdAt": "2025-03-17T20:12:06.109Z",
     "updatedAt": "2025-03-17T20:29:43.043Z"
@@ -67,18 +66,17 @@ curl --request PATCH 'https://server-clothes-store.vercel.app/api/users/update-u
 
 ### Structure Data Response
 
-| Field      | Nullable | Type    | Description    |
-| ---------- | -------- | ------- | -------------- |
-| id         |          | String  | User Id        |
-| avatar     | x        | String  | Avatar         |
-| name       |          | String  | User name      |
-| email      |          | String  | Email          |
-| phone      |          | String  | Phone          |
-| gender     |          | String  | Gender         |
-| status     |          | String  | Status account |
-| verifiedAt | x        | Boolean | Verified At    |
-| createdAt  |          | String  | Created At     |
-| updatedAt  |          | String  | Updated At     |
+| Field      | Nullable | Type    | Description |
+| ---------- | -------- | ------- | ----------- |
+| id         |          | String  | User Id     |
+| avatar     | x        | String  | Avatar      |
+| name       |          | String  | User name   |
+| email      |          | String  | Email       |
+| phone      |          | String  | Phone       |
+| gender     |          | String  | Gender      |
+| verifiedAt | x        | Boolean | Verified At |
+| createdAt  |          | String  | Created At  |
+| updatedAt  |          | String  | Updated At  |
 
 ### INVALID_DATA (400)
 

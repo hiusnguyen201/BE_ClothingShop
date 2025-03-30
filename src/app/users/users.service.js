@@ -1,8 +1,9 @@
 import { isValidObjectId } from 'mongoose';
-import { genSalt, genSaltSync, hashSync } from 'bcrypt';
+import { genSaltSync, hashSync } from 'bcrypt';
 import { UserModel } from '#src/app/users/models/user.model';
 import { REGEX_PATTERNS } from '#src/core/constant';
-import { USER_SELECTED_FIELDS, USER_STATUS } from '#src/app/users/users.constant';
+import { USER_SELECTED_FIELDS } from '#src/app/users/users.constant';
+import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query';
 
 /**
  * Create user
@@ -20,19 +21,16 @@ export async function createUserService(data) {
  * @param {*} data
  * @returns
  */
-export async function getOrCreateUserWithTransaction(data, session) {
-  const user = await UserModel.findOne({ email: data.email }).lean();
+export async function getOrCreateUserService(data, session) {
+  const existUser = await UserModel.findOne({ email: data.email }).lean();
 
-  if (user) {
-    return user;
+  if (existUser) {
+    return existUser;
   }
 
-  const salt = await genSalt();
-  data.password = hashSync(data.password, salt);
-  const [created] = await UserModel.insertMany([data], {
-    session,
-  });
-  return created;
+  const [newUser] = await UserModel.insertMany([data], { session });
+
+  return newUser;
 }
 
 /**
@@ -40,13 +38,14 @@ export async function getOrCreateUserWithTransaction(data, session) {
  * @param {*} query
  * @returns
  */
-export async function getAllUsersService({ filters = {}, offset, limit, sortBy, sortOrder }) {
-  return UserModel.find(filters)
-    .skip(offset)
-    .limit(limit)
-    .select(USER_SELECTED_FIELDS)
-    .sort({ [sortBy]: sortOrder })
-    .lean();
+export async function getAllUsersService(payload) {
+  const { filters = {}, page, limit, sortBy, sortOrder } = payload;
+
+  let queryOptions = {};
+  queryOptions = extendQueryOptionsWithPagination({ page, limit }, queryOptions);
+  queryOptions = extendQueryOptionsWithSort({ sortBy, sortOrder }, queryOptions);
+
+  return UserModel.find(filters, USER_SELECTED_FIELDS, queryOptions).lean();
 }
 
 /**
@@ -116,7 +115,6 @@ export async function updateUserVerifiedByIdService(id) {
     id,
     {
       verifiedAt: new Date(),
-      status: USER_STATUS.ACTIVE,
     },
     { new: true },
   )

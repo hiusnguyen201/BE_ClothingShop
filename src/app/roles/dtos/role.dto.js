@@ -5,7 +5,6 @@ export const RoleDto = Joi.object({
   name: Joi.string().required(),
   slug: Joi.string().required(),
   description: Joi.string().required(),
-  status: Joi.string().required(),
   createdAt: Joi.date().required(),
   updatedAt: Joi.date().required(),
 });

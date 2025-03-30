@@ -34,7 +34,6 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/categories/get-c
 | limit     |         | query  | Number | Limit<br>Default: 10                                         |
 | sortBy    |         | query  | String | Sort by<br>Enum: ["name", "createdAt"]<br>Default: createdAt |
 | sortOrder |         | query  | String | Sort order<br>Enum: ["asc", "desc"]<br>Default: desc         |
-| status    |         | query  | String | Status<br>Enum: ["active", "inactive"]                       |
 
 ### Success (200)
 
@@ -45,24 +44,13 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/categories/get-c
   "message": "Get all categories successfully",
   "timestamp": 1742373058243,
   "data": {
-    "meta": {
-      "page": 1,
-      "limit": 10,
-      "totalCount": 1,
-      "offset": 0,
-      "totalPage": 1,
-      "isNext": false,
-      "isPrevious": false,
-      "isFirst": false,
-      "isLast": false
-    },
+    "totalCount": 1,
     "list": [
       {
         "id": "67da7fa684daebe31786e7c9",
         "image": "http://res.cloudinary.com/dsfkimwl7/image/upload/742372772/categories-image/1742372771698_e4e47241-1ae2-4529-b2d2-8e17bc5eac93.jpg",
         "name": "Howard Corwin",
         "slug": "howard-corwin",
-        "status": "inactive",
         "level": 1,
         "createdAt": "2025-03-19T08:26:14.441Z",
         "updatedAt": "2025-03-19T08:26:14.441Z"
@@ -74,27 +62,18 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/categories/get-c
 
 ### Structure Data Response
 
-| Field      | Nullable | Type    | Description         |
-| ---------- | -------- | ------- | ------------------- |
-| meta       |          | Object  | Meta                |
-| page       |          | Number  | Current page        |
-| limit      |          | Number  | Limit per page      |
-| totalCount |          | Number  | Total count         |
-| offset     |          | Number  | Skip                |
-| totalPage  |          | Number  | Total page          |
-| isNext     |          | Boolean | Is next             |
-| isPrevious |          | Boolean | Is previous         |
-| isFirst    |          | Boolean | Is first            |
-| isLast     |          | Boolean | Is last             |
-| list       |          | Array   | Array of categories |
-| id         |          | String  | Category ID         |
-| image      | x        | String  | Category image      |
-| name       |          | String  | Category name       |
-| slug       |          | String  | Slug                |
-| status     |          | String  | Status              |
-| level      |          | String  | Level of category   |
-| createdAt  |          | String  | Created at          |
-| updatedAt  |          | String  | Updated at          |
+| Field      | Nullable | Type   | Description         |
+| ---------- | -------- | ------ | ------------------- |
+| data       |          | Object | Data response       |
+| totalCount |          | Number | Total count         |
+| list       |          | Array  | Array of categories |
+| id         |          | String | Category ID         |
+| image      |          | String | Category image      |
+| name       |          | String | Category name       |
+| slug       |          | String | Slug                |
+| level      |          | String | Level of category   |
+| createdAt  |          | String | Created at          |
+| updatedAt  |          | String | Updated at          |
 
 ### Invalid Data (400)
 
@@ -120,10 +99,6 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/categories/get-c
     {
       "path": "sortOrder",
       "message": "\"sortOrder\" must be one of [asc, desc]"
-    },
-    {
-      "path": "status",
-      "message": "\"status\" must be one of [active, inactive]"
     }
   ]
 }

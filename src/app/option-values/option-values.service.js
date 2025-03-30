@@ -1,8 +1,7 @@
-import { isValidObjectId } from "mongoose";
-import { OptionValueModel } from "#src/app/option-values/models/option-value.model";
+import { isValidObjectId } from 'mongoose';
+import { OptionValueModel } from '#src/app/option-values/models/option-value.model';
 
-const SELECTED_FIELDS =
-  "_id valueName createdAt updatedAt";
+const SELECTED_FIELDS = '_id valueName createdAt updatedAt';
 
 /**
  * Create option value
@@ -19,9 +18,7 @@ export async function createOptionValueService(data) {
  * @param {*} selectFields
  * @returns
  */
-export async function getOptionValueByIdService(
-  id,
-) {
+export async function getOptionValueByIdService(id) {
   if (!id) return null;
   const filter = {};
 
@@ -79,7 +76,7 @@ export async function updateOptionValueByIdService(id, data) {
  * @returns
  */
 export async function removeOptionValueByIdService(id) {
-  return await OptionValueModel.findByIdAndDelete(id).select(SELECTED_FIELDS)
+  return await OptionValueModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
 }
 
 /**
@@ -87,6 +84,19 @@ export async function removeOptionValueByIdService(id) {
  * @param {*} data
  * @returns
  */
-export async function createOptionValuesWithinTransactionService(data, session) {
-  return OptionValueModel.insertMany(data, { session });
+export async function getOrCreateOptionValuesService(data = [], session) {
+  const existingOptionValues = await OptionValueModel.find({
+    valueName: { $in: data.map((item) => item.valueName) },
+  }).lean();
+
+  const existingSet = new Set(existingOptionValues.map((item) => item.valueName));
+
+  const newOptionValuesData = data.filter((item) => !existingSet.has(item.valueName));
+
+  if (newOptionValuesData.length > 0) {
+    const created = await OptionValueModel.insertMany(newOptionValuesData, { session });
+    return [...existingOptionValues, ...created];
+  }
+
+  return existingOptionValues;
 }

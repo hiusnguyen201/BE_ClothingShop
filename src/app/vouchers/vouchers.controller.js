@@ -9,7 +9,6 @@ import {
   checkExistVoucherCodeService,
   countAllVouchersService,
 } from '#src/app/vouchers/vouchers.service';
-import { calculatePagination } from '#src/utils/pagination.util';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { VoucherDto } from '#src/app/vouchers/dtos/voucher.dto';
@@ -29,25 +28,33 @@ export const createVoucherController = async (req) => {
 };
 
 export const getAllVouchersController = async (req) => {
-  let { keyword = '', limit = 10, page = 1 } = req.query;
+  const { keyword, limit, page, sortBy, sortOrder } = req.query;
 
-  const filterOptions = {
-    $or: [{ name: { $regex: keyword, $options: 'i' } }, { code: { $regex: keyword, $options: 'i' } }],
+  const filters = {
+    $or: [
+      {
+        name: { $regex: keyword, $options: 'i' },
+      },
+      {
+        code: { $regex: keyword, $options: 'i' },
+      },
+    ],
   };
 
-  const totalCount = await countAllVouchersService(filterOptions);
-  const metaData = calculatePagination(page, limit, totalCount);
+  const totalCount = await countAllVouchersService(filters);
 
   const vouchers = await getAllVouchersService({
-    filters: filterOptions,
-    offset: metaData.offset,
-    limit: metaData.limit,
+    filters,
+    page,
+    limit,
+    sortBy,
+    sortOrder,
   });
 
   const vouchersDto = ModelDto.newList(VoucherDto, vouchers);
   return ApiResponse.success(
     {
-      meta: metaData,
+      totalCount,
       list: vouchersDto,
     },
     'Get all vouchers successfully',

@@ -34,7 +34,6 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/roles/get-roles'
 | limit     |         | query  | Number | Limit<br>Default: 10                                         |
 | sortBy    |         | query  | String | Sort by<br>Enum: ["name", "createdAt"]<br>Default: createdAt |
 | sortOrder |         | query  | String | Sort order<br>Enum: ["asc", "desc"]<br>Default: desc         |
-| status    |         | query  | String | Status<br>Enum: ["active", "inactive"]                       |
 
 ### Success (200)
 
@@ -45,23 +44,12 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/roles/get-roles'
   "message": "Get all roles successfully",
   "timestamp": 1742209827162,
   "data": {
-    "meta": {
-      "page": 1,
-      "limit": 0,
-      "totalCount": 7,
-      "offset": 0,
-      "totalPage": null,
-      "isNext": true,
-      "isPrevious": false,
-      "isFirst": false,
-      "isLast": true
-    },
+    "totalCount": 1,
     "list": [
       {
         "id": "67d807baa32da40ffd946fa0",
         "name": "exampl4e2323333",
         "slug": "exampl4e2323333",
-        "status": "active",
         "description": "a",
         "createdAt": "2025-03-17T11:30:02.722Z",
         "updatedAt": "2025-03-17T11:30:02.722Z"
@@ -73,26 +61,17 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/roles/get-roles'
 
 ### Structure Data Response
 
-| Field       | Nullable | Type    | Description    |
-| ----------- | -------- | ------- | -------------- |
-| meta        |          | Object  | Meta           |
-| page        |          | Number  | Current page   |
-| limit       |          | Number  | Limit per page |
-| totalCount  |          | Number  | Total count    |
-| offset      |          | Number  | Skip           |
-| totalPage   |          | Number  | Total page     |
-| isNext      |          | Boolean | Is next        |
-| isPrevious  |          | Boolean | Is previous    |
-| isFirst     |          | Boolean | Is first       |
-| isLast      |          | Boolean | Is last        |
-| list        |          | Array   | Array of roles |
-| id          |          | String  | Role ID        |
-| name        |          | String  | Role name      |
-| slug        |          | String  | Role slug      |
-| status      |          | String  | Role status    |
-| description |          | String  | Description    |
-| createdAt   |          | String  | Created At     |
-| updatedAt   |          | String  | Updated At     |
+| Field       | Nullable | Type   | Description    |
+| ----------- | -------- | ------ | -------------- |
+| data        |          | Object | Data response  |
+| totalCount  |          | Number | Total count    |
+| list        |          | Array  | Array of roles |
+| id          |          | String | Role ID        |
+| name        |          | String | Role name      |
+| slug        |          | String | Role slug      |
+| description |          | String | Description    |
+| createdAt   |          | String | Created At     |
+| updatedAt   |          | String | Updated At     |
 
 ### Invalid Data (400)
 
@@ -118,10 +97,6 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/roles/get-roles'
     {
       "path": "sortOrder",
       "message": "\"sortOrder\" must be one of [asc, desc]"
-    },
-    {
-      "path": "status",
-      "message": "\"status\" must be one of [active, inactive]"
     }
   ]
 }

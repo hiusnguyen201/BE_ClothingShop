@@ -2,7 +2,8 @@ import { isValidObjectId } from 'mongoose';
 import { CategoryModel } from '#src/app/categories/models/category.model';
 import { REGEX_PATTERNS } from '#src/core/constant';
 import { makeSlug } from '#src/utils/string.util';
-import { CATEGORY_STATUS } from '#src/app/categories/categories.constant';
+import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query';
+import { CATEGORY_SELECTED_FIELDS } from '#src/app/categories/categories.constant';
 
 /**
  * Create category instance
@@ -18,12 +19,14 @@ export async function createCategoryService(data) {
  * @param {*} query
  * @returns
  */
-export async function getAllCategoriesService({ filters, offset, limit, sortBy, sortOrder }) {
-  return CategoryModel.find(filters)
-    .skip(offset)
-    .limit(limit)
-    .sort({ [sortBy]: sortOrder })
-    .lean();
+export async function getAllCategoriesService(payload) {
+  const { filters = {}, page, limit, sortBy, sortOrder } = payload;
+
+  let queryOptions = {};
+  queryOptions = extendQueryOptionsWithPagination({ page, limit }, queryOptions);
+  queryOptions = extendQueryOptionsWithSort({ sortBy, sortOrder }, queryOptions);
+
+  return CategoryModel.find(filters, CATEGORY_SELECTED_FIELDS, queryOptions).lean();
 }
 
 /**
@@ -52,7 +55,7 @@ export async function getCategoryByIdService(id) {
     filter.name = id;
   }
 
-  return CategoryModel.findOne(filter).lean();
+  return CategoryModel.findOne(filter).select(CATEGORY_SELECTED_FIELDS).lean();
 }
 
 /**
@@ -68,7 +71,9 @@ export async function updateCategoryInfoByIdService(id, data) {
 
   return CategoryModel.findByIdAndUpdate(id, data, {
     new: true,
-  }).lean();
+  })
+    .select(CATEGORY_SELECTED_FIELDS)
+    .lean();
 }
 
 /**
@@ -77,7 +82,7 @@ export async function updateCategoryInfoByIdService(id, data) {
  * @returns
  */
 export async function removeCategoryByIdService(id) {
-  return CategoryModel.findByIdAndSoftDelete(id).lean();
+  return CategoryModel.findByIdAndSoftDelete(id).select('_id').lean();
 }
 
 /**
@@ -99,39 +104,10 @@ export async function checkExistCategoryNameService(name, skipId) {
   };
 
   if (skipId) {
-    filters._id = { $ne: skipId };
+    const key = isValidObjectId(skipId) ? '_id' : skipId.match(REGEX_PATTERNS.SLUG) ? 'slug' : null;
+    if (key) filters[key] = { $ne: skipId };
   }
 
   const result = await CategoryModel.findOne(filters, '_id', { withRemoved: true }).lean();
   return !!result;
-}
-
-/**
- * Activate category
- * @param {*} id
- * @returns
- */
-export async function activateCategoryService(id) {
-  return CategoryModel.findByIdAndUpdate(
-    id,
-    {
-      status: CATEGORY_STATUS.ACTIVE,
-    },
-    { new: true },
-  ).lean();
-}
-
-/**
- * Deactivate category
- * @param {*} id
- * @returns
- */
-export async function deactivateCategoryService(id) {
-  return CategoryModel.findByIdAndUpdate(
-    id,
-    {
-      status: CATEGORY_STATUS.INACTIVE,
-    },
-    { new: true },
-  ).lean();
 }

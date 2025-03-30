@@ -1,4 +1,5 @@
 import { UserModel } from '#src/app/users/models/user.model';
+import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query';
 
 export async function addVoucherToCustomerService(userId, voucherId) {
   return UserModel.findByIdAndUpdate(userId, { $push: { vouchers: voucherId } }, { new: true }).lean();
@@ -20,14 +21,19 @@ export async function checkClaimedVoucherService(userId, voucherId) {
     .lean();
 }
 
-export async function getAllVouchersInCustomerService(id, { offset, limit }) {
+export async function getAllVouchersInCustomerService(id, payload) {
+  const { filters = {}, page, limit, sortBy, sortOrder } = payload;
+
+  let queryOptions = {};
+  queryOptions = extendQueryOptionsWithPagination({ page, limit }, queryOptions);
+  queryOptions = extendQueryOptionsWithSort({ sortBy, sortOrder }, queryOptions);
+
   const user = await UserModel.findById(id)
     .populate({
       path: 'vouchers',
       options: {
-        skip: offset,
-        limit: limit,
-        sort: { createdAt: -1 },
+        $elemMatch: filters,
+        ...queryOptions,
       },
     })
     .select('vouchers')

@@ -7,7 +7,6 @@ export const UserDto = Joi.object({
   email: Joi.string().required(),
   phone: Joi.string().required(),
   gender: Joi.string().allow(null),
-  status: Joi.string().required(),
   verifiedAt: Joi.date().allow(null),
   createdAt: Joi.date().required(),
   updatedAt: Joi.date().required(),

@@ -1,12 +1,14 @@
 import { isValidObjectId } from 'mongoose';
 import { PermissionModel } from '#src/app/permissions/models/permission.model';
+import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query';
+import { PERMISSION_SELECTED_FIELDS } from '#src/app/permissions/permissions.constant';
 
 /**
  * Get or create list permission
  * @param {*} data
  * @returns
  */
-export async function getOrCreateListPermissionServiceWithTransaction(data = [], session) {
+export async function getOrCreateListPermissionService(data = [], session) {
   const existingPermissions = await PermissionModel.find({
     endpoint: { $in: data.map((p) => p.endpoint) },
     method: { $in: data.map((p) => p.method) },
@@ -29,12 +31,14 @@ export async function getOrCreateListPermissionServiceWithTransaction(data = [],
  * @param {*} param0
  * @returns
  */
-export async function getAllPermissionsService({ filters, offset = 0, limit = 10, sortBy, sortOrder }) {
-  return PermissionModel.find(filters)
-    .skip(offset)
-    .limit(limit)
-    .sort({ [sortBy]: sortOrder })
-    .lean();
+export async function getAllPermissionsService(payload) {
+  const { filters = {}, page, limit, sortBy, sortOrder } = payload;
+
+  let queryOptions = {};
+  queryOptions = extendQueryOptionsWithPagination({ page, limit }, queryOptions);
+  queryOptions = extendQueryOptionsWithSort({ sortBy, sortOrder }, queryOptions);
+
+  return PermissionModel.find(filters, PERMISSION_SELECTED_FIELDS, queryOptions).lean();
 }
 
 /**
