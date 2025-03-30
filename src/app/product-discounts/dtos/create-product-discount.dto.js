@@ -9,22 +9,30 @@ export const createProductDiscountDto = Joi.object({
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
   amount: Joi.number()
     .required(),
-  is_fixed: Joi.boolean()
+  isFixed: Joi.boolean()
     .required(),
-  start_date: Joi.date()
+  startDate: Joi.date()
     .iso()
     .required(),
-  end_date: Joi.date()
+  endDate: Joi.date()
     .iso()
     .required(),
   productVariant: Joi.string()
     .required(),
 }).custom((value, helper) => {
-  const start = new Date(value.start_date).getTime();
-  const end = new Date(value.end_date).getTime();
+  const start = new Date(value.startDate).getTime();
+  const end = new Date(value.endDate).getTime();
 
   if (start > end) {
     return helper.message("Start date cannot be greater than end date")
+  }
+
+  if (value.isFixed) {
+    if (value.amount < 1 || value.amount > 99) {
+      return helper.message("Discounts ranging from 1 to 99 percent")
+    } else if (value.amount <= 1000) {
+      return helper.message("Discount amount must greater than 1000")
+    }
   }
   return value;
 });

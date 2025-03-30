@@ -3,7 +3,7 @@ import { TagModel } from "#src/app/tags/models/tag.model";
 import { makeSlug } from "#src/utils/string.util";
 
 const SELECTED_FIELDS =
-  "_id name slug products createdAt updatedAt";
+    "_id name slug products createdAt updatedAt";
 
 /**
  * Create tag
@@ -11,10 +11,10 @@ const SELECTED_FIELDS =
  * @returns
  */
 export async function createTagService(data) {
-  return await TagModel.create({
-    ...data,
-    slug: makeSlug(data.name)
-  });
+    return await TagModel.create({
+        ...data,
+        slug: makeSlug(data.name)
+    });
 }
 
 /**
@@ -24,16 +24,16 @@ export async function createTagService(data) {
  * @returns
  */
 export async function getAllTagsService({
-  filters,
-  offset = 0,
-  limit = 10,
-  selectFields = SELECTED_FIELDS,
+    filters,
+    offset = 0,
+    limit = 10,
+    selectFields = SELECTED_FIELDS,
 }) {
-  return TagModel.find(filters)
-    .skip(offset)
-    .limit(limit)
-    .select(selectFields)
-    .sort({ createdAt: -1 });
+    return TagModel.find(filters)
+        .skip(offset)
+        .limit(limit)
+        .select(selectFields)
+        .sort({ createdAt: -1 });
 }
 
 /**
@@ -42,7 +42,7 @@ export async function getAllTagsService({
  * @returns
  */
 export async function countAllTagsService(filters) {
-  return TagModel.countDocuments(filters);
+    return TagModel.countDocuments(filters);
 }
 
 /**
@@ -52,19 +52,19 @@ export async function countAllTagsService(filters) {
  * @returns
  */
 export async function getTagByIdService(
-  id,
-  selectFields = SELECTED_FIELDS
+    id,
+    selectFields = SELECTED_FIELDS
 ) {
-  if (!id) return null;
-  const filter = {};
+    if (!id) return null;
+    const filter = {};
 
-  if (isValidObjectId(id)) {
-    filter._id = id;
-  } else {
-    filter.name = id;
-  }
+    if (isValidObjectId(id)) {
+        filter._id = id;
+    } else {
+        filter.name = id;
+    }
 
-  return await TagModel.findOne(filter).select(selectFields);
+    return await TagModel.findOne(filter).select(selectFields);
 }
 
 /**
@@ -74,9 +74,9 @@ export async function getTagByIdService(
  * @returns
  */
 export async function updateTagByIdService(id, data) {
-  return await TagModel.findByIdAndUpdate(id, data, {
-    new: true,
-  }).select(SELECTED_FIELDS);
+    return await TagModel.findByIdAndUpdate(id, data, {
+        new: true,
+    }).select(SELECTED_FIELDS);
 }
 
 /**
@@ -85,7 +85,7 @@ export async function updateTagByIdService(id, data) {
  * @returns
  */
 export async function removeTagByIdService(id) {
-  return await TagModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
+    return await TagModel.findByIdAndDelete(id).select(SELECTED_FIELDS);
 }
 
 /**
@@ -95,18 +95,18 @@ export async function removeTagByIdService(id) {
  * @returns
  */
 export async function checkExistTagNameService(name, skipId) {
-  const tag = await TagModel.findOne({
-    $or: [
-      {
-        name,
-      },
-      {
-        slug: makeSlug(name),
-      },
-    ],
-    _id: { $ne: skipId },
-  }).select("_id");
-  return Boolean(tag);
+    const tag = await TagModel.findOne({
+        $or: [
+            {
+                name,
+            },
+            {
+                slug: makeSlug(name),
+            },
+        ],
+        _id: { $ne: skipId },
+    }).select("_id");
+    return Boolean(tag);
 }
 
 /**
@@ -116,15 +116,15 @@ export async function checkExistTagNameService(name, skipId) {
  * @returns
  */
 export async function getOrCreateTagByName(name, productId) {
-  const tag = await getTagByIdService(name);
-  if (!tag) {
-    const newTag = await createTagService({
-      name,
-      products: productId
-    });
-    return newTag;
-  }
-  return tag;
+    const tag = await getTagByIdService(name);
+    if (!tag) {
+        const newTag = await createTagService({
+            name,
+            products: productId
+        });
+        return newTag;
+    }
+    return tag;
 }
 
 /**
@@ -134,14 +134,14 @@ export async function getOrCreateTagByName(name, productId) {
  * @returns
  */
 export async function updateProductTagByIdService(id, productId) {
-  return await TagModel.findByIdAndUpdate(id,
-    {
-      $addToSet: {
-        products: productId
-      }
-    }, {
-    new: true,
-  }).select(SELECTED_FIELDS);
+    return await TagModel.findByIdAndUpdate(id,
+        {
+            $addToSet: {
+                products: productId
+            }
+        }, {
+        new: true,
+    }).select(SELECTED_FIELDS);
 }
 
 /**
@@ -151,12 +151,12 @@ export async function updateProductTagByIdService(id, productId) {
  * @returns
  */
 export async function removeProductTagByIdService(id, productId) {
-  return await TagModel.findByIdAndUpdate(id,
-    {
-      $pull: {
-        products: productId
-      }
-    }, {
-    new: true,
-  }).select(SELECTED_FIELDS);
+    return await TagModel.findByIdAndUpdate(id,
+        {
+            $pull: {
+                products: productId
+            }
+        }, {
+        new: true,
+    }).select(SELECTED_FIELDS);
 }

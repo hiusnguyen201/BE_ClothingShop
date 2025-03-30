@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 const { Schema } = mongoose;
 
-const PRODUCT_DISCOUNTS_MODEL = "product_discounts";
+const PRODUCT_DISCOUNTS_MODEL = "productDiscounts";
 
 const productDiscountSchema = new Schema(
   {
@@ -13,15 +13,15 @@ const productDiscountSchema = new Schema(
       type: Number,
       required: true
     },
-    is_fixed: {
+    isFixed: {
       type: Boolean,
       required: true
     },
-    start_date: {
+    startDate: {
       type: Date,
       required: true
     },
-    end_date: {
+    endDate: {
       type: Date,
       required: true
     },
@@ -31,7 +31,7 @@ const productDiscountSchema = new Schema(
     },
 
     // FK
-    product_variant: {
+    productVariant: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Product_Variant'
     },

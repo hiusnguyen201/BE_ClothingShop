@@ -12,7 +12,7 @@ const OptionSchema = new Schema(
     },
 
     // FK
-    option_values: [{
+    optionValues: [{
       type: Schema.Types.ObjectId,
       ref: "Option_Value"
     }]

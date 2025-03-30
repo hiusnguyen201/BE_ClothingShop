@@ -1,18 +1,14 @@
 import mongoose from "mongoose";
 const { Schema } = mongoose;
 
-const OPTION_VALUES_MODEL = "option_values";
+export const OPTION_VALUES_MODEL = "optionValues";
 
 const optionValueSchema = new Schema(
     {
-        value_name: {
+        valueName: {
             type: String,
             required: true
-        },
-
-        // option_id: {
-        //     type: Schema.Types.ObjectId,
-        // },
+        }
     },
     {
         versionKey: false,

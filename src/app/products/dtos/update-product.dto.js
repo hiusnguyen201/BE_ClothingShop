@@ -4,7 +4,7 @@ import { replaceMultiSpacesToSingleSpace } from "#src/utils/string.util";
 const createVariantValueDto = Joi.object({
   option: Joi.string()
     .required(),
-  option_value: Joi.string()
+  optionValue: Joi.string()
     .required()
 });
 
@@ -19,7 +19,7 @@ const createProductVariantDto = Joi.object({
     .min(3)
     .max(100)
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
-  variant_values: Joi.array()
+  variantValues: Joi.array()
     .required()
     .items(createVariantValueDto)
     .custom((value, helper) => {
@@ -39,24 +39,24 @@ const createProductVariantDto = Joi.object({
 const updateProductVariantDto = Joi.object({
   _id: Joi.string()
     .required(),
-  quantity: Joi.number()
+  quantity: Joi.number().required()
     .min(1),
   price: Joi.number()
-    .min(1000),
+    .min(1000).required(),
   sku: Joi.string()
     .min(3)
-    .max(100)
+    .max(100).required()
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
 });
 
 export const updateProductDto = Joi.object({
   name: Joi.string()
     .min(3)
-    .max(120)
+    .max(120).required()
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
   // price: Joi.number()
   //   .required(),
-  short_description: Joi.string()
+  shortDescription: Joi.string()
     .min(3)
     .max(255)
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
@@ -64,18 +64,18 @@ export const updateProductDto = Joi.object({
     .min(3)
     .max(255)
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
-  category: Joi.string(),
-  sub_category: Joi.string(),
-  tags: Joi.array().items(Joi.string()),
-  tagsToDelete: Joi.array().items(Joi.string()),
+  category: Joi.string().required(),
+  subCategory: Joi.string(),
+  // tags: Joi.array().items(Joi.string()),
+  // tagsToDelete: Joi.array().items(Joi.string()),
 
-  product_variants: Joi.array()
-    .items(createProductVariantDto),
+  productVariants: Joi.array()
+    .items(createProductVariantDto).required().min(1),
 
-  productVariantsToUpdate: Joi.array()
-    .items(updateProductVariantDto),
+  // productVariantsToUpdate: Joi.array()
+  //   .items(updateProductVariantDto),
 
-  productVariantsToDelete: Joi.array()
-    .items(Joi.string())
+  // productVariantsToDelete: Joi.array()
+  //   .items(Joi.string())
 });
 

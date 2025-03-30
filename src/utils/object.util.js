@@ -3,11 +3,11 @@ export const uniqueProductVariants = (arr) => {
     let uniqueVariantValues = new Set();
     arr = arr.map(variant => ({
         ...variant,
-        variant_values: variant.variant_values.map(item => sortObject(item))
+        variantValues: variant.variantValues.map(item => sortObject(item))
     }))
 
     arr.map((variant, i) => {
-        const variantKey = JSON.stringify(variant.variant_values)
+        const variantKey = JSON.stringify(variant.variantValues)
         if (!uniqueVariantValues.has(variantKey)) {
             uniqueVariantValues.add(variantKey)
             newArr.push(arr[i])
@@ -30,10 +30,10 @@ export const isVariantValuesDuplicated = (currentArr, newVariantValues) => {
     newVariantValues = newVariantValues.map(value => sortObject(value));
 
     for (const item of currentArr) {
-        const currentValues = item.variant_values.map((v) => {
+        const currentValues = item.variantValues.map((v) => {
             return {
                 option: v.option,
-                option_value: v.option_value
+                optionValue: v.optionValue
             }
         });
 

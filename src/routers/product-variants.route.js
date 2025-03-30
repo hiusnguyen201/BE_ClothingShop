@@ -8,9 +8,9 @@
 //     updateProductVariantByIdController,
 //     removeProductVariantByIdController,
 
-// } from "#src/modules/product_variants/product_variants.controller"
-// import { createProductVariantDto } from "#src/modules/product_variants/dto/create-product-variants.dto";
-// import { updateProductVariantDto } from "#src/modules/product_variants/dto/update-product-variants.dto";
+// } from "#src/modules/productVariants/productVariants.controller"
+// import { createProductVariantDto } from "#src/modules/productVariants/dto/create-product-variants.dto";
+// import { updateProductVariantDto } from "#src/modules/productVariants/dto/update-product-variants.dto";
 // import {
 //     validateBody,
 // } from "#src/core/validations/request.validation";

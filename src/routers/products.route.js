@@ -8,8 +8,6 @@ import {
     updateProductByIdController,
     removeProductByIdController,
     isExistProductNameController,
-    showProductByIdController,
-    hideProductByIdController,
 } from "#src/app/products/products.controller";
 import { CreateProductDto } from "#src/app/products/dtos/create-product.dto";
 import { updateProductDto } from "#src/app/products/dtos/update-product.dto";
@@ -31,7 +29,7 @@ router
     .get("/get-products",
         validateQuery(GetListProductDto),
         getAllProductsController)
-    .get("/get-product-by-id/:id",
+    .get("/get-product-by-id/:productId",
         getProductByIdController)
     .post(
         "/create-product",
@@ -39,20 +37,14 @@ router
         validateBody(CreateProductDto),
         createProductController
     )
-    .patch(
-        "/update-product-by-id/:id",
+    .put(
+        "/update-product-by-id/:productId",
         // isAuthorizedAndHasPermission,
         validateBody(updateProductDto),
         updateProductByIdController
     )
-    .delete("/remove-product-by-id/:id",
-        isAuthorizedAndHasPermission,
+    .delete("/remove-product-by-id/:productId",
+        // isAuthorizedAndHasPermission,
         removeProductByIdController)
-    .patch("/show-product-by-id/:id",
-        isAuthorizedAndHasPermission,
-        showProductByIdController)
-    .patch("/hide-product-by-id/:id",
-        isAuthorizedAndHasPermission,
-        hideProductByIdController);
 
 export default router;

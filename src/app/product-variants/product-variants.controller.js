@@ -11,7 +11,7 @@
 //   removeProductVariantByIdService,
 //   countAllProductVariantsService,
 
-// } from "#src/modules/product_variants/product_variants.service"
+// } from "#src/modules/productVariants/productVariants.service"
 // import { calculatePagination } from "#src/utils/pagination.util";
 
 // export const createProductVariantController = async (req) => {

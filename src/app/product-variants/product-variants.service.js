@@ -2,15 +2,40 @@ import { isValidObjectId } from "mongoose";
 import { ProductVariantModel } from "#src/app/product-variants/models/product-variants.model";
 
 const SELECTED_FIELDS =
-  "_id quantity price sku image sold variant_values product product_discount createdAt updatedAt";
+  "_id quantity price sku image sold variantValues product productDiscount createdAt updatedAt";
+
+
+
+
+/**
+ * New product variant instance
+ * @param {*} data
+ * @returns
+ */
+export function newProductVariantsService(data) {
+  return new ProductVariantModel(data);
+}
+
+/**
+ * Save product variant instance
+ * @param {*} data
+ * @returns
+ */
+export function saveProductVariantsService(data, session) {
+  return ProductVariantModel.insertMany(data, { session });
+}
+
 
 /**
  * Create product variant
  * @param {*} data
  * @returns
  */
-export async function createProductVariantService(data) {
-  return await ProductVariantModel.create(data);
+export async function createProductVariantsService(data, session) {
+  return await ProductVariantModel.create(data, {
+    session,
+    ordered: true
+  });
 }
 
 /**
@@ -90,11 +115,12 @@ export async function removeProductVariantByIdService(id) {
  * @param {*} data
  * @returns
  */
-export async function updateProductVariantValueByIdService(id, data) {
+export async function updateProductVariantValueByIdService(id, data, session) {
   return await ProductVariantModel.findByIdAndUpdate(id, {
-    $push: { variant_values: data }
+    $push: { variantValues: data }
   }, {
     new: true,
+    session
   }).select(SELECTED_FIELDS);
 }
 
@@ -104,12 +130,16 @@ export async function updateProductVariantValueByIdService(id, data) {
  * @param {*} productDiscountId
  * @returns
  */
-export async function updateProductDiscountByProductVariantIdService(id, productDiscountId) {
-  return await ProductVariantModel.findByIdAndUpdate(
-    id,
-    {
-      product_discount: productDiscountId
-    },
-    { new: true }
+export async function updateProductDiscountByProductVariantIdService(id, productDiscountId, session) {
+  return await ProductVariantModel.findByIdAndUpdate(id, {
+    productDiscount: productDiscountId
+  }, {
+    new: true,
+    session
+  }
   ).select(SELECTED_FIELDS);
+}
+
+export async function removeProductVariantsByProductIdService(productId, session) {
+  return await ProductVariantModel.deleteMany({ product: productId }, { session })
 }

@@ -8,6 +8,6 @@ export const GetListProductDiscountDto = Joi.object({
     .custom((val) => replaceMultiSpacesToSingleSpace(val)),
   page: Joi.number().min(1).default(1),
   limit: Joi.number().min(10).max(100).default(10),
-  sortBy: Joi.string().valid('name', 'start_date', 'end_date', 'createdAt').default('createdAt'),
+  sortBy: Joi.string().valid('name', 'startDate', 'endDate', 'createdAt').default('createdAt'),
   sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
 });

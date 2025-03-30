@@ -7,10 +7,10 @@ export const updateProductDiscountDto = Joi.object({
     .max(150)
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
   amount: Joi.number(),
-  is_fixed: Joi.boolean(),
-  start_date: Joi.date()
+  isFixed: Joi.boolean(),
+  startDate: Joi.date()
     .iso(),
-  end_date: Joi.date()
+  endDate: Joi.date()
     .iso(),
 }).custom((value, helper) => {
   const start = new Date(value.start_date).getTime();
@@ -18,6 +18,13 @@ export const updateProductDiscountDto = Joi.object({
 
   if (start > end) {
     return helper.message("Start date cannot be greater than end date")
+  }
+  if (value.isFixed) {
+    if (value.amount < 1 || value.amount > 99) {
+      return helper.message("Discounts ranging from 1 to 99 percent")
+    } else if (value.amount <= 1000) {
+      return helper.message("Discount amount must greater than 1000")
+    }
   }
   return value;
 });

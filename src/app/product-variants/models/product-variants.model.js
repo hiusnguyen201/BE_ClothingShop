@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 const { Schema } = mongoose;
 
-const PRODUCT_VARIANT_MODEL = "product_variants";
+const PRODUCT_VARIANT_MODEL = "productVariants";
 
 const productVariantSchema = new Schema(
   {
@@ -26,12 +26,12 @@ const productVariantSchema = new Schema(
     },
 
     // Foreign Key
-    variant_values: [{
+    variantValues: [{
       option: {
         type: Schema.Types.ObjectId,
         ref: "Option"
       },
-      option_value: {
+      optionValue: {
         type: Schema.Types.ObjectId,
         ref: "Option_Value"
       }
@@ -42,7 +42,7 @@ const productVariantSchema = new Schema(
       ref: "Product",
       required: true,
     },
-    product_discount: {
+    productDiscount: {
       type: Schema.Types.ObjectId,
       ref: "Product_Discount"
     },

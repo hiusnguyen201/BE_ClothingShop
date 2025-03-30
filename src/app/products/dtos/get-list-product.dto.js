@@ -8,10 +8,7 @@ export const GetListProductDto = Joi.object({
     .custom((val) => replaceMultiSpacesToSingleSpace(val)),
   page: Joi.number().min(1).default(1),
   limit: Joi.number().min(10).max(100).default(10),
-  sortBy: Joi.string().valid('name', 'email', 'createdAt').default('createdAt'),
+  sortBy: Joi.string().valid('name', 'createdAt').default('createdAt'),
   sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
-  roleId: Joi.string(),
   category: Joi.string(),
-  tag: Joi.string(),
-  is_hidden: Joi.boolean()
 });

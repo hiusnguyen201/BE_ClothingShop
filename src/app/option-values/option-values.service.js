@@ -2,7 +2,7 @@ import { isValidObjectId } from "mongoose";
 import { OptionValueModel } from "#src/app/option-values/models/option-value.model";
 
 const SELECTED_FIELDS =
-  "_id value_name option_id value_id createdAt updatedAt";
+  "_id valueName createdAt updatedAt";
 
 /**
  * Create option value
@@ -21,7 +21,6 @@ export async function createOptionValueService(data) {
  */
 export async function getOptionValueByIdService(
   id,
-  selectFields = SELECTED_FIELDS
 ) {
   if (!id) return null;
   const filter = {};
@@ -32,7 +31,7 @@ export async function getOptionValueByIdService(
     return null;
   }
 
-  return await OptionValueModel.findOne(filter).select(selectFields);
+  return await OptionValueModel.findOne(filter).select(SELECTED_FIELDS);
 }
 
 // /**
@@ -45,7 +44,6 @@ export async function getOptionValueByIdService(
 //   filters,
 //   offset = 0,
 //   limit = 10,
-//   selectFields = SELECTED_FIELDS,
 // }) {
 //   return OptionValueModel.find(filters)
 //     .skip(offset)

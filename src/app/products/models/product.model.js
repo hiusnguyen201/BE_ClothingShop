@@ -15,21 +15,13 @@ const productSchema = new Schema(
       required: true,
       length: 200,
     },
-    short_description: {
+    shortDescription: {
       type: String,
       default: null
     },
     content: {
       type: String,
       default: null
-    },
-    avg_rating: {
-      type: Number,
-      default: 0,
-    },
-    total_review: {
-      type: Number,
-      default: 0,
     },
     removedAt: {
       type: Date,
@@ -41,11 +33,11 @@ const productSchema = new Schema(
       ref: "Category",
       required: true
     },
-    sub_category: {
+    subCategory: {
       type: Schema.Types.ObjectId,
       ref: "Category"
     },
-    product_variants: [{
+    productVariants: [{
       type: Schema.Types.ObjectId,
       ref: "Product_Variant"
     }]
