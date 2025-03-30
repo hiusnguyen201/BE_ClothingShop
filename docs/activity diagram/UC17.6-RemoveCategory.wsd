@@ -31,18 +31,12 @@ endif
 |System|
 :Check the category exists;
 if(Exist category?) then(yes)
-    :Check category status;
-    if(Active?) then(yes)
-        :Display error message;
-        stop
-    else(no)
-        :Update the category as removed in the database;
+    :Update the category as removed in the database;
         :Display success message;
         stop
         note right
             Go to UC17.1
         end note
-    endif
 else(no)
     :Display error message;
     stop

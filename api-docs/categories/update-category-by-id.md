@@ -23,18 +23,16 @@ curl -X PATCH 'https://server-clothes-store.vercel.app/api/categories/update-cat
 --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZDJhMzMyYzhhMjEzYjA1MDI4MzNjNiIsInR5cGUiOiJVc2VyIiwiaWF0IjoxNzQyMjAxMDU5LCJleHAiOjE3NDIyMDE5NTl9.gsqLAzSlJKDPU3D9gvKg_I42NJ3NhI2d5svf-MYywDo' \
 --form "image=@/path/to/file.png"
 --form "name=example" \
---form "status=active" \
 ```
 
 ### Parameter
 
-| Param      | Require | Path   | Type   | Description                            |
-| ---------- | ------- | ------ | ------ | -------------------------------------- |
-| token      | x       | header | String | Token                                  |
-| categoryId | x       | params | String | Category ID                            |
-| image      |         | form   | String | Category image                         |
-| name       |         | form   | String | Category name                          |
-| status     |         | form   | String | Status<br>Enum: ["active", "inactive"] |
+| Param      | Require | Path   | Type   | Description    |
+| ---------- | ------- | ------ | ------ | -------------- |
+| token      | x       | header | String | Token          |
+| categoryId | x       | params | String | Category ID    |
+| image      |         | form   | String | Category image |
+| name       |         | form   | String | Category name  |
 
 ### Success (200)
 
@@ -49,7 +47,6 @@ curl -X PATCH 'https://server-clothes-store.vercel.app/api/categories/update-cat
     "image": "http://res.cloudinary.com/dsfkimwl7/image/upload/v1742377076/categories-image/1742377073496_4eb3f9d3-fe29-42ee-868e-f532a1999ba1.jpg",
     "name": "Jody Buckridge",
     "slug": "jody-buckridge",
-    "status": "inactive",
     "level": 1,
     "createdAt": "2025-03-19T08:54:09.088Z",
     "updatedAt": "2025-03-19T09:37:58.821Z"
@@ -65,7 +62,6 @@ curl -X PATCH 'https://server-clothes-store.vercel.app/api/categories/update-cat
 | image     |          | String | Category image    |
 | name      |          | String | Category name     |
 | slug      |          | String | Slug              |
-| status    |          | String | Status            |
 | level     |          | Number | Level of category |
 | createdAt |          | String | Created at        |
 | updatedAt |          | String | Updated at        |

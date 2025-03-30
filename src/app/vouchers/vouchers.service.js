@@ -1,5 +1,7 @@
 import { isValidObjectId } from 'mongoose';
 import { VoucherModel } from '#src/app/vouchers/models/voucher.model';
+import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query';
+import { VOUCHER_SELECTED_FIELDS } from '#src/app/vouchers/vouchers.constant';
 
 /**
  * Create voucher
@@ -15,13 +17,14 @@ export async function createVoucherService(data) {
  * @param {*} query
  * @returns
  */
-export async function getAllVouchersService({ filters, page, limit, sortBy, sortOrder }) {
-  const offset = (page - 1) * limit;
-  return VoucherModel.find(filters)
-    .skip(offset)
-    .limit(limit)
-    .sort({ [sortBy]: sortOrder })
-    .lean();
+export async function getAllVouchersService(payload) {
+  const { filters = {}, page, limit, sortBy, sortOrder } = payload;
+
+  let queryOptions = {};
+  queryOptions = extendQueryOptionsWithPagination({ page, limit }, queryOptions);
+  queryOptions = extendQueryOptionsWithSort({ sortBy, sortOrder }, queryOptions);
+
+  return VoucherModel.find(filters, VOUCHER_SELECTED_FIELDS, queryOptions).lean();
 }
 
 /**
@@ -48,7 +51,7 @@ export async function getVoucherByIdService(id) {
     filter.code = id;
   }
 
-  return await VoucherModel.findOne(filter).lean();
+  return await VoucherModel.findOne(filter).select(VOUCHER_SELECTED_FIELDS).lean();
 }
 
 /**
@@ -60,7 +63,9 @@ export async function getVoucherByIdService(id) {
 export async function updateVoucherByIdService(id, data) {
   return VoucherModel.findByIdAndUpdate(id, data, {
     new: true,
-  }).lean();
+  })
+    .select(VOUCHER_SELECTED_FIELDS)
+    .lean();
 }
 
 /**
@@ -69,7 +74,7 @@ export async function updateVoucherByIdService(id, data) {
  * @returns
  */
 export async function removeVoucherByIdService(id) {
-  return VoucherModel.findByIdAndSoftDelete(id).lean();
+  return VoucherModel.findByIdAndSoftDelete(id).select('_id').lean();
 }
 
 /**
@@ -98,5 +103,5 @@ export async function getVoucherByCodeService(code) {
   if (!code) return null;
   const filter = { code };
 
-  return await VoucherModel.findOne(filter).lean();
+  return await VoucherModel.findOne(filter).select(VOUCHER_SELECTED_FIELDS).lean();
 }

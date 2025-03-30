@@ -34,8 +34,7 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/users/get-users'
 | limit     |         | query  | Number | Limit<br>Default: 10                                                 |
 | sortBy    |         | query  | String | Sort by<br>Enum: ["name","email", "createdAt"]<br>Default: createdAt |
 | sortOrder |         | query  | String | Sort order<br>Enum: ["asc", "desc"]<br>Default: desc                 |
-| status    |         | query  | String | Status<br>Enum: ["active", "inactive"]                               |
-| gender    |         | query  | String | Status<br>Enum: ["male", "female", "other"]                          |
+| gender    |         | query  | String | Gender<br>Enum: ["male", "female", "other"]                          |
 
 ### Success (200)
 
@@ -55,7 +54,6 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/users/get-users'
         "email": "example@gmail.com",
         "phone": "0912345678",
         "gender": null,
-        "status": "inactive",
         "verifiedAt": "2025-03-17T20:05:22.760Z",
         "createdAt": "2025-03-17T20:05:22.805Z",
         "updatedAt": "2025-03-17T20:05:33.249Z"
@@ -78,8 +76,6 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/users/get-users'
 | email      |          | String | Email          |
 | phone      |          | String | Phone number   |
 | gender     |          | String | Gender         |
-| birthday   | x        | String | Birthday       |
-| status     |          | String | Status         |
 | verifiedAt | x        | String | Verified at    |
 | createdAt  |          | String | Created at     |
 | updatedAt  |          | String | Updated at     |
@@ -108,10 +104,6 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/users/get-users'
     {
       "path": "sortOrder",
       "message": "\"sortOrder\" must be one of [asc, desc]"
-    },
-    {
-      "path": "status",
-      "message": "\"status\" must be one of [active, inactive]"
     },
     {
       "path": "gender",

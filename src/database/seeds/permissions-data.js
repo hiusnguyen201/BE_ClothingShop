@@ -75,18 +75,18 @@ const ROLES_PERMISSIONS = [
     method: 'DELETE',
   },
   {
-    name: 'activate:role',
-    description: 'Activate role',
+    name: 'read:role_permissions',
+    description: 'View list role permissions',
     module: 'roles',
-    endpoint: '/api/roles/activate-role-by-id/:roleId',
-    method: 'PATCH',
+    endpoint: '/api/roles/get-role-permissions-by-id',
+    method: 'GET',
   },
   {
-    name: 'deactivate:role',
-    description: 'Deactivate role',
+    name: 'edit:role_permissions',
+    description: 'Edit role permissions',
     module: 'roles',
-    endpoint: '/api/roles/deactivate-role-by-id/:roleId',
-    method: 'PATCH',
+    endpoint: '/api/roles/update-role-permissions-by-id',
+    method: 'PUT',
   },
 ];
 
@@ -136,20 +136,6 @@ const CATEGORIES_PERMISSIONS = [
     endpoint: '/api/categories/remove-category-by-id/:categoryId',
     method: 'DELETE',
   },
-  {
-    name: 'activate:category',
-    description: 'Activate category',
-    module: 'categories',
-    endpoint: '/api/categories/activate-category-by-id/:categoryId',
-    method: 'PATCH',
-  },
-  {
-    name: 'deactivate:category',
-    description: 'Deactivate category',
-    module: 'categories',
-    endpoint: '/api/categories/deactivate-category-by-id/:categoryId',
-    method: 'PATCH',
-  },
 ];
 
 const CUSTOMERS_PERMISSIONS = [
@@ -192,43 +178,43 @@ const CUSTOMERS_PERMISSIONS = [
   },
 ];
 
-const VOUCHERS_PERMISSIONS = [
-  {
-    name: 'view:vouchers',
-    description: 'View list voucher',
-    module: 'vouchers',
-    endpoint: '/api/vouchers/get-vouchers',
-    method: 'GET',
-  },
-  {
-    name: 'view:details:voucher',
-    description: 'View details voucher',
-    module: 'vouchers',
-    endpoint: '/api/vouchers/get-voucher-by-id/:voucherId',
-    method: 'GET',
-  },
-  {
-    name: 'create:voucher',
-    description: 'Create voucher',
-    module: 'vouchers',
-    endpoint: '/api/vouchers/create-voucher',
-    method: 'POST',
-  },
-  {
-    name: 'edit:voucher',
-    description: 'Edit voucher',
-    module: 'vouchers',
-    endpoint: '/api/vouchers/update-voucher-by-id/:voucherId',
-    method: 'PATCH',
-  },
-  {
-    name: 'remove:voucher',
-    description: 'Remove voucher',
-    module: 'vouchers',
-    endpoint: '/api/vouchers/remove-voucher-by-id/:voucherId',
-    method: 'DELETE',
-  },
-];
+// const VOUCHERS_PERMISSIONS = [
+//   {
+//     name: 'view:vouchers',
+//     description: 'View list voucher',
+//     module: 'vouchers',
+//     endpoint: '/api/vouchers/get-vouchers',
+//     method: 'GET',
+//   },
+//   {
+//     name: 'view:details:voucher',
+//     description: 'View details voucher',
+//     module: 'vouchers',
+//     endpoint: '/api/vouchers/get-voucher-by-id/:voucherId',
+//     method: 'GET',
+//   },
+//   {
+//     name: 'create:voucher',
+//     description: 'Create voucher',
+//     module: 'vouchers',
+//     endpoint: '/api/vouchers/create-voucher',
+//     method: 'POST',
+//   },
+//   {
+//     name: 'edit:voucher',
+//     description: 'Edit voucher',
+//     module: 'vouchers',
+//     endpoint: '/api/vouchers/update-voucher-by-id/:voucherId',
+//     method: 'PATCH',
+//   },
+//   {
+//     name: 'remove:voucher',
+//     description: 'Remove voucher',
+//     module: 'vouchers',
+//     endpoint: '/api/vouchers/remove-voucher-by-id/:voucherId',
+//     method: 'DELETE',
+//   },
+// ];
 
 export const PERMISSIONS_LIST = [
   ...USERS_PERMISSIONS,
@@ -236,5 +222,5 @@ export const PERMISSIONS_LIST = [
   ...PERMISSIONS_PERMISSIONS,
   ...CATEGORIES_PERMISSIONS,
   ...CUSTOMERS_PERMISSIONS,
-  ...VOUCHERS_PERMISSIONS,
+  // ...VOUCHERS_PERMISSIONS,
 ];

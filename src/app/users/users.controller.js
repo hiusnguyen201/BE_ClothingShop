@@ -47,23 +47,22 @@ export const createUserController = async (req) => {
 };
 
 export const getAllUsersController = async (req) => {
-  const { keyword, limit, page, status, sortBy, sortOrder, gender } = req.query;
+  const { keyword, limit, page, sortBy, sortOrder, gender } = req.query;
 
-  const filterOptions = {
+  const filters = {
     $or: [
       { name: { $regex: keyword, $options: 'i' } },
       { email: { $regex: keyword, $options: 'i' } },
       { phone: { $regex: keyword, $options: 'i' } },
     ],
-    ...(status ? { status } : {}),
     ...(gender ? { gender } : {}),
     type: USER_TYPE.USER,
   };
 
-  const totalCount = await countAllUsersService(filterOptions);
+  const totalCount = await countAllUsersService(filters);
 
   const users = await getAllUsersService({
-    filters: filterOptions,
+    filters: filters,
     page,
     limit,
     sortBy,

@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { USER_TYPE, GENDER, USER_STATUS } from '#src/app/users/users.constant';
+import { USER_TYPE, GENDER } from '#src/app/users/users.constant';
 import SoftDelete from '#src/core/plugins/soft-delete.plugin';
 const { Schema } = mongoose;
 
@@ -48,10 +48,6 @@ const UserSchema = new Schema(
       enum: Object.values(GENDER),
       default: null,
     },
-    birthday: {
-      type: Date,
-      default: null,
-    },
     googleId: {
       type: String,
       required: false,
@@ -63,24 +59,12 @@ const UserSchema = new Schema(
       default: null,
     },
 
-    status: {
-      type: String,
-      require: true,
-      enum: Object.values(USER_STATUS),
-      default: USER_STATUS.INACTIVE,
-      length: 50,
-    },
     verifiedAt: {
       type: Date,
       required: false,
       default: null,
     },
-    isLocked: {
-      type: Boolean,
-      required: false,
-      default: false,
-    },
-    lockedAt: {
+    untilLockedAt: {
       type: Date,
       required: false,
       default: null,

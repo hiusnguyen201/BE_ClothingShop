@@ -34,7 +34,6 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/categories/get-c
 | limit     |         | query  | Number | Limit<br>Default: 10                                         |
 | sortBy    |         | query  | String | Sort by<br>Enum: ["name", "createdAt"]<br>Default: createdAt |
 | sortOrder |         | query  | String | Sort order<br>Enum: ["asc", "desc"]<br>Default: desc         |
-| status    |         | query  | String | Status<br>Enum: ["active", "inactive"]                       |
 
 ### Success (200)
 
@@ -52,7 +51,6 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/categories/get-c
         "image": "http://res.cloudinary.com/dsfkimwl7/image/upload/742372772/categories-image/1742372771698_e4e47241-1ae2-4529-b2d2-8e17bc5eac93.jpg",
         "name": "Howard Corwin",
         "slug": "howard-corwin",
-        "status": "inactive",
         "level": 1,
         "createdAt": "2025-03-19T08:26:14.441Z",
         "updatedAt": "2025-03-19T08:26:14.441Z"
@@ -73,7 +71,6 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/categories/get-c
 | image      |          | String | Category image      |
 | name       |          | String | Category name       |
 | slug       |          | String | Slug                |
-| status     |          | String | Status              |
 | level      |          | String | Level of category   |
 | createdAt  |          | String | Created at          |
 | updatedAt  |          | String | Updated at          |
@@ -102,10 +99,6 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/categories/get-c
     {
       "path": "sortOrder",
       "message": "\"sortOrder\" must be one of [asc, desc]"
-    },
-    {
-      "path": "status",
-      "message": "\"status\" must be one of [active, inactive]"
     }
   ]
 }

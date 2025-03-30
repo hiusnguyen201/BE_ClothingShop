@@ -31,7 +31,14 @@ export const getAllVouchersController = async (req) => {
   const { keyword, limit, page, sortBy, sortOrder } = req.query;
 
   const filters = {
-    $or: [{ name: { $regex: keyword, $options: 'i' } }, { code: { $regex: keyword, $options: 'i' } }],
+    $or: [
+      {
+        name: { $regex: keyword, $options: 'i' },
+      },
+      {
+        code: { $regex: keyword, $options: 'i' },
+      },
+    ],
   };
 
   const totalCount = await countAllVouchersService(filters);

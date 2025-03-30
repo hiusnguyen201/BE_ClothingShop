@@ -38,7 +38,7 @@ export const createCustomerController = async (req) => {
 };
 
 export const getAllCustomersController = async (req) => {
-  const { keyword, limit, page, status, sortBy, sortOrder, gender } = req.query;
+  const { keyword, limit, page, sortBy, sortOrder, gender } = req.query;
 
   const filters = {
     $or: [
@@ -46,7 +46,6 @@ export const getAllCustomersController = async (req) => {
       { email: { $regex: keyword, $options: 'i' } },
       { phone: { $regex: keyword, $options: 'i' } },
     ],
-    ...(status ? { status } : {}),
     ...(gender ? { gender } : {}),
     type: USER_TYPE.CUSTOMER,
   };

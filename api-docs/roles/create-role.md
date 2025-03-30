@@ -25,18 +25,16 @@ curl --request POST 'https://server-clothes-store.vercel.app/api/roles/create-ro
 --data-raw '{
     "name": "example",
     "description": "This is example"
-    "status": "active"
 }'
 ```
 
 ### Parameter
 
-| Param       | Require | Path   | Type    | Description                            |
-| ----------- | ------- | ------ | ------- | -------------------------------------- |
-| token       | x       | header | String  | Token                                  |
-| name        | x       | body   | String  | Role name                              |
-| description | x       | body   | String  | Description                            |
-| status      | x       | body   | Boolean | Status<br>Enum: ["active", "inactive"] |
+| Param       | Require | Path   | Type   | Description |
+| ----------- | ------- | ------ | ------ | ----------- |
+| token       | x       | header | String | Token       |
+| name        | x       | body   | String | Role name   |
+| description | x       | body   | String | Description |
 
 ### Success (200)
 
@@ -50,7 +48,6 @@ curl --request POST 'https://server-clothes-store.vercel.app/api/roles/create-ro
     "id": "67d810ac54e327ba6b329e19",
     "name": "exampl4e232333343",
     "slug": "exampl4e232333343",
-    "status": "active",
     "description": "a",
     "createdAt": "2025-03-17T12:08:12.097Z",
     "updatedAt": "2025-03-17T12:08:12.097Z"
@@ -65,7 +62,6 @@ curl --request POST 'https://server-clothes-store.vercel.app/api/roles/create-ro
 | id          |          | String | Role Id     |
 | name        |          | String | Role name   |
 | slug        |          | String | Role slug   |
-| status      |          | String | Status      |
 | description |          | String | Description |
 | createdAt   |          | String | Created At  |
 | updatedAt   |          | String | Updated At  |
@@ -84,8 +80,8 @@ curl --request POST 'https://server-clothes-store.vercel.app/api/roles/create-ro
       "message": "\"name\" is required"
     },
     {
-      "path": "status",
-      "message": "\"status\" is required"
+      "path": "description",
+      "message": "\"description\" is required"
     }
   ]
 }

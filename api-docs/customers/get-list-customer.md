@@ -34,8 +34,7 @@ curl --location --request GET 'https://server-clothes-store.vercel.app/api/custo
 | limit     |         | query  | Number | Limit<br>Default: 10                                                 |
 | sortBy    |         | query  | String | Sort by<br>Enum: ["name","email", "createdAt"]<br>Default: createdAt |
 | sortOrder |         | query  | String | Sort order<br>Enum: ["asc", "desc"]<br>Default: desc                 |
-| status    |         | query  | String | Status<br>Enum: ["active", "inactive"]                               |
-| gender    |         | query  | String | Status<br>Enum: ["male", "female", "other"]                          |
+| gender    |         | query  | String | Gender<br>Enum: ["male", "female", "other"]                          |
 
 ### Success (200)
 
@@ -55,8 +54,6 @@ curl --location --request GET 'https://server-clothes-store.vercel.app/api/custo
         "email": "Mayra.Pfannerstill@gmail.com",
         "phone": "0383460015",
         "gender": "male",
-        "birthday": null,
-        "status": "inactive",
         "verifiedAt": null,
         "createdAt": "2025-03-18T10:03:03.278Z",
         "updatedAt": "2025-03-18T10:03:03.278Z"
@@ -79,8 +76,6 @@ curl --location --request GET 'https://server-clothes-store.vercel.app/api/custo
 | email      |          | String | Email              |
 | phone      |          | String | Phone number       |
 | gender     |          | String | Gender             |
-| birthday   | x        | String | Birthday           |
-| status     |          | String | Status             |
 | verifiedAt | x        | String | Verified at        |
 | createdAt  |          | String | Created at         |
 | updatedAt  |          | String | Updated at         |
@@ -109,10 +104,6 @@ curl --location --request GET 'https://server-clothes-store.vercel.app/api/custo
     {
       "path": "sortOrder",
       "message": "\"sortOrder\" must be one of [asc, desc]"
-    },
-    {
-      "path": "status",
-      "message": "\"status\" must be one of [active, inactive]"
     },
     {
       "path": "gender",

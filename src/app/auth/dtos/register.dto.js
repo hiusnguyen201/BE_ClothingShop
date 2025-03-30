@@ -13,5 +13,4 @@ export const RegisterDto = Joi.object({
   gender: Joi.string()
     .valid(...Object.values(GENDER))
     .required(),
-  birthday: Joi.date(),
 });

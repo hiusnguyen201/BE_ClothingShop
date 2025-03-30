@@ -32,14 +32,13 @@ curl --request POST 'https://server-clothes-store.vercel.app/api/customers/creat
 
 ### Parameter
 
-| Param    | Require | Path   | Type   | Description                                                  |
-| -------- | ------- | ------ | ------ | ------------------------------------------------------------ |
-| token    | x       | header | String | Token                                                        |
-| name     | x       | body   | String | Customer name                                                |
-| email    | x       | body   | String | Email                                                        |
-| gender   | x       | body   | String | Gender<br>Enum: ["male", "female", "other"]<br>Default: null |
-| phone    | x       | body   | String | Phone number with region 'VN'                                |
-| birthday |         | body   | String | Birthday                                                     |
+| Param  | Require | Path   | Type   | Description                                                  |
+| ------ | ------- | ------ | ------ | ------------------------------------------------------------ |
+| token  | x       | header | String | Token                                                        |
+| name   | x       | body   | String | Customer name                                                |
+| email  | x       | body   | String | Email                                                        |
+| gender | x       | body   | String | Gender<br>Enum: ["male", "female", "other"]<br>Default: null |
+| phone  | x       | body   | String | Phone number with region 'VN'                                |
 
 ### Success (200)
 
@@ -56,8 +55,6 @@ curl --request POST 'https://server-clothes-store.vercel.app/api/customers/creat
     "email": "Mayra.Pfannerstill@gmail.com",
     "phone": "0383460015",
     "gender": "male",
-    "birthday": null,
-    "status": "inactive",
     "verifiedAt": null,
     "createdAt": "2025-03-18T10:03:03.278Z",
     "updatedAt": "2025-03-18T10:03:03.278Z"
@@ -67,19 +64,17 @@ curl --request POST 'https://server-clothes-store.vercel.app/api/customers/creat
 
 ### Structure Data Response
 
-| Field      | Nullable | Type    | Description    |
-| ---------- | -------- | ------- | -------------- |
-| id         |          | String  | Customer Id    |
-| avatar     | x        | String  | Avatar         |
-| name       |          | String  | Customer name  |
-| email      |          | String  | Email          |
-| phone      |          | String  | Phone          |
-| gender     |          | String  | Gender         |
-| birthday   | x        | String  | Birthday       |
-| status     |          | String  | Status account |
-| verifiedAt | x        | Boolean | Verified At    |
-| createdAt  |          | String  | Created At     |
-| updatedAt  |          | String  | Updated At     |
+| Field      | Nullable | Type    | Description   |
+| ---------- | -------- | ------- | ------------- |
+| id         |          | String  | Customer Id   |
+| avatar     | x        | String  | Avatar        |
+| name       |          | String  | Customer name |
+| email      |          | String  | Email         |
+| phone      |          | String  | Phone         |
+| gender     |          | String  | Gender        |
+| verifiedAt | x        | Boolean | Verified At   |
+| createdAt  |          | String  | Created At    |
+| updatedAt  |          | String  | Updated At    |
 
 ### Invalid Data (400)
 
