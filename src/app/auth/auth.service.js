@@ -55,7 +55,7 @@ export async function authenticateUserService(email, password) {
  */
 export async function generateTokensService(userId, payload) {
   const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {
-    expiresIn: '5s',
+    expiresIn: +process.env.ACCESS_TOKEN_TTL_IN_MINUTES + 'm',
   });
 
   const refreshToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {
