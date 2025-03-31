@@ -55,11 +55,11 @@ export async function authenticateUserService(email, password) {
  */
 export async function generateTokensService(userId, payload) {
   const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {
-    expiresIn: process.env.ACCESS_TOKEN_TTL_IN_MINUTES + 'm',
+    expiresIn: '5s',
   });
 
   const refreshToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {
-    expiresIn: process.env.REFRESH_TOKEN_TTL_IN_DAYS + 'd',
+    expiresIn: +process.env.REFRESH_TOKEN_TTL_IN_DAYS + 'd',
   });
 
   await UserModel.updateOne({ _id: userId }, { refreshToken });

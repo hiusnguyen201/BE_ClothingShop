@@ -47,7 +47,7 @@ export const refreshTokenController = async (req, res) => {
   const currentRefreshToken = req.cookies[REFRESH_TOKEN_KEY];
 
   if (!currentRefreshToken) {
-    throw HttpException.new({ code: Code.UNAUTHORIZED, message: 'No refresh token provided' });
+    throw HttpException.new({ code: Code.BAD_REQUEST, message: 'No refresh token provided' });
   }
 
   const user = await getUserByRefreshTokenService(currentRefreshToken);
@@ -63,7 +63,7 @@ export const refreshTokenController = async (req, res) => {
   setSession(res, { accessToken, refreshToken });
 
   const userDto = ModelDto.new(UserDto, user);
-  return ApiResponse.success(userDto);
+  return ApiResponse.success(userDto, 'Refresh token successful');
 };
 
 export const loginController = async (req, res) => {
@@ -91,11 +91,14 @@ export const loginController = async (req, res) => {
 
   setSession(res, { accessToken, refreshToken });
 
-  return ApiResponse.success({
-    isAuthenticated: true,
-    is2FactorRequired: false,
-    user: userDto,
-  });
+  return ApiResponse.success(
+    {
+      isAuthenticated: true,
+      is2FactorRequired: false,
+      user: userDto,
+    },
+    'Login successful',
+  );
 };
 
 export const registerController = async (req) => {
