@@ -13,6 +13,7 @@ import { handleError, notFound } from '#src/middlewares/error.middleware';
 import { limiter } from '#src/middlewares/rate-limit.middleware';
 import { enhanceRouter } from '#src/utils/async-handler';
 import Database from '#src/modules/database/init.database';
+import { handleTimeout } from '#src/middlewares/timeout.middleware';
 
 // Connect to Database
 Database.getInstance({
@@ -24,14 +25,23 @@ Database.getInstance({
 const app = express();
 app.use(helmet());
 app.use(compression());
-app.set('trust proxy', true);
+app.use(
+  cors({
+    origin: ['http://localhost:5173'],
+    methods: 'GET,POST,PUT,PATCH,DELETE',
+    allowedHeaders: 'Content-Type,Authorization',
+    credentials: true,
+  }),
+);
+app.use(limiter);
 
+app.set('trust proxy', true);
 app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'combined'));
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 app.use(cookieParser());
-app.use(cors());
-app.use(limiter);
+
+app.use(handleTimeout);
 
 // Add ipv4 to req
 app.use((req, res, next) => {

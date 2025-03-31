@@ -2,7 +2,8 @@ import { isValidObjectId } from 'mongoose';
 import { genSalt, genSaltSync, hashSync } from 'bcrypt';
 import { UserModel } from '#src/app/users/models/user.model';
 import { REGEX_PATTERNS } from '#src/core/constant';
-import { USER_SELECTED_FIELDS, USER_STATUS } from '#src/app/users/users.constant';
+import { USER_SELECTED_FIELDS } from '#src/app/users/users.constant';
+import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
 
 /**
  * Create user
@@ -40,13 +41,14 @@ export async function getOrCreateUserWithTransaction(data, session) {
  * @param {*} query
  * @returns
  */
-export async function getAllUsersService({ filters = {}, offset, limit, sortBy, sortOrder }) {
-  return UserModel.find(filters)
-    .skip(offset)
-    .limit(limit)
-    .select(USER_SELECTED_FIELDS)
-    .sort({ [sortBy]: sortOrder })
-    .lean();
+export async function getAllUsersService(payload) {
+  const { filters = {}, page, limit, sortBy, sortOrder } = payload;
+
+  let queryOptions = {};
+  queryOptions = extendQueryOptionsWithPagination({ page, limit }, queryOptions);
+  queryOptions = extendQueryOptionsWithSort({ sortBy, sortOrder }, queryOptions);
+
+  return UserModel.find(filters, USER_SELECTED_FIELDS, queryOptions).lean();
 }
 
 /**
@@ -116,7 +118,6 @@ export async function updateUserVerifiedByIdService(id) {
     id,
     {
       verifiedAt: new Date(),
-      status: USER_STATUS.ACTIVE,
     },
     { new: true },
   )

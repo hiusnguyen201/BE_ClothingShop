@@ -10,7 +10,6 @@ export const UpdateCustomerDto = Joi.object({
   email: Joi.string().email(),
   phone: Joi.phoneNumber('VN'),
   gender: Joi.string().valid(...Object.values(GENDER)),
-  birthday: Joi.date(),
 })
   .min(1)
   .message('Update customer must have at least 1 key');

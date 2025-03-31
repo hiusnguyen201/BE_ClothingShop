@@ -1,6 +1,5 @@
 import { faker } from '@faker-js/faker';
 import { createRoleService } from '#src/app/roles/roles.service';
-import { ROLE_STATUS } from '#src/app/roles/roles.constant';
 
 /** @type {import('#src/app/roles/models/role.model')} */
 
@@ -8,7 +7,6 @@ class RoleFactory {
   constructor() {
     this.default = {
       name: faker.internet.username(),
-      status: ROLE_STATUS.ACTIVE,
       description: 'This',
       permissions: [],
     };

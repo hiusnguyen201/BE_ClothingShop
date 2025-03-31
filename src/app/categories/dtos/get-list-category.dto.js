@@ -1,6 +1,5 @@
 import Joi from 'joi';
 import { replaceMultiSpacesToSingleSpace } from '#src/utils/string.util';
-import { CATEGORY_STATUS } from '#src/app/categories/categories.constant';
 
 export const GetListCategoryDto = Joi.object({
   keyword: Joi.string()
@@ -8,8 +7,7 @@ export const GetListCategoryDto = Joi.object({
     .allow('')
     .custom((val) => replaceMultiSpacesToSingleSpace(val)),
   page: Joi.number().min(1).default(1),
-  limit: Joi.number().min(10).max(100).default(10),
+  limit: Joi.number().min(10).max(500).default(10),
   sortBy: Joi.string().valid('name', 'createdAt').default('createdAt'),
   sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
-  status: Joi.string().valid(...Object.values(CATEGORY_STATUS)),
 });

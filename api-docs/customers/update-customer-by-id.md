@@ -40,7 +40,6 @@ curl --location --request PATCH 'https://server-clothes-store.vercel.app/api/cus
 | email      |         | body   | String | Email                                                        |
 | gender     |         | body   | String | Gender<br>Enum: ["male", "female", "other"]<br>Default: null |
 | phone      |         | body   | String | Phone number with region 'VN'                                |
-| birthday   |         | body   | String | Birthday                                                     |
 
 ### Success (200)
 
@@ -57,30 +56,22 @@ curl --location --request PATCH 'https://server-clothes-store.vercel.app/api/cus
     "email": "example@yahoo.com",
     "phone": "0912345678",
     "gender": "male",
-    "birthday": null,
-    "status": "inactive",
-    "verifiedAt": null,
-    "createdAt": "2025-03-18T10:03:03.278Z",
-    "updatedAt": "2025-03-18T10:21:08.030Z"
+    "verifiedAt": null
   }
 }
 ```
 
 ### Structure Data Response
 
-| Field      | Nullable | Type    | Description    |
-| ---------- | -------- | ------- | -------------- |
-| id         |          | String  | Customer Id    |
-| avatar     | x        | String  | Avatar         |
-| name       |          | String  | Customer name  |
-| email      |          | String  | Email          |
-| phone      |          | String  | Phone          |
-| gender     |          | String  | Gender         |
-| birthday   | x        | String  | Birthday       |
-| status     |          | String  | Status account |
-| verifiedAt | x        | Boolean | Verified At    |
-| createdAt  |          | String  | Created At     |
-| updatedAt  |          | String  | Updated At     |
+| Field      | Nullable | Type    | Description   |
+| ---------- | -------- | ------- | ------------- |
+| id         |          | String  | Customer Id   |
+| avatar     | x        | String  | Avatar        |
+| name       |          | String  | Customer name |
+| email      |          | String  | Email         |
+| phone      |          | String  | Phone         |
+| gender     |          | String  | Gender        |
+| verifiedAt | x        | Boolean | Verified At   |
 
 ### INVALID_DATA (400)
 

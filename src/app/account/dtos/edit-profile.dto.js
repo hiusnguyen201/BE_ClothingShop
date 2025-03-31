@@ -10,7 +10,6 @@ export const EditProfileDto = Joi.object({
   email: Joi.string().email().trim(),
   phone: Joi.phoneNumber('VN'),
   gender: Joi.string().valid(...Object.values(GENDER)),
-  birthday: Joi.date(),
 })
   .min(1)
   .message('Update profile must have at least 1 key');

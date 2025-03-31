@@ -4,22 +4,17 @@ import { checkUserHasPermissionByMethodAndEndpointService, getUserByIdService } 
 import { USER_TYPE } from '#src/app/users/users.constant';
 import { verifyTokenService } from '#src/app/auth/auth.service';
 import { Code } from '#src/core/code/Code';
-import { REGEX_PATTERNS } from '#src/core/constant';
+import { ACCESS_TOKEN_KEY, clearSession } from '#src/utils/cookie.util';
 
 async function authorized(req, res, next) {
-  let token = req.headers['x-access-token'] || req.headers['authorization'];
+  const accessToken = req.cookies[ACCESS_TOKEN_KEY];
 
-  if (!token) {
+  if (!accessToken) {
+    clearSession(res);
     return next(HttpException.new({ code: Code.TOKEN_REQUIRED }));
   }
 
-  if (!token.match(REGEX_PATTERNS.BEARER_TOKEN)) {
-    return next(HttpException.new({ code: Code.WRONG_TOKEN_FORMAT }));
-  }
-
-  token = token.split(' ')[1];
-
-  const decoded = await verifyTokenService(token);
+  const decoded = await verifyTokenService(accessToken);
   if (!decoded) {
     return next(HttpException.new({ code: Code.INVALID_TOKEN }));
   }

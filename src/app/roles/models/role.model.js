@@ -1,4 +1,3 @@
-import { ROLE_STATUS } from '#src/app/roles/roles.constant';
 import SoftDelete from '#src/core/plugins/soft-delete.plugin';
 import mongoose from 'mongoose';
 const { Schema } = mongoose;
@@ -18,13 +17,6 @@ const RoleSchema = new Schema(
       length: 100,
       unique: true,
       required: true,
-    },
-    status: {
-      type: String,
-      length: 100,
-      required: true,
-      enum: ROLE_STATUS,
-      default: ROLE_STATUS.INACTIVE,
     },
     description: {
       type: String,

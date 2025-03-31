@@ -46,28 +46,22 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/users/get-user-b
     "email": "Leone_Considine@gmail.com",
     "phone": "0383460015",
     "gender": "female",
-    "status": "inactive",
-    "verifiedAt": null,
-    "createdAt": "2025-03-17T20:12:06.109Z",
-    "updatedAt": "2025-03-17T20:12:06.109Z"
+    "verifiedAt": null
   }
 }
 ```
 
 ### Structure Data Response
 
-| Field      | Nullable | Type    | Description    |
-| ---------- | -------- | ------- | -------------- |
-| id         |          | String  | User Id        |
-| avatar     | x        | String  | Avatar         |
-| name       |          | String  | User name      |
-| email      |          | String  | Email          |
-| phone      |          | String  | Phone          |
-| gender     |          | String  | Gender         |
-| status     |          | String  | Status account |
-| verifiedAt | x        | Boolean | Verified At    |
-| createdAt  |          | String  | Created At     |
-| updatedAt  |          | String  | Updated At     |
+| Field      | Nullable | Type    | Description |
+| ---------- | -------- | ------- | ----------- |
+| id         |          | String  | User Id     |
+| avatar     | x        | String  | Avatar      |
+| name       |          | String  | User name   |
+| email      |          | String  | Email       |
+| phone      |          | String  | Phone       |
+| gender     |          | String  | Gender      |
+| verifiedAt | x        | Boolean | Verified At |
 
 ### User Not Found (404)
 

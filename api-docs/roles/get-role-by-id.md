@@ -43,10 +43,7 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/roles/get-role-b
     "id": "67d810ac54e327ba6b329e19",
     "name": "exampl4e232333343",
     "slug": "exampl4e232333343",
-    "status": "Active",
-    "description": "a",
-    "createdAt": "2025-03-17T12:08:12.097Z",
-    "updatedAt": "2025-03-17T12:08:12.097Z"
+    "description": "a"
   }
 }
 ```
@@ -58,10 +55,7 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/roles/get-role-b
 | id          |          | String | Role Id     |
 | name        |          | String | Role name   |
 | slug        |          | String | Role slug   |
-| status      |          | String | Status      |
 | description |          | String | Description |
-| createdAt   |          | String | Created At  |
-| updatedAt   |          | String | Updated At  |
 
 ### Role Not Found (404)
 

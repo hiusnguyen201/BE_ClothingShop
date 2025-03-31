@@ -39,21 +39,18 @@ curl --request DELETE 'https://server-clothes-store.vercel.app/api/roles/remove-
   "codeMessage": "SUCCESS",
   "message": "Remove role successfully",
   "timestamp": 1742233049127,
-  "data": null
+  "data": {
+    "id": "67d7e61b5114396a4af8b95d"
+  }
 }
 ```
 
-### Role is activate (400)
+### Structure Data Response
 
-```json
-{
-  "code": 400,
-  "codeMessage": "BAD_REQUEST",
-  "message": "Role is activate",
-  "timestamp": 1742233014046,
-  "data": null
-}
-```
+| Field | Nullable | Type   | Description |
+| ----- | -------- | ------ | ----------- |
+| data  |          | Object | Data        |
+| id    |          | id     | Role ID     |
 
 ### Role Not Found (404)
 

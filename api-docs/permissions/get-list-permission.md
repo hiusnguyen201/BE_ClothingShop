@@ -44,25 +44,13 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/permissions/get-
   "message": "Get all permissions successfully",
   "timestamp": 1742289879961,
   "data": {
-    "meta": {
-      "page": 1,
-      "limit": 10,
-      "totalCount": 1,
-      "offset": 0,
-      "totalPage": 1,
-      "isNext": false,
-      "isPrevious": false,
-      "isFirst": false,
-      "isLast": false
-    },
+    "totalCount": 1,
     "list": [
       {
         "id": "67d93a54d62edb1e2e85a1b8",
         "name": "show:category",
         "description": "Show category",
-        "module": "categories",
-        "createdAt": "2025-03-18T09:18:12.981Z",
-        "updatedAt": "2025-03-18T09:18:12.981Z"
+        "module": "categories"
       }
     ]
   }
@@ -71,25 +59,15 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/permissions/get-
 
 ### Structure Data Response
 
-| Field       | Nullable | Type    | Description          |
-| ----------- | -------- | ------- | -------------------- |
-| meta        |          | Object  | Meta                 |
-| page        |          | Number  | Current page         |
-| limit       |          | Number  | Limit per page       |
-| totalCount  |          | Number  | Total count          |
-| offset      |          | Number  | Skip                 |
-| totalPage   |          | Number  | Total page           |
-| isNext      |          | Boolean | Is next              |
-| isPrevious  |          | Boolean | Is previous          |
-| isFirst     |          | Boolean | Is first             |
-| isLast      |          | Boolean | Is last              |
-| list        |          | Array   | Array of permissions |
-| id          |          | String  | Permission ID        |
-| name        |          | String  | Permission name      |
-| description |          | String  | Description          |
-| module      |          | String  | Module               |
-| createdAt   |          | String  | Created At           |
-| updatedAt   |          | String  | Updated At           |
+| Field       | Nullable | Type   | Description          |
+| ----------- | -------- | ------ | -------------------- |
+| data        |          | Object | Data response        |
+| totalCount  |          | Number | Total count          |
+| list        |          | Array  | Array of permissions |
+| id          |          | String | Permission ID        |
+| name        |          | String | Permission name      |
+| description |          | String | Description          |
+| module      |          | String | Module               |
 
 ### Invalid Data (400)
 

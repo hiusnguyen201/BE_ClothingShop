@@ -1,5 +1,7 @@
 import { isValidObjectId } from 'mongoose';
 import { PermissionModel } from '#src/app/permissions/models/permission.model';
+import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
+import { PERMISSION_SELECTED_FIELDS } from '#src/app/permissions/permissions.constant';
 
 /**
  * Get or create list permission
@@ -29,12 +31,14 @@ export async function getOrCreateListPermissionServiceWithTransaction(data = [],
  * @param {*} param0
  * @returns
  */
-export async function getAllPermissionsService({ filters, offset = 0, limit = 10, sortBy, sortOrder }) {
-  return PermissionModel.find(filters)
-    .skip(offset)
-    .limit(limit)
-    .sort({ [sortBy]: sortOrder })
-    .lean();
+export async function getAllPermissionsService(payload) {
+  const { filters = {}, page, limit, sortBy, sortOrder } = payload;
+
+  let queryOptions = {};
+  queryOptions = extendQueryOptionsWithPagination({ page, limit }, queryOptions);
+  queryOptions = extendQueryOptionsWithSort({ sortBy, sortOrder }, queryOptions);
+
+  return PermissionModel.find(filters, PERMISSION_SELECTED_FIELDS, queryOptions).lean();
 }
 
 /**

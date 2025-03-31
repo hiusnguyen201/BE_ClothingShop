@@ -9,14 +9,6 @@ export const GENDER = {
   OTHER: 'other',
 };
 
-export const USER_STATUS = {
-  ACTIVE: 'active',
-  INACTIVE: 'inactive',
-  BANNED: 'banned',
-  LOCKED: 'locked',
-  REMOVED: 'removed',
-};
-
 export const USER_SELECTED_FIELDS = {
   _id: true,
   type: true,
@@ -25,9 +17,5 @@ export const USER_SELECTED_FIELDS = {
   email: true,
   phone: true,
   gender: true,
-  birthday: true,
-  status: true,
   verifiedAt: true,
-  createdAt: true,
-  updatedAt: true,
 };

@@ -48,7 +48,7 @@ export class Code {
   };
 
   static TOKEN_REQUIRED = {
-    status: 401,
+    status: 400,
     codeMessage: 'TOKEN_REQUIRED',
     message: 'Token is required',
   };
@@ -141,5 +141,11 @@ export class Code {
     status: 503,
     codeMessage: 'FILE_STORAGE_ERROR',
     message: 'File storage error',
+  };
+
+  static TIMEOUT_API_RESPONSE = {
+    status: 504,
+    codeMessage: 'TIMEOUT_API_RESPONSE',
+    message: 'Timeout api response',
   };
 }

@@ -25,19 +25,17 @@ curl --request PATCH 'https://server-clothes-store.vercel.app/api/roles/update-r
 --data-raw '{
     "name": "example",
     "description": "This is example",
-    "status": "active"
 }'
 ```
 
 ### Parameter
 
-| Param       | Require | Path   | Type    | Description                            |
-| ----------- | ------- | ------ | ------- | -------------------------------------- |
-| token       | x       | header | String  | Token                                  |
-| roleId      | x       | params | String  | Role ID                                |
-| name        |        | body   | String  | Role name                              |
-| description |        | body   | String  | Description                            |
-| status      |        | body   | Boolean | Status<br>Enum: ["active", "inactive"] |
+| Param       | Require | Path   | Type   | Description |
+| ----------- | ------- | ------ | ------ | ----------- |
+| token       | x       | header | String | Token       |
+| roleId      | x       | params | String | Role ID     |
+| name        |         | body   | String | Role name   |
+| description |         | body   | String | Description |
 
 ### Success (200)
 
@@ -45,16 +43,13 @@ curl --request PATCH 'https://server-clothes-store.vercel.app/api/roles/update-r
 {
   "code": 200,
   "codeMessage": "SUCCESS",
-  "message": "Update role successfully",
+  "message": "Edit role successfully",
   "timestamp": 1742232606628,
   "data": {
     "id": "67d85c19284c7c3933f9823f",
     "name": "example",
     "slug": "example",
-    "status": "active",
-    "description": "This is example",
-    "createdAt": "2025-03-17T17:30:01.529Z",
-    "updatedAt": "2025-03-17T17:30:06.621Z"
+    "description": "This is example"
   }
 }
 ```
@@ -66,10 +61,7 @@ curl --request PATCH 'https://server-clothes-store.vercel.app/api/roles/update-r
 | id          |          | String | Role Id     |
 | name        |          | String | Role name   |
 | slug        |          | String | Role slug   |
-| status      |          | String | Status      |
 | description |          | String | Description |
-| createdAt   |          | String | Created At  |
-| updatedAt   |          | String | Updated At  |
 
 ### INVALID_DATA (400)
 
@@ -87,10 +79,6 @@ curl --request PATCH 'https://server-clothes-store.vercel.app/api/roles/update-r
     {
       "path": "description",
       "message": "\"description\" is required"
-    },
-    {
-      "path": "status",
-      "message": "\"status\" is required"
     }
   ]
 }

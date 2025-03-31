@@ -15,7 +15,9 @@ import orderDetailsRouter from '#src/routers/order-details.router';
 import productsRouter from '#src/routers/products.router';
 import shippingAddressRouter from '#src/routers/shipping-address.router';
 
-router.get('/ping', () => 'Hello world! PING 1');
+router.get('/ping', () => {
+  return 'Hello world! PING 1';
+});
 
 router.use('/auth', authRouter);
 

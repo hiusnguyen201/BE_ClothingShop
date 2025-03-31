@@ -1,0 +1,17 @@
+export const VOUCHER_SELECTED_FIELDS = {
+  _id: true,
+  code: true,
+  name: true,
+  description: true,
+  maxUses: true,
+  maxUsesPerUser: true,
+  discount: true,
+  isFixed: true,
+  isPublic: true,
+  maxDiscount: true,
+  hasMaxDiscount: true,
+  minPrice: true,
+  startDate: true,
+  endDate: true,
+  uses: true,
+};

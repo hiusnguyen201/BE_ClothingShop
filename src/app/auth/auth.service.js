@@ -7,6 +7,30 @@ import { generateNumericOTP } from '#src/utils/string.util';
 import { USER_SELECTED_FIELDS } from '#src/app/users/users.constant';
 
 /**
+ * Revoke token
+ * @param {string} email
+ * @param {string} password
+ * @returns
+ */
+export async function revokeTokenByUserIdService(userId) {
+  await UserModel.updateOne({ _id: userId }, { refreshToken: null });
+}
+
+/**
+ * Get user by refresh token
+ * @param {string} email
+ * @param {string} password
+ * @returns
+ */
+export async function getUserByRefreshTokenService(token) {
+  return UserModel.findOne({
+    refreshToken: token,
+  })
+    .select(USER_SELECTED_FIELDS)
+    .lean();
+}
+
+/**
  * Authenticate User
  * @param {string} email
  * @param {string} password

@@ -76,19 +76,21 @@ export const claimVoucherByCodeController = async (req) => {
 
 export const getAllVoucherFromCustomerController = async (req) => {
   const userId = req.user.id;
+  const { page, limit, sortBy, sortOrder } = req.params;
 
   const totalCount = await countAllVouchersInCustomerService(userId);
-  const metaData = calculatePagination(page, limit, totalCount);
 
   const vouchers = await getAllVouchersInCustomerService(userId, {
-    offset: metaData.offset,
-    limit: metaData.limit,
+    page,
+    limit,
+    sortBy,
+    sortOrder,
   });
 
   const vouchersDto = ModelDto.newList(VoucherDto, vouchers);
   return ApiResponse.success(
     {
-      meta: metaData,
+      totalCount,
       list: vouchersDto,
     },
     'Get all vouchers successfully',

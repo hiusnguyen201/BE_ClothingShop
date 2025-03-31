@@ -1,4 +1,6 @@
-export const ROLE_STATUS = {
-  ACTIVE: 'active',
-  INACTIVE: 'inactive',
+export const ROLE_SELECTED_FIELDS = {
+  _id: true,
+  name: true,
+  slug: true,
+  description: true,
 };
