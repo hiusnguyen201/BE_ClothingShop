@@ -9,6 +9,7 @@ export const connectToMongoDb = (options) => {
   mongoose
     .connect(process.env.MONGO_URI, {
       serverSelectionTimeoutMS: 30000,
+      connectTimeoutMS: 60000,
       minPoolSize: 10,
     })
     .then(() => {
