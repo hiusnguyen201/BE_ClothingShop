@@ -14,6 +14,4 @@ export const VOUCHER_SELECTED_FIELDS = {
   startDate: true,
   endDate: true,
   uses: true,
-  createdAt: true,
-  updatedAt: true,
 };

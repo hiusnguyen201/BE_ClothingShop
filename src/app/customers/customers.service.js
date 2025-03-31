@@ -1,5 +1,5 @@
 import { UserModel } from '#src/app/users/models/user.model';
-import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query';
+import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
 
 export async function addVoucherToCustomerService(userId, voucherId) {
   return UserModel.findByIdAndUpdate(userId, { $push: { vouchers: voucherId } }, { new: true }).lean();

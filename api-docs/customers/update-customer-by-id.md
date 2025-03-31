@@ -56,9 +56,7 @@ curl --location --request PATCH 'https://server-clothes-store.vercel.app/api/cus
     "email": "example@yahoo.com",
     "phone": "0912345678",
     "gender": "male",
-    "verifiedAt": null,
-    "createdAt": "2025-03-18T10:03:03.278Z",
-    "updatedAt": "2025-03-18T10:21:08.030Z"
+    "verifiedAt": null
   }
 }
 ```
@@ -74,8 +72,6 @@ curl --location --request PATCH 'https://server-clothes-store.vercel.app/api/cus
 | phone      |          | String  | Phone         |
 | gender     |          | String  | Gender        |
 | verifiedAt | x        | Boolean | Verified At   |
-| createdAt  |          | String  | Created At    |
-| updatedAt  |          | String  | Updated At    |
 
 ### INVALID_DATA (400)
 

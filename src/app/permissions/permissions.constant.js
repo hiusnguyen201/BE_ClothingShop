@@ -5,6 +5,4 @@ export const PERMISSION_SELECTED_FIELDS = {
   module: true,
   endpoint: true,
   method: true,
-  createdAt: true,
-  updatedAt: true,
 };

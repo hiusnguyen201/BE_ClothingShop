@@ -2,7 +2,7 @@ import { isValidObjectId } from 'mongoose';
 import { RoleModel } from '#src/app/roles/models/role.model';
 import { makeSlug } from '#src/utils/string.util';
 import { REGEX_PATTERNS } from '#src/core/constant';
-import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query';
+import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
 import { ROLE_SELECTED_FIELDS } from '#src/app/roles/roles.constant';
 import { PERMISSION_SELECTED_FIELDS } from '#src/app/permissions/permissions.constant';
 

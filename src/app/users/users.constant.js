@@ -18,6 +18,4 @@ export const USER_SELECTED_FIELDS = {
   phone: true,
   gender: true,
   verifiedAt: true,
-  createdAt: true,
-  updatedAt: true,
 };

@@ -44,24 +44,20 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/categories/get-c
     "image": "http://res.cloudinary.com/dsfkimwl7/image/upload/v1742374445/categories-image/1742374443473_865f14a6-d3d1-4d0d-868c-224de5894ec6.jpg",
     "name": "Johnny Hoeger",
     "slug": "johnny-hoeger",
-    "level": 1,
-    "createdAt": "2025-03-19T08:54:09.088Z",
-    "updatedAt": "2025-03-19T08:54:09.088Z"
+    "level": 1
   }
 }
 ```
 
 ### Structure Data Response
 
-| Field     | Nullable | Type   | Description       |
-| --------- | -------- | ------ | ----------------- |
-| id        |          | String | Category Id       |
-| image     |          | String | Category image    |
-| name      |          | String | Category name     |
-| slug      |          | String | Slug              |
-| level     |          | Number | Level of category |
-| createdAt |          | String | Created at        |
-| updatedAt |          | String | Updated at        |
+| Field | Nullable | Type   | Description       |
+| ----- | -------- | ------ | ----------------- |
+| id    |          | String | Category Id       |
+| image |          | String | Category image    |
+| name  |          | String | Category name     |
+| slug  |          | String | Slug              |
+| level |          | Number | Level of category |
 
 ### Category Not Found (404)
 

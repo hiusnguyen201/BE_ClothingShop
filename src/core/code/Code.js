@@ -48,7 +48,7 @@ export class Code {
   };
 
   static TOKEN_REQUIRED = {
-    status: 401,
+    status: 400,
     codeMessage: 'TOKEN_REQUIRED',
     message: 'Token is required',
   };

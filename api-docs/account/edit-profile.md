@@ -55,9 +55,7 @@ curl --request PATCH 'https://server-clothes-store.vercel.app/api/account/edit-p
     "email": "Timmy_Nitzsche72@hotmail.com",
     "phone": "0912345657",
     "gender": "male",
-    "verifiedAt": "2025-03-19T10:37:57.979Z",
-    "createdAt": "2025-03-19T10:35:49.546Z",
-    "updatedAt": "2025-03-19T11:05:46.250Z"
+    "verifiedAt": "2025-03-19T10:37:57.979Z"
   }
 }
 ```
@@ -73,8 +71,6 @@ curl --request PATCH 'https://server-clothes-store.vercel.app/api/account/edit-p
 | phone      |          | String  | Phone         |
 | gender     |          | String  | Gender        |
 | verifiedAt | x        | Boolean | Verified At   |
-| createdAt  |          | String  | Created At    |
-| updatedAt  |          | String  | Updated At    |
 
 ### Invalid Data (400)
 

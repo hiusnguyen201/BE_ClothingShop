@@ -1,6 +1,6 @@
 import { isValidObjectId } from 'mongoose';
 import { VoucherModel } from '#src/app/vouchers/models/voucher.model';
-import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query';
+import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
 import { VOUCHER_SELECTED_FIELDS } from '#src/app/vouchers/vouchers.constant';
 
 /**

@@ -47,24 +47,20 @@ curl -X PATCH 'https://server-clothes-store.vercel.app/api/categories/update-cat
     "image": "http://res.cloudinary.com/dsfkimwl7/image/upload/v1742377076/categories-image/1742377073496_4eb3f9d3-fe29-42ee-868e-f532a1999ba1.jpg",
     "name": "Jody Buckridge",
     "slug": "jody-buckridge",
-    "level": 1,
-    "createdAt": "2025-03-19T08:54:09.088Z",
-    "updatedAt": "2025-03-19T09:37:58.821Z"
+    "level": 1
   }
 }
 ```
 
 ### Structure Data Response
 
-| Field     | Nullable | Type   | Description       |
-| --------- | -------- | ------ | ----------------- |
-| id        |          | String | Category Id       |
-| image     |          | String | Category image    |
-| name      |          | String | Category name     |
-| slug      |          | String | Slug              |
-| level     |          | Number | Level of category |
-| createdAt |          | String | Created at        |
-| updatedAt |          | String | Updated at        |
+| Field | Nullable | Type   | Description       |
+| ----- | -------- | ------ | ----------------- |
+| id    |          | String | Category Id       |
+| image |          | String | Category image    |
+| name  |          | String | Category name     |
+| slug  |          | String | Slug              |
+| level |          | Number | Level of category |
 
 ### Too Many Files (400)
 

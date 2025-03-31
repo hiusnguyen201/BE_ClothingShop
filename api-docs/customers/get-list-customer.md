@@ -54,9 +54,7 @@ curl --location --request GET 'https://server-clothes-store.vercel.app/api/custo
         "email": "Mayra.Pfannerstill@gmail.com",
         "phone": "0383460015",
         "gender": "male",
-        "verifiedAt": null,
-        "createdAt": "2025-03-18T10:03:03.278Z",
-        "updatedAt": "2025-03-18T10:03:03.278Z"
+        "verifiedAt": null
       }
     ]
   }
@@ -77,8 +75,6 @@ curl --location --request GET 'https://server-clothes-store.vercel.app/api/custo
 | phone      |          | String | Phone number       |
 | gender     |          | String | Gender             |
 | verifiedAt | x        | String | Verified at        |
-| createdAt  |          | String | Created at         |
-| updatedAt  |          | String | Updated at         |
 
 ### Invalid Data (400)
 

@@ -2,7 +2,7 @@ import { isValidObjectId } from 'mongoose';
 import { CategoryModel } from '#src/app/categories/models/category.model';
 import { REGEX_PATTERNS } from '#src/core/constant';
 import { makeSlug } from '#src/utils/string.util';
-import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query';
+import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
 import { CATEGORY_SELECTED_FIELDS } from '#src/app/categories/categories.constant';
 
 /**

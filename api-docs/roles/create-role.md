@@ -48,9 +48,7 @@ curl --request POST 'https://server-clothes-store.vercel.app/api/roles/create-ro
     "id": "67d810ac54e327ba6b329e19",
     "name": "exampl4e232333343",
     "slug": "exampl4e232333343",
-    "description": "a",
-    "createdAt": "2025-03-17T12:08:12.097Z",
-    "updatedAt": "2025-03-17T12:08:12.097Z"
+    "description": "a"
   }
 }
 ```
@@ -63,8 +61,6 @@ curl --request POST 'https://server-clothes-store.vercel.app/api/roles/create-ro
 | name        |          | String | Role name   |
 | slug        |          | String | Role slug   |
 | description |          | String | Description |
-| createdAt   |          | String | Created At  |
-| updatedAt   |          | String | Updated At  |
 
 ### Invalid Data (400)
 

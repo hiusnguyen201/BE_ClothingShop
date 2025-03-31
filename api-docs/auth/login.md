@@ -49,10 +49,6 @@ curl --request POST 'https://server-clothes-store.vercel.app/api/auth/login' \
       "id": "67d944d742e52209d72a1fde",
       "name": "Norma Schmitt",
       "email": "Mayra.Pfannerstill@gmail.com"
-    },
-    "tokens": {
-      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZDJhMzMyYzhhMjEzYjA1MDI4MzNjNiIsInR5cGUiOiJVc2VyIiwiaWF0IjoxNzQyMjAxMDU5LCJleHAiOjE3NDIyMDE5NTl9.gsqLAzSlJKDPU3D9gvKg_I42NJ3NhI2d5svf-MYywDo",
-      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZDJhMzMyYzhhMjEzYjA1MDI4MzNjNiIsInR5cGUiOiJVc2VyIiwiaWF0IjoxNzQyMjAxMDU5LCJleHAiOjE3NDIyMDE5NTl9.gsqLAzSlJKDPU3D9gvKg_I42NJ3NhI2d5svf-MYywDo"
     }
   }
 }
@@ -60,17 +56,14 @@ curl --request POST 'https://server-clothes-store.vercel.app/api/auth/login' \
 
 ### Structure Data Response
 
-| Field             | Nullable | Type    | Description                            |
-| ----------------- | -------- | ------- | -------------------------------------- |
-| isAuthenticated   |          | Boolean | Authenticated                          |
-| is2FactorRequired |          | Boolean | Two-Factor required                    |
-| user              |          | Object  | User                                   |
-| id                |          | String  | User ID                                |
-| name              |          | String  | User name                              |
-| email             |          | String  | Email                                  |
-| tokens            | x        | Object  | Contain access token and refresh token |
-| accessToken       |          | String  | Access token                           |
-| refreshToken      |          | String  | Refresh token                          |
+| Field             | Nullable | Type    | Description         |
+| ----------------- | -------- | ------- | ------------------- |
+| isAuthenticated   |          | Boolean | Authenticated       |
+| is2FactorRequired |          | Boolean | Two-Factor required |
+| user              |          | Object  | User                |
+| id                |          | String  | User ID             |
+| name              |          | String  | User name           |
+| email             |          | String  | Email               |
 
 ### Invalid Data (400)
 

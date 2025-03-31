@@ -8,6 +8,4 @@ export const CustomerDto = Joi.object({
   phone: Joi.string().required(),
   gender: Joi.string().required(),
   verifiedAt: Joi.date().allow(null),
-  createdAt: Joi.date().required(),
-  updatedAt: Joi.date().required(),
 });

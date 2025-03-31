@@ -47,24 +47,20 @@ curl -X POST 'https://server-clothes-store.vercel.app/api/categories/create-cate
     "image": "http://res.cloudinary.com/dsfkimwl7/image/upload/742371998/categories-image/1742371995833_5ddb7278-cc9b-421d-ad72-dc22965708d7.jpg",
     "name": "Mr. Merle Keebler",
     "slug": "mr.-merle-keebler",
-    "level": 1,
-    "createdAt": "2025-03-19T08:13:20.451Z",
-    "updatedAt": "2025-03-19T08:13:20.451Z"
+    "level": 1
   }
 }
 ```
 
 ### Structure Data Response
 
-| Field     | Nullable | Type   | Description       |
-| --------- | -------- | ------ | ----------------- |
-| id        |          | String | Category Id       |
-| image     |          | String | Category image    |
-| name      |          | String | Category name     |
-| slug      |          | String | Slug              |
-| level     |          | Number | Level of category |
-| createdAt |          | String | Created at        |
-| updatedAt |          | String | Updated at        |
+| Field | Nullable | Type   | Description       |
+| ----- | -------- | ------ | ----------------- |
+| id    |          | String | Category Id       |
+| image |          | String | Category image    |
+| name  |          | String | Category name     |
+| slug  |          | String | Slug              |
+| level |          | Number | Level of category |
 
 ### Too Many Files (400)
 
