@@ -15,7 +15,5 @@ export const VoucherDto = Joi.object({
   minPrice: Joi.number(),
   startDate: Joi.date(),
   endDate: Joi.date(),
-  createdAt: Joi.date(),
-  updatedAt: Joi.date(),
   uses: Joi.number(),
 });

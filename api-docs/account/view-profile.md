@@ -45,9 +45,7 @@ curl --request POST 'https://server-clothes-store.vercel.app/api/account/view-pr
     "email": "Timmy_Nitzsche72@hotmail.com",
     "phone": "0912345657",
     "gender": "male",
-    "verifiedAt": "2025-03-19T10:37:57.979Z",
-    "createdAt": "2025-03-19T10:35:49.546Z",
-    "updatedAt": "2025-03-19T10:37:58.010Z"
+    "verifiedAt": "2025-03-19T10:37:57.979Z"
   }
 }
 ```
@@ -63,8 +61,6 @@ curl --request POST 'https://server-clothes-store.vercel.app/api/account/view-pr
 | phone      |          | String  | Phone         |
 | gender     |          | String  | Gender        |
 | verifiedAt | x        | Boolean | Verified at   |
-| createdAt  |          | String  | Created at    |
-| updatedAt  |          | String  | Updated at    |
 
 ### Too Many Request(429)
 

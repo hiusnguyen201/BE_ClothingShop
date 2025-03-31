@@ -4,6 +4,4 @@ export const CATEGORY_SELECTED_FIELDS = {
   name: true,
   slug: true,
   level: true,
-  createdAt: true,
-  updatedAt: true,
 };

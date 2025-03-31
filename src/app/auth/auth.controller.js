@@ -15,6 +15,8 @@ import {
   checkTimeLeftToResendOTPService,
   getValidUserOtpInUserService,
   removeUserOtpsInUserService,
+  revokeTokenByUserIdService,
+  getUserByRefreshTokenService,
 } from '#src/app/auth/auth.service';
 import { HttpException } from '#src/core/exception/http-exception';
 import {
@@ -29,8 +31,42 @@ import { generateTokensService } from '#src/app/auth/auth.service';
 import { Code } from '#src/core/code/Code';
 import { UserDto } from '#src/app/users/dtos/user.dto';
 import { ModelDto } from '#src/core/dto/ModelDto';
+import { clearSession, REFRESH_TOKEN_KEY, setSession } from '#src/utils/cookie.util';
 
-export const loginController = async (req) => {
+export const logoutController = async (req, res) => {
+  const userId = req.user.id;
+
+  await revokeTokenByUserIdService(userId);
+
+  clearSession(res);
+
+  return ApiResponse.success(null);
+};
+
+export const refreshTokenController = async (req, res) => {
+  const currentRefreshToken = req.cookies[REFRESH_TOKEN_KEY];
+
+  if (!currentRefreshToken) {
+    throw HttpException.new({ code: Code.UNAUTHORIZED, message: 'No refresh token provided' });
+  }
+
+  const user = await getUserByRefreshTokenService(currentRefreshToken);
+  if (!user) {
+    throw HttpException.new({ code: Code.UNAUTHORIZED, message: 'Invalid refresh token' });
+  }
+
+  const { accessToken, refreshToken } = await generateTokensService(user._id, {
+    id: user._id,
+    type: user.type,
+  });
+
+  setSession(res, { accessToken, refreshToken });
+
+  const userDto = ModelDto.new(UserDto, user);
+  return ApiResponse.success(userDto);
+};
+
+export const loginController = async (req, res) => {
   const { email, password } = req.body;
 
   const user = await authenticateUserService(email, password);
@@ -38,22 +74,27 @@ export const loginController = async (req) => {
     throw HttpException.new({ code: Code.UNAUTHORIZED, overrideMessage: 'Invalid Credentials' });
   }
 
+  const userDto = ModelDto.new(UserDto, user);
   const isNeed2Fa = !user.verifiedAt; // || user.type === USER_TYPE.USER;
-
-  let tokens = null;
-  if (!isNeed2Fa) {
-    tokens = await generateTokensService(user._id, {
-      id: user._id,
-      type: user.type,
+  if (isNeed2Fa) {
+    return ApiResponse.success({
+      isAuthenticated: false,
+      is2FactorRequired: true,
+      user: userDto,
     });
   }
 
-  const userDto = ModelDto.new(UserDto, user);
+  const { accessToken, refreshToken } = await generateTokensService(user._id, {
+    id: user._id,
+    type: user.type,
+  });
+
+  setSession(res, { accessToken, refreshToken });
+
   return ApiResponse.success({
-    isAuthenticated: !isNeed2Fa,
-    is2FactorRequired: isNeed2Fa,
+    isAuthenticated: true,
+    is2FactorRequired: false,
     user: userDto,
-    tokens,
   });
 };
 
@@ -152,10 +193,12 @@ export const verifyOtpController = async (req) => {
   // Otp valid then remove it
   await removeUserOtpsInUserService(userId);
 
-  const tokens = await generateTokensService(user._id, {
+  const { accessToken, refreshToken } = await generateTokensService(user._id, {
     id: user._id,
     type: user.type,
   });
+
+  setSession(res, { accessToken, refreshToken });
 
   const userDto = ModelDto.new(UserDto, user);
   return ApiResponse.success(
@@ -163,7 +206,6 @@ export const verifyOtpController = async (req) => {
       isAuthenticated: true,
       is2FactorRequired: false,
       user: userDto,
-      tokens,
     },
     'Verify otp successfully',
   );

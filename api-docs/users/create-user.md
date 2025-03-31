@@ -56,9 +56,7 @@ curl --request POST 'https://server-clothes-store.vercel.app/api/users/create-us
     "email": "Jimmy_Wuckert55@yahoo.com",
     "phone": "0383460015",
     "gender": "male",
-    "verifiedAt": null,
-    "createdAt": "2025-03-17T18:34:06.875Z",
-    "updatedAt": "2025-03-17T18:34:06.875Z"
+    "verifiedAt": null
   }
 }
 ```
@@ -74,8 +72,6 @@ curl --request POST 'https://server-clothes-store.vercel.app/api/users/create-us
 | phone      |          | String  | Phone       |
 | gender     |          | String  | Gender      |
 | verifiedAt | x        | Boolean | Verified At |
-| createdAt  |          | String  | Created At  |
-| updatedAt  |          | String  | Updated At  |
 
 ### Invalid Data (400)
 

@@ -50,9 +50,7 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/permissions/get-
         "id": "67d93a54d62edb1e2e85a1b8",
         "name": "show:category",
         "description": "Show category",
-        "module": "categories",
-        "createdAt": "2025-03-18T09:18:12.981Z",
-        "updatedAt": "2025-03-18T09:18:12.981Z"
+        "module": "categories"
       }
     ]
   }
@@ -70,8 +68,6 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/permissions/get-
 | name        |          | String | Permission name      |
 | description |          | String | Description          |
 | module      |          | String | Module               |
-| createdAt   |          | String | Created At           |
-| updatedAt   |          | String | Updated At           |
 
 ### Invalid Data (400)
 

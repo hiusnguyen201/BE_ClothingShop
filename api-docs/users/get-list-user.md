@@ -54,9 +54,7 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/users/get-users'
         "email": "example@gmail.com",
         "phone": "0912345678",
         "gender": null,
-        "verifiedAt": "2025-03-17T20:05:22.760Z",
-        "createdAt": "2025-03-17T20:05:22.805Z",
-        "updatedAt": "2025-03-17T20:05:33.249Z"
+        "verifiedAt": "2025-03-17T20:05:22.760Z"
       }
     ]
   }
@@ -77,8 +75,6 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/users/get-users'
 | phone      |          | String | Phone number   |
 | gender     |          | String | Gender         |
 | verifiedAt | x        | String | Verified at    |
-| createdAt  |          | String | Created at     |
-| updatedAt  |          | String | Updated at     |
 
 ### Invalid Data (400)
 

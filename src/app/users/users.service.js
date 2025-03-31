@@ -3,7 +3,7 @@ import { genSaltSync, hashSync } from 'bcrypt';
 import { UserModel } from '#src/app/users/models/user.model';
 import { REGEX_PATTERNS } from '#src/core/constant';
 import { USER_SELECTED_FIELDS } from '#src/app/users/users.constant';
-import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query';
+import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
 
 /**
  * Create user

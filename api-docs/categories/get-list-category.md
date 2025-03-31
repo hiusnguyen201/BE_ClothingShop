@@ -51,9 +51,7 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/categories/get-c
         "image": "http://res.cloudinary.com/dsfkimwl7/image/upload/742372772/categories-image/1742372771698_e4e47241-1ae2-4529-b2d2-8e17bc5eac93.jpg",
         "name": "Howard Corwin",
         "slug": "howard-corwin",
-        "level": 1,
-        "createdAt": "2025-03-19T08:26:14.441Z",
-        "updatedAt": "2025-03-19T08:26:14.441Z"
+        "level": 1
       }
     ]
   }
@@ -72,8 +70,6 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/categories/get-c
 | name       |          | String | Category name       |
 | slug       |          | String | Slug                |
 | level      |          | String | Level of category   |
-| createdAt  |          | String | Created at          |
-| updatedAt  |          | String | Updated at          |
 
 ### Invalid Data (400)
 

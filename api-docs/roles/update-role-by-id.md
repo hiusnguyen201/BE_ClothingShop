@@ -49,9 +49,7 @@ curl --request PATCH 'https://server-clothes-store.vercel.app/api/roles/update-r
     "id": "67d85c19284c7c3933f9823f",
     "name": "example",
     "slug": "example",
-    "description": "This is example",
-    "createdAt": "2025-03-17T17:30:01.529Z",
-    "updatedAt": "2025-03-17T17:30:06.621Z"
+    "description": "This is example"
   }
 }
 ```
@@ -64,8 +62,6 @@ curl --request PATCH 'https://server-clothes-store.vercel.app/api/roles/update-r
 | name        |          | String | Role name   |
 | slug        |          | String | Role slug   |
 | description |          | String | Description |
-| createdAt   |          | String | Created At  |
-| updatedAt   |          | String | Updated At  |
 
 ### INVALID_DATA (400)
 

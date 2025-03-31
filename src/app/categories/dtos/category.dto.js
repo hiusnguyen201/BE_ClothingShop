@@ -6,6 +6,4 @@ export const CategoryDto = Joi.object({
   name: Joi.string().required(),
   slug: Joi.string().required(),
   level: Joi.number().required(),
-  createdAt: Joi.date().required(),
-  updatedAt: Joi.date().required(),
 });

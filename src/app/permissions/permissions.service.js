@@ -1,6 +1,6 @@
 import { isValidObjectId } from 'mongoose';
 import { PermissionModel } from '#src/app/permissions/models/permission.model';
-import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query';
+import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
 import { PERMISSION_SELECTED_FIELDS } from '#src/app/permissions/permissions.constant';
 
 /**

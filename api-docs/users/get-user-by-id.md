@@ -46,9 +46,7 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/users/get-user-b
     "email": "Leone_Considine@gmail.com",
     "phone": "0383460015",
     "gender": "female",
-    "verifiedAt": null,
-    "createdAt": "2025-03-17T20:12:06.109Z",
-    "updatedAt": "2025-03-17T20:12:06.109Z"
+    "verifiedAt": null
   }
 }
 ```
@@ -64,8 +62,6 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/users/get-user-b
 | phone      |          | String  | Phone       |
 | gender     |          | String  | Gender      |
 | verifiedAt | x        | Boolean | Verified At |
-| createdAt  |          | String  | Created At  |
-| updatedAt  |          | String  | Updated At  |
 
 ### User Not Found (404)
 

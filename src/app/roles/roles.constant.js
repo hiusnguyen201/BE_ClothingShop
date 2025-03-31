@@ -3,6 +3,4 @@ export const ROLE_SELECTED_FIELDS = {
   name: true,
   slug: true,
   description: true,
-  createdAt: true,
-  updatedAt: true,
 };
