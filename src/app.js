@@ -27,7 +27,7 @@ app.use(helmet());
 app.use(compression());
 app.use(
   cors({
-    origin: ['http://localhost:5173'],
+    origin: true,
     methods: 'GET,POST,PUT,PATCH,DELETE',
     allowedHeaders: 'Content-Type,Authorization',
     credentials: true,
