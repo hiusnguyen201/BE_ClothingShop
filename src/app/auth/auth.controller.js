@@ -201,7 +201,7 @@ export const sendOtpViaEmailController = async (req) => {
   return ApiResponse.success(null, 'Send otp via email successful');
 };
 
-export const verifyOtpController = async (req) => {
+export const verifyOtpController = async (req, res) => {
   const { userId, otp } = req.body;
   const user = await getUserByIdService(userId);
   if (!user) {
