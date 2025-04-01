@@ -44,9 +44,8 @@ const UserSchema = new Schema(
     },
     gender: {
       type: String,
-      required: false,
+      required: true,
       enum: Object.values(GENDER),
-      default: null,
     },
     googleId: {
       type: String,

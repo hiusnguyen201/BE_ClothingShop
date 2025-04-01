@@ -1,5 +1,5 @@
 import { isValidObjectId } from 'mongoose';
-import { genSalt, genSaltSync, hashSync } from 'bcrypt';
+import { genSaltSync, hashSync } from 'bcrypt';
 import { UserModel } from '#src/app/users/models/user.model';
 import { REGEX_PATTERNS } from '#src/core/constant';
 import { USER_SELECTED_FIELDS } from '#src/app/users/users.constant';
@@ -17,23 +17,28 @@ export async function createUserService(data) {
 }
 
 /**
- * Create user within transaction
+ * Create users within transaction
  * @param {*} data
  * @returns
  */
-export async function getOrCreateUserWithTransaction(data, session) {
-  const user = await UserModel.findOne({ email: data.email }).lean();
+export async function getOrCreateUsersWithTransaction(data, session) {
+  const existingUsers = await UserModel.find({
+    email: data.map((item) => item.email),
+  }).lean();
 
-  if (user) {
-    return user;
+  const existingSet = new Set(existingUsers.map((p) => p.email));
+
+  const newUsers = data.filter((p) => !existingSet.has(p.email));
+
+  if (newUsers.length > 0) {
+    const created = await UserModel.insertMany(
+      newUsers.map((item) => ({ ...item, password: hashSync(item.password, genSaltSync()) })),
+      { session },
+    );
+    return [...existingUsers, ...created];
   }
 
-  const salt = await genSalt();
-  data.password = hashSync(data.password, salt);
-  const [created] = await UserModel.insertMany([data], {
-    session,
-  });
-  return created;
+  return existingUsers;
 }
 
 /**

@@ -97,7 +97,7 @@ export const loginCustomerController = async (req, res) => {
   }
 
   const customerDto = ModelDto.new(CustomerDto, customer);
-  const isNeed2Fa = !user.verifiedAt;
+  const isNeed2Fa = !customer.verifiedAt;
   if (isNeed2Fa) {
     return ApiResponse.success({
       isAuthenticated: false,
@@ -151,7 +151,10 @@ export const forgotPasswordController = async (req) => {
   const token = createResetPasswordTokenService({ id: user._id });
 
   const resetURL = path.join(callbackUrl, token);
-  await sendResetPasswordRequestService(email, resetURL);
+  const result = await sendResetPasswordRequestService(email, resetURL);
+  if (!result) {
+    throw HttpException.new({ code: Code.SEND_MAIL_ERROR, overrideMessage: 'Send link reset password failed' });
+  }
 
   return ApiResponse.success(null, 'Required Forgot Password Success');
 };
@@ -190,7 +193,10 @@ export const sendOtpViaEmailController = async (req) => {
   await removeUserOtpsInUserService(user._id);
 
   const userOtp = await createUserOtpService(user._id);
-  sendOtpCodeService(user.email, userOtp.otp);
+  const result = await sendOtpCodeService(user.email, userOtp.otp);
+  if (!result) {
+    throw HttpException.new({ code: Code.SEND_MAIL_ERROR, overrideMessage: 'Send OTP failed' });
+  }
 
   return ApiResponse.success(null, 'Send otp via email successful');
 };
