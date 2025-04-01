@@ -3,13 +3,14 @@ const router = express.Router();
 
 import {
   registerController,
-  loginController,
+  loginCustomerController,
   forgotPasswordController,
   resetPasswordController,
   verifyOtpController,
   sendOtpViaEmailController,
   logoutController,
   refreshTokenController,
+  loginAdminController,
 } from '#src/app/auth/auth.controller';
 import { validateBody } from '#src/core/validations/request.validation';
 import { RegisterDto } from '#src/app/auth/dtos/register.dto';
@@ -20,7 +21,8 @@ import { isAuthorized } from '#src/middlewares/jwt-auth.middleware';
 
 router
   .post('/logout', isAuthorized, logoutController)
-  .post('/login', validateBody(LoginDto), loginController)
+  .post('/login', validateBody(LoginDto), loginCustomerController)
+  .post('/login-admin', validateBody(LoginDto), loginAdminController)
   .post('/refresh-token', refreshTokenController)
   .post('/register', validateBody(RegisterDto), registerController)
   .post('/forgot-password', validateBody(ForgotPasswordDto), forgotPasswordController)

@@ -69,6 +69,11 @@ const UserSchema = new Schema(
       required: false,
       default: null,
     },
+    lastLoginAt: {
+      type: Date,
+      required: false,
+      default: null,
+    },
 
     // Foreign key
     role: { type: Schema.Types.ObjectId, ref: 'Role', default: null },

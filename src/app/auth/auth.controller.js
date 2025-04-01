@@ -17,6 +17,7 @@ import {
   removeUserOtpsInUserService,
   revokeTokenByUserIdService,
   getUserByRefreshTokenService,
+  authenticateCustomerService,
 } from '#src/app/auth/auth.service';
 import { HttpException } from '#src/core/exception/http-exception';
 import {
@@ -32,6 +33,7 @@ import { Code } from '#src/core/code/Code';
 import { UserDto } from '#src/app/users/dtos/user.dto';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { clearSession, REFRESH_TOKEN_KEY, setSession } from '#src/utils/cookie.util';
+import { CustomerDto } from '#src/app/customers/dtos/customer.dto';
 
 export const logoutController = async (req, res) => {
   const userId = req.user.id;
@@ -66,7 +68,7 @@ export const refreshTokenController = async (req, res) => {
   return ApiResponse.success(userDto, 'Refresh token successful');
 };
 
-export const loginController = async (req, res) => {
+export const loginAdminController = async (req, res) => {
   const { email, password } = req.body;
 
   const user = await authenticateUserService(email, password);
@@ -75,19 +77,36 @@ export const loginController = async (req, res) => {
   }
 
   const userDto = ModelDto.new(UserDto, user);
-  const isNeed2Fa = !user.verifiedAt; // || user.type === USER_TYPE.USER;
+
+  return ApiResponse.success(
+    {
+      isAuthenticated: false,
+      is2FactorRequired: true,
+      user: userDto,
+    },
+    'Login successful',
+  );
+};
+
+export const loginCustomerController = async (req, res) => {
+  const { email, password } = req.body;
+
+  const customer = await authenticateCustomerService(email, password);
+  if (!customer) {
+    throw HttpException.new({ code: Code.UNAUTHORIZED, overrideMessage: 'Invalid Credentials' });
+  }
+
+  const customerDto = ModelDto.new(CustomerDto, customer);
+  const isNeed2Fa = !user.verifiedAt;
   if (isNeed2Fa) {
     return ApiResponse.success({
       isAuthenticated: false,
       is2FactorRequired: true,
-      user: userDto,
+      customer: customerDto,
     });
   }
 
-  const { accessToken, refreshToken } = await generateTokensService(user._id, {
-    id: user._id,
-    type: user.type,
-  });
+  const { accessToken, refreshToken } = await generateTokensService(customer._id, { id: customer._id });
 
   setSession(res, { accessToken, refreshToken });
 
@@ -95,7 +114,7 @@ export const loginController = async (req, res) => {
     {
       isAuthenticated: true,
       is2FactorRequired: false,
-      user: userDto,
+      customer: customerDto,
     },
     'Login successful',
   );

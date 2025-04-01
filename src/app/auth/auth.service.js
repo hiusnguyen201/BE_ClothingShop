@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import { UserOtpModel } from '#src/app/auth/models/user-otp.model';
 import { UserModel } from '#src/app/users/models/user.model';
 import { generateNumericOTP } from '#src/utils/string.util';
-import { USER_SELECTED_FIELDS } from '#src/app/users/users.constant';
+import { USER_SELECTED_FIELDS, USER_TYPE } from '#src/app/users/users.constant';
 
 /**
  * Revoke token
@@ -37,7 +37,7 @@ export async function getUserByRefreshTokenService(token) {
  * @returns
  */
 export async function authenticateUserService(email, password) {
-  const user = await UserModel.findOne({ email })
+  const user = await UserModel.findOne({ email, type: USER_TYPE.USER })
     .select({ ...USER_SELECTED_FIELDS, password: true })
     .lean();
   if (!user || !compareSync(password, user.password)) {
@@ -45,6 +45,23 @@ export async function authenticateUserService(email, password) {
   }
   delete user.password;
   return user;
+}
+
+/**
+ * Authenticate Customer
+ * @param {string} email
+ * @param {string} password
+ * @returns
+ */
+export async function authenticateCustomerService(email, password) {
+  const customer = await UserModel.findOne({ email, type: USER_TYPE.CUSTOMER })
+    .select({ ...USER_SELECTED_FIELDS, password: true })
+    .lean();
+  if (!customer || !compareSync(password, customer.password)) {
+    return null;
+  }
+  delete customer.password;
+  return customer;
 }
 
 /**
@@ -62,7 +79,7 @@ export async function generateTokensService(userId, payload) {
     expiresIn: +process.env.REFRESH_TOKEN_TTL_IN_DAYS + 'd',
   });
 
-  await UserModel.updateOne({ _id: userId }, { refreshToken });
+  await UserModel.updateOne({ _id: userId }, { refreshToken, lastLoginAt: new Date() });
 
   return { accessToken, refreshToken };
 }
