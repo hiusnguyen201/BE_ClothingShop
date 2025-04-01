@@ -43,7 +43,7 @@ curl --request PATCH 'https://server-clothes-store.vercel.app/api/roles/update-r
 {
   "code": 200,
   "codeMessage": "SUCCESS",
-  "message": "Edit role successfully",
+  "message": "Edit role successful",
   "timestamp": 1742232606628,
   "data": {
     "id": "67d85c19284c7c3933f9823f",

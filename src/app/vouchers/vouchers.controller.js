@@ -99,10 +99,9 @@ export const removeVoucherByIdController = async (req) => {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Voucher not found' });
   }
 
-  const removeVoucher = await removeVoucherByIdService(id);
+  await removeVoucherByIdService(id);
 
-  const voucherDto = ModelDto.new(VoucherDto, removeVoucher);
-  return ApiResponse.success(voucherDto, 'Remove voucher successfully');
+  return ApiResponse.success({ id: existVoucher._id }, 'Remove voucher successful');
 };
 
 export const isExistVoucherCodeController = async (req) => {

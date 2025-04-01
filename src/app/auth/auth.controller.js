@@ -149,7 +149,7 @@ export const resetPasswordController = async (req) => {
 
   sendResetPasswordSuccessService(updatedUser.email);
 
-  return ApiResponse.success(null, 'Reset password successfully');
+  return ApiResponse.success(null, 'Reset password successful');
 };
 
 export const sendOtpViaEmailController = async (req) => {
@@ -173,7 +173,7 @@ export const sendOtpViaEmailController = async (req) => {
   const userOtp = await createUserOtpService(user._id);
   sendOtpCodeService(user.email, userOtp.otp);
 
-  return ApiResponse.success(null, 'Send otp via email successfully');
+  return ApiResponse.success(null, 'Send otp via email successful');
 };
 
 export const verifyOtpController = async (req) => {
@@ -210,6 +210,6 @@ export const verifyOtpController = async (req) => {
       is2FactorRequired: false,
       user: userDto,
     },
-    'Verify otp successfully',
+    'Verify otp successful',
   );
 };

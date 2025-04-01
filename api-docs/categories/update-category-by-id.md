@@ -40,7 +40,7 @@ curl -X PATCH 'https://server-clothes-store.vercel.app/api/categories/update-cat
 {
   "code": 200,
   "codeMessage": "SUCCESS",
-  "message": "Update category successfully",
+  "message": "Update category successful",
   "timestamp": 1742377078834,
   "data": {
     "id": "67da86312d0dfdb03567ad28",

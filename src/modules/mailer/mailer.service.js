@@ -74,7 +74,7 @@ export const sendResetPasswordSuccessService = async (email) => {
     await transporter.sendMail({
       from: mailerEmail,
       to: email,
-      subject: 'Password Reset Successfully',
+      subject: 'Password Reset successful',
       html,
     });
   } catch (err) {
@@ -92,7 +92,7 @@ export const sendPasswordService = async (email, password) => {
     await transporter.sendMail({
       from: mailerEmail,
       to: email,
-      subject: 'Send Password Successfully',
+      subject: 'Send Password successful',
       html,
     });
   } catch (err) {

@@ -41,7 +41,7 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/permissions/get-
 {
   "code": 200,
   "codeMessage": "SUCCESS",
-  "message": "Get all permissions successfully",
+  "message": "Get all permissions successful",
   "timestamp": 1742289879961,
   "data": {
     "totalCount": 1,

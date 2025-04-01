@@ -6,7 +6,7 @@ Database.getInstance({ type: 'mongodb', logging: process.env.NODE_ENV === 'devel
 async function dropDatabase() {
   try {
     await Database.instance.connection.dropDatabase();
-    console.log('Database dropped successfully');
+    console.log('Database dropped successful');
 
     console.log('Connection closed');
   } catch (error) {

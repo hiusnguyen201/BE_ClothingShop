@@ -42,7 +42,7 @@ curl --request POST 'https://server-clothes-store.vercel.app/api/roles/create-ro
 {
   "code": 200,
   "codeMessage": "SUCCESS",
-  "message": "Create role successfully",
+  "message": "Create role successful",
   "timestamp": 1742202395238,
   "data": {
     "id": "67d810ac54e327ba6b329e19",

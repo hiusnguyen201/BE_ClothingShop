@@ -13,7 +13,7 @@ export const connectToMongoDb = (options) => {
       minPoolSize: 10,
     })
     .then(() => {
-      console.log('Connected successfully to MongoDB');
+      console.log('Connected successful to MongoDB');
     })
     .catch((err) => {
       console.error('Connect to MongoDB failed', err);

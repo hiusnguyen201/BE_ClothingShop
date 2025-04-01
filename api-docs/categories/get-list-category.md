@@ -41,7 +41,7 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/categories/get-c
 {
   "code": 200,
   "codeMessage": "SUCCESS",
-  "message": "Get all categories successfully",
+  "message": "Get all categories successful",
   "timestamp": 1742373058243,
   "data": {
     "totalCount": 1,

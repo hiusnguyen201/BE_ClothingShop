@@ -37,7 +37,7 @@ curl --request DELETE 'https://server-clothes-store.vercel.app/api/roles/remove-
 {
   "code": 200,
   "codeMessage": "SUCCESS",
-  "message": "Remove role successfully",
+  "message": "Remove role successful",
   "timestamp": 1742233049127,
   "data": {
     "id": "67d7e61b5114396a4af8b95d"

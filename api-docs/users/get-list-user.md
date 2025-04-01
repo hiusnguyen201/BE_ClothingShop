@@ -42,7 +42,7 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/users/get-users'
 {
   "code": 200,
   "codeMessage": "SUCCESS",
-  "message": "Get all roles successfully",
+  "message": "Get all roles successful",
   "timestamp": 1742209827162,
   "data": {
     "totalCount": 1,

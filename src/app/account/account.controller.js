@@ -69,7 +69,7 @@ export const claimVoucherByCodeController = async (req) => {
 
   await addVoucherToCustomerService(userId, voucher._id);
 
-  return ApiResponse.success(true, 'Claim voucher by code successfully');
+  return ApiResponse.success(true, 'Claim voucher by code successful');
 };
 
 export const getAllVoucherFromCustomerController = async (req) => {
@@ -91,6 +91,6 @@ export const getAllVoucherFromCustomerController = async (req) => {
       totalCount,
       list: vouchersDto,
     },
-    'Get all vouchers successfully',
+    'Get all vouchers successful',
   );
 };
