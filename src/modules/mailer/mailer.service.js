@@ -33,6 +33,7 @@ export const sendOtpCodeService = async (email, otpCode) => {
       html,
     });
   } catch (err) {
+    console.log(err);
     throw HttpException.new({ code: Code.SEND_MAIL_ERROR, overrideMessage: 'Send OTP failed' });
   }
 };
@@ -48,6 +49,7 @@ export const sendWelcomeEmailService = async (email, name) => {
       html,
     });
   } catch (err) {
+    console.log(err);
     throw HttpException.new({ code: Code.SEND_MAIL_ERROR, overrideMessage: 'Send welcome email failed' });
   }
 };
@@ -63,6 +65,7 @@ export const sendResetPasswordRequestService = async (email, resetURL) => {
       html,
     });
   } catch (err) {
+    console.log(err);
     throw HttpException.new({ code: Code.SEND_MAIL_ERROR, overrideMessage: 'Send link reset password failed' });
   }
 };
@@ -78,6 +81,7 @@ export const sendResetPasswordSuccessService = async (email) => {
       html,
     });
   } catch (err) {
+    console.log(err);
     throw HttpException.new({
       code: Code.SEND_MAIL_ERROR,
       overrideMessage: 'Send reset password success email failed',
@@ -96,6 +100,7 @@ export const sendPasswordService = async (email, password) => {
       html,
     });
   } catch (err) {
+    console.log(err);
     throw HttpException.new({ code: Code.SEND_MAIL_ERROR, overrideMessage: 'Send password failed' });
   }
 };
