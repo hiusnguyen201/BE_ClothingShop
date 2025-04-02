@@ -59,6 +59,12 @@ export class Code {
     message: 'Token is not valid',
   };
 
+  static REFRESH_TOKEN_FAILED = {
+    status: 401,
+    codeMessage: 'REFRESH_TOKEN_FAILED',
+    message: 'Refresh token is invalid or expired.',
+  };
+
   static UNAUTHORIZED = {
     status: 401,
     codeMessage: 'UNAUTHORIZED',

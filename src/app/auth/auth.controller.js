@@ -49,12 +49,12 @@ export const refreshTokenController = async (req, res) => {
   const currentRefreshToken = req.cookies[REFRESH_TOKEN_KEY];
 
   if (!currentRefreshToken) {
-    throw HttpException.new({ code: Code.BAD_REQUEST, message: 'No refresh token provided' });
+    throw HttpException.new({ code: Code.REFRESH_TOKEN_FAILED, message: 'No refresh token provided' });
   }
 
   const user = await getUserByRefreshTokenService(currentRefreshToken);
   if (!user) {
-    throw HttpException.new({ code: Code.UNAUTHORIZED, message: 'Invalid refresh token' });
+    throw HttpException.new({ code: Code.REFRESH_TOKEN_FAILED, message: 'Invalid refresh token' });
   }
 
   const { accessToken, refreshToken } = await generateTokensService(user._id, {
