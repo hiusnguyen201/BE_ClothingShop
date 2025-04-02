@@ -2,20 +2,7 @@ import HttpStatus from 'http-status-codes';
 import userFactory from '#src/app/users/factory/user.factory';
 import { Code } from '#src/core/code/Code';
 import { GENDER } from '#src/app/users/users.constant';
-import { expectError, testEndpoint, expectValidationError } from '#test/common';
-
-export const expectUserData = (userData) => {
-  expect(userData).toMatchObject({
-    id: expect.any(String),
-    avatar: expect.toBeOneOf([expect.any(String), null]),
-    name: expect.any(String),
-    email: expect.any(String),
-    phone: expect.any(String),
-    gender: expect.any(String),
-    verifiedAt: expect.toBeOneOf([expect.any(String), null]),
-    lastLoginAt: expect.toBeOneOf([expect.any(String), null]),
-  });
-};
+import { expectError, testEndpoint, expectValidationError, expectUserData } from '#test/common';
 
 describe('User API Endpoints', () => {
   describe('POST /api/users/create-user', () => {

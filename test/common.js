@@ -4,6 +4,10 @@ import { Code } from '#src/core/code/Code';
 import app from '#src/app';
 import { ACCESS_TOKEN_KEY } from '#src/utils/cookie.util';
 
+/**
+ * Usage: https://jestjs.io/docs/api#testeachtablename-fn-timeout
+ */
+
 export const testEndpoint = (method, endpoint, data = null) => {
   return async (options = {}) => {
     const { accessToken, headers = {}, queryParams = {} } = options;
@@ -52,5 +56,18 @@ export const expectValidationError = (response, paths) => {
     codeMessage: Code.INVALID_DATA.codeMessage,
     message: expect.any(String),
     data: expect.arrayContaining(paths.map((path) => ({ path, message: expect.any(String) }))),
+  });
+};
+
+export const expectUserData = (userData) => {
+  expect(userData).toMatchObject({
+    id: expect.any(String),
+    avatar: expect.toBeOneOf([expect.any(String), null]),
+    name: expect.any(String),
+    email: expect.any(String),
+    phone: expect.any(String),
+    gender: expect.any(String),
+    verifiedAt: expect.toBeOneOf([expect.any(String), null]),
+    lastLoginAt: expect.toBeOneOf([expect.any(String), null]),
   });
 };
