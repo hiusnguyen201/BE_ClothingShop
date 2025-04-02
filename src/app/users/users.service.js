@@ -13,7 +13,8 @@ import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#s
 export async function createUserService(data) {
   const salt = genSaltSync();
   data.password = hashSync(data.password, salt);
-  return UserModel.create(data);
+  const user = await UserModel.create(data);
+  return user.toJSON();
 }
 
 /**
@@ -157,6 +158,14 @@ export async function checkUserHasPermissionByMethodAndEndpointService(id, { met
           endpoint,
         },
       },
+    })
+    .populate({
+      path: 'permissions',
+      match: {
+        method,
+        endpoint,
+      },
     });
-  return Boolean(user?.role?.permissions?.length > 0);
+
+  return Boolean(user?.role?.permissions?.length > 0 || user?.permissions.length > 0);
 }

@@ -19,7 +19,7 @@ async function authorized(req, res, next) {
     return next(HttpException.new({ code: Code.INVALID_TOKEN }));
   }
 
-  const user = await getUserByIdService(decoded.id);
+  const user = await getUserByIdService(decoded?.id);
   if (!user) {
     return next(HttpException.new({ code: Code.INVALID_TOKEN }));
   }

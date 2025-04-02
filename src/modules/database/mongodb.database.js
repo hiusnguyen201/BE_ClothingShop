@@ -13,10 +13,14 @@ export const connectToMongoDb = (options) => {
       minPoolSize: 10,
     })
     .then(() => {
-      console.log('Connected successful to MongoDB');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Connected successful to MongoDB');
+      }
     })
     .catch((err) => {
-      console.error('Connect to MongoDB failed', err);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Connect to MongoDB failed', err);
+      }
     });
 
   return mongoose.connection;
