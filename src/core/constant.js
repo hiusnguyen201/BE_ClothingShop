@@ -32,3 +32,8 @@ export const PAYMENT_METHOD = {
   VNPAY: 'Vnpay',
   MOMO: 'Momo',
 };
+export const PRODUCT_STATUS = [
+  "Public",
+  "Hidden",
+  "Deleted",
+];

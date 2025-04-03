@@ -9,6 +9,11 @@ import { TransactionalServiceWrapper } from '#src/core/transaction/Transactional
 import { PERMISSION_MODEL } from '#src/app/permissions/models/permission.model';
 import { ROLE_MODEL } from '#src/app/roles/models/role.model';
 import { USER_MODEL } from '#src/app/users/models/user.model';
+import { OPTIONS_MODEL } from '#src/app/options/models/option.model';
+import { OPTIONS_DATA } from '#src/database/seeds/options-data';
+import { OPTION_VALUES_MODEL } from '#src/app/option-values/models/option-value.model';
+import { createOptionValuesWithinTransactionService } from '#src/app/option-values/option-values.service';
+import { createOptionService, updateOptionByIdService } from '#src/app/options/options.service';
 
 Database.getInstance({ type: 'mongodb', logging: process.env.NODE_ENV === 'development' });
 /**
@@ -71,6 +76,31 @@ async function runSeed() {
         type: USER_TYPE.USER,
       },
       session,
+    );
+
+    const optionCollections = await Database.instance.connection.db.listCollections({ name: OPTIONS_MODEL }).toArray();
+    if (optionCollections.length === 0) {
+      await Database.instance.connection.createCollection(OPTIONS_MODEL);
+    }
+    const optionValuesCollections = await Database.instance.connection.db.listCollections({ name: OPTION_VALUES_MODEL }).toArray();
+    if (optionValuesCollections.length === 0) {
+      await Database.instance.connection.createCollection(OPTION_VALUES_MODEL);
+    }
+
+    await Promise.all(
+      OPTIONS_DATA.map(async (option) => {
+        const newOption = await createOptionService({
+          name: option.name
+        });
+        const formattedData = option.data.map(value => ({
+          valueName: value,
+        }));
+        const newOptionValues = await createOptionValuesWithinTransactionService(formattedData, session);
+        const newOptionValuesIds = newOptionValues.map(item => item._id);
+        await updateOptionByIdService(newOption._id, {
+          optionValues: newOptionValuesIds
+        })
+      })
     );
 
     // Settings
