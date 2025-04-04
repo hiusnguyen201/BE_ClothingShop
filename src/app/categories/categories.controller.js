@@ -2,12 +2,11 @@
 import { HttpException } from '#src/core/exception/http-exception';
 import {
   createCategoryService,
-  getAllCategoriesService,
   getCategoryByIdService,
   updateCategoryInfoByIdService,
   removeCategoryByIdService,
   checkExistCategoryNameService,
-  countAllCategoriesService,
+  getAndCountCategoriesService,
 } from '#src/app/categories/categories.service';
 import { CategoryDto } from '#src/app/categories/dtos/category.dto';
 import { ApiResponse } from '#src/core/api/ApiResponse';
@@ -55,30 +54,21 @@ export const createCategoryController = async (req) => {
 };
 
 export const getAllCategoriesController = async (req) => {
-  const { keyword, limit, page, sortBy, sortOrder } = req.query;
+  const { keyword = '', page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
 
+  const searchFields = ['name'];
   const filters = {
-    $or: [{ name: { $regex: keyword, $options: 'i' } }],
+    $or: searchFields.map((field) => ({
+      [field]: { $regex: keyword, $options: 'i' },
+    })),
   };
 
-  const totalCount = await countAllCategoriesService(filters);
-
-  const categories = await getAllCategoriesService({
-    filters,
-    page,
-    limit,
-    sortBy,
-    sortOrder,
-  });
+  const skip = (page - 1) * limit;
+  const [totalCount, categories] = await getAndCountCategoriesService(filters, skip, limit, sortBy, sortOrder);
 
   const categoriesDto = ModelDto.newList(CategoryDto, categories);
-  return ApiResponse.success(
-    {
-      totalCount,
-      list: categoriesDto,
-    },
-    'Get all categories successful',
-  );
+
+  return ApiResponse.success({ totalCount, list: categoriesDto }, 'Get all categories successful');
 };
 
 export const getCategoryByIdController = async (req) => {
@@ -101,11 +91,9 @@ export const updateCategoryByIdController = async (req) => {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Category not found' });
   }
 
-  if (name) {
-    const isExistName = await checkExistCategoryNameService(name, categoryId);
-    if (isExistName) {
-      throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Category name already exist' });
-    }
+  const isExistName = await checkExistCategoryNameService(name, categoryId);
+  if (isExistName) {
+    throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Category name already exist' });
   }
 
   if (image) {

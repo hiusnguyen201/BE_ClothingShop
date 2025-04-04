@@ -7,8 +7,8 @@ const SoftDelete = (schema) => {
     removedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   });
 
-  schema.pre(['find', 'findOne', 'findById', 'findOneAndUpdate', 'update', 'countDocuments', 'aggregate'], function () {
-    if (!this.getOptions().withRemoved) {
+  schema.pre(['find', 'findOne', 'findById', 'findOneAndUpdate', 'countDocuments'], function () {
+    if (!this.options || !this.options.withRemoved) {
       this.where({ isRemoved: false });
     }
   });

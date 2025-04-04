@@ -8,7 +8,6 @@ import { ACCESS_TOKEN_KEY, clearSession } from '#src/utils/cookie.util';
 
 async function authorized(req, res, next) {
   const accessToken = req.cookies[ACCESS_TOKEN_KEY];
-
   if (!accessToken) {
     clearSession(res);
     return next(HttpException.new({ code: Code.TOKEN_REQUIRED }));

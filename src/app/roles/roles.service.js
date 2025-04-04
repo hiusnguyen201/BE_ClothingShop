@@ -1,4 +1,4 @@
-import { isValidObjectId } from 'mongoose';
+import { isValidObjectId, Types } from 'mongoose';
 import { RoleModel } from '#src/app/roles/models/role.model';
 import { makeSlug } from '#src/utils/string.util';
 import { REGEX_PATTERNS } from '#src/core/constant';
@@ -38,27 +38,21 @@ export async function getOrCreateRoleServiceWithTransaction(data, session) {
 }
 
 /**
- * Get all roles
+ * Get and count roles
  * @param {*} query
  * @returns
  */
-export async function getAllRolesService(payload) {
-  const { filters = {}, page, limit, sortBy, sortOrder } = payload;
+export async function getAndCountRolesService(filters, skip, limit, sortBy, sortOrder) {
+  const totalCount = await RoleModel.countDocuments(filters);
 
-  let queryOptions = {};
-  queryOptions = extendQueryOptionsWithPagination({ page, limit }, queryOptions);
-  queryOptions = extendQueryOptionsWithSort({ sortBy, sortOrder }, queryOptions);
+  const queryOptions = {
+    ...extendQueryOptionsWithPagination(skip, limit),
+    ...extendQueryOptionsWithSort(sortBy, sortOrder),
+  };
 
-  return RoleModel.find(filters, ROLE_SELECTED_FIELDS, queryOptions).lean();
-}
+  const list = await RoleModel.find(filters, ROLE_SELECTED_FIELDS, queryOptions).lean();
 
-/**
- * Count all roles
- * @param {*} filters
- * @returns
- */
-export async function countAllRolesService(filters) {
-  return RoleModel.countDocuments(filters);
+  return [totalCount, list];
 }
 
 /**
@@ -78,7 +72,7 @@ export async function getRoleByIdService(id) {
     filter.name = id;
   }
 
-  return RoleModel.findOne(filter).select(ROLE_SELECTED_FIELDS).lean();
+  return RoleModel.findOne(filter).lean();
 }
 
 /**
@@ -122,60 +116,122 @@ export async function updateRoleInfoByIdService(id, data) {
   return RoleModel.findByIdAndUpdate(id, data, {
     new: true,
   })
-    .select(ROLE_SELECTED_FIELDS)
-    .lean();
+  .lean();
 }
 
 /**
- * Get list role permission by id
- * @param {*} id
+ * Get list role permissions
+ * @param {string} roleId
+ * @param {object} filters
+ * @param {number} skip
+ * @param {number} limit
+ * @param {string} sortBy
+ * @param {string} sortOrder
  * @returns
  */
-export async function getListRolePermissionsByIdService(id, payload) {
+export async function getAndCountRolePermissionsService(roleId, filters, skip, limit, sortBy, sortOrder) {
   const filterRole = {};
 
-  if (isValidObjectId(id)) {
-    filterRole._id = id;
-  } else if (id.match(REGEX_PATTERNS.SLUG)) {
-    filterRole.slug = id;
+  if (isValidObjectId(roleId)) {
+    filterRole._id = roleId;
+  } else if (roleId.match(REGEX_PATTERNS.SLUG)) {
+    filterRole.slug = roleId;
   } else {
-    filterRole.name = id;
+    filterRole.name = roleId;
   }
 
-  const { filters = {}, page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = payload;
+  const queryOptions = {
+    ...extendQueryOptionsWithPagination(skip, limit),
+    ...extendQueryOptionsWithSort(sortBy, sortOrder),
+  };
 
   const role = await RoleModel.findOne(filterRole)
     .populate({
       path: 'permissions',
       select: PERMISSION_SELECTED_FIELDS,
       ...(filters ? { match: filters } : {}),
-      options: { limit, skip: (page - 1) * limit, sort: { [sortBy]: sortOrder } },
+      options: queryOptions,
     })
     .select('permissions')
     .lean();
 
-  return role.permissions;
+  const rolePermissions = await RoleModel.aggregate([
+    { $match: { ...filterRole, ...(filterRole?._id ? { _id: new Types.ObjectId(filterRole._id) } : {}) } },
+    {
+      $lookup: {
+        from: 'permissions',
+        localField: 'permissions',
+        foreignField: '_id',
+        as: 'rolePermissions',
+        pipeline: [{ $match: filters }],
+      },
+    },
+    {
+      $project: {
+        _id: true,
+        totalCount: {
+          $size: '$rolePermissions',
+        },
+      },
+    },
+  ]);
+
+  return [rolePermissions[0].totalCount, role.permissions];
 }
 
 /**
- * Update role permissions by id
+ * Get role permission
+ * @param {string} roleId
+ * @param {string} permissionId
+ * @returns
+ */
+export async function getRolePermissionService(roleId, permissionId) {
+  return RoleModel.findById(roleId)
+    .populate({
+      path: 'permissions',
+      select: PERMISSION_SELECTED_FIELDS,
+      match: { _id: permissionId },
+    })
+    .select('permissions')
+    .lean();
+}
+
+/**
+ * Add role permission
  * @param {*} id
  * @param {*} permissions
  * @returns
  */
-export async function updateRolePermissionsByIdService(id, permissionIds = []) {
-  const role = await RoleModel.findByIdAndUpdate(
-    id,
+export async function addRolePermissionsService(roleId, permissionIds) {
+  return RoleModel.findByIdAndUpdate(
+    roleId,
     {
-      permissions: permissionIds.filter(Boolean),
+      $addToSet: {
+        permissions: { $each: permissionIds },
+      },
     },
     { new: true },
   )
-    .populate({
-      path: 'permissions',
-      select: PERMISSION_SELECTED_FIELDS,
-    })
     .select('permissions')
     .lean();
-  return role.permissions;
+}
+
+/**
+ * Remove role permission
+ * @param {*} id
+ * @param {*} permissions
+ * @returns
+ */
+export async function removeRolePermissionService(roleId, permissionId) {
+  return RoleModel.findByIdAndUpdate(
+    roleId,
+    {
+      $pull: {
+        permissions: permissionId,
+      },
+    },
+    { new: true },
+  )
+    .select('permissions')
+    .lean();
 }

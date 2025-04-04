@@ -17,7 +17,7 @@ router
   .post('/create-customer', isAuthorizedAndHasPermission, validateBody(CreateCustomerDto), createCustomerController)
   .get('/get-customers', isAuthorizedAndHasPermission, validateQuery(GetListCustomerDto), getAllCustomersController)
   .get('/get-customer-by-id/:customerId', isAuthorizedAndHasPermission, getCustomerByIdController)
-  .patch(
+  .put(
     '/update-customer-by-id/:customerId',
     isAuthorizedAndHasPermission,
     validateBody(UpdateCustomerDto),

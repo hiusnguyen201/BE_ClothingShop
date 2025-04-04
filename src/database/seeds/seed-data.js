@@ -24,88 +24,87 @@ Database.getInstance({ type: 'mongodb', logging: process.env.NODE_ENV === 'devel
  * - Run rs.initiate() in mongo shell
  * - Check replica set is configured: rs.status()
  */
+
+const models = [PERMISSION_MODEL, ROLE_MODEL, USER_MODEL];
+
 async function runSeed() {
-  try {
-    await TransactionalServiceWrapper.execute(async (session) => {
-      /**
-       * Permission
-       */
-      const permissionCollections = await Database.instance.connection.db
-        .listCollections({ name: PERMISSION_MODEL })
-        .toArray();
-      if (permissionCollections.length === 0) {
-        await Database.instance.connection.createCollection(PERMISSION_MODEL);
-      }
-      const permissions = await getOrCreateListPermissionServiceWithTransaction(PERMISSIONS_LIST, session);
+  await TransactionalServiceWrapper.execute(async (session) => {
+    const collections = await Promise.all([
+      Database.instance.connection.db.listCollections({
+        name: { $in: models },
+      }),
+    ]);
 
-      /**
-       * Role
-       */
-      const roleCollections = await Database.instance.connection.db.listCollections({ name: ROLE_MODEL }).toArray();
-      if (roleCollections.length === 0) {
-        await Database.instance.connection.createCollection(ROLE_MODEL);
-      }
-      const role = await getOrCreateRoleServiceWithTransaction(
+    const existingCollections = new Set(collections.map((col) => col.name));
+
+    await Promise.all(
+      models
+        .filter((model) => !existingCollections.has(model))
+        .map((model) => Database.instance.connection.createCollection(model)),
+    );
+
+    /**
+     * Permission
+     */
+    const permissions = await getOrCreateListPermissionServiceWithTransaction(PERMISSIONS_LIST, session);
+
+    /**
+     * Role
+     */
+    const role = await getOrCreateRoleServiceWithTransaction(
+      {
+        name: 'Admin',
+        description: 'This is admin',
+        permissions: permissions.map((p) => p._id),
+      },
+      session,
+    );
+
+    /**
+     * User
+     */
+    await getOrCreateUsersWithTransaction(
+      [
         {
-          name: 'Admin',
-          description: 'This is admin',
-          permissions: permissions.map((p) => p._id),
+          name: 'Admin Verified',
+          email: 'admin123@gmail.com',
+          password: '1234',
+          phone: '0383460015',
+          verifiedAt: new Date(),
+          role: role._id,
+          gender: GENDER.MALE,
+          type: USER_TYPE.USER,
         },
-        session,
-      );
-
-      /**
-       * User
-       */
-      const userCollections = await Database.instance.connection.db.listCollections({ name: USER_MODEL }).toArray();
-      if (userCollections.length === 0) {
-        await Database.instance.connection.createCollection(USER_MODEL);
-      }
-      await getOrCreateUsersWithTransaction(
-        [
-          {
-            name: 'Admin Verified',
-            email: 'admin123@gmail.com',
-            password: '1234',
-            phone: '0383460015',
-            verifiedAt: new Date(),
-            role: role._id,
-            gender: GENDER.MALE,
-            type: USER_TYPE.USER,
-          },
-          {
-            name: 'Admin Unverified',
-            email: 'admin1234@gmail.com',
-            password: '1234',
-            phone: '0383460015',
-            role: role._id,
-            gender: GENDER.MALE,
-            type: USER_TYPE.USER,
-          },
-          {
-            name: 'Customer Verified',
-            email: 'customer123@gmail.com',
-            password: '1234',
-            phone: '0383460015',
-            verifiedAt: new Date(),
-            gender: GENDER.MALE,
-            type: USER_TYPE.CUSTOMER,
-          },
-          {
-            name: 'Customer Unverified',
-            email: 'customer1234@gmail.com',
-            password: '1234',
-            phone: '0383460015',
-            gender: GENDER.MALE,
-            type: USER_TYPE.CUSTOMER,
-          },
-        ],
-        session,
-      );
-    });
-  } catch (err) {
-    console.log(err);
-  }
+        {
+          name: 'Admin Unverified',
+          email: 'admin1234@gmail.com',
+          password: '1234',
+          phone: '0383460015',
+          role: role._id,
+          gender: GENDER.MALE,
+          type: USER_TYPE.USER,
+        },
+        {
+          name: 'Customer Verified',
+          email: 'customer123@gmail.com',
+          password: '1234',
+          phone: '0383460015',
+          verifiedAt: new Date(),
+          gender: GENDER.MALE,
+          type: USER_TYPE.CUSTOMER,
+        },
+        {
+          name: 'Customer Unverified',
+          email: 'customer1234@gmail.com',
+          password: '1234',
+          phone: '0383460015',
+          gender: GENDER.MALE,
+          type: USER_TYPE.CUSTOMER,
+        },
+      ],
+      session,
+    );
+  });
 }
 
 await runSeed();

@@ -27,7 +27,7 @@ const USERS_PERMISSIONS = [
     description: 'Edit user',
     module: 'users',
     endpoint: '/api/users/update-user-by-id/:userId',
-    method: 'PATCH',
+    method: 'PUT',
   },
   {
     name: 'remove:user',
@@ -65,7 +65,7 @@ const ROLES_PERMISSIONS = [
     description: 'Edit role',
     module: 'roles',
     endpoint: '/api/roles/update-role-by-id/:roleId',
-    method: 'PATCH',
+    method: 'PUT',
   },
   {
     name: 'remove:role',
@@ -76,17 +76,24 @@ const ROLES_PERMISSIONS = [
   },
   {
     name: 'read:role_permissions',
-    description: 'View list role permissions',
+    description: 'View role permissions',
     module: 'roles',
-    endpoint: '/api/roles/get-role-permissions-by-id',
+    endpoint: '/api/roles/:roleId/permissions',
     method: 'GET',
   },
   {
-    name: 'edit:role_permissions',
-    description: 'Edit role permissions',
+    name: 'add:role_permissions',
+    description: 'Add role permission',
     module: 'roles',
-    endpoint: '/api/roles/update-role-permissions-by-id',
-    method: 'PUT',
+    endpoint: '/api/roles/:roleId/permissions',
+    method: 'PATCH',
+  },
+  {
+    name: 'remove:role_permissions',
+    description: 'Remove role permission',
+    module: 'roles',
+    endpoint: '/api/roles/:roleId/permissions/:permissionId',
+    method: 'DELETE',
   },
 ];
 
@@ -127,7 +134,7 @@ const CATEGORIES_PERMISSIONS = [
     description: 'Edit category',
     module: 'categories',
     endpoint: '/api/categories/update-category-by-id/:categoryId',
-    method: 'PATCH',
+    method: 'PUT',
   },
   {
     name: 'remove:category',
@@ -163,15 +170,13 @@ const CUSTOMERS_PERMISSIONS = [
   {
     name: 'edit:customer',
     description: 'Edit customer',
-    name: 'Update customer by id',
     module: 'customers',
     endpoint: '/api/customers/update-customer-by-id/:customerId',
-    method: 'PATCH',
+    method: 'PUT',
   },
   {
     name: 'remove:customer',
     description: 'Remove customer',
-    name: 'Remove customer by id',
     module: 'customers',
     endpoint: '/api/customers/remove-customer-by-id/:customerId',
     method: 'DELETE',
@@ -205,7 +210,7 @@ const CUSTOMERS_PERMISSIONS = [
 //     description: 'Edit voucher',
 //     module: 'vouchers',
 //     endpoint: '/api/vouchers/update-voucher-by-id/:voucherId',
-//     method: 'PATCH',
+//     method: 'PUT',
 //   },
 //   {
 //     name: 'remove:voucher',

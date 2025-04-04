@@ -1,7 +1,7 @@
 import Joi from 'joi';
 import { replaceMultiSpacesToSingleSpace } from '#src/utils/string.util';
 
-export const GetListRolePermissionsDto = Joi.object({
+export const GetListUserPermissionsDto = Joi.object({
   keyword: Joi.string()
     .default('')
     .allow('')
@@ -10,5 +10,4 @@ export const GetListRolePermissionsDto = Joi.object({
   limit: Joi.number().min(10).max(500).default(10),
   sortBy: Joi.string().valid('name', 'createdAt').default('createdAt'),
   sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
-  roleId: Joi.string().required(),
 });

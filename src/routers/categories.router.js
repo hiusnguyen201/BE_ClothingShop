@@ -29,7 +29,7 @@ router
   )
   .get('/get-categories', isAuthorizedAndHasPermission, validateQuery(GetListCategoryDto), getAllCategoriesController)
   .get('/get-category-by-id/:categoryId', isAuthorizedAndHasPermission, getCategoryByIdController)
-  .patch(
+  .put(
     '/update-category-by-id/:categoryId',
     isAuthorizedAndHasPermission,
     UploadUtils.single({ field: 'image' }),

@@ -7,7 +7,6 @@ import rolesRouter from '#src/routers/roles.router';
 import permissionsRouter from '#src/routers/permissions.router';
 import customersRouter from '#src/routers/customers.router';
 import categoriesRouter from '#src/routers/categories.router';
-import vouchersRouter from '#src/routers/vouchers.router';
 import accountRouter from '#src/routers/account.router';
 
 router.get('/ping', () => {
@@ -27,7 +26,5 @@ router.use('/permissions', permissionsRouter);
 router.use('/categories', categoriesRouter);
 
 router.use('/customers', customersRouter);
-
-router.use('/vouchers', vouchersRouter);
 
 export default router;

@@ -76,6 +76,10 @@ export const loginAdminController = async (req, res) => {
     throw HttpException.new({ code: Code.UNAUTHORIZED, overrideMessage: 'Invalid Credentials' });
   }
 
+  const { accessToken, refreshToken } = await generateTokensService(user._id, { id: user._id });
+
+  setSession(res, { accessToken, refreshToken });
+
   const userDto = ModelDto.new(UserDto, user);
 
   return ApiResponse.success(

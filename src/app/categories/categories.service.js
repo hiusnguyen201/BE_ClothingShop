@@ -7,7 +7,7 @@ import { CATEGORY_SELECTED_FIELDS } from '#src/app/categories/categories.constan
 
 /**
  * Create category instance
- * @param {*} data
+ * @param {object} data
  * @returns
  */
 export async function createCategoryService(data) {
@@ -15,32 +15,30 @@ export async function createCategoryService(data) {
 }
 
 /**
- * Get all categories
- * @param {*} query
+ * Get and count categories
+ * @param {object} filters
+ * @param {number} skip
+ * @param {number} limit
+ * @param {string} sortBy
+ * @param {string} sortOrder
  * @returns
  */
-export async function getAllCategoriesService(payload) {
-  const { filters = {}, page, limit, sortBy, sortOrder } = payload;
+export async function getAndCountCategoriesService(filters, skip, limit, sortBy, sortOrder) {
+  const totalCount = await CategoryModel.countDocuments(filters);
 
-  let queryOptions = {};
-  queryOptions = extendQueryOptionsWithPagination({ page, limit }, queryOptions);
-  queryOptions = extendQueryOptionsWithSort({ sortBy, sortOrder }, queryOptions);
+  const queryOptions = {
+    ...extendQueryOptionsWithPagination(skip, limit),
+    ...extendQueryOptionsWithSort(sortBy, sortOrder),
+  };
 
-  return CategoryModel.find(filters, CATEGORY_SELECTED_FIELDS, queryOptions).lean();
-}
+  const list = await CategoryModel.find(filters, CATEGORY_SELECTED_FIELDS, queryOptions).lean();
 
-/**
- * Count all categories
- * @param {*} filters
- * @returns
- */
-export async function countAllCategoriesService(filters) {
-  return CategoryModel.countDocuments(filters);
+  return [totalCount, list];
 }
 
 /**
  * Get one category by id
- * @param {*} id
+ * @param {string} id
  * @returns
  */
 export async function getCategoryByIdService(id) {
