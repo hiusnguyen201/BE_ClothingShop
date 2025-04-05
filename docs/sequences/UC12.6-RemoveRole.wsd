@@ -1,0 +1,180 @@
+@startuml 
+header Page Header
+actor       User       
+boundary    ListRolePage 
+participant ErrorMiddleware
+participant AsyncHandler
+participant JwtAuthMiddleware
+participant CookieUtil
+participant AuthService
+participant Jsonwebtoken
+participant UsersService
+entity      UserModel  
+control     RolesController  
+participant RolesService
+entity      RoleModel     
+database    Database 
+
+title UC12.6: Remove Role
+
+activate User
+User -> ListRolePage : Click to view details button
+activate ListRolePage
+ListRolePage -> AsyncHandler: request role details
+activate AsyncHandler
+AsyncHandler -> JwtAuthMiddleware: authorized()
+activate JwtAuthMiddleware
+
+' Check Access Token provided
+alt Access token not provided
+    JwtAuthMiddleware -> CookieUtil: clearSession
+    activate CookieUtil
+    CookieUtil -> JwtAuthMiddleware: return void
+    deactivate CookieUtil
+    JwtAuthMiddleware -> AsyncHandler: next(error 401)
+    AsyncHandler -> ErrorMiddleware:  next(error 401)
+    activate ErrorMiddleware
+    ErrorMiddleware -> ListRolePage: response error (401)
+    deactivate ErrorMiddleware
+    ListRolePage -> User: Display error message
+end alt
+' =========================================================
+
+JwtAuthMiddleware -> AuthService: verifyTokenService()
+activate AuthService
+AuthService -> Jsonwebtoken: verify()
+activate Jsonwebtoken
+
+' Check decoded token
+alt Decode token return null
+    Jsonwebtoken -> AuthService: throw Error
+    AuthService -> JwtAuthMiddleware: return null
+    JwtAuthMiddleware -> AsyncHandler: next(error 401)
+    AsyncHandler -> ErrorMiddleware:  next(error 401)
+    activate ErrorMiddleware
+    ErrorMiddleware -> ListRolePage: response error (401)
+    deactivate ErrorMiddleware
+    ListRolePage -> User: Display error message
+end alt
+' =========================================================
+
+    Jsonwebtoken -> AuthService: return data
+    deactivate Jsonwebtoken
+    AuthService -> JwtAuthMiddleware: return data
+    deactivate AuthService
+    JwtAuthMiddleware -> UsersService: getUserByIdService()
+    activate UsersService
+    UsersService -> UserModel: findOne()
+    activate UserModel
+    UserModel -> Database: findOne()
+    activate Database
+
+' Check user exist
+alt User don't exist
+    Database -> UserModel: Return null
+    UserModel -> UsersService: Return null
+    UsersService -> JwtAuthMiddleware: Return null
+    JwtAuthMiddleware -> AsyncHandler: next(error 401)
+    AsyncHandler -> ErrorMiddleware:  next(error 401)
+    activate ErrorMiddleware
+    ErrorMiddleware -> ListRolePage: response error (401)
+    deactivate ErrorMiddleware
+    ListRolePage -> User: Display error message
+else Unverified User
+    Database -> UserModel: Return Data
+    UserModel -> UsersService: Return Data
+    UsersService -> JwtAuthMiddleware: Return Data
+    JwtAuthMiddleware -> AsyncHandler: next(error 403)
+    AsyncHandler -> ErrorMiddleware:  next(error 403)
+    activate ErrorMiddleware
+    ErrorMiddleware -> ListRolePage: response error (403)
+    deactivate ErrorMiddleware
+    ListRolePage -> User: Display error message
+end alt
+'==========================================================
+
+    Database -> UserModel: Return data
+    deactivate Database
+    UserModel -> UsersService: Return data
+    deactivate UserModel
+    UsersService -> JwtAuthMiddleware: Return data
+    deactivate UsersService
+    JwtAuthMiddleware -> AsyncHandler: next()
+    deactivate JwtAuthMiddleware
+    AsyncHandler -> JwtAuthMiddleware: checkPermission()
+    activate JwtAuthMiddleware
+    JwtAuthMiddleware -> UsersService: checkUserHasPermissionByMethodAndEndpointService()
+    activate UsersService
+    UsersService -> UserModel: findById()
+    activate UserModel
+    UserModel -> Database: findById()
+    activate Database
+    Database -> UserModel: Return data
+    deactivate Database
+    UserModel -> UsersService: Return data
+    deactivate UserModel
+
+' check permission
+alt User don't have permission 
+    UsersService -> JwtAuthMiddleware: Return false
+    JwtAuthMiddleware -> AsyncHandler: next(error 403)
+    AsyncHandler -> ErrorMiddleware:  next(error 403)
+    activate ErrorMiddleware
+    ErrorMiddleware -> ListRolePage: response error (403)
+    deactivate ErrorMiddleware
+    ListRolePage -> User: Display error message
+end alt
+'==========================================================
+    UsersService -> JwtAuthMiddleware: Return true
+    deactivate UsersService
+    JwtAuthMiddleware -> AsyncHandler: next()
+    deactivate JwtAuthMiddleware
+    AsyncHandler -> RolesController: removeRoleByIdController()
+    activate RolesController
+    RolesController -> RolesService: getRoleByIdService()
+    activate RolesService
+    RolesService -> RoleModel: findOne()
+    activate RoleModel
+    RoleModel -> Database: findOne()
+    activate Database
+' Check role exist
+alt Role don't exist
+    Database -> RoleModel: Return null
+    RoleModel -> RolesService: Return null
+    RolesService -> RolesController: Return null
+    RolesController -> AsyncHandler: next(error 404)
+    AsyncHandler -> ErrorMiddleware:  next(error 404)
+    activate ErrorMiddleware
+    ErrorMiddleware -> ListRolePage: response error (404)
+    deactivate ErrorMiddleware
+    ListRolePage -> User: Display error message
+end alt
+'==========================================================
+
+    Database -> RoleModel: Return data
+    deactivate Database
+    RoleModel -> RolesService: Return data
+    deactivate RoleModel
+    RolesService -> RolesController: Return data
+    deactivate RolesService
+    RolesController -> RolesService: removeRoleByIdService()
+    activate RolesService
+    RolesService -> RoleModel: findByIdAndSoftDelete()
+    activate RoleModel
+    RoleModel -> Database: findByIdAndSoftDelete()
+    activate Database
+    Database -> RoleModel: Return data
+    deactivate Database
+    RoleModel -> RolesService: Return data
+    deactivate RoleModel
+    RolesService -> RolesController: Return data
+    deactivate RolesService
+    RolesController -> AsyncHandler: return data
+    deactivate RolesController
+    AsyncHandler -> ListRolePage: response data(200)
+    deactivate AsyncHandler
+    ListRolePage -> User: Display success message
+    deactivate ListRolePage
+
+
+@enduml
