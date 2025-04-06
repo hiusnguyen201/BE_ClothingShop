@@ -36,6 +36,7 @@ export const createUserController = async (req) => {
     if (!existRole) {
       throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' });
     }
+    req.body.role = existRole._id;
   }
 
   const password = randomStr(32);
@@ -93,7 +94,7 @@ export const getUserByIdController = async (req) => {
 
 export const updateUserByIdController = async (req) => {
   const { userId } = req.params;
-  const { email, roleId = null } = req.body;
+  const { email, roleId } = req.body;
 
   const existUser = await getUserByIdService(userId, { type: USER_TYPE.USER });
   if (!existUser) {

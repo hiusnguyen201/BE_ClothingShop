@@ -115,8 +115,7 @@ export async function updateRoleInfoByIdService(id, data) {
 
   return RoleModel.findByIdAndUpdate(id, data, {
     new: true,
-  })
-  .lean();
+  }).lean();
 }
 
 /**
@@ -145,6 +144,7 @@ export async function getAndCountRolePermissionsService(roleId, filters, skip, l
     ...extendQueryOptionsWithSort(sortBy, sortOrder),
   };
 
+  // Get List
   const role = await RoleModel.findOne(filterRole)
     .populate({
       path: 'permissions',
@@ -155,6 +155,7 @@ export async function getAndCountRolePermissionsService(roleId, filters, skip, l
     .select('permissions')
     .lean();
 
+  // Count
   const rolePermissions = await RoleModel.aggregate([
     { $match: { ...filterRole, ...(filterRole?._id ? { _id: new Types.ObjectId(filterRole._id) } : {}) } },
     {
@@ -176,7 +177,7 @@ export async function getAndCountRolePermissionsService(roleId, filters, skip, l
     },
   ]);
 
-  return [rolePermissions[0].totalCount, role.permissions];
+  return [rolePermissions.length > 0 ? rolePermissions[0]?.totalCount : 0, role.permissions];
 }
 
 /**

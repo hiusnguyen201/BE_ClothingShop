@@ -5,6 +5,7 @@ import { REGEX_PATTERNS } from '#src/core/constant';
 import { USER_SELECTED_FIELDS } from '#src/app/users/users.constant';
 import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
 import { PERMISSION_SELECTED_FIELDS } from '#src/app/permissions/permissions.constant';
+import { ROLE_SELECTED_FIELDS } from '#src/app/roles/roles.constant';
 
 /**
  * Create user
@@ -60,7 +61,9 @@ export async function getAndCountUsersService(filters, skip, limit, sortBy, sort
     ...extendQueryOptionsWithSort(sortBy, sortOrder),
   };
 
-  const list = await UserModel.find(filters, USER_SELECTED_FIELDS, queryOptions).lean();
+  const list = await UserModel.find(filters, USER_SELECTED_FIELDS, queryOptions)
+    .populate({ path: 'role', select: ROLE_SELECTED_FIELDS })
+    .lean();
 
   return [totalCount, list];
 }
@@ -143,7 +146,7 @@ export async function updateUserInfoByIdService(id, data) {
     .lean();
 }
 
-export async function checkUserHasPermissionByMethodAndEndpointService(id, { method, endpoint }) {
+export async function checkUserHasPermissionService(id, method, endpoint) {
   const user = await UserModel.findById(id)
     .lean()
     .select('role')

@@ -1,7 +1,7 @@
 export const extendQueryOptionsWithPagination = (skip, limit) => {
   const options = {};
 
-  if (skip) {
+  if (skip || skip === 0) {
     options.skip = skip;
   }
   if (limit) {

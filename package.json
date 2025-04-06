@@ -20,6 +20,7 @@
     "seed:prod": "cross-env NODE_ENV=production node --env-file=env/.env.production ./src/database/seeds/seed-data.js",
     "drop-db:dev": "cross-env NODE_ENV=development  node --env-file=env/.env.development ./src/database/drop-database.js",
     "drop-db:prod": "cross-env NODE_ENV=production  node --env-file=env/.env.production ./src/database/drop-database.js",
+    "reset-db:dev": "npm run drop-db:dev && npm run seed:dev",
     "reset-db:prod": "npm run drop-db:prod && npm run seed:prod"
   },
   "dependencies": {

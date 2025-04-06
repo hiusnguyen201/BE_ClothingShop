@@ -107,7 +107,7 @@ export const isExistRoleNameController = async (req) => {
   return ApiResponse.success(existRoleName, existRoleName ? 'Role name exists' : 'Role name does not exist');
 };
 
-export const getRolePermissionsController = async (req) => {
+export const getAssignedRolePermissionsController = async (req) => {
   const { roleId } = req.params;
   const existRole = await getRoleByIdService(roleId);
   if (!existRole) {
@@ -117,43 +117,59 @@ export const getRolePermissionsController = async (req) => {
   const { keyword = '', page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
 
   const searchFields = ['name', 'description', 'module'];
-  const assignedFilters = {
+  const filters = {
     $or: searchFields.map((field) => ({
       [field]: { $regex: keyword, $options: 'i' },
     })),
   };
 
   const skip = (page - 1) * limit;
-  const [assignedTotalCount, assignedPermissions] = await getAndCountRolePermissionsService(
+  const [totalCount, permissions] = await getAndCountRolePermissionsService(
     roleId,
-    assignedFilters,
+    filters,
     skip,
     limit,
     sortBy,
     sortOrder,
   );
 
-  const unassignedFilters = {
-    _id: { $nin: existRole.permissions.map((item) => item._id) },
-  };
-  const [unassignedTotalCount, unassignedPermissions] = await getAndCountPermissionsService(
-    unassignedFilters,
-    skip,
-    limit,
-    sortBy,
-    sortOrder,
-  );
-
-  const assignedPermissionsDto = ModelDto.newList(PermissionDto, assignedPermissions);
-  const unassignedPermissionsDto = ModelDto.newList(PermissionDto, unassignedPermissions);
+  const permissionsDto = ModelDto.newList(PermissionDto, permissions);
   return ApiResponse.success(
     {
-      assignedTotalCount,
-      assignedList: assignedPermissionsDto,
-      unassignedTotalCount,
-      unassignedList: unassignedPermissionsDto,
+      totalCount,
+      list: permissionsDto,
     },
-    'Get all role permissions successful',
+    'Get all assigned role permissions successful',
+  );
+};
+
+export const getUnassignedRolePermissionsController = async (req) => {
+  const { roleId } = req.params;
+  const existRole = await getRoleByIdService(roleId);
+  if (!existRole) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' });
+  }
+
+  const { keyword = '', page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+
+  const searchFields = ['name', 'description', 'module'];
+
+  const skip = (page - 1) * limit;
+  const filters = {
+    $or: searchFields.map((field) => ({
+      [field]: { $regex: keyword, $options: 'i' },
+    })),
+    _id: { $nin: existRole.permissions.map((item) => item._id) },
+  };
+  const [totalCount, permissions] = await getAndCountPermissionsService(filters, skip, limit, sortBy, sortOrder);
+
+  const permissionsDto = ModelDto.newList(PermissionDto, permissions);
+  return ApiResponse.success(
+    {
+      totalCount,
+      list: permissionsDto,
+    },
+    'Get all unassigned role permissions successful',
   );
 };
 

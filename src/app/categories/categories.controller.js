@@ -1,36 +1,37 @@
 'use strict';
 import { HttpException } from '#src/core/exception/http-exception';
 import {
-  createCategoryService,
   getCategoryByIdService,
   updateCategoryInfoByIdService,
   removeCategoryByIdService,
   checkExistCategoryNameService,
   getAndCountCategoriesService,
+  newCategoryService,
+  saveCategoryService,
 } from '#src/app/categories/categories.service';
 import { CategoryDto } from '#src/app/categories/dtos/category.dto';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
 import { Code } from '#src/core/code/Code';
-
-const MAXIMUM_CHILDREN_CATEGORY_LEVEL = 2;
+import { MAXIMUM_CHILDREN_CATEGORY_LEVEL } from '#src/app/categories/categories.constant';
 
 export const createCategoryController = async (req) => {
   const { name, parentId, image } = req.body;
-  let level = 1;
 
   const isExistName = await checkExistCategoryNameService(name);
   if (isExistName) {
     throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Category name already exists' });
   }
 
+  const category = await newCategoryService({ ...req.body, level: 1 });
+
   if (parentId) {
     const existParent = await getCategoryByIdService(parentId);
-
     if (!existParent) {
       throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Parent category not found' });
     }
+    category.parent = existParent._id;
 
     const nextCategoryLevel = existParent.level + 1;
     if (nextCategoryLevel > MAXIMUM_CHILDREN_CATEGORY_LEVEL) {
@@ -39,15 +40,15 @@ export const createCategoryController = async (req) => {
         overrideMessage: `Parent category has a maximum ${MAXIMUM_CHILDREN_CATEGORY_LEVEL} levels only`,
       });
     }
-    level = nextCategoryLevel;
+    category.level = nextCategoryLevel;
   }
 
-  if (image instanceof Buffer) {
+  if (image) {
     const result = await uploadImageBufferService({ buffer: req.file.buffer, folderName: 'categories-image' });
-    req.body.image = result.url;
+    category.image = result.url;
   }
 
-  const category = await createCategoryService({ ...req.body, level });
+  await saveCategoryService(category);
 
   const categoryDto = ModelDto.new(CategoryDto, category);
   return ApiResponse.success(categoryDto, 'Create category successful');
@@ -96,7 +97,7 @@ export const updateCategoryByIdController = async (req) => {
     throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Category name already exist' });
   }
 
-  if (image) {
+  if (image instanceof Buffer) {
     const result = await uploadImageBufferService({ buffer: req.file.buffer, folderName: 'categories-image' });
     req.body.image = result.url;
   }

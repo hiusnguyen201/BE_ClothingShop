@@ -75,10 +75,17 @@ const ROLES_PERMISSIONS = [
     method: 'DELETE',
   },
   {
-    name: 'read:role_permissions',
-    description: 'View role permissions',
+    name: 'read:assigned_role_permissions',
+    description: 'View list assigned role permissions',
     module: 'roles',
-    endpoint: '/api/roles/:roleId/permissions',
+    endpoint: '/api/roles/:roleId/assigned-permissions',
+    method: 'GET',
+  },
+  {
+    name: 'read:unassigned_role_permissions',
+    description: 'View list unassigned role permissions',
+    module: 'roles',
+    endpoint: '/api/roles/:roleId/unassigned-permissions',
     method: 'GET',
   },
   {

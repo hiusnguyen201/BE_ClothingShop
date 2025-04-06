@@ -9,6 +9,26 @@ const options = {
   stripUnknown: true, //  when true, ignores unknown keys with a function value. Defaults to false.
 };
 
+function convertId(obj) {
+  if (Array.isArray(obj)) {
+    return obj.map(convertId);
+  } else if (obj && typeof obj === 'object') {
+    const result = {};
+
+    for (const [key, value] of Object.entries(obj)) {
+      if (key === '_id') {
+        result['id'] = value.toString();
+      } else {
+        result[key] = convertId(value);
+      }
+    }
+
+    return result;
+  }
+
+  return obj;
+}
+
 export class ModelDto {
   static new(schema, data) {
     if (data && data instanceof mongoose.Document) {
@@ -24,8 +44,7 @@ export class ModelDto {
     }
 
     // Convert _id to id
-    value = { id: value._id, ...value };
-    delete value._id;
+    value = convertId(value);
 
     return value;
   }

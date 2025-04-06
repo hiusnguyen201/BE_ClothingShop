@@ -1,83 +1,142 @@
-@startuml
-actor       User       
-boundary    LoginPage 
-participant RequestValidation
-control     UserController  
-participant UserService
-entity      UserModel     
-database    Database 
+@startuml Create Role Feature
 
-activate User
-User -> LoginPage : Access to login page
-activate LoginPage
+' Participants
+actor "Frontend" as FE
+box "Application Layer" #LightBlue
+participant "Express:App" as App
+participant "Async:Handler" as AsyncHandler
+participant "Error:Middleware" as ErrorMiddleware
+end box
 
-LoginPage -> User: Display a login form
-User -> LoginPage : Enter email and password
-User -> LoginPage : Submits login form
+box "Authentication" #LightYellow
+participant "JwtAuth:Middleware" as AuthMiddleware
+participant "Auth:Service" as AuthService
+participant "JWT" as JWT
+end box
 
-LoginPage -> RequestValidation: Validates request
-activate RequestValidation
+box "Authorization" #LightGreen
+participant "Users:Service" as UserService
+participant "User:Model" as UserModel
+end box
 
-alt Valid data
-    RequestValidation -> UserController : Send body
-    activate UserController
+box "Validation" #LightPink
+participant "Validator:Middleware" as Validator
+end box
 
-    UserController -> UserService : Get user (email)
-    activate UserService
+box "Business Logic" #LightGray
+participant "Roles:Controller" as Controller
+participant "Roles:Service" as Service
+participant "Role:Model" as RoleModel
+participant "Model:Dto" as Dto
+participant "Api:Response" as Response
+end box
 
-    UserService -> UserModel: Find user (email)
-    activate UserModel
+database MongoDB as DB
 
-    UserModel -> Database : Find user (email)
-    activate Database
-
-    alt User found
-        Database -> UserModel: Return user document
-
-        UserModel -> UserService: Return user document
-
-        UserService -> UserController: Return user document
-
-        ' Compare Password
-        UserController -> UserController: Compare password
-        alt Correct password
-            ' Check need 2FA
-            UserController -> UserController: Check need 2FA
-            alt Don't need 2FA
-                UserController -> UserController: Create access token and refresh token
-            end
-
-            UserController -> LoginPage: Response data
-
-            LoginPage -> User: Redirect user based on response data
-        else Incorrect password
-            UserController -> LoginPage: Response error (401)
-
-            LoginPage -> User: Display error message
-        end
-        
-    else User not found
-        Database -> UserModel: Return null
-        deactivate Database
-
-        UserModel -> UserService: Return null
-        deactivate UserModel
-
-        UserService -> UserController: Return null
-        deactivate UserService
-
-        UserController -> LoginPage: Response error (401)
-        deactivate UserController
-
-        LoginPage -> User: Display error message 
-    end
-else Invalid data
-    RequestValidation -> LoginPage : Response error (400)
-    deactivate RequestValidation
-
-    LoginPage -> User: Display detailed error
+' Main Flow
+group Request Initialization
+    FE -> App: POST /api/roles
+    activate App
+    App -> AsyncHandler: asyncHandler(createRoleController)
+    activate AsyncHandler
 end
 
-deactivate LoginPage
+group Authentication Flow
+    AsyncHandler -> AuthMiddleware: isAuthorizedAndHasPermission
+    activate AuthMiddleware
+    
+    group Token Validation
+        AuthMiddleware -> AuthMiddleware: extractToken(req.cookies)
+        AuthMiddleware -> AuthService: verifyTokenService(token)
+        activate AuthService
+        AuthService -> JWT: verify(token, SECRET)
+        
+        alt token invalid
+            JWT --> AuthService: Error
+            AuthService --> AuthMiddleware: null
+            AuthMiddleware -> ErrorMiddleware: next(error)
+            ErrorMiddleware --> FE: HTTP 401 Unauthorized
+        else token valid
+            JWT --> AuthService: decoded
+            AuthService --> AuthMiddleware: decoded
+        end
+        deactivate AuthService
+    end
+end
+
+group Authorization Flow
+    AuthMiddleware -> UserService: checkPermission(userId, "POST", "/api/roles")
+    activate UserService
+    UserService -> UserModel: findUserWithPermissions(id)
+    UserModel -> DB: Aggregate query
+    
+    alt no permission
+        DB --> UserModel: permissions[]
+        UserModel --> UserService: false
+        UserService -> ErrorMiddleware: next(error)
+        ErrorMiddleware --> FE: HTTP 403 Access Denied
+    else has permission
+        DB --> UserModel: permissions
+        UserModel --> UserService: true
+        UserService --> AsyncHandler: next()
+    end
+    deactivate UserService
+    deactivate AuthMiddleware
+end
+
+group Validation Flow
+    AsyncHandler -> Validator: validateBody(CreateRoleDto)
+    activate Validator
+    
+    alt validation error
+        Validator -> ErrorMiddleware: next(error)
+        ErrorMiddleware --> FE: HTTP 400 Bad Request
+    else validation ok
+        Validator --> AsyncHandler: next()
+    end
+    deactivate Validator
+end
+
+group Business Logic Flow
+    AsyncHandler -> Controller: createRole(req)
+    activate Controller
+    
+    group Check Existing Role
+        Controller -> Service: checkExistRoleName(name)
+        activate Service
+        Service -> RoleModel: findOne({name})
+        RoleModel -> DB: Query
+        
+        alt name exists
+            DB --> RoleModel: role
+            RoleModel --> Service: true
+            Service -> ErrorMiddleware: next(error)
+            ErrorMiddleware --> FE: HTTP 409 Conflict
+        else name available
+            DB --> RoleModel: null
+            RoleModel --> Service: false
+            
+            group Create Role
+                Controller -> Service: createRole(data)
+                Service -> RoleModel: create(data)
+                RoleModel -> DB: Insert
+                DB --> RoleModel: newRole
+                RoleModel --> Service: newRole
+                Service --> Controller: newRole
+                
+                Controller -> Dto: transform(RoleDto, newRole)
+                Dto --> Controller: roleDto
+                Controller -> Response: ApiResponse.success(roleDto)
+                Response --> AsyncHandler: response
+                AsyncHandler --> FE: HTTP 200 Success
+            end
+        end
+        deactivate Service
+    end
+    deactivate Controller
+end
+
+deactivate AsyncHandler
+deactivate App
 
 @enduml

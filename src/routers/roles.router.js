@@ -8,9 +8,10 @@ import {
   updateRoleByIdController,
   removeRoleByIdController,
   isExistRoleNameController,
-  getRolePermissionsController,
+  getAssignedRolePermissionsController,
   addRolePermissionsController,
   removeRolePermissionController,
+  getUnassignedRolePermissionsController,
 } from '#src/app/roles/roles.controller';
 import { CreateRoleDto } from '#src/app/roles/dtos/create-role.dto';
 import { UpdateRoleDto } from '#src/app/roles/dtos/update-role.dto';
@@ -18,9 +19,10 @@ import { validateBody, validateParams, validateQuery } from '#src/core/validatio
 import { CheckExistRoleNameDto } from '#src/app/roles/dtos/check-exist-role-name.dto';
 import { isAuthorizedAndHasPermission } from '#src/middlewares/jwt-auth.middleware';
 import { GetListRoleDto } from '#src/app/roles/dtos/get-list-role.dto';
-import { GetRolePermissionsDto } from '#src/app/roles/dtos/get-role-permissions.dto';
+import { GetAssignedRolePermissionsDto } from '#src/app/roles/dtos/get-assigned-role-permissions.dto';
 import { RemoveRolePermissionDto } from '#src/app/roles/dtos/remove-role-permission.dto';
 import { AddRolePermissionsDto } from '#src/app/roles/dtos/add-role-permissions.dto';
+import { GetUnassignedRolePermissionsDto } from '#src/app/roles/dtos/get-unassigned-role-permissions.dto';
 
 router.post('/is-exist-role-name', validateBody(CheckExistRoleNameDto), isExistRoleNameController);
 
@@ -36,10 +38,16 @@ router
   )
   .delete('/remove-role-by-id/:roleId', isAuthorizedAndHasPermission, removeRoleByIdController)
   .get(
-    '/:roleId/permissions',
+    '/:roleId/assigned-permissions',
     isAuthorizedAndHasPermission,
-    validateQuery(GetRolePermissionsDto),
-    getRolePermissionsController,
+    validateQuery(GetAssignedRolePermissionsDto),
+    getAssignedRolePermissionsController,
+  )
+  .get(
+    '/:roleId/unassigned-permissions',
+    isAuthorizedAndHasPermission,
+    validateQuery(GetUnassignedRolePermissionsDto),
+    getUnassignedRolePermissionsController,
   )
   .patch(
     '/:roleId/permissions',
