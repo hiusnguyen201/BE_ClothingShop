@@ -14,10 +14,9 @@ import paymentsRouter from '#src/routers/payments.route';
 import orderDetailsRouter from '#src/routers/order-details.router';
 import productsRouter from '#src/routers/products.router';
 import shippingAddressRouter from '#src/routers/shipping-address.router';
-import productsRouter from "#src/routers/products.route";
 import productDiscountsRouter from "#src/routers/product-discounts.route";
-import productReviewsRouter from '#src/routers/product-reviews.route';
-import reviewFeedbacksRouter from '#src/routers/review-feedbacks.route';
+// import productReviewsRouter from '#src/routers/product-reviews.route';
+// import reviewFeedbacksRouter from '#src/routers/review-feedbacks.route';
 // import tagsRouter from "#src/routers/tags.route";
 import { OptionValueModel } from "#src/app/option-values/models/option-value.model";
 
@@ -55,9 +54,9 @@ router.use("/products", productsRouter);
 
 router.use("/product-discounts", productDiscountsRouter);
 
-router.use("/product-reviews", productReviewsRouter);
+// router.use("/product-reviews", productReviewsRouter);
 
-router.use("/review-feedbacks", reviewFeedbacksRouter);
+// router.use("/review-feedbacks", reviewFeedbacksRouter);
 
 // router.use("/product-variants", productVariantsRouter);
 

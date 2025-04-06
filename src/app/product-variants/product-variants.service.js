@@ -4,9 +4,6 @@ import { ProductVariantModel } from "#src/app/product-variants/models/product-va
 const SELECTED_FIELDS =
   "_id quantity price sku image sold variantValues product productDiscount createdAt updatedAt";
 
-
-
-
 /**
  * New product variant instance
  * @param {*} data
@@ -85,7 +82,32 @@ export async function getProductVariantByIdService(
     filter.product;
   }
 
-  return await ProductVariantModel.findOne(filter).select(selectFields);
+  return await ProductVariantModel.findOne(filter)
+    .select(selectFields)
+    .populate({
+      path: 'product',
+      model: 'Product',
+      select: '-productVariants'
+    })
+    .populate({
+      path: 'variantValues',
+      model: 'productVariants',
+      populate: [
+        {
+          path: 'option',
+          model: 'Option',
+          select: '-optionValues'
+        },
+        {
+          path: "optionValue",
+          model: 'Option_Value'
+        }
+      ],
+    })
+    .populate({
+      path: 'productDiscount',
+      model: 'Product_Discount'
+    });
 }
 
 /**

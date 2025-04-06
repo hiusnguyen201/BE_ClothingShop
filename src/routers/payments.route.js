@@ -7,7 +7,7 @@ import {
   returnPaymentMoMoController,
   returnPaymentVnPayController,
 } from '#src/app/payments/payments.controller';
-import { createPaymentDto } from '#src/app/payments/dto/create-payments.dto';
+import { createPaymentDto } from '#src/app/payments/dtos/create-payments.dto';
 
 const router = express.Router();
 

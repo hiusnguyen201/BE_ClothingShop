@@ -1,25 +1,47 @@
-import { OrderModel } from '#src/app/orders/schema/orders.schema';
+import { OrderModel } from '#src/app/orders/models/orders.model';
+import { isValidObjectId } from 'mongoose';
 
-export async function createOrderService(data, session) {
-  if (session) {
-    const result = await OrderModel.create([data], { session });
-    return result[0];
-  }
-  return await OrderModel.create(data);
+/**
+ * New order
+ * @param {*} data
+ * @returns
+ */
+export function newOrderService(data) {
+  return new OrderModel(data);
 }
+
+export async function createOrdersService(data, session) {
+  return await OrderModel.create(data, { session });
+}
+
 export async function getAllOrdersByUserService({ filters, offset = 0, limit = 10, sortOptions }) {
   return await OrderModel.find(filters).skip(offset).limit(limit).sort(sortOptions).lean();
 }
 
+/**
+ * Find one order by id
+ * @param {*} id
+ * @returns
+ */
 export async function getOrderByIdService(orderId) {
+  if (!orderId) return null;
+  const filter = {};
+
+  if (isValidObjectId(orderId)) {
+    filter._id = orderId;
+  } else {
+    return null;
+  }
+
   return await OrderModel.findOne({
     _id: orderId,
   }).populate('paymentId');
 }
 
-export async function updateOrderByIdService(orderId, data) {
+export async function updateOrderByIdService(orderId, data, session) {
   return await OrderModel.findByIdAndUpdate(orderId, data, {
     new: true,
+    session
   });
 }
 
@@ -31,11 +53,10 @@ export async function countAllOrdersService(filters) {
   return OrderModel.countDocuments(filters);
 }
 
-export const calculateOrderTotalService = async (productVariantDetails, voucher) => {
+export const calculateOrderTotalService = async (productVariantDetails) => {
   let subTotal = 0;
   let totalQuantity = 0;
   let shippingFee = 0;
-  let discountVoucher = 0;
   let discountProduct = 0;
 
   const orderDetails = productVariantDetails.map((variant) => {
@@ -44,11 +65,6 @@ export const calculateOrderTotalService = async (productVariantDetails, voucher)
     totalQuantity += variant.quantity;
     return { ...variant, totalPrice, discountProduct };
   });
-  if (voucher && voucher.isFixed) {
-    discountVoucher = voucher.discount;
-  } else if (voucher) {
-    discountVoucher = (subTotal * voucher.discount) / 100;
-  }
 
   //fee
   const total = subTotal + shippingFee - discountVoucher;

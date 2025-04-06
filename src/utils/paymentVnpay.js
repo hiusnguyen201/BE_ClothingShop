@@ -31,7 +31,7 @@ export const createVnpayPayment = async (orderId, amountOder, orderCode) => {
   var date = new Date();
 
   var createDate = moment(date).format('YYYYMMDDHHmmss');
-  var amount = amountOder;
+  var amount = 100000;
 
   var orderInfo = `Payment via ${PAYMENT_METHOD.VNPAY} ${orderCode}`;
   var orderType = 'other';

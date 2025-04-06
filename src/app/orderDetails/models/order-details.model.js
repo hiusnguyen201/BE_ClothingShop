@@ -19,13 +19,11 @@ export const orderDetailSchema = new Schema(
     },
     isFixed: {
       type: Boolean,
-      required: true,
-      default: false,
+      default: null,
     },
     discount: {
       type: Number,
-      required: false,
-      default: 0,
+      default: null,
     },
     // Foreign Key
     // roles: [{ type: Schema.Types.ObjectId, ref: "Role" }],

@@ -39,7 +39,6 @@ export const orderSchema = new Schema(
       type: String,
       required: true,
     },
-    shippingAddressId: { type: Schema.Types.ObjectId, ref: 'ShippingAddress', required: true },
 
     orderDate: {
       type: Date,
@@ -67,37 +66,30 @@ export const orderSchema = new Schema(
       type: Number,
       required: true,
     },
-    isPaid: {
-      type: Boolean,
-      required: true,
-      default: false,
-    },
     status: {
       type: String,
       required: true,
       enum: [ORDERS_STATUS.PENDING, ORDERS_STATUS.SHIPPING, ORDERS_STATUS.DELIVERED, ORDERS_STATUS.CANCELLED],
-      default: ORDERS_STATUS.PENDING,
+    },
+    payUrl: {
+      type: String,
+      default: null,
     },
 
     // Foreign Key
     // roles: [{ type: Schema.Types.ObjectId, ref: "Role" }],
-    customerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    customerId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
     paymentId: {
       type: Schema.Types.ObjectId,
       ref: 'Payment',
-      default: null,
     },
     employeeId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
     },
-    voucherId: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: 'Voucher',
-        required: false,
-      },
-    ],
   },
   {
     versionKey: false,

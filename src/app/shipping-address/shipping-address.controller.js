@@ -1,74 +1,126 @@
-import { HttpException } from '#src/core/exception/http-exception';
-import { getDistricts, getProvinces, getWards } from '#src/modules/GHN/ghn.service';
-import { getUserByIdService } from '#src/app/users/users.service';
-import HttpStatus from 'http-status-codes';
+import { ApiResponse } from "#src/core/api/ApiResponse";
+import { ModelDto } from "#src/core/dto/ModelDto";
 import {
   createShippingAddressService,
-  getShippingAddressByUserIdService,
+  getAllShippingAddressService,
+  getShippingAddressByIdService,
   updateShippingAddressByIdService,
-} from '#src/app/shipping-address/shipping-address.service';
-import { Code } from '#src/core/code/Code';
-export const createShippingAddressController = async (req, res) => {
-  const { customerName, customerPhone, address, province, district, ward, isDefault } = req.body;
+  removeShippingAddressByIdService,
+  setDefaultShippingAddressByIdService,
+  unsetDefaultCurrentShippingAddressService,
+  countAllShippingAddressService,
+} from "#src/app/shipping-address/shipping-address.service";
+import { ShippingAddressDto } from "#src/app/shipping-address/dtos/shipping-address.dto";
+import { HttpException } from "#src/core/exception/http-exception";
+import { Code } from "#src/core/code/Code";
 
-  const customerExisted = await getUserByIdService(req.user.id);
+export const createShippingAddressController = async (req) => {
+  // const { id } = req.user;
+  const id = "67ed3bb1b80e7de1f2a03c0e"
 
-  // Lấy danh sách tỉnh/thành từ GHN
-  const provinces = await getProvinces();
+  const totalCount = await countAllShippingAddressService({
+    customer: id,
+  });
 
-  const provinceData = provinces.find(
-    (p) =>
-      Array.isArray(p.NameExtension) && p.NameExtension.some((name) => name.toLowerCase() === province.toLowerCase()),
-  );
+  const newShippingAddress = await createShippingAddressService({
+    ...req.body,
+    ...(totalCount === 0 ? { isDefault: true } : {}),
+    customer: id,
+  });
 
-  if (!provinceData) {
-    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Province not found' });
-  }
+  const shippingAddressDto = ModelDto.new(ShippingAddressDto, newShippingAddress);
+  return ApiResponse.success(shippingAddressDto);
+};
 
-  // Lấy danh sách quận/huyện theo tỉnh
-  const districts = await getDistricts(provinceData.ProvinceID);
-  const districtData = districts.find(
-    (p) =>
-      Array.isArray(p.NameExtension) && p.NameExtension.some((name) => name.toLowerCase() === district.toLowerCase()),
-  );
-  if (!districtData) {
-    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'District not found' });
-  }
+export const getAllShippingAddressController = async (req) => {
+  const { id } = req.user;
+  const { limit, page } = req.query;
 
-  // // Lấy danh sách phường/xã theo huyện
-  const wards = await getWards(districtData.DistrictID);
-  const wardData = wards.find(
-    (p) => Array.isArray(p.NameExtension) && p.NameExtension.some((name) => name.toLowerCase() === ward.toLowerCase()),
-  );
-  if (!wardData) {
-    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Ward not found' });
-  }
-
-  const createShippingAddressRequirement = {
-    customerId: customerExisted._id,
-    customerName,
-    customerPhone,
-    address: `${address}, ${ward}, ${district}, ${province}`,
-    province,
-    district,
-    ward,
-    isDefault,
+  const filterOptions = {
+    customer: id,
   };
 
-  if (isDefault) {
-    const addressUser = await getShippingAddressByUserIdService(customerExisted._id, isDefault);
-    if (addressUser) {
-      await updateShippingAddressByIdService(addressUser._id, {
-        isDefault: false,
-      });
-    }
+  const totalCount = await countAllShippingAddressService(filterOptions);
+
+  const shippingAddress = await getAllShippingAddressService({
+    filters: filterOptions,
+    page,
+    limit,
+  });
+
+  const shippingAddressDto = ModelDto.newList(ShippingAddressDto, shippingAddress);
+  return ApiResponse.success({ totalCount, list: shippingAddressDto });
+};
+
+export const getShippingAddressByIdController = async (req) => {
+  const { shippingAddressId } = req.params;
+  const existShippingAddress = await getShippingAddressByIdService(
+    shippingAddressId,
+    req.user.id
+  );
+
+  if (!existShippingAddress) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Shipping address not found' })
   }
 
-  const newShippingAddress = await createShippingAddressService(createShippingAddressRequirement);
+  const shippingAddressDto = ModelDto.new(ShippingAddressDto, existShippingAddress);
+  return ApiResponse.success(shippingAddressDto);
+};
 
-  return {
-    statusCode: HttpStatus.CREATED,
-    message: 'Create shipping address successfully',
-    data: newShippingAddress,
-  };
+export const updateShippingAddressByIdController = async (req) => {
+  const { shippingAddressId } = req.params;
+  const existShippingAddress = await getShippingAddressByIdService(
+    shippingAddressId,
+    req.user._id
+  );
+
+  if (!existShippingAddress) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Shipping address not found' })
+  }
+
+  const updatedShippingAddress = await updateShippingAddressByIdService(
+    shippingAddressId,
+    req.body
+  );
+
+  const shippingAddressDto = ModelDto.new(ShippingAddressDto, updatedShippingAddress);
+  return ApiResponse.success(shippingAddressDto);
+};
+
+export const removeShippingAddressByIdController = async (req) => {
+  const { shippingAddressId } = req.params;
+  const existShippingAddress = await getShippingAddressByIdService(
+    shippingAddressId,
+    req.user.id
+  );
+
+  if (!existShippingAddress) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Shipping address not found' })
+  }
+
+  const shippingAddress = await removeShippingAddressByIdService(shippingAddressId);
+
+  return ApiResponse.success({ id: shippingAddress._id });
+};
+
+export const setDefaultShippingAddressByIdController = async (req) => {
+  const { shippingAddressId } = req.params;
+  const { id } = req.user;
+  const existShippingAddress = await getShippingAddressByIdService(
+    shippingAddressId,
+    id
+  );
+
+  if (!existShippingAddress) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Shipping address not found' })
+  }
+
+  if (existShippingAddress.isDefault) {
+    throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Current address is default' })
+  }
+
+  await unsetDefaultCurrentShippingAddressService(id);
+  await setDefaultShippingAddressByIdService(shippingAddressId, id);
+
+  return ApiResponse.success({ id: existShippingAddress._id });
 };

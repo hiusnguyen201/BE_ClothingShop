@@ -17,6 +17,7 @@ export const REGEX_PATTERNS = {
   BEARER_TOKEN: /^Bearer ((?:\.?(?:[A-Za-z0-9-_]+)){3})$/,
   COMMA_SEPARATED_LIST: /^[a-zA-Z0-9,]+$/,
   IMAGE_URL: /\.(jpg|jpeg|png)$/i,
+  STRING_NUMBER: /^\d+$/
 };
 
 export const ORDERS_STATUS = {

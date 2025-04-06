@@ -1,11 +1,11 @@
 import { UserModel } from '#src/app/users/models/user.model';
-<<<<<<< HEAD
+import {
+  extendQueryOptionsWithPagination,
+  extendQueryOptionsWithSort
+} from '#src/utils/query.util';
+import { isValidObjectId } from 'mongoose';
 import { USER_SELECTED_FIELDS, USER_TYPE } from '#src/app/users/users.constant';
 import { REGEX_PATTERNS } from '#src/core/constant';
-import { isValidObjectId } from 'mongoose';
-=======
-import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
->>>>>>> develop
 
 export async function addVoucherToCustomerService(userId, voucherId) {
   return UserModel.findByIdAndUpdate(userId, { $push: { vouchers: voucherId } }, { new: true }).lean();

@@ -7,14 +7,14 @@ import {
   getProfileController,
   editProfileController,
   changePasswordController,
-  createOrderCustomerController,
+  // createOrderCustomerController,
 } from '#src/app/account/account.controller';
 
 import { ClaimVoucherByCodeDto } from '#src/app/account/dtos/claim-voucher-by-code.dto';
 import { isAuthorized, isAuthorizedAndIsCustomer } from '#src/middlewares/jwt-auth.middleware';
 import { EditProfileDto } from '#src/app/account/dtos/edit-profile.dto';
 import { ChangePasswordDto } from '#src/app/account/dtos/change-password.dto';
-import { createOrderCustomerDto } from '#src/app/orders/dto/create-order.dto';
+import { createOrderCustomerDto } from '#src/app/orders/dtos/create-order.dto';
 
 router
   .get('/view-profile', isAuthorized, getProfileController)
@@ -28,6 +28,6 @@ router
   )
   .get('/get-vouchers-from-customer', isAuthorizedAndIsCustomer, getAllVoucherFromCustomerController)
 
-  .post('/create-order-customer', isAuthorized, validateBody(createOrderCustomerDto), createOrderCustomerController);
+// .post('/create-order-customer', isAuthorized, validateBody(createOrderCustomerDto), createOrderCustomerController);
 
 export default router;

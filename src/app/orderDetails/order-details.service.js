@@ -1,4 +1,14 @@
-import { OrderDetailModel } from '#src/app/orderDetails/schema/order-details.schema';
+import { OrderDetailModel } from '#src/app/orderDetails/models/order-details.model';
+
+/**
+ * New order detail
+ * @param {*} data
+ * @returns
+ */
+export function newOrderDetailService(data) {
+  return new OrderDetailModel(data)
+}
+
 
 export const createOrderDetailService = async (data) => {
   return await OrderDetailModel.create(data);

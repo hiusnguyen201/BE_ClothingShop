@@ -10,15 +10,14 @@ export const paymentSchema = new Schema(
       type: String,
       required: true,
       enum: [PAYMENT_METHOD.COD, PAYMENT_METHOD.VNPAY, PAYMENT_METHOD.MOMO],
-      default: PAYMENT_METHOD.COD,
     },
     amountPaid: {
       type: Number,
-      required: true,
+      default: null
     },
     paidDate: {
       type: Date,
-      required: true,
+      default: null
     },
     transactionId: {
       type: String,
@@ -26,10 +25,14 @@ export const paymentSchema = new Schema(
     },
     notes: {
       type: String,
-      required: false,
+      default: null
     },
     // Foreign Key
-    orderId: { type: Schema.Types.ObjectId, ref: 'Order', required: true },
+    orderId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Order',
+      required: true
+    },
   },
   {
     versionKey: false,

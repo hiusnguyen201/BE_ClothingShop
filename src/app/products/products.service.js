@@ -1,7 +1,6 @@
 import { isValidObjectId } from "mongoose";
 import { ProductModel } from "#src/app/products/models/product.model";
 import { makeSlug } from "#src/utils/string.util";
-import { getAllProductReviewsService } from "#src/app/product-reviews/product-reviews.service";
 
 const SELECTED_FIELDS =
   "_id name slug shortDescription content category subCategory productVariants createdAt updatedAt removedAt";

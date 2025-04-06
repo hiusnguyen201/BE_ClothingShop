@@ -60,6 +60,7 @@ export const createMomoPayment = async (order_id, amount) => {
   const response = await axios.post('https://test-payment.momo.vn/v2/gateway/api/create', requestBody, {
     headers: {
       'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(requestBody)
     },
   });
   return response.data;
