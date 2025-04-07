@@ -150,6 +150,13 @@ const CATEGORIES_PERMISSIONS = [
     endpoint: '/api/categories/remove-category-by-id/:categoryId',
     method: 'DELETE',
   },
+  {
+    name: 'get:sub_categories',
+    description: 'Get list subcategories',
+    module: 'categories',
+    endpoint: '/api/categories/:categoryId/subcategories',
+    method: 'GET',
+  },
 ];
 
 const CUSTOMERS_PERMISSIONS = [
