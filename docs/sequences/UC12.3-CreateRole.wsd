@@ -1,202 +1,248 @@
-@startuml 
-header Page Header
-actor       User       
-boundary    ListRolePage 
-participant ErrorMiddleware
-participant AsyncHandler
-participant JwtAuthMiddleware
+@startuml Create Role
+
+actor Client
+
+box "Application Layer"
+participant RolesRouter 
+participant ErrorMiddleware 
+participant AsyncHandler 
+end box
+
+box "Authentication"
+participant JwtAuthMiddleware 
 participant CookieUtil
 participant AuthService
-participant Jsonwebtoken
-participant UsersService
+participant jsonwebtoken
+end box
+
+box "Authorization"
+participant UserService 
+participant UserModel
+end box
+
+box "Validation"
 participant RequestValidation
-entity      UserModel  
-participant RequestValidation
-control     RolesController  
-participant RolesService
-entity      RoleModel     
+end box
+
+box "Business Logic"
+participant RolesController
 participant ModelDto
-database    Database 
+participant ApiResponse
+participant RolesService
+participant RoleModel
+end box
 
-title UC12.3: Create Role
+database MongoDB
 
-activate User
-User -> ListRolePage : Click to create role button
-activate ListRolePage
-ListRolePage -> AsyncHandler: request create role
-activate AsyncHandler
-AsyncHandler -> JwtAuthMiddleware: authorized()
-activate JwtAuthMiddleware
+' Step 1
+group Request Initialization
+    Client -> RolesRouter: POST /api/roles/create-role
+    activate Client
+    activate RolesRouter
+    RolesRouter -> AsyncHandler: asyncHandler(createRoleController)
+    activate AsyncHandler
+end
 
-' Check Access Token provided
-alt Access token not provided
-    JwtAuthMiddleware -> CookieUtil: clearSession
-    activate CookieUtil
-    CookieUtil -> JwtAuthMiddleware: return void
-    deactivate CookieUtil
-    JwtAuthMiddleware -> AsyncHandler: next(error 401)
-    AsyncHandler -> ErrorMiddleware:  next(error 401)
-    activate ErrorMiddleware
-    ErrorMiddleware -> ListRolePage: response error (401)
-    deactivate ErrorMiddleware
-    ListRolePage -> User: Display error message
-end alt
-' =========================================================
+break
+break
 
-JwtAuthMiddleware -> AuthService: verifyTokenService()
-activate AuthService
-AuthService -> Jsonwebtoken: verify()
-activate Jsonwebtoken
-
-' Check decoded token
-alt Decode token return null
-    Jsonwebtoken -> AuthService: throw Error
-    AuthService -> JwtAuthMiddleware: return null
-    JwtAuthMiddleware -> AsyncHandler: next(error 401)
-    AsyncHandler -> ErrorMiddleware:  next(error 401)
-    activate ErrorMiddleware
-    ErrorMiddleware -> ListRolePage: response error (401)
-    deactivate ErrorMiddleware
-    ListRolePage -> User: Display error message
-end alt
-' =========================================================
-
-    Jsonwebtoken -> AuthService: return data
-    deactivate Jsonwebtoken
-    AuthService -> JwtAuthMiddleware: return data
-    deactivate AuthService
-    JwtAuthMiddleware -> UsersService: getUserByIdService()
-    activate UsersService
-    UsersService -> UserModel: findOne()
-    activate UserModel
-    UserModel -> Database: findOne()
-    activate Database
-
-' Check user exist
-alt User don't exist
-    Database -> UserModel: Return null
-    UserModel -> UsersService: Return null
-    UsersService -> JwtAuthMiddleware: Return null
-    JwtAuthMiddleware -> AsyncHandler: next(error 401)
-    AsyncHandler -> ErrorMiddleware:  next(error 401)
-    activate ErrorMiddleware
-    ErrorMiddleware -> ListRolePage: response error (401)
-    deactivate ErrorMiddleware
-    ListRolePage -> User: Display error message
-else Unverified User
-    Database -> UserModel: Return Data
-    UserModel -> UsersService: Return Data
-    UsersService -> JwtAuthMiddleware: Return Data
-    JwtAuthMiddleware -> AsyncHandler: next(error 403)
-    AsyncHandler -> ErrorMiddleware:  next(error 403)
-    activate ErrorMiddleware
-    ErrorMiddleware -> ListRolePage: response error (403)
-    deactivate ErrorMiddleware
-    ListRolePage -> User: Display error message
-end alt
-'==========================================================
-
-    Database -> UserModel: Return data
-    deactivate Database
-    UserModel -> UsersService: Return data
-    deactivate UserModel
-    UsersService -> JwtAuthMiddleware: Return data
-    deactivate UsersService
-    JwtAuthMiddleware -> AsyncHandler: next()
-    deactivate JwtAuthMiddleware
-    AsyncHandler -> JwtAuthMiddleware: checkPermission()
+' Step 2
+group Authentication Flow
+    AsyncHandler -> JwtAuthMiddleware: isAuthorizedAndHasPermission
     activate JwtAuthMiddleware
-    JwtAuthMiddleware -> UsersService: checkUserHasPermissionByMethodAndEndpointService()
-    activate UsersService
-    UsersService -> UserModel: findById()
+
+    JwtAuthMiddleware -> JwtAuthMiddleware: extract token
+    alt token not provided
+        JwtAuthMiddleware -> CookieUtil: clearSession(res)
+        activate CookieUtil
+        CookieUtil -->> JwtAuthMiddleware: return void
+        deactivate CookieUtil
+        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
+        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
+        deactivate ErrorMiddleware
+    end 
+
+    JwtAuthMiddleware -> AuthService: verifyTokenService(token)
+    activate AuthService
+    AuthService -> jsonwebtoken: verify(token, SECRET)
+    activate jsonwebtoken
+    alt token invalid
+        jsonwebtoken --x AuthService: throw Error
+        AuthService -->> JwtAuthMiddleware: catch Error and return null
+        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
+        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
+        deactivate ErrorMiddleware
+    end
+
+    jsonwebtoken -->> AuthService: return data decoded
+    deactivate jsonwebtoken
+    AuthService -->> JwtAuthMiddleware: return data decoded
+    deactivate AuthService
+    JwtAuthMiddleware -> UserService: getUserByIdService(decoded.id)
+    activate UserService
+    UserService -> UserModel: findOne(filters)
     activate UserModel
-    UserModel -> Database: findById()
-    activate Database
-    Database -> UserModel: Return data
-    deactivate Database
-    UserModel -> UsersService: Return data
+    UserModel -> MongoDB: query select
+    activate MongoDB
+
+    alt user not found
+        MongoDB -->> UserModel: return null
+        UserModel -->> UserService: return null
+        UserService -->> JwtAuthMiddleware: return null
+        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
+        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> UserModel: return user
+    deactivate MongoDB
+    UserModel -->> UserService: return user
     deactivate UserModel
+    UserService -->> JwtAuthMiddleware: return user
+    deactivate UserService
 
-' check permission
-alt User don't have permission 
-    UsersService -> JwtAuthMiddleware: Return false
-    JwtAuthMiddleware -> AsyncHandler: next(error 403)
-    AsyncHandler -> ErrorMiddleware:  next(error 403)
-    activate ErrorMiddleware
-    ErrorMiddleware -> ListRolePage: response error (403)
-    deactivate ErrorMiddleware
-    ListRolePage -> User: Display error message
-end alt
-'==========================================================
-    UsersService -> JwtAuthMiddleware: Return true
-    deactivate UsersService
-    JwtAuthMiddleware -> AsyncHandler: next()
+    alt unverified account
+        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(403))
+        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 403 Forbidden
+        deactivate ErrorMiddleware
+    end
+end
+
+break
+break
+
+' Step 3
+group Authorization Flow
+    JwtAuthMiddleware -> UserService: checkUserHasPermissionService(userId, method, endpoint)
+    activate UserService
+    UserService -> UserModel: findById(id).populate(role).populate(permissions)
+    activate UserModel
+    UserModel -> MongoDB: query select
+    activate MongoDB
+
+    alt User doesn't have permissions 
+        MongoDB -->> UserModel: return empty permissions
+        UserModel -->> UserService: return empty permissions
+        UserService -->> JwtAuthMiddleware: return false
+        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 403 Forbidden
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> UserModel: return permissions
+    deactivate MongoDB
+    UserModel -->> UserService: return permissions
+    deactivate UserModel
+    UserService -->> JwtAuthMiddleware: return true
+    deactivate UserService
+end
+
+break
+break
+
+' Step 4
+group Validation Flow
+    JwtAuthMiddleware -> RequestValidation: validateBody(CreateRoleDto)
     deactivate JwtAuthMiddleware
-    AsyncHandler -> RequestValidation: validateBody()
     activate RequestValidation
-    RequestValidation -> RequestValidation: validateSchema()
+    
+    alt validation error
+        RequestValidation ->> RequestValidation: next(HttpException(400))
+        RequestValidation ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 400 Bad Request
+        deactivate ErrorMiddleware
+    end
+end
 
-' Check schema Body
-alt Schema Body invalidate
-    RequestValidation -> AsyncHandler: next(error 400)
-    AsyncHandler -> ErrorMiddleware:  next(error 400)
-    ErrorMiddleware -> ListRolePage: response error (400)
-    ListRolePage -> User: Display error message
-    end alt
-'====================================================
-    RequestValidation -> AsyncHandler: next()
+break
+break
+
+' Step 5
+group Business Logic Flow
+    RequestValidation -> RolesController: createRoleController
     deactivate RequestValidation
-    AsyncHandler -> RolesController: createRoleController()
     activate RolesController
-    RolesController -> RolesService: checkExistRoleNameService()
+    RolesController -> RolesService: checkExistRoleNameService(name)
     activate RolesService
-    RolesService -> RoleModel: findOne()
+    RolesService -> RoleModel: fineOne(filters)
     activate RoleModel
-    RoleModel -> Database: findOne()
-    activate Database
-    Database -> RoleModel: Return data
-    deactivate Database
-    RoleModel -> RolesService: Return data
+    RoleModel -> MongoDB: query select
+    activate MongoDB
+
+    alt Role name already exists
+        MongoDB -->> RoleModel: return role
+        RoleModel -->> RolesService: return role
+        RolesService -->> RolesController: return true
+        RolesController --x RolesController : throw HttpException(409)
+        RolesController ->> AsyncHandler : catch HttpException and next(HttpException(409))
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 409 Conflict
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> RoleModel: return null
+    deactivate MongoDB
+    RoleModel -->> RolesService: return null
     deactivate RoleModel
-
-' Check role name exist
-alt Role name already Exist
-    RolesService -> RolesController: Return true
-    RolesController -> AsyncHandler: Return true
-    AsyncHandler -> ErrorMiddleware:  next(error 409)
-    activate ErrorMiddleware
-    ErrorMiddleware -> ListRolePage: response error (409)
-    deactivate ErrorMiddleware
-    ListRolePage -> User: Display error message
-end alt
-'==========================================================
-
-    RolesService -> RolesController: Return false
+    RolesService -->> RolesController: return false
     deactivate RolesService
-    RolesController -> RolesService: createRoleService()
+
+    RolesController -> RolesService: createRoleService(data)
     activate RolesService
-    RolesService -> RoleModel: create()
+    RolesService -> RoleModel: create(data)
     activate RoleModel
-    RoleModel -> Database: create()
-    activate Database
-    Database -> RoleModel: Return data
-    deactivate Database
-    RoleModel -> RolesService: Return data
+    RoleModel -> MongoDB: query create
+    activate MongoDB
+
+    alt Create fail
+        MongoDB --x RoleModel: throw Error
+        RoleModel --x RolesService: throw Error
+        RolesService --x RolesController: throw Error
+        RolesController ->> AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Server Error
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> RoleModel: return role
+    deactivate MongoDB
+    RoleModel -->> RolesService: return role
     deactivate RoleModel
-    RolesService -> RolesController: Return data
+    RolesService -->> RolesController: return role
     deactivate RolesService
-    RolesController -> ModelDto: new()
-    activate ModelDto 
-    ModelDto -> RolesController: Return data
+end
+
+break 
+break 
+
+group Transform data response
+    RolesController -> ModelDto: new(RoleDto, role)
+    activate ModelDto
+    ModelDto -->> RolesController: return RoleDto instance
     deactivate ModelDto
-    RolesController -> AsyncHandler: Return data
-    deactivate RolesController
-    AsyncHandler -> ListRolePage: response data
-    deactivate AsyncHandler
-    ListRolePage -> User: Display success message
-    deactivate ListRolePage
 
+    RolesController -> ApiResponse: success(RoleDto, success message)
+    activate ApiResponse
+    ApiResponse -->> RolesController: return ApiResponse instance
+    deactivate ApiResponse 
+end
 
-
+RolesController -->> AsyncHandler: return ApiResponse instance
+deactivate RolesController
+AsyncHandler --> Client: HTTP 201 Success
+deactivate AsyncHandler
+deactivate RolesRouter
 
 @enduml
