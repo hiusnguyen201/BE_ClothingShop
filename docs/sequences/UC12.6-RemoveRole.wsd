@@ -151,6 +151,23 @@ break
 break
 
 ' Step 4
+group Validation Flow
+    JwtAuthMiddleware -> RequestValidation: validateParams(GetRoleDto)
+    deactivate JwtAuthMiddleware
+    activate RequestValidation
+    
+    alt validation error
+        RequestValidation ->> RequestValidation: next(HttpException(400))
+        RequestValidation ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 400 Bad Request
+        deactivate ErrorMiddleware
+    end
+end
+break
+break
+
+' Step 5
 group Business Logic Flow
     JwtAuthMiddleware -> RolesController: removeRoleByIdController
     activate RolesController
@@ -159,7 +176,7 @@ group Business Logic Flow
     
     alt roleId not provided
         RolesService -->> RolesController: return null
-        RolesController -> RolesController: next(HttpException(400))
+        RolesController --x RolesController: throw(HttpException(400))
         RolesController ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 400 Bad Request
@@ -175,7 +192,7 @@ group Business Logic Flow
         MongoDB -->> RoleModel: return null
         RoleModel -->> RolesService: return null
         RolesService -->> RolesController: return null
-        RolesController ->> RolesController: next(HttpException(404))
+        RolesController --x RolesController: throw(HttpException(404))
         RolesController ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 404 Not Found
@@ -199,7 +216,7 @@ group Business Logic Flow
         MongoDB -->> RoleModel: return null
         RoleModel -->> RolesService: return null
         RolesService -->> RolesController: return null
-        RolesController ->> RolesController: next(HttpException(404))
+        RolesController --x RolesController: throw(HttpException(404))
         RolesController ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 404 Not Found

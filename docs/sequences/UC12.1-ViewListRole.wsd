@@ -212,7 +212,7 @@ group Business Logic Flow
         MongoDB --x RoleModel:throw Error
         RoleModel --x RolesService:throw Error
         RolesService --x RolesController: throw Error
-        RolesController --x AsyncHandler: catch Error and next(Error)
+        RolesController ->> AsyncHandler: catch Error and next(Error)
         AsyncHandler ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500  Server Error
