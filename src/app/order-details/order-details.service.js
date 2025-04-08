@@ -1,4 +1,4 @@
-import { OrderDetailModel } from '#src/app/orderDetails/models/order-details.model';
+import { OrderDetailModel } from '#src/app/order-details/models/order-details.model';
 
 /**
  * New order detail
@@ -15,8 +15,9 @@ export const createOrderDetailService = async (data) => {
 };
 
 export const getOrderDetailsByOrderIdService = async (orderId) => {
-  return await OrderDetailModel.find({ orderId }).populate({
-    path: 'variantId',
-    model: 'ProductVariant',
-  });
+  return await OrderDetailModel.find({ orderId })
+    .populate({
+      path: 'variantId',
+      model: 'Product_Variant',
+    });
 };

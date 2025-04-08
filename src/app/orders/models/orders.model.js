@@ -69,7 +69,7 @@ export const orderSchema = new Schema(
     status: {
       type: String,
       required: true,
-      enum: [ORDERS_STATUS.PENDING, ORDERS_STATUS.SHIPPING, ORDERS_STATUS.DELIVERED, ORDERS_STATUS.CANCELLED],
+      enum: Object.values(ORDERS_STATUS),
     },
     payUrl: {
       type: String,
@@ -77,7 +77,6 @@ export const orderSchema = new Schema(
     },
 
     // Foreign Key
-    // roles: [{ type: Schema.Types.ObjectId, ref: "Role" }],
     customerId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
@@ -90,6 +89,10 @@ export const orderSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'User',
     },
+    orderStatusHistory: [{
+      type: Schema.Types.ObjectId,
+      ref: 'Order_Status_History',
+    }]
   },
   {
     versionKey: false,

@@ -5,9 +5,15 @@ import {
   getOrderByIdController,
   updateOrderByIdController,
   removeOrderByIdController,
-  createOrderGhnController,
+  confirmOrderController,
+  createShippingOrderController,
+  webHookUpdateOrder,
+  processOrderController,
 } from '#src/app/orders/orders.controller';
-import { isAuthorized, isAuthorizedAndHasPermission } from '#src/middlewares/jwt-auth.middleware';
+import {
+  isAuthorized,
+  isAuthorizedAndHasPermission
+} from '#src/middlewares/jwt-auth.middleware';
 import { createOrderDto } from '#src/app/orders/dtos/create-order.dto';
 import { validateBody } from '#src/core/validations/request.validation';
 import { updateOrderDto } from '#src/app/orders/dtos/update-order.dto';
@@ -24,8 +30,30 @@ router
   .get('/get-order-by-id/:id',
     // isAuthorized,
     getOrderByIdController)
-  .put('/update-order-by-id/:id', isAuthorized, validateBody(updateOrderDto), updateOrderByIdController)
-  .delete('/remove-order-by-id/:id', isAuthorized, removeOrderByIdController)
-  .post('/create-order-ghn', isAuthorized, validateBody(createOrderGhnDto), createOrderGhnController);
+  .put('/update-order-by-id/:id',
+    isAuthorized,
+    validateBody(updateOrderDto),
+    updateOrderByIdController)
+  .delete('/remove-order-by-id/:id',
+    isAuthorized,
+    removeOrderByIdController)
+  .post('/confirm-order',
+    // isAuthorized,
+    validateBody(createOrderGhnDto),
+    confirmOrderController)
+  .post('/process-order',
+    // isAuthorized,
+    validateBody(createOrderGhnDto),
+    processOrderController)
+
+
+
+  .post('/create-shipping-order',
+    // isAuthorized,
+    validateBody(createOrderGhnDto),
+    createShippingOrderController)
+
+  .post('/webhook/update-order-status',
+    webHookUpdateOrder)
 
 export default router;

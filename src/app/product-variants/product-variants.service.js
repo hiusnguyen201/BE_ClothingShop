@@ -116,9 +116,10 @@ export async function getProductVariantByIdService(
  * @param {*} data
  * @returns
  */
-export async function updateProductVariantByIdService(id, data) {
+export async function updateProductVariantByIdService(id, data, session) {
   return await ProductVariantModel.findByIdAndUpdate(id, data, {
     new: true,
+    session
   }).select(SELECTED_FIELDS);
 }
 

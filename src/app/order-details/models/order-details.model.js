@@ -25,11 +25,20 @@ export const orderDetailSchema = new Schema(
       type: Number,
       default: null,
     },
+
     // Foreign Key
-    // roles: [{ type: Schema.Types.ObjectId, ref: "Role" }],
-    orderId: { type: Schema.Types.ObjectId, ref: 'Order', required: true },
-    productId: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
-    variantId: { type: Schema.Types.ObjectId, ref: 'VariantProduct', required: true },
+    orderId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Order', required: true
+    },
+    productId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Product', required: true
+    },
+    variantId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Product_Variant', required: true
+    },
   },
   {
     versionKey: false,

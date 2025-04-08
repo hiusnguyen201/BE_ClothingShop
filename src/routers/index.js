@@ -11,7 +11,7 @@ import vouchersRouter from '#src/routers/vouchers.router';
 import accountRouter from '#src/routers/account.router';
 import ordersRouter from '#src/routers/orders.route';
 import paymentsRouter from '#src/routers/payments.route';
-import orderDetailsRouter from '#src/routers/order-details.router';
+// import orderDetailsRouter from '#src/routers/order-details.router';
 import productsRouter from '#src/routers/products.router';
 import shippingAddressRouter from '#src/routers/shipping-address.router';
 import productDiscountsRouter from "#src/routers/product-discounts.route";
@@ -44,7 +44,7 @@ router.use('/orders', ordersRouter);
 
 router.use('/payments', paymentsRouter);
 
-router.use('/order-details', orderDetailsRouter);
+// router.use('/order-details', orderDetailsRouter);
 
 router.use('/products', productsRouter);
 

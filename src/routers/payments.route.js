@@ -2,16 +2,16 @@ import express from 'express';
 
 import { validateBody, validateQuery } from '#src/core/validations/request.validation';
 import {
-  createPaymentController,
+  // createPaymentController,
   returnPaymentCodController,
   returnPaymentMoMoController,
   returnPaymentVnPayController,
 } from '#src/app/payments/payments.controller';
-import { createPaymentDto } from '#src/app/payments/dtos/create-payments.dto';
+// import { createPaymentDto } from '#src/app/payments/dtos/create-payments.dto';
 
 const router = express.Router();
 
-router.post('/create-payment', validateBody(createPaymentDto), createPaymentController);
+// router.post('/create-payment', validateBody(createPaymentDto), createPaymentController);
 
 // thanh toans Momo xong => Get tới endpoint api /return-payment-momo?resultCode=0
 

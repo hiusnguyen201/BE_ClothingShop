@@ -1,4 +1,5 @@
 import { OrderModel } from '#src/app/orders/models/orders.model';
+import { ORDERS_STATUS } from '#src/core/constant';
 import { isValidObjectId } from 'mongoose';
 
 /**
@@ -40,6 +41,44 @@ export async function getOrderByIdService(orderId) {
 
 export async function updateOrderByIdService(orderId, data, session) {
   return await OrderModel.findByIdAndUpdate(orderId, data, {
+    new: true,
+    session
+  });
+}
+
+export async function updateOrderStatusByIdService(orderId, newOrderStatus, orderStatusHistoryId, session) {
+  return await OrderModel.findByIdAndUpdate(orderId, {
+    status: newOrderStatus,
+    $push: { orderStatusHistory: orderStatusHistoryId }
+  }, {
+    new: true,
+    session
+  });
+}
+
+
+export async function updateOrderStatusToConfirmByIdService(orderId, session) {
+  return await OrderModel.findByIdAndUpdate(orderId, {
+    status: ORDERS_STATUS.CONFIRM,
+  }, {
+    new: true,
+    session
+  });
+}
+
+export async function updateOrderStatusToProcressByIdService(orderId, session) {
+  return await OrderModel.findByIdAndUpdate(orderId, {
+    status: ORDERS_STATUS.PROCESSING,
+  }, {
+    new: true,
+    session
+  });
+}
+
+export async function cancelOrderByIdService(orderId, session) {
+  return await OrderModel.findByIdAndUpdate(orderId, {
+    status: ORDERS_STATUS.CANCELLED,
+  }, {
     new: true,
     session
   });

@@ -1,11 +1,11 @@
-import express from 'express';
+// import express from 'express';
 
-import { validateBody } from '#src/core/validations/request.validation';
-import { createOrderDetailController } from '#src/app/orderDetails/order-details.controller';
-import { createOrderDetailDto } from '#src/app/orderDetails/dto/create-order-detail.dto';
+// import { validateBody } from '#src/core/validations/request.validation';
+// import { createOrderDetailController } from '#src/app/orderDetails/order-details.controller';
+// import { createOrderDetailDto } from '#src/app/orderDetails/dto/create-order-detail.dto';
 
-const router = express.Router();
+// const router = express.Router();
 
-router.post('/create-order-detail', validateBody(createOrderDetailDto), createOrderDetailController);
+// router.post('/create-order-detail', validateBody(createOrderDetailDto), createOrderDetailController);
 
-export default router;
+// export default router;

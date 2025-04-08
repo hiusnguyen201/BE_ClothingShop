@@ -5,7 +5,6 @@ import {
   removeOrderByIdService,
   countAllOrdersService,
   newOrderService,
-  updateOrderStatusByIdService,
 } from '#src/app/orders/orders.service';
 import HttpStatus from 'http-status-codes';
 import { HttpException } from '#src/core/exception/http-exception';
@@ -18,7 +17,7 @@ import {
 } from '#src/modules/GHN/ghn.service';
 import { Code } from '#src/core/code/Code';
 import { ORDERS_STATUS, PAYMENT_METHOD } from '#src/core/constant';
-import { getOrderDetailsByOrderIdService, newOrderDetailService } from '#src/app/order-details/order-details.service';
+import { createOrderDetailService, getOrderDetailsByOrderIdService, newOrderDetailService } from '#src/app/orderDetails/order-details.service';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { OrderDto } from '#src/app/orders/dtos/order.dto';
@@ -27,11 +26,6 @@ import { randomCodeOrder } from '#src/utils/string.util';
 import { calculateDiscount } from '#src/utils/handle-create-order';
 import { newPaymentService } from '#src/app/payments/payments.service';
 import { createMomoPayment } from '#src/utils/paymentMomo';
-import {
-  createOrderStatusHistoryService,
-  getOrderIdByTrackingIdService,
-  newOrderStatusHistoryService
-} from '#src/app/order-status-history/order-status-history.service';
 
 export const createOrderController = async (req) => {
   return TransactionalServiceWrapper.execute(async (session) => {
@@ -124,201 +118,12 @@ export const createOrderController = async (req) => {
       newOrder.payUrl = paymentUrl;
     }
 
-    const newOrderHistory = newOrderStatusHistoryService({
-      status: ORDERS_STATUS.PENDING,
-      orderId: newOrder._id
-    }, session);
-    newOrder.orderStatusHistory = newOrderHistory._id;
-
     await newOrder.save({ session });
     await newPayment.save({ session });
-    await newOrderHistory.save({ session })
 
     const orderDto = ModelDto.new(OrderDto, newOrder);
     return ApiResponse.success(orderDto);
   });
-};
-
-export const confirmOrderController = async (req) => {
-  return TransactionalServiceWrapper.execute(async (session) => {
-    const { orderId } = req.body;
-
-    const orderExisted = await getOrderByIdService(orderId);
-    if (!orderExisted) {
-      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
-    }
-
-    if (orderExisted.status !== ORDERS_STATUS.PENDING) {
-      throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Invalid order status' });
-    }
-
-    if (!orderExisted.paymentId) {
-      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Payment not found' });
-    }
-
-    const newOrderStatus = ORDERS_STATUS.CONFIRM;
-
-    const newOrderHistory = await createOrderStatusHistoryService({
-      status: newOrderStatus,
-      orderId: orderExisted._id,
-      // assignedTo: Types.ObjectId,
-    }, session);
-
-    const updatedOrder = await updateOrderStatusByIdService(orderExisted._id, newOrderStatus, newOrderHistory[0]._id, session);
-
-    const orderDto = ModelDto.new(OrderDto, updatedOrder);
-    return ApiResponse.success(orderDto);
-  });
-};
-
-export const processOrderController = async (req) => {
-  return TransactionalServiceWrapper.execute(async (session) => {
-    const { orderId } = req.body;
-
-    const orderExisted = await getOrderByIdService(orderId);
-    if (!orderExisted) {
-      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
-    }
-
-    if (orderExisted.status !== ORDERS_STATUS.CONFIRM) {
-      throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Invalid order status' });
-    }
-
-    // if (!orderExisted.paymentId) {
-    //   throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Payment not found' });
-    // }
-
-    const newOrderStatus = ORDERS_STATUS.PROCESSING;
-
-    const newOrderHistory = await createOrderStatusHistoryService({
-      status: newOrderStatus,
-      orderId: orderExisted._id,
-      // assignedTo: Types.ObjectId,
-    }, session);
-
-    const updatedOrder = await updateOrderStatusByIdService(orderExisted._id, newOrderStatus, newOrderHistory[0]._id, session);
-
-
-    const orderDto = ModelDto.new(OrderDto, updatedOrder);
-    return ApiResponse.success(orderDto);
-  });
-};
-
-export const createShippingOrderController = async (req) => {
-  return TransactionalServiceWrapper.execute(async (session) => {
-    const { orderId } = req.body;
-
-    const orderExisted = await getOrderByIdService(orderId);
-    if (!orderExisted) {
-      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
-    }
-
-    if (orderExisted.status !== ORDERS_STATUS.PROCESSING) {
-      throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Invalid order status' });
-    }
-
-    if (!orderExisted.paymentId) {
-      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Payment not found' });
-    }
-
-    const newOrderStatus = ORDERS_STATUS.WAITING_FOR_PICKUP;
-
-    const orderDetails = await getOrderDetailsByOrderIdService(orderExisted._id);
-    const newOrderGhn = await createGhnOrder(orderExisted, orderDetails);
-
-    if (!newOrderGhn || newOrderGhn?.code != 200) {
-      throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Create shipping order false' });
-    }
-
-    const newOrderHistory = await createOrderStatusHistoryService({
-      status: newOrderStatus,
-      shippingCarrier: "GHN",
-      trackingNumber: newOrderGhn.data.order_code,
-      expectedShipDate: newOrderGhn.data.expected_delivery_time,
-      orderId: orderExisted._id,
-      // assignedTo: Types.ObjectId,
-    }, session);
-
-    const updatedOrder = await updateOrderStatusByIdService(orderExisted._id, newOrderStatus, newOrderHistory[0]._id, session);
-
-    const orderDto = ModelDto.new(OrderDto, updatedOrder);
-    return ApiResponse.success(orderDto);
-  });
-};
-
-export const webHookUpdateOrder = async (req) => {
-  return TransactionalServiceWrapper.execute(async (session) => {
-    const { OrderCode, Status } = req.body;
-
-    const orderStatusHistory = await getOrderIdByTrackingIdService(OrderCode);
-
-    const orderExisted = await getOrderByIdService(orderStatusHistory.orderId);
-    if (!orderExisted) {
-      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
-    }
-
-    const validStatuses = [ORDERS_STATUS.WAITING_FOR_PICKUP, ORDERS_STATUS.SHIPPING];
-
-    if (!validStatuses.includes(orderExisted.status)) {
-      throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Invalid order status' });
-    }
-
-    // if (!orderExisted.paymentId) {
-    //   throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Payment not found' });
-    // }
-
-    const statusMap = {
-      picked: ORDERS_STATUS.SHIPPING,
-      delivered: ORDERS_STATUS.DELIVERED,
-      return: ORDERS_STATUS.CANCELLED,
-    };
-
-    const newOrderStatus = statusMap[Status];
-    if (!newOrderStatus) {
-      return ApiResponse.success();
-    }
-
-    const newOrderHistory = await createOrderStatusHistoryService({
-      status: newOrderStatus,
-      shippingCarrier: "GHN",
-      trackingNumber: orderStatusHistory.trackingNumber,
-      expectedShipDate: orderStatusHistory.expectedShipDate,
-      orderId: orderExisted._id,
-      // assignedTo: Types.ObjectId,
-    }, session);
-
-    const updatedOrder = await updateOrderStatusByIdService(orderExisted._id, newOrderStatus, newOrderHistory[0]._id, session);
-
-    const orderDto = ModelDto.new(OrderDto, updatedOrder);
-    return ApiResponse.success(orderDto);
-  });
-}
-
-
-
-
-export const cancelExpiredOrders = async () => {
-  const now = moment(); // Thời gian hiện tại
-  const expirationThreshold = now.clone().subtract(24, 'hours'); // Thời điểm cách 24 giờ trước
-
-  // Lọc các đơn hàng Pending quá 24 giờ
-  const expiredOrders = await OrderModel.find({
-    status: 'Pending',
-    createdAt: { $lte: expirationThreshold.toDate() }, // createdAt <= 24h trước
-  });
-
-  if (expiredOrders.length === 0) {
-    console.log('Không có đơn hàng nào quá hạn.');
-    return;
-  }
-
-  // Cập nhật trạng thái thành Cancelled
-  const orderIds = expiredOrders.map(order => order._id);
-  await OrderModel.updateMany(
-    { _id: { $in: orderIds } },
-    { status: 'Cancelled', updatedAt: new Date() }
-  );
-  console.log(`Đã hủy ${expiredOrders.length} đơn hàng quá hạn.`);
 };
 
 export const getAllOrdersByUserController = async (req) => {
@@ -407,4 +212,154 @@ export const removeOrderByIdController = async (req) => {
     message: 'Remove order successfully',
     data: {},
   };
+};
+
+export const createOrderGhnController = async (req) => {
+  const { orderId } = req.body;
+  const orderExisted = await getOrderByIdService(orderId);
+
+  if (!orderExisted || !orderExisted.paymentId) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
+  }
+
+  const orderDetails = await getOrderDetailsByOrderIdService(orderExisted._id);
+
+  const newOrderGhn = await createGhnOrder(orderExisted, orderDetails);
+
+  if (!newOrderGhn) {
+    throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Create order ghn false' });
+  }
+
+  await updateOrderByIdService(orderExisted._id, {
+    status: ORDERS_STATUS.PROCESSING,
+  });
+
+  return {
+    statusCode: HttpStatus.OK,
+    message: 'Create order ghn successfully',
+    data: { newOrderGhn },
+  };
+};
+
+export const confirmOrderController = async (req) => {
+  return TransactionalServiceWrapper.execute(async (session) => {
+    const { orderId } = req.body;
+
+    const orderExisted = await getOrderByIdService(orderId);
+    if (!orderExisted) {
+      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
+    }
+
+    if (!orderExisted.status === ORDERS_STATUS.PENDING) {
+      throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Invalid order status' });
+    }
+
+    if (!orderExisted.paymentId) {
+      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Payment not found' });
+    }
+
+    // let updatedOrder;
+
+    // if (!orderExisted.isShipping) {
+
+    // }
+    // const orderDetails = await getOrderDetailsByOrderIdService(orderExisted._id);
+    // const newOrderGhn = await createGhnOrder(orderExisted, orderDetails);
+    // console.log(newOrderGhn);
+
+    // if (!newOrderGhn) {
+    //   throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Create order ghn false' });
+    // }
+
+    const updatedOrder = await updateOrderByIdService(orderExisted._id, {
+      status: ORDERS_STATUS.CONFIRM,
+    }, session);
+
+    const orderDto = ModelDto.new(OrderDto, updatedOrder);
+    return ApiResponse.success(orderDto);
+  });
+};
+
+export const processOrderController = async (req) => {
+  return TransactionalServiceWrapper.execute(async (session) => {
+    const { orderId } = req.body;
+
+    const orderExisted = await getOrderByIdService(orderId);
+    if (!orderExisted) {
+      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
+    }
+
+    if (!orderExisted.status === ORDERS_STATUS.CONFIRM) {
+      throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Invalid order status' });
+    }
+
+    if (!orderExisted.paymentId) {
+      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Payment not found' });
+    }
+
+    const updatedOrder = await updateOrderByIdService(orderExisted._id, {
+      status: ORDERS_STATUS.PROCESSING,
+    }, session);
+
+    const orderDto = ModelDto.new(OrderDto, updatedOrder);
+    return ApiResponse.success(orderDto);
+  });
+};
+
+export const createShippingOrderController = async (req) => {
+  return TransactionalServiceWrapper.execute(async (session) => {
+    const { orderId } = req.body;
+
+    const orderExisted = await getOrderByIdService(orderId);
+    if (!orderExisted) {
+      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
+    }
+
+    if (!orderExisted.status === ORDERS_STATUS.PROCESSING) {
+      throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Invalid order status' });
+    }
+
+    if (!orderExisted.paymentId) {
+      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Payment not found' });
+    }
+
+    const orderDetails = await getOrderDetailsByOrderIdService(orderExisted._id);
+    const newOrderGhn = await createGhnOrder(orderExisted, orderDetails);
+    console.log(newOrderGhn);
+
+    if (!newOrderGhn) {
+      throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Create order ghn false' });
+    }
+
+    const updatedOrder = await updateOrderByIdService(orderExisted._id, {
+      status: ORDERS_STATUS.WAITING_FOR_PICKUP,
+    }, session);
+
+    const orderDto = ModelDto.new(OrderDto, updatedOrder);
+    return ApiResponse.success(orderDto);
+  });
+};
+
+export const cancelExpiredOrders = async () => {
+  const now = moment(); // Thời gian hiện tại
+  const expirationThreshold = now.clone().subtract(24, 'hours'); // Thời điểm cách 24 giờ trước
+
+  // Lọc các đơn hàng Pending quá 24 giờ
+  const expiredOrders = await OrderModel.find({
+    status: 'Pending',
+    createdAt: { $lte: expirationThreshold.toDate() }, // createdAt <= 24h trước
+  });
+
+  if (expiredOrders.length === 0) {
+    console.log('Không có đơn hàng nào quá hạn.');
+    return;
+  }
+
+  // Cập nhật trạng thái thành Cancelled
+  const orderIds = expiredOrders.map(order => order._id);
+  await OrderModel.updateMany(
+    { _id: { $in: orderIds } },
+    { status: 'Cancelled', updatedAt: new Date() }
+  );
+  console.log(`Đã hủy ${expiredOrders.length} đơn hàng quá hạn.`);
 };
