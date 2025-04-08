@@ -1,4 +1,4 @@
-@startuml Role Details
+@startuml Add Role Permissions
 
 actor Client
 
@@ -28,19 +28,21 @@ box "Business Logic"
 participant RolesController
 participant ModelDto
 participant ApiResponse
+participant PermissionsService
 participant RolesService
 participant QueryUtil
 participant RoleModel
+participant PermissionModel
 end box
 
 database MongoDB
 
 ' Step 1
 group Request Initialization
-    Client -> RolesRouter: GET /api/roles/get-role-by-id/:roleId
+    Client -> RolesRouter: PATCH /api/roles/:roleId/permissions
     activate Client
     activate RolesRouter
-    RolesRouter -> AsyncHandler: asyncHandler(getRoleByIdController)
+    RolesRouter -> AsyncHandler: asyncHandler(addRolePermissionsController)
     activate AsyncHandler
 end
 
@@ -150,12 +152,20 @@ end
 break
 break
 
-
 ' Step 4
 group Validation Flow
     JwtAuthMiddleware -> RequestValidation: validateParams(GetRoleDto)
     deactivate JwtAuthMiddleware
     activate RequestValidation
+    alt validation error
+        RequestValidation ->> RequestValidation: next(HttpException(400))
+        RequestValidation ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 400 Bad Request
+        deactivate ErrorMiddleware
+    end
+    
+    RequestValidation -> RequestValidation: validateBody(AddRolePermissionsDto)
     
     alt validation error
         RequestValidation ->> RequestValidation: next(HttpException(400))
@@ -170,16 +180,17 @@ break
 break
 
 
-' Step 5
+' step 5
 group Business Logic Flow
-    JwtAuthMiddleware -> RolesController: getRoleByIdController
+    RequestValidation -> RolesController: addRolePermissionsController
+    deactivate RequestValidation
     activate RolesController
     RolesController -> RolesService: getRoleByIdService(roleId)
     activate RolesService
-
+    
     alt roleId not provided
         RolesService -->> RolesController: return null
-        RolesController --x RolesController: throw(HttpException(400))
+        RolesController -> RolesController: throw(HttpException(400))
         RolesController ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 400 Bad Request
@@ -208,12 +219,68 @@ group Business Logic Flow
     deactivate RoleModel
     RolesService -->> RolesController: return role
     deactivate RolesService
+    RolesController -> PermissionsService: getPermissionsService(filters)
+    activate PermissionsService
+    PermissionsService -> QueryUtil: extendQueryOptionsWithPagination(skip, limit)
+    activate QueryUtil
+    QueryUtil ->> PermissionsService: return options
+    deactivate QueryUtil
+    PermissionsService -> QueryUtil: extendQueryOptionsWithSort(sortBy, sortOrder)
+    activate QueryUtil
+    QueryUtil ->> PermissionsService: return options
+    deactivate QueryUtil
+    PermissionsService -> PermissionModel: find(filter)
+    activate PermissionModel
+    PermissionModel -> MongoDB: query select
+    activate MongoDB
+
+    alt permissions not found
+        MongoDB -->> PermissionModel: return null
+        PermissionModel -->> PermissionsService: return null
+        PermissionsService -->> RolesController: return null
+        RolesController --x RolesController: throw(HttpException(404))
+        RolesController ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 404 Not Found
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> PermissionModel: return permissions
+    deactivate MongoDB
+    PermissionModel -->> PermissionsService: return permissions
+    deactivate PermissionModel
+    PermissionsService -->> RolesController: return list
+    deactivate PermissionsService
+    RolesController -> RolesService: addRolePermissionsService(role._id, permissions)
+    RolesService -> RoleModel: findByIdAndUpdate(id, update)
+    activate RoleModel
+    RoleModel -> MongoDB: query update
+    activate MongoDB
+
+    alt update false
+        MongoDB -->> RoleModel: return null
+        RoleModel -->> RolesService: return null
+        RolesService -->> RolesController: return null
+        RolesController --x RolesController: throw(HttpException(404))
+        RolesController ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 404 Not Found
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> RoleModel: return role
+    deactivate MongoDB
+    RoleModel -->> RolesService: return role
+    deactivate RoleModel
+    RolesService -->> RolesController: return role
+    deactivate RolesService
+
 end
 break 
-break 
+break
 
 group Transform data response
-    RolesController -> ModelDto: new(RoleDto, role)
+    RolesController -> ModelDto: newList(PermissionDto, permissions)
     activate ModelDto
     ModelDto -->> RolesController: return RoleDto instance
     deactivate ModelDto
@@ -223,13 +290,11 @@ group Transform data response
     ApiResponse -->> RolesController: return ApiResponse instance
     deactivate ApiResponse 
 end
-    
 RolesController -->> AsyncHandler: return ApiResponse instance
 deactivate RolesController
 AsyncHandler --> Client: HTTP 200 Success
 deactivate AsyncHandler
 deactivate RolesRouter
-
 
 
 

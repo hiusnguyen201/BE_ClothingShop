@@ -1,4 +1,4 @@
-@startuml Search Role
+@startuml Role Details
 
 actor Client
 
@@ -29,7 +29,6 @@ participant RolesController
 participant ModelDto
 participant ApiResponse
 participant RolesService
-participant QueryUtil
 participant RoleModel
 end box
 
@@ -37,10 +36,10 @@ database MongoDB
 
 ' Step 1
 group Request Initialization
-    Client -> RolesRouter: GET /api/roles/get-roles
+    Client -> RolesRouter: GET /api/roles/get-role-by-id/:roleId
     activate Client
     activate RolesRouter
-    RolesRouter -> AsyncHandler: asyncHandler(getAllRolesController)
+    RolesRouter -> AsyncHandler: asyncHandler(getRoleByIdController)
     activate AsyncHandler
 end
 
@@ -150,9 +149,11 @@ end
 break
 break
 
+
 ' Step 4
 group Validation Flow
-    JwtAuthMiddleware -> RequestValidation: validateQuery(GetListRoleDto)
+    JwtAuthMiddleware -> RequestValidation: validateParams(GetRoleDto)
+    deactivate JwtAuthMiddleware
     activate RequestValidation
     
     alt validation error
@@ -170,79 +171,66 @@ break
 
 ' Step 5
 group Business Logic Flow
-    RequestValidation -> RolesController: getAllRolesController
+    RequestValidation -> RolesController: getRoleByIdController
     deactivate RequestValidation
     activate RolesController
-    RolesController -> RolesService: getAndCountRolesService(filters, skip, limit, sortBy, sortOrder)
+    RolesController -> RolesService: getRoleByIdService(roleId)
     activate RolesService
-    RolesService -> RoleModel: countDocuments(filters)
-    activate RoleModel
-    RoleModel -> MongoDB: query count 
-    activate MongoDB
 
-    alt count false
-        MongoDB --x RoleModel:throw Error
-        RoleModel --x RolesService:throw Error
-        RolesService --x RolesController: throw Error
-        RolesController -->> AsyncHandler: catch Error and next(Error)
-        AsyncHandler ->> ErrorMiddleware: handleError(Error)
+    alt roleId not provided
+        RolesService -->> RolesController: return null
+        RolesController --x RolesController: throw(HttpException(400))
+        RolesController ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500  Server Error
+        ErrorMiddleware -->> Client: HTTP 400 Bad Request
         deactivate ErrorMiddleware
     end
 
-    MongoDB -->> RoleModel: return count
-    deactivate MongoDB
-    RoleModel -->> RolesService: return count
-    deactivate RoleModel
-    RolesService -> QueryUtil : extendQueryOptionsWithPagination(skip, limit)
-    activate QueryUtil
-    QueryUtil -->> RolesService: return options
-    deactivate QueryUtil
-    RolesService -> QueryUtil : extendQueryOptionsWithSort(sortBy, sortOrder)
-    activate QueryUtil
-    QueryUtil -->> RolesService: return options
-    deactivate QueryUtil
-    RolesService -> RoleModel: find(filters, ROLE_SELECTED_FIELDS, queryOptions)
+    RolesService -> RoleModel: findOne(filter)
     activate RoleModel
     RoleModel -> MongoDB: query select
     activate MongoDB
 
-    alt select false
-        MongoDB --x RoleModel:throw Error
-        RoleModel --x RolesService:throw Error
-        RolesService --x RolesController: throw Error
-        RolesController ->> AsyncHandler: catch Error and next(Error)
-        AsyncHandler ->> ErrorMiddleware: handleError(Error)
+    alt role not found
+        MongoDB -->> RoleModel: return null
+        RoleModel -->> RolesService: return null
+        RolesService -->> RolesController: return null
+        RolesController --x RolesController: throw(HttpException(404))
+        RolesController ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500  Server Error
+        ErrorMiddleware -->> Client: HTTP 404 Not Found
         deactivate ErrorMiddleware
     end
 
-    MongoDB -->> RoleModel: return roles
+    MongoDB -->> RoleModel: return role
     deactivate MongoDB
-    RoleModel -->> RolesService: return roles
+    RoleModel -->> RolesService: return role
     deactivate RoleModel
-    RolesService -->> RolesController: return roles
+    RolesService -->> RolesController: return role
     deactivate RolesService
 end
+break 
+break 
 
 group Transform data response
-    RolesController -> ModelDto: newList(RoleDto, roles)
+    RolesController -> ModelDto: new(RoleDto, role)
     activate ModelDto
     ModelDto -->> RolesController: return RoleDto instance
     deactivate ModelDto
 
-    RolesController -> ApiResponse: success(TotalCount, RoleDto, success message)
+    RolesController -> ApiResponse: success(RoleDto, success message)
     activate ApiResponse
     ApiResponse -->> RolesController: return ApiResponse instance
     deactivate ApiResponse 
 end
-
+    
 RolesController -->> AsyncHandler: return ApiResponse instance
 deactivate RolesController
 AsyncHandler --> Client: HTTP 200 Success
 deactivate AsyncHandler
 deactivate RolesRouter
+
+
+
 
 @enduml
