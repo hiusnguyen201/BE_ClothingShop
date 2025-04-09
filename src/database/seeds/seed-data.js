@@ -1,16 +1,20 @@
 'use strict';
 import { GENDER, USER_TYPE } from '#src/app/users/users.constant';
-import { getOrCreateListPermissionServiceWithTransaction } from '#src/app/permissions/permissions.service';
-import { getOrCreateRoleServiceWithTransaction } from '#src/app/roles/roles.service';
-import { getOrCreateUsersWithTransaction } from '#src/app/users/users.service';
+import { getOrCreateUsersService } from '#src/app/users/users.service';
+import { getOrCreateListPermissionService } from '#src/app/permissions/permissions.service';
+import { getOrCreateRoleService } from '#src/app/roles/roles.service';
 import { PERMISSIONS_LIST } from '#src/database/seeds/permissions-data';
 import Database from '#src/modules/database/init.database';
 import { TransactionalServiceWrapper } from '#src/core/transaction/TransactionalServiceWrapper';
 import { PERMISSION_MODEL } from '#src/app/permissions/models/permission.model';
 import { ROLE_MODEL } from '#src/app/roles/models/role.model';
 import { USER_MODEL } from '#src/app/users/models/user.model';
+import { OPTIONS_MODEL } from '#src/app/options/models/option.model';
+import { OPTIONS_DATA } from '#src/database/seeds/options-data';
+import { OPTION_VALUES_MODEL } from '#src/app/options/models/option-value.model';
+import { getOrCreateOptionValuesService } from '#src/app/options/options.service';
+import { getOrCreateOptionService } from '#src/app/options/options.service';
 
-Database.getInstance({ type: 'mongodb', logging: process.env.NODE_ENV === 'development' });
 /**
  * Need fix MongoServerError: Transaction numbers are only allowed on a replica set member or mongos
  * - Stop mongodb service
@@ -25,10 +29,15 @@ Database.getInstance({ type: 'mongodb', logging: process.env.NODE_ENV === 'devel
  * - Check replica set is configured: rs.status()
  */
 
-const models = [PERMISSION_MODEL, ROLE_MODEL, USER_MODEL];
+Database.getInstance({ type: 'mongodb', logging: process.env.NODE_ENV === 'development' });
+
+const models = [PERMISSION_MODEL, ROLE_MODEL, USER_MODEL, OPTIONS_MODEL, OPTION_VALUES_MODEL];
 
 async function runSeed() {
   await TransactionalServiceWrapper.execute(async (session) => {
+    /**
+     * Init tables
+     */
     const collections = await Promise.all([
       Database.instance.connection.db.listCollections({
         name: { $in: models },
@@ -44,26 +53,20 @@ async function runSeed() {
     );
 
     /**
-     * Permission
+     * RBAC
      */
-    const permissions = await getOrCreateListPermissionServiceWithTransaction(PERMISSIONS_LIST, session);
+    const permissions = await getOrCreateListPermissionService(PERMISSIONS_LIST, session);
 
-    /**
-     * Role
-     */
-    const role = await getOrCreateRoleServiceWithTransaction(
+    const role = await getOrCreateRoleService(
       {
-        name: 'Admin',
-        description: 'This is admin',
+        name: 'Access Control Manager',
+        description: 'Responsibilities include managing role-based access control (RBAC)',
         permissions: permissions.map((p) => p._id),
       },
       session,
     );
 
-    /**
-     * User
-     */
-    await getOrCreateUsersWithTransaction(
+    await getOrCreateUsersService(
       [
         {
           name: 'Admin Verified',
@@ -71,15 +74,6 @@ async function runSeed() {
           password: '1234',
           phone: '0383460015',
           verifiedAt: new Date(),
-          role: role._id,
-          gender: GENDER.MALE,
-          type: USER_TYPE.USER,
-        },
-        {
-          name: 'Admin Unverified',
-          email: 'admin1234@gmail.com',
-          password: '1234',
-          phone: '0383460015',
           role: role._id,
           gender: GENDER.MALE,
           type: USER_TYPE.USER,
@@ -103,6 +97,20 @@ async function runSeed() {
         },
       ],
       session,
+    );
+
+    /**
+     * Options & Option value
+     */
+    await Promise.all(
+      OPTIONS_DATA.map(async (option) => {
+        const optionValuesData = option.values.map((value) => ({ valueName: value }));
+        const optionValues = await getOrCreateOptionValuesService(optionValuesData, session);
+        await getOrCreateOptionService({
+          name: option.name,
+          optionValues: optionValues.map((item) => item._id),
+        });
+      }),
     );
   });
 }

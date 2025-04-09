@@ -24,7 +24,7 @@ export async function createUserService(data) {
  * @param {*} data
  * @returns
  */
-export async function getOrCreateUsersWithTransaction(data, session) {
+export async function getOrCreateUsersService(data, session) {
   const existingUsers = await UserModel.find({
     email: data.map((item) => item.email),
   }).lean();
