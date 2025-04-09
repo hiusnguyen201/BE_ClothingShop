@@ -1,9 +1,9 @@
-@startuml Update Role
+@startuml Create Customer
 
 actor Client
 
 box "Application Layer"
-participant RolesRouter 
+participant CustomersRouter 
 participant ErrorMiddleware 
 participant AsyncHandler 
 end box
@@ -15,32 +15,30 @@ participant AuthService
 participant jsonwebtoken
 end box
 
-box "Authorization"
-participant UserService 
-participant UserModel
-end box
 
 box "Validation"
 participant RequestValidation
 end box
 
 box "Business Logic"
-participant RolesController
-participant ModelDto
+participant CustomersController
 participant ApiResponse
-participant RolesService
-participant RoleModel
+participant QueryUtil
+participant UserService 
+participant UserModel
 participant StringUtil
+participant MailerService
+participant ModelDto
 end box
 
 database MongoDB
 
 ' Step 1
 group Request Initialization
-    Client -> RolesRouter: PUT /api/roles/update-role-by-id/:roleId
+    Client -> CustomersRouter: GET /api/customers/create-customers
     activate Client
-    activate RolesRouter
-    RolesRouter -> AsyncHandler: asyncHandler(updateRoleByIdController)
+    activate CustomersRouter
+    CustomersRouter -> AsyncHandler: asyncHandler(createCustomerController)
     activate AsyncHandler
 end
 
@@ -152,7 +150,7 @@ break
 
 ' Step 4
 group Validation Flow
-    JwtAuthMiddleware -> RequestValidation: validateParams(GetRoleDto)
+    JwtAuthMiddleware -> RequestValidation: validateBody(CreateCustomerDto)
     deactivate JwtAuthMiddleware
     activate RequestValidation
     alt validation error
@@ -163,135 +161,122 @@ group Validation Flow
         deactivate ErrorMiddleware
     end
     
-    RequestValidation -> RequestValidation: validateBody(UpdateRoleDto)
-    
-    alt validation error
-        RequestValidation ->> RequestValidation: next(HttpException(400))
-        RequestValidation ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
-    end
 end
 
 break
 break
 
-' Step 5
+
+' step 5
 group Business Logic Flow
-    RequestValidation -> RolesController: updateRoleByIdController
+    RequestValidation -> CustomersController: createCustomerController
     deactivate RequestValidation
-    activate RolesController
-    RolesController -> RolesService: getRoleByIdService(roleId)
-    activate RolesService
-    
-    alt roleId not provided
-        RolesService -->> RolesController: return null
-        RolesController --x RolesController: throw(HttpException(400))
-        RolesController ->> ErrorMiddleware: handleError(Error)
+    activate CustomersController
+    CustomersController -> UserService: checkExistEmailService(email)
+    activate UserService
+    UserService -> UserModel: findOne(filters)
+    activate UserModel
+    UserModel -> MongoDB: query select
+    activate MongoDB
+
+    alt email already exists
+        MongoDB -->> UserModel: return user
+        UserModel -->> UserService: return user
+        UserService -->> CustomersController: return user
+        CustomersController --x CustomersController: throw(HttpException(400))
+        CustomersController ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 400 Bad Request
         deactivate ErrorMiddleware
-    end
 
-    RolesService -> RoleModel: findOne(filter)
-    activate RoleModel
-    RoleModel -> MongoDB: query select
-    activate MongoDB
-
-    alt role not found
-        MongoDB -->> RoleModel: return null
-        RoleModel -->> RolesService: return null
-        RolesService -->> RolesController: return null
-        RolesController --x RolesController: throw(HttpException(404))
-        RolesController ->> ErrorMiddleware: handleError(Error)
+        else database error
+        MongoDB --x UserModel: throw error
+        UserModel --x UserService: throw error
+        UserService --x CustomersController: throw error
+        CustomersController --x CustomersController: throw(HttpException(500))
+        CustomersController ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 404 Not Found
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
     end
 
-    MongoDB -->> RoleModel: return role
+    MongoDB -->> UserModel: return null
     deactivate MongoDB
-    RoleModel -->> RolesService: return role
-    deactivate RoleModel
-    RolesService -->> RolesController: return role
-    deactivate RolesService
-
-    RolesController -> RolesService: checkExistRoleNameService(name, existRole._id)
-    activate RolesService
-    RolesService -> RoleModel: fineOne(filters)
-    activate RoleModel
-    RoleModel -> MongoDB: query select
-    activate MongoDB
-
-    alt Role name already exists
-        MongoDB -->> RoleModel: return role
-        RoleModel -->> RolesService: return role
-        RolesService -->> RolesController: return true
-        RolesController --x RolesController : throw HttpException(409)
-        RolesController ->> AsyncHandler : catch HttpException and next(HttpException(409))
-        AsyncHandler ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 409 Conflict
-        deactivate ErrorMiddleware
-    end
-
-    MongoDB -->> RoleModel: return null
-    deactivate MongoDB
-    RoleModel -->> RolesService: return null
-    deactivate RoleModel
-    RolesService -->> RolesController: return false
-    deactivate RolesService
-    RolesController -> RolesService: updateRoleInfoByIdService(existRole._id, req.body)
-    activate RolesService
-    RolesService -> StringUtil: makeSlug(data.name)
+    UserModel -->> UserService: return null
+    deactivate UserModel
+    UserService -->> CustomersController: return null
+    deactivate UserService
+    CustomersController -> StringUtil: randomStr(32)
     activate StringUtil
-    StringUtil -->> RolesService: return slug
+    StringUtil -->> CustomersController: return random string
     deactivate StringUtil
-    RolesService -> RoleModel: findByIdAndUpdate(id, data)
-    activate RoleModel
-    RoleModel -> MongoDB: query update
+    CustomersController -> UserService: createUserService(data)
+    activate UserService
+    UserService -> UserService: genSaltSync()
+    UserService -> UserService: hashSync(data.password, salt) 
+    UserService -> UserModel: create(data)
+    activate UserModel
+    UserModel -> MongoDB: query create
     activate MongoDB
 
-    alt update false
-        MongoDB --x RoleModel: throw Error
-        RoleModel --x RolesService: throw Error
-        RolesService --x RolesController: throw Error
-        RolesController ->> AsyncHandler: catch Error and next(Error)
+    alt Create fail
+        MongoDB --x UserModel: throw Error
+        UserModel --x UserService: throw Error
+        UserService --x CustomersController: throw Error
+        CustomersController ->> AsyncHandler: catch Error and next(Error)
         AsyncHandler ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Server Error
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
     end
 
-    MongoDB -->> RoleModel: return role
+    MongoDB -->> UserModel: return user
     deactivate MongoDB
-    RoleModel -->> RolesService: return role
-    deactivate RoleModel
-    RolesService -->> RolesController: return role
-    deactivate RolesService
-    
+    UserModel -->> UserService: return user
+    deactivate UserModel
+    UserService -> UserService: toJSON(user)
+    UserService -->> CustomersController: return user
+    deactivate UserService
+    CustomersController -> MailerService: sendPasswordService(email, password)
+    activate MailerService
+    MailerService -> MailerService: getEmailTemplateToString()
+    MailerService -> MailerService: sendEmail(email, subject, body)
+
+    alt send email fail
+        MailerService --x MailerService: throw Error
+        MailerService -->> CustomersController: throw Error
+        CustomersController --x CustomersController: throw Error
+        CustomersController ->> AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        deactivate ErrorMiddleware
+    end
+
+    MailerService -->> CustomersController: return void
+    deactivate MailerService
+
 end
-break 
+break
 break
 
 group Transform data response
-    RolesController -> ModelDto: new(RoleDto, updatedRole)
+    CustomersController -> ModelDto: new(CustomerDto, customers)
     activate ModelDto
-    ModelDto -->> RolesController: return RoleDto instance
+    ModelDto -->> CustomersController: return RoleDto instance
     deactivate ModelDto
 
-    RolesController -> ApiResponse: success(RoleDto, success message)
+    CustomersController -> ApiResponse: success(RoleDto, success message)
     activate ApiResponse
-    ApiResponse -->> RolesController: return ApiResponse instance
+    ApiResponse -->> CustomersController: return ApiResponse instance
     deactivate ApiResponse 
 end
-    
-RolesController -->> AsyncHandler: return ApiResponse instance
-deactivate RolesController
+CustomersController -->> AsyncHandler: return ApiResponse instance
+deactivate CustomersController
 AsyncHandler --> Client: HTTP 200 Success
 deactivate AsyncHandler
-deactivate RolesRouter
+deactivate CustomersRouter
+
 
 
 @enduml

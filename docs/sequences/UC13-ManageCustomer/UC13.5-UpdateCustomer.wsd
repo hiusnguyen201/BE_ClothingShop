@@ -1,9 +1,9 @@
-@startuml Update Role
+@startuml Update Customer
 
 actor Client
 
 box "Application Layer"
-participant RolesRouter 
+participant CustomersRouter 
 participant ErrorMiddleware 
 participant AsyncHandler 
 end box
@@ -15,32 +15,27 @@ participant AuthService
 participant jsonwebtoken
 end box
 
-box "Authorization"
-participant UserService 
-participant UserModel
-end box
 
 box "Validation"
 participant RequestValidation
 end box
 
 box "Business Logic"
-participant RolesController
-participant ModelDto
+participant CustomersController
 participant ApiResponse
-participant RolesService
-participant RoleModel
-participant StringUtil
+participant UserService 
+participant UserModel
+participant ModelDto
 end box
 
 database MongoDB
 
 ' Step 1
 group Request Initialization
-    Client -> RolesRouter: PUT /api/roles/update-role-by-id/:roleId
+    Client -> CustomersRouter: PUT /api/customers/update-customer-by-id/:customerId
     activate Client
-    activate RolesRouter
-    RolesRouter -> AsyncHandler: asyncHandler(updateRoleByIdController)
+    activate CustomersRouter
+    CustomersRouter -> AsyncHandler: asyncHandler(updateCustomerByIdController)
     activate AsyncHandler
 end
 
@@ -163,7 +158,7 @@ group Validation Flow
         deactivate ErrorMiddleware
     end
     
-    RequestValidation -> RequestValidation: validateBody(UpdateRoleDto)
+    RequestValidation -> RequestValidation: validateBody(UpdateCustomerDto)
     
     alt validation error
         RequestValidation ->> RequestValidation: next(HttpException(400))
@@ -179,119 +174,134 @@ break
 
 ' Step 5
 group Business Logic Flow
-    RequestValidation -> RolesController: updateRoleByIdController
+    RequestValidation -> CustomersController: updateCustomerByIdController
     deactivate RequestValidation
-    activate RolesController
-    RolesController -> RolesService: getRoleByIdService(roleId)
-    activate RolesService
+    activate CustomersController
+    CustomersController -> UserService: getUserByIdService(customerId)
+    activate UserService
     
-    alt roleId not provided
-        RolesService -->> RolesController: return null
-        RolesController --x RolesController: throw(HttpException(400))
-        RolesController ->> ErrorMiddleware: handleError(Error)
+    alt customerId not provided
+        UserService -->> CustomersController: return null
+        CustomersController --x CustomersController: throw(HttpException(400))
+        CustomersController ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 400 Bad Request
         deactivate ErrorMiddleware
     end
 
-    RolesService -> RoleModel: findOne(filter)
-    activate RoleModel
-    RoleModel -> MongoDB: query select
+    UserService -> UserModel: findOne(filters)
+    activate UserModel
+    UserModel -> MongoDB: query select
     activate MongoDB
 
-    alt role not found
-        MongoDB -->> RoleModel: return null
-        RoleModel -->> RolesService: return null
-        RolesService -->> RolesController: return null
-        RolesController --x RolesController: throw(HttpException(404))
-        RolesController ->> ErrorMiddleware: handleError(Error)
+    alt user not found
+        MongoDB -->> UserModel: return null
+        UserModel -->> UserService: return null
+        UserService -->> CustomersController: return null
+        CustomersController --x CustomersController: throw(HttpException(404))
+        CustomersController ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 404 Not Found
         deactivate ErrorMiddleware
-    end
 
-    MongoDB -->> RoleModel: return role
-    deactivate MongoDB
-    RoleModel -->> RolesService: return role
-    deactivate RoleModel
-    RolesService -->> RolesController: return role
-    deactivate RolesService
-
-    RolesController -> RolesService: checkExistRoleNameService(name, existRole._id)
-    activate RolesService
-    RolesService -> RoleModel: fineOne(filters)
-    activate RoleModel
-    RoleModel -> MongoDB: query select
-    activate MongoDB
-
-    alt Role name already exists
-        MongoDB -->> RoleModel: return role
-        RoleModel -->> RolesService: return role
-        RolesService -->> RolesController: return true
-        RolesController --x RolesController : throw HttpException(409)
-        RolesController ->> AsyncHandler : catch HttpException and next(HttpException(409))
-        AsyncHandler ->> ErrorMiddleware: handleError(Error)
+        else database error
+        MongoDB --x UserModel: throw error
+        UserModel --x UserService: throw error
+        UserService --x CustomersController: throw error
+        CustomersController --x CustomersController: throw(HttpException(500))
+        CustomersController ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 409 Conflict
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
     end
 
-    MongoDB -->> RoleModel: return null
+    MongoDB -->> UserModel: return user
     deactivate MongoDB
-    RoleModel -->> RolesService: return null
-    deactivate RoleModel
-    RolesService -->> RolesController: return false
-    deactivate RolesService
-    RolesController -> RolesService: updateRoleInfoByIdService(existRole._id, req.body)
-    activate RolesService
-    RolesService -> StringUtil: makeSlug(data.name)
-    activate StringUtil
-    StringUtil -->> RolesService: return slug
-    deactivate StringUtil
-    RolesService -> RoleModel: findByIdAndUpdate(id, data)
-    activate RoleModel
-    RoleModel -> MongoDB: query update
+    UserModel -->> UserService: return user
+    deactivate UserModel
+    UserService -->> CustomersController: return user
+    deactivate UserService
+    CustomersController -> UserService: checkExistEmailService(email, customerId)
+    activate UserService
+    UserService -> UserModel: findOne(filters)
+    activate UserModel
+    UserModel -> MongoDB: query select
     activate MongoDB
 
-    alt update false
-        MongoDB --x RoleModel: throw Error
-        RoleModel --x RolesService: throw Error
-        RolesService --x RolesController: throw Error
-        RolesController ->> AsyncHandler: catch Error and next(Error)
-        AsyncHandler ->> ErrorMiddleware: handleError(Error)
+    alt email already exists
+        MongoDB -->> UserModel: return user
+        UserModel -->> UserService: return user
+        UserService -->> CustomersController: return user
+        CustomersController --x CustomersController: throw(HttpException(400))
+        CustomersController ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Server Error
+        ErrorMiddleware -->> Client: HTTP 400 Bad Request
+        deactivate ErrorMiddleware
+
+        else database error
+        MongoDB --x UserModel: throw error
+        UserModel --x UserService: throw error
+        UserService --x CustomersController: throw error
+        CustomersController --x CustomersController: throw(HttpException(500))
+        CustomersController ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
     end
 
-    MongoDB -->> RoleModel: return role
+    MongoDB -->> UserModel: return null
     deactivate MongoDB
-    RoleModel -->> RolesService: return role
-    deactivate RoleModel
-    RolesService -->> RolesController: return role
-    deactivate RolesService
+    UserModel -->> UserService: return null
+    deactivate UserModel
+    UserService -->> CustomersController: return null
+    deactivate UserService
+
+    CustomersController -> UserService: updateUserService(customerId, data)
+    activate UserService
+    UserService -> UserModel: findByIdAndUpdate(customerId, data, options)
+    activate UserModel
+    UserModel -> MongoDB: query update
+    activate MongoDB
+
+    alt Update fail
+        MongoDB --x UserModel: throw error
+        UserModel --x UserService: throw error
+        UserService --x CustomersController: throw error
+        CustomersController --x CustomersController: throw(HttpException(500))
+        CustomersController ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        deactivate ErrorMiddleware
+
+    end
+    MongoDB -->> UserModel: return user
+    deactivate MongoDB
+    UserModel -->> UserService: return user
+    deactivate UserModel
+    UserService -->> CustomersController: return user
+    deactivate UserService
+
     
 end
 break 
 break
 
 group Transform data response
-    RolesController -> ModelDto: new(RoleDto, updatedRole)
+    CustomersController -> ModelDto: new(CustomerDto, customer)
     activate ModelDto
-    ModelDto -->> RolesController: return RoleDto instance
+    ModelDto -->> CustomersController: return RoleDto instance
     deactivate ModelDto
 
-    RolesController -> ApiResponse: success(RoleDto, success message)
+    CustomersController -> ApiResponse: success(RoleDto, success message)
     activate ApiResponse
-    ApiResponse -->> RolesController: return ApiResponse instance
+    ApiResponse -->> CustomersController: return ApiResponse instance
     deactivate ApiResponse 
 end
-    
-RolesController -->> AsyncHandler: return ApiResponse instance
-deactivate RolesController
+CustomersController -->> AsyncHandler: return ApiResponse instance
+deactivate CustomersController
 AsyncHandler --> Client: HTTP 200 Success
 deactivate AsyncHandler
-deactivate RolesRouter
+deactivate CustomersRouter
 
 
 @enduml
