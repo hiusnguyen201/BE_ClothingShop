@@ -34,7 +34,7 @@ export const createCustomerController = async (req) => {
   sendPasswordService(email, password);
 
   const customersDto = ModelDto.new(CustomerDto, customer);
-  return ApiResponse.success(customersDto, 'Create customer successfully');
+  return ApiResponse.success(customersDto, 'Create customer successful');
 };
 
 export const getAllCustomersController = async (req) => {
@@ -61,7 +61,7 @@ export const getAllCustomersController = async (req) => {
   });
 
   const customersDto = ModelDto.newList(CustomerDto, customers);
-  return ApiResponse.success({ totalCount, list: customersDto }, 'Get all customers successfully');
+  return ApiResponse.success({ totalCount, list: customersDto }, 'Get all customers successful');
 };
 
 export const getCustomerByIdController = async (req) => {
@@ -73,7 +73,7 @@ export const getCustomerByIdController = async (req) => {
   }
 
   const customerDto = ModelDto.new(CustomerDto, customer);
-  return ApiResponse.success(customerDto, 'Get customer successfully');
+  return ApiResponse.success(customerDto, 'Get customer successful');
 };
 
 export const updateCustomerByIdController = async (req) => {
@@ -95,7 +95,7 @@ export const updateCustomerByIdController = async (req) => {
   const updatedCustomer = await updateUserInfoByIdService(customerId, req.body);
 
   const customerDto = ModelDto.new(CustomerDto, updatedCustomer);
-  return ApiResponse.success(customerDto, 'Update customer successfully');
+  return ApiResponse.success(customerDto, 'Update customer successful');
 };
 
 export const removeCustomerByIdController = async (req) => {
@@ -108,5 +108,5 @@ export const removeCustomerByIdController = async (req) => {
 
   await removeUserByIdService(customerId);
 
-  return ApiResponse.success(null, 'Remove customer successfully');
+  return ApiResponse.success({ id: existCustomer._id }, 'Remove customer successful');
 };

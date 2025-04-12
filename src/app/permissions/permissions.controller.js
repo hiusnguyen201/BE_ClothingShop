@@ -22,5 +22,5 @@ export const getAllPermissionsController = async (req) => {
   });
 
   const permissionDto = ModelDto.newList(PermissionDto, permissions);
-  return ApiResponse.success({ totalCount, list: permissionDto }, 'Get all permissions successfully');
+  return ApiResponse.success({ totalCount, list: permissionDto }, 'Get all permissions successful');
 };

@@ -37,7 +37,7 @@ curl --request DELETE 'https://server-clothes-store.vercel.app/api/categories/re
 {
   "code": 200,
   "codeMessage": "SUCCESS",
-  "message": "Remove category successfully",
+  "message": "Remove category successful",
   "timestamp": 1742377237795,
   "data": null
 }

@@ -34,10 +34,6 @@ export const PermissionSchema = new Schema(
       required: true,
       enum: ALLOW_METHODS,
     },
-
-    // Foreign Key
-    // roles: [{ type: Schema.Types.ObjectId, ref: "Role" }],
-    users: [{ type: Schema.Types.ObjectId, ref: 'User' }],
   },
   {
     versionKey: false,

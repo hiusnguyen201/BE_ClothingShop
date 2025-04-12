@@ -40,7 +40,7 @@ curl -X POST 'https://server-clothes-store.vercel.app/api/categories/create-cate
 {
   "code": 200,
   "codeMessage": "SUCCESS",
-  "message": "Create category successfully",
+  "message": "Create category successful",
   "timestamp": 1742372000464,
   "data": {
     "id": "67da7ca096ff86fc1e010fbb",

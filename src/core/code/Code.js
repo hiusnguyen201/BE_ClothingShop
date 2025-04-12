@@ -1,4 +1,10 @@
 export class Code {
+  static SUCCESS = {
+    status: 200,
+    codeMessage: 'SUCCESS',
+    message: 'Success',
+  };
+
   static ENTITY_VALIDATION_FAILED = {
     status: 400,
     codeMessage: 'ENTITY_VALIDATION_FAILED',
@@ -48,7 +54,7 @@ export class Code {
   };
 
   static TOKEN_REQUIRED = {
-    status: 400,
+    status: 401,
     codeMessage: 'TOKEN_REQUIRED',
     message: 'Token is required',
   };
@@ -57,6 +63,12 @@ export class Code {
     status: 401,
     codeMessage: 'INVALID_TOKEN',
     message: 'Token is not valid',
+  };
+
+  static REFRESH_TOKEN_FAILED = {
+    status: 401,
+    codeMessage: 'REFRESH_TOKEN_FAILED',
+    message: 'Refresh token is invalid or expired.',
   };
 
   static UNAUTHORIZED = {

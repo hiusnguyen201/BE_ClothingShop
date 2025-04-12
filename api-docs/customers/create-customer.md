@@ -46,7 +46,7 @@ curl --request POST 'https://server-clothes-store.vercel.app/api/customers/creat
 {
   "code": 200,
   "codeMessage": "SUCCESS",
-  "message": "Create customer successfully",
+  "message": "Create customer successful",
   "timestamp": 1742292183292,
   "data": {
     "id": "67d944d742e52209d72a1fde",

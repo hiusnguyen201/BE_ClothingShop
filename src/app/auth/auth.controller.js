@@ -17,6 +17,7 @@ import {
   removeUserOtpsInUserService,
   revokeTokenByUserIdService,
   getUserByRefreshTokenService,
+  authenticateCustomerService,
 } from '#src/app/auth/auth.service';
 import { HttpException } from '#src/core/exception/http-exception';
 import {
@@ -32,6 +33,7 @@ import { Code } from '#src/core/code/Code';
 import { UserDto } from '#src/app/users/dtos/user.dto';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { clearSession, REFRESH_TOKEN_KEY, setSession } from '#src/utils/cookie.util';
+import { CustomerDto } from '#src/app/customers/dtos/customer.dto';
 
 export const logoutController = async (req, res) => {
   const userId = req.user.id;
@@ -47,12 +49,12 @@ export const refreshTokenController = async (req, res) => {
   const currentRefreshToken = req.cookies[REFRESH_TOKEN_KEY];
 
   if (!currentRefreshToken) {
-    throw HttpException.new({ code: Code.UNAUTHORIZED, message: 'No refresh token provided' });
+    throw HttpException.new({ code: Code.REFRESH_TOKEN_FAILED, message: 'No refresh token provided' });
   }
 
   const user = await getUserByRefreshTokenService(currentRefreshToken);
   if (!user) {
-    throw HttpException.new({ code: Code.UNAUTHORIZED, message: 'Invalid refresh token' });
+    throw HttpException.new({ code: Code.REFRESH_TOKEN_FAILED, message: 'Invalid refresh token' });
   }
 
   const { accessToken, refreshToken } = await generateTokensService(user._id, {
@@ -63,10 +65,10 @@ export const refreshTokenController = async (req, res) => {
   setSession(res, { accessToken, refreshToken });
 
   const userDto = ModelDto.new(UserDto, user);
-  return ApiResponse.success(userDto);
+  return ApiResponse.success(userDto, 'Refresh token successful');
 };
 
-export const loginController = async (req, res) => {
+export const loginAdminController = async (req, res) => {
   const { email, password } = req.body;
 
   const user = await authenticateUserService(email, password);
@@ -75,27 +77,47 @@ export const loginController = async (req, res) => {
   }
 
   const userDto = ModelDto.new(UserDto, user);
-  const isNeed2Fa = !user.verifiedAt; // || user.type === USER_TYPE.USER;
+
+  return ApiResponse.success(
+    {
+      isAuthenticated: false,
+      is2FactorRequired: true,
+      user: userDto,
+    },
+    'Login successful',
+  );
+};
+
+export const loginCustomerController = async (req, res) => {
+  const { email, password } = req.body;
+
+  const customer = await authenticateCustomerService(email, password);
+  if (!customer) {
+    throw HttpException.new({ code: Code.UNAUTHORIZED, overrideMessage: 'Invalid Credentials' });
+  }
+
+  const customerDto = ModelDto.new(CustomerDto, customer);
+  const isNeed2Fa = !customer.verifiedAt;
   if (isNeed2Fa) {
     return ApiResponse.success({
       isAuthenticated: false,
       is2FactorRequired: true,
-      user: userDto,
+      customer: customerDto,
     });
   }
 
-  const { accessToken, refreshToken } = await generateTokensService(user._id, {
-    id: user._id,
-    type: user.type,
-  });
+  const { accessToken, refreshToken } = await generateTokensService(customer._id, { id: customer._id });
 
   setSession(res, { accessToken, refreshToken });
 
-  return ApiResponse.success({
-    isAuthenticated: true,
-    is2FactorRequired: false,
-    user: userDto,
-  });
+  return ApiResponse.success(
+    {
+      isAuthenticated: true,
+      is2FactorRequired: false,
+      customer: customerDto,
+    },
+    'Login successful',
+  );
 };
 
 export const registerController = async (req) => {
@@ -129,7 +151,10 @@ export const forgotPasswordController = async (req) => {
   const token = createResetPasswordTokenService({ id: user._id });
 
   const resetURL = path.join(callbackUrl, token);
-  await sendResetPasswordRequestService(email, resetURL);
+  const result = await sendResetPasswordRequestService(email, resetURL);
+  if (!result) {
+    throw HttpException.new({ code: Code.SEND_MAIL_ERROR, overrideMessage: 'Send link reset password failed' });
+  }
 
   return ApiResponse.success(null, 'Required Forgot Password Success');
 };
@@ -146,7 +171,7 @@ export const resetPasswordController = async (req) => {
 
   sendResetPasswordSuccessService(updatedUser.email);
 
-  return ApiResponse.success(null, 'Reset password successfully');
+  return ApiResponse.success(null, 'Reset password successful');
 };
 
 export const sendOtpViaEmailController = async (req) => {
@@ -168,12 +193,15 @@ export const sendOtpViaEmailController = async (req) => {
   await removeUserOtpsInUserService(user._id);
 
   const userOtp = await createUserOtpService(user._id);
-  sendOtpCodeService(user.email, userOtp.otp);
+  const result = await sendOtpCodeService(user.email, userOtp.otp);
+  if (!result) {
+    throw HttpException.new({ code: Code.SEND_MAIL_ERROR, overrideMessage: 'Send OTP failed' });
+  }
 
-  return ApiResponse.success(null, 'Send otp via email successfully');
+  return ApiResponse.success(null, 'Send otp via email successful');
 };
 
-export const verifyOtpController = async (req) => {
+export const verifyOtpController = async (req, res) => {
   const { userId, otp } = req.body;
   const user = await getUserByIdService(userId);
   if (!user) {
@@ -207,6 +235,6 @@ export const verifyOtpController = async (req) => {
       is2FactorRequired: false,
       user: userDto,
     },
-    'Verify otp successfully',
+    'Verify otp successful',
   );
 };

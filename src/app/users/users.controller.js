@@ -123,7 +123,7 @@ export const removeUserByIdController = async (req) => {
 
   await removeUserByIdService(userId);
 
-  return ApiResponse.success();
+  return ApiResponse.success({ id: existUser._id }, 'Remove user successful');
 };
 
 export const checkExistEmailController = async (req) => {

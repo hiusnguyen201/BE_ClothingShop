@@ -67,3 +67,12 @@ export async function getPermissionByIdService(id) {
 
   return PermissionModel.findOne(filter).lean();
 }
+
+/**
+ * Create permission
+ * @param {*} id
+ * @returns
+ */
+export async function createPermissionService(data) {
+  return PermissionModel.create(data);
+}

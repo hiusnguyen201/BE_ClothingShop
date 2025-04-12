@@ -38,7 +38,7 @@ curl --request POST 'https://server-clothes-store.vercel.app/api/auth/send-otp-v
 {
   "code": 200,
   "codeMessage": "SUCCESS",
-  "message": "Send otp via email successfully",
+  "message": "Send otp via email successful",
   "timestamp": 1742200311115,
   "data": null
 }

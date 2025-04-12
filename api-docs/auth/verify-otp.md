@@ -40,7 +40,7 @@ curl --request POST 'https://server-clothes-store.vercel.app/api/auth/verify-otp
 {
   "code": 200,
   "codeMessage": "SUCCESS",
-  "message": "Verify otp successfully",
+  "message": "Verify otp successful",
   "timestamp": 1742201059901,
   "data": {
     "isAuthenticated": true,

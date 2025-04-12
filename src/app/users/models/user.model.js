@@ -44,9 +44,8 @@ const UserSchema = new Schema(
     },
     gender: {
       type: String,
-      required: false,
+      required: true,
       enum: Object.values(GENDER),
-      default: null,
     },
     googleId: {
       type: String,
@@ -69,9 +68,19 @@ const UserSchema = new Schema(
       required: false,
       default: null,
     },
+    lastLoginAt: {
+      type: Date,
+      required: false,
+      default: null,
+    },
 
     // Foreign key
     role: { type: Schema.Types.ObjectId, ref: 'Role', default: null },
+
+    permissions: {
+      type: [{ type: Schema.Types.ObjectId, ref: 'Permission' }],
+      default: [],
+    },
 
     vouchers: {
       type: [{ type: Schema.Types.ObjectId, ref: 'Voucher' }],

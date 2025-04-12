@@ -14,10 +14,12 @@ class PermissionFactory {
   }
 
   async createPermission(overrides = {}) {
-    return await createPermissionService({
+    const data = {
       ...this.default,
       ...overrides,
-    });
+    };
+
+    return createPermissionService(data);
   }
 }
 

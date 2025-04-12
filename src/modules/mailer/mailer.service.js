@@ -3,7 +3,6 @@ import nodemailer from 'nodemailer';
 import fs from 'fs';
 import path from 'path';
 import { HttpException } from '#src/core/exception/http-exception';
-import { viewRootDir } from '#src/views/viewRootDir';
 import { Code } from '#src/core/code/Code';
 
 const mailerEmail = process.env.MAILER_AUTH_USER;
@@ -19,22 +18,18 @@ const transporter = nodemailer.createTransport({
 });
 
 const getEmailTemplateToString = (fileName) => {
-  return fs.readFileSync(path.join(viewRootDir, '/email-templates', `${fileName}`)).toString();
+  return fs.readFileSync(path.resolve(process.cwd(), 'src/views/email-templates/', `${fileName}`)).toString();
 };
 
 export const sendOtpCodeService = async (email, otpCode) => {
-  try {
-    const html = getEmailTemplateToString('verification-otp.html').replace('{otpCode}', otpCode);
+  const html = getEmailTemplateToString('verification-otp.html').replace('{otpCode}', otpCode);
 
-    await transporter.sendMail({
-      from: mailerEmail,
-      to: email,
-      subject: 'Verify Otp',
-      html,
-    });
-  } catch (err) {
-    throw HttpException.new({ code: Code.SEND_MAIL_ERROR, overrideMessage: 'Send OTP failed' });
-  }
+  return await transporter.sendMail({
+    from: mailerEmail,
+    to: email,
+    subject: 'Verify Otp',
+    html,
+  });
 };
 
 export const sendWelcomeEmailService = async (email, name) => {
@@ -48,23 +43,20 @@ export const sendWelcomeEmailService = async (email, name) => {
       html,
     });
   } catch (err) {
+    console.log(err);
     throw HttpException.new({ code: Code.SEND_MAIL_ERROR, overrideMessage: 'Send welcome email failed' });
   }
 };
 
 export const sendResetPasswordRequestService = async (email, resetURL) => {
-  try {
-    const html = getEmailTemplateToString('password-reset-request.html').replace('{resetURL}', resetURL);
+  const html = getEmailTemplateToString('password-reset-request.html').replace('{resetURL}', resetURL);
 
-    await transporter.sendMail({
-      from: mailerEmail,
-      to: email,
-      subject: 'Send Request Reset Password',
-      html,
-    });
-  } catch (err) {
-    throw HttpException.new({ code: Code.SEND_MAIL_ERROR, overrideMessage: 'Send link reset password failed' });
-  }
+  return await transporter.sendMail({
+    from: mailerEmail,
+    to: email,
+    subject: 'Send Request Reset Password',
+    html,
+  });
 };
 
 export const sendResetPasswordSuccessService = async (email) => {
@@ -74,10 +66,11 @@ export const sendResetPasswordSuccessService = async (email) => {
     await transporter.sendMail({
       from: mailerEmail,
       to: email,
-      subject: 'Password Reset Successfully',
+      subject: 'Password Reset successful',
       html,
     });
   } catch (err) {
+    console.log(err);
     throw HttpException.new({
       code: Code.SEND_MAIL_ERROR,
       overrideMessage: 'Send reset password success email failed',
@@ -92,10 +85,11 @@ export const sendPasswordService = async (email, password) => {
     await transporter.sendMail({
       from: mailerEmail,
       to: email,
-      subject: 'Send Password Successfully',
+      subject: 'Send Password successful',
       html,
     });
   } catch (err) {
+    console.log(err);
     throw HttpException.new({ code: Code.SEND_MAIL_ERROR, overrideMessage: 'Send password failed' });
   }
 };

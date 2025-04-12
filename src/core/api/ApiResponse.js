@@ -1,3 +1,4 @@
+import { Code } from '#src/core/code/Code';
 import HttpStatus from 'http-status-codes';
 
 export class ApiResponse {
@@ -11,8 +12,8 @@ export class ApiResponse {
 
   static success(data, message) {
     const resultCode = HttpStatus.OK;
-    const resultMessage = message || 'Success';
-    const resultCodeMessage = 'SUCCESS';
+    const resultMessage = message || Code.SUCCESS.message;
+    const resultCodeMessage = Code.SUCCESS.codeMessage;
     return new ApiResponse(resultCode, resultCodeMessage, resultMessage, data);
   }
 

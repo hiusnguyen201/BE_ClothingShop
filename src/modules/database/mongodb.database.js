@@ -9,13 +9,18 @@ export const connectToMongoDb = (options) => {
   mongoose
     .connect(process.env.MONGO_URI, {
       serverSelectionTimeoutMS: 30000,
+      connectTimeoutMS: 60000,
       minPoolSize: 10,
     })
     .then(() => {
-      console.log('Connected successfully to MongoDB');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Connected successful to MongoDB');
+      }
     })
     .catch((err) => {
-      console.error('Connect to MongoDB failed', err);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Connect to MongoDB failed', err);
+      }
     });
 
   return mongoose.connection;

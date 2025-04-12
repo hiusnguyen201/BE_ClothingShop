@@ -51,7 +51,7 @@ export const createCategoryController = async (req) => {
   const category = await createCategoryService({ ...req.body, level });
 
   const categoryDto = ModelDto.new(CategoryDto, category);
-  return ApiResponse.success(categoryDto, 'Create category successfully');
+  return ApiResponse.success(categoryDto, 'Create category successful');
 };
 
 export const getAllCategoriesController = async (req) => {
@@ -77,7 +77,7 @@ export const getAllCategoriesController = async (req) => {
       totalCount,
       list: categoriesDto,
     },
-    'Get all categories successfully',
+    'Get all categories successful',
   );
 };
 
@@ -89,7 +89,7 @@ export const getCategoryByIdController = async (req) => {
   }
 
   const categoryDto = ModelDto.new(CategoryDto, category);
-  return ApiResponse.success(categoryDto, 'Get one category successfully');
+  return ApiResponse.success(categoryDto, 'Get one category successful');
 };
 
 export const updateCategoryByIdController = async (req) => {
@@ -116,7 +116,7 @@ export const updateCategoryByIdController = async (req) => {
   const updatedCategory = await updateCategoryInfoByIdService(categoryId, req.body);
 
   const categoryDto = ModelDto.new(CategoryDto, updatedCategory);
-  return ApiResponse.success(categoryDto, 'Update category successfully');
+  return ApiResponse.success(categoryDto, 'Update category successful');
 };
 
 export const removeCategoryByIdController = async (req) => {
@@ -128,7 +128,7 @@ export const removeCategoryByIdController = async (req) => {
 
   await removeCategoryByIdService(categoryId);
 
-  return ApiResponse.success(null, 'Remove category successfully');
+  return ApiResponse.success({ id: existCategory._id }, 'Remove category successful');
 };
 
 export const isExistCategoryNameController = async (req) => {

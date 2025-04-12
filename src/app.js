@@ -27,7 +27,7 @@ app.use(helmet());
 app.use(compression());
 app.use(
   cors({
-    origin: ['http://localhost:5173'],
+    origin: true,
     methods: 'GET,POST,PUT,PATCH,DELETE',
     allowedHeaders: 'Content-Type,Authorization',
     credentials: true,
@@ -51,8 +51,6 @@ app.use((req, res, next) => {
 
 // Ignore favicon request
 app.get('/favicon.ico', (req, res) => res.status(HttpStatus.NO_CONTENT).end());
-
-app.use('/docs', (req, res) => res.redirect(process.env.POSTMAN_URL_DOCS));
 
 // Api version 1
 app.use('/api', enhanceRouter(router));

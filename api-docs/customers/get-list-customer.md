@@ -42,7 +42,7 @@ curl --location --request GET 'https://server-clothes-store.vercel.app/api/custo
 {
   "code": 200,
   "codeMessage": "SUCCESS",
-  "message": "Get all customers successfully",
+  "message": "Get all customers successful",
   "timestamp": 1742292503798,
   "data": {
     "totalCount": 1,

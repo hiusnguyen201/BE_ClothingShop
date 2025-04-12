@@ -1,10 +1,15 @@
-// import mongoose from "mongoose";
+import Database from '#src/modules/database/init.database';
+import dotenv from 'dotenv';
+dotenv.config({ path: './env/.env.test' });
 
-// beforeEach(async () => {
-//   await mongoose.connect(process.env.MONGO_URI);
-// });
+beforeAll(async () => {
+  Database.getInstance({ type: 'mongodb', logging: process.env.NODE_ENV === 'development' });
+});
 
-// afterEach(async () => {
-//   await mongoose.connection.db?.dropDatabase();
-//   await mongoose.connection.close();
-// });
+beforeEach(async () => {
+  await Database.instance.connection.dropDatabase();
+});
+
+afterAll(async () => {
+  await Database.close();
+});

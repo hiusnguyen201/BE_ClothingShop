@@ -47,7 +47,7 @@ curl --location --request PATCH 'https://server-clothes-store.vercel.app/api/cus
 {
   "code": 200,
   "codeMessage": "SUCCESS",
-  "message": "Update customer successfully",
+  "message": "Update customer successful",
   "timestamp": 1742293268037,
   "data": {
     "id": "67d944d742e52209d72a1fde",

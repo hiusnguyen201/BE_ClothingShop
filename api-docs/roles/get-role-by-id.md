@@ -37,7 +37,7 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/roles/get-role-b
 {
   "code": 200,
   "codeMessage": "SUCCESS",
-  "message": "Get one role successfully",
+  "message": "Get one role successful",
   "timestamp": 1742213340286,
   "data": {
     "id": "67d810ac54e327ba6b329e19",

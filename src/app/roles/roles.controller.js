@@ -29,7 +29,7 @@ export const createRoleController = async (req) => {
   const newRole = await createRoleService(req.body);
 
   const roleDto = ModelDto.new(RoleDto, newRole);
-  return ApiResponse.success(roleDto, 'Create role successfully');
+  return ApiResponse.success(roleDto, 'Create role successful');
 };
 
 export const getAllRolesController = async (req) => {
@@ -57,7 +57,7 @@ export const getAllRolesController = async (req) => {
   });
 
   const rolesDto = ModelDto.newList(RoleDto, roles);
-  return ApiResponse.success({ totalCount, list: rolesDto }, 'Get all roles successfully');
+  return ApiResponse.success({ totalCount, list: rolesDto }, 'Get all roles successful');
 };
 
 export const getRoleByIdController = async (req) => {
@@ -69,7 +69,7 @@ export const getRoleByIdController = async (req) => {
   }
 
   const roleDto = ModelDto.new(RoleDto, role);
-  return ApiResponse.success(roleDto, 'Get one role successfully');
+  return ApiResponse.success(roleDto, 'Get one role successful');
 };
 
 export const updateRoleByIdController = async (req) => {
@@ -91,7 +91,7 @@ export const updateRoleByIdController = async (req) => {
   const updatedRole = await updateRoleInfoByIdService(existRole._id, req.body);
 
   const roleDto = ModelDto.new(RoleDto, updatedRole);
-  return ApiResponse.success(roleDto, 'Edit role successfully');
+  return ApiResponse.success(roleDto, 'Edit role successful');
 };
 
 export const removeRoleByIdController = async (req) => {
@@ -103,7 +103,7 @@ export const removeRoleByIdController = async (req) => {
 
   await removeRoleByIdService(roleId);
 
-  return ApiResponse.success({ id: existRole._id }, 'Remove role successfully');
+  return ApiResponse.success({ id: existRole._id }, 'Remove role successful');
 };
 
 export const isExistRoleNameController = async (req) => {
@@ -146,7 +146,7 @@ export const getListRolePermissionsController = async (req) => {
   const totalCount = await countAllPermissionsService({ _id: { $in: existRole.permissions }, ...filters });
 
   const permissionsDto = ModelDto.newList(PermissionDto, permissions);
-  return ApiResponse.success({ totalCount, list: permissionsDto }, 'Get all permissions successfully');
+  return ApiResponse.success({ totalCount, list: permissionsDto }, 'Get all permissions successful');
 };
 
 export const updateListRolePermissionsController = async (req) => {
@@ -168,5 +168,5 @@ export const updateListRolePermissionsController = async (req) => {
   );
 
   const permissionsDto = ModelDto.newList(PermissionDto, updatedRolePermissions);
-  return ApiResponse.success(permissionsDto, 'Update role permissions successfully');
+  return ApiResponse.success(permissionsDto, 'Update role permissions successful');
 };
