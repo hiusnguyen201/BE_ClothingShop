@@ -39,16 +39,6 @@ export const orderSchema = new Schema(
       type: String,
       required: true,
     },
-
-    orderDate: {
-      type: Date,
-      required: true,
-    },
-    shippingDate: {
-      type: Date,
-      required: false,
-      default: null,
-    },
     quantity: {
       type: Number,
       required: true,

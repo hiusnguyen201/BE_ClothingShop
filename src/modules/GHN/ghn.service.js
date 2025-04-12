@@ -10,6 +10,11 @@ const ghnAPI = axios.create({
 });
 // create order GHN
 export const createGhnOrder = async (order, orderDetails) => {
+  let isPaid = false;
+  if (order?.paymentId?.paidDate) {
+    isPaid = true
+  }
+
   const pickupTime = moment().unix();
   const response = await ghnAPI.post(`/v2/shipping-order/create`, {
     payment_type_id: 1,
@@ -32,13 +37,13 @@ export const createGhnOrder = async (order, orderDetails) => {
     to_ward_name: order.wardName,
     to_district_name: order.districtName,
     to_province_name: order.provinceName,
-    cod_amount: order.total,
+    cod_amount: isPaid ? 0 : order.total,
     content: '',
     length: 12,
     width: 12,
     height: 12,
-    weight: 1200,
-    cod_failed_amount: 2000,
+    weight: orderDetails.length * 200,
+    // cod_failed_amount: 2000,
     pick_station_id: 1444,
     deliver_station_id: null,
     insurance_value: order.total,
@@ -50,11 +55,11 @@ export const createGhnOrder = async (order, orderDetails) => {
       name: item.variantId.sku,
       code: item.productId,
       quantity: item.quantity,
-      price: item.unitPrice,
+      price: isPaid ? 0 : item.unitPrice,
       length: 12,
       width: 12,
       height: 12,
-      weight: 1000,
+      weight: 200,
     })),
   });
   return response.data;

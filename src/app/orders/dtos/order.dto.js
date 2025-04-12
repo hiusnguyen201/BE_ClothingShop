@@ -10,8 +10,6 @@ export const OrderDto = Joi.object({
     customerName: Joi.string().required(),
     customerPhone: Joi.string().required(),
     customerEmail: Joi.string().allow(null),
-    orderDate: Joi.date().iso().required(),
-    shippingDate: Joi.date().iso().allow(null),
     quantity: Joi.number().required(),
     subTotal: Joi.number().required(),
     shippingFee: Joi.number().required(),

@@ -3,7 +3,7 @@ import express from 'express';
 import { validateBody, validateQuery } from '#src/core/validations/request.validation';
 import {
   // createPaymentController,
-  returnPaymentCodController,
+  // returnPaymentCodController,
   returnPaymentMoMoController,
   returnPaymentVnPayController,
 } from '#src/app/payments/payments.controller';
@@ -17,6 +17,6 @@ const router = express.Router();
 
 router.get('/return-payment-momo', returnPaymentMoMoController);
 router.get('/return-payment-vnpay', returnPaymentVnPayController);
-router.get('/return-payment-cod', returnPaymentCodController);
+// router.get('/return-payment-cod', returnPaymentCodController);
 
 export default router;

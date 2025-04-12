@@ -1,14 +1,22 @@
-import { PaymentModel } from '#src/app/payments/models/payments.models';
+import { PaymentModel } from "#src/app/payments/models/payments.model";
+import { PAYMENT_SELECTED_FIELDS } from "#src/app/payments/payments.constant";
 
-const SELECTED_FIELDS =
-  "_id paymentMethod amountPaid paidDate transactionId notes orderId createdAt updatedAt";
-
+/**
+ * New payment
+ * @param {*} data
+ * @returns
+ */
 export const newPaymentService = (data) => {
   return new PaymentModel(data);
 };
 
-export const getPaymentByOrderIdService = async (orderId) => {
-  return await PaymentModel.findOne({ orderId });
+/**
+ * Get payment by id
+ * @param {*} data
+ * @returns
+ */
+export const getPaymentByIdService = async (paymentId) => {
+  return await PaymentModel.findById(paymentId);
 };
 
 /**
@@ -21,5 +29,6 @@ export async function updatePaymentByIdService(paymentId, data, session) {
   return await PaymentModel.findByIdAndUpdate(paymentId, data, {
     new: true,
     session
-  }).select(SELECTED_FIELDS);
+  }).select(PAYMENT_SELECTED_FIELDS)
+    .lean();
 }

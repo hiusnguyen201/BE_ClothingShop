@@ -1,5 +1,12 @@
-import { getDistrictByCodeService, getProvinceByCodeService, getWardByCodeService } from '#src/app/divisions/divisions.service';
-import { PAYMENT_METHOD, REGEX_PATTERNS } from '#src/core/constant';
+import {
+  getDistrictByCodeService,
+  getProvinceByCodeService,
+  getWardByCodeService
+} from '#src/app/divisions/divisions.service';
+import {
+  PAYMENT_METHOD,
+  REGEX_PATTERNS
+} from '#src/core/constant';
 import { replaceMultiSpacesToSingleSpace } from '#src/utils/string.util';
 import Joi from 'joi';
 import mongoose from 'mongoose';

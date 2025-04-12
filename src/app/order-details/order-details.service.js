@@ -9,7 +9,6 @@ export function newOrderDetailService(data) {
   return new OrderDetailModel(data)
 }
 
-
 export const createOrderDetailService = async (data) => {
   return await OrderDetailModel.create(data);
 };

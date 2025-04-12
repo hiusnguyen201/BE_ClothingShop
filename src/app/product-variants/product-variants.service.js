@@ -166,3 +166,19 @@ export async function updateProductDiscountByProductVariantIdService(id, product
 export async function removeProductVariantsByProductIdService(productId, session) {
   return await ProductVariantModel.deleteMany({ product: productId }, { session })
 }
+
+/**
+ * Update product variant quantity by id
+ * @param {*} id
+ * @param {*} productDiscountId
+ * @returns
+ */
+export async function updateProductVariantQuantityByIdService(id, quantity, session) {
+  return await ProductVariantModel.findByIdAndUpdate(id, {
+    quantity: quantity
+  }, {
+    new: true,
+    session
+  }
+  ).select(SELECTED_FIELDS);
+}

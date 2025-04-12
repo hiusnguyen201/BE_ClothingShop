@@ -9,7 +9,7 @@ export const paymentSchema = new Schema(
     paymentMethod: {
       type: String,
       required: true,
-      enum: [PAYMENT_METHOD.COD, PAYMENT_METHOD.VNPAY, PAYMENT_METHOD.MOMO],
+      enum: Object.values(PAYMENT_METHOD),
     },
     amountPaid: {
       type: Number,

@@ -1,6 +1,7 @@
 import { OrderModel } from '#src/app/orders/models/orders.model';
-import { ORDERS_STATUS } from '#src/core/constant';
+import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
 import { isValidObjectId } from 'mongoose';
+import { ORDER_SELECTED_FIELDS } from '#src/app/orders/orders.constant';
 
 /**
  * New order
@@ -11,12 +12,13 @@ export function newOrderService(data) {
   return new OrderModel(data);
 }
 
+/**
+ * Create order
+ * @param {*} data
+ * @returns
+ */
 export async function createOrdersService(data, session) {
   return await OrderModel.create(data, { session });
-}
-
-export async function getAllOrdersByUserService({ filters, offset = 0, limit = 10, sortOptions }) {
-  return await OrderModel.find(filters).skip(offset).limit(limit).sort(sortOptions).lean();
 }
 
 /**
@@ -24,28 +26,53 @@ export async function getAllOrdersByUserService({ filters, offset = 0, limit = 1
  * @param {*} id
  * @returns
  */
-export async function getOrderByIdService(orderId) {
-  if (!orderId) return null;
-  const filter = {};
+export async function getOrderByIdService(id, extras = {}) {
+  if (!id) return null;
+  const filters = {
+    ...extras,
+  };
 
-  if (isValidObjectId(orderId)) {
-    filter._id = orderId;
+  if (isValidObjectId(id)) {
+    filters._id = id;
   } else {
     return null;
   }
 
-  return await OrderModel.findOne({
-    _id: orderId,
-  }).populate('paymentId');
+  return await OrderModel.findOne(filters)
+    .select(ORDER_SELECTED_FIELDS)
+    .populate('paymentId')
+    .lean();
 }
 
-export async function updateOrderByIdService(orderId, data, session) {
-  return await OrderModel.findByIdAndUpdate(orderId, data, {
-    new: true,
-    session
-  });
+/**
+ * Count all orders
+ * @param {*} filters
+ * @returns
+ */
+export async function countAllOrdersService(filters) {
+  return OrderModel.countDocuments(filters);
 }
 
+/**
+ * Get all orders
+ * @param {*} query
+ * @returns
+ */
+export async function getAllOrdersService(payload) {
+  const { filters = {}, page, limit, sortBy, sortOrder } = payload;
+
+  let queryOptions = {};
+  queryOptions = extendQueryOptionsWithPagination({ page, limit }, queryOptions);
+  queryOptions = extendQueryOptionsWithSort({ sortBy, sortOrder }, queryOptions);
+
+  return OrderModel.find(filters, ORDER_SELECTED_FIELDS, queryOptions).lean();
+}
+
+/**
+ * Update order status
+ * @param {*} query
+ * @returns
+ */
 export async function updateOrderStatusByIdService(orderId, newOrderStatus, orderStatusHistoryId, session) {
   return await OrderModel.findByIdAndUpdate(orderId, {
     status: newOrderStatus,
@@ -53,59 +80,6 @@ export async function updateOrderStatusByIdService(orderId, newOrderStatus, orde
   }, {
     new: true,
     session
-  });
+  }).select(ORDER_SELECTED_FIELDS)
+    .lean();
 }
-
-
-export async function updateOrderStatusToConfirmByIdService(orderId, session) {
-  return await OrderModel.findByIdAndUpdate(orderId, {
-    status: ORDERS_STATUS.CONFIRM,
-  }, {
-    new: true,
-    session
-  });
-}
-
-export async function updateOrderStatusToProcressByIdService(orderId, session) {
-  return await OrderModel.findByIdAndUpdate(orderId, {
-    status: ORDERS_STATUS.PROCESSING,
-  }, {
-    new: true,
-    session
-  });
-}
-
-export async function cancelOrderByIdService(orderId, session) {
-  return await OrderModel.findByIdAndUpdate(orderId, {
-    status: ORDERS_STATUS.CANCELLED,
-  }, {
-    new: true,
-    session
-  });
-}
-
-export async function removeOrderByIdService(orderId) {
-  return await OrderModel.findByIdAndDelete(orderId);
-}
-
-export async function countAllOrdersService(filters) {
-  return OrderModel.countDocuments(filters);
-}
-
-export const calculateOrderTotalService = async (productVariantDetails) => {
-  let subTotal = 0;
-  let totalQuantity = 0;
-  let shippingFee = 0;
-  let discountProduct = 0;
-
-  const orderDetails = productVariantDetails.map((variant) => {
-    const totalPrice = variant.unitPrice * variant.quantity - discountProduct;
-    subTotal += totalPrice;
-    totalQuantity += variant.quantity;
-    return { ...variant, totalPrice, discountProduct };
-  });
-
-  //fee
-  const total = subTotal + shippingFee - discountVoucher;
-  return { subTotal, total, totalQuantity, orderDetails };
-};

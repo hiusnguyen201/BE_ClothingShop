@@ -1,28 +1,19 @@
 import { ORDERS_STATUS, PAYMENT_METHOD } from '#src/core/constant';
 import { HttpException } from '#src/core/exception/http-exception';
 import {
-  cancelOrderByIdService,
   getOrderByIdService,
-  updateOrderByIdService,
   updateOrderStatusByIdService,
-  updateOrderStatusToConfirmByIdService,
-  updateOrderStatusToProcressByIdService
 } from '#src/app/orders/orders.service';
-import HttpStatus from 'http-status-codes';
 import {
-  newPaymentService,
   updatePaymentByIdService
 } from '#src/app/payments/payments.service';
-import { createMomoPayment } from '#src/utils/paymentMomo';
-import { createVnpayPayment } from '#src/utils/paymentVnpay';
-import moment from 'moment-timezone';
 import { Code } from '#src/core/code/Code';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { PaymentDto } from '#src/app/payments/dtos/payment.dto';
 import { TransactionalServiceWrapper } from '#src/core/transaction/TransactionalServiceWrapper';
-import { createGhnOrder } from '#src/modules/GHN/ghn.service';
 import { duplicateCheckOrderStatusHistoryService, newOrderStatusHistoryService } from '#src/app/order-status-history/order-status-history.service';
+import { updateOrderStatusUtil } from '#src/utils/handle-create-order';
 
 // export const createPaymentController = async (req) => {
 //   return TransactionalServiceWrapper.execute(async (session) => {
@@ -111,8 +102,8 @@ export const returnPaymentMoMoController = async (req) => {
     }
 
     if (resultCode != 0) {
-      await cancelOrderByIdService(orderExisted._id, session);
-      throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Payment false' });
+      await updateOrderStatusUtil(orderExisted._id, ORDERS_STATUS.CANCELLED, session);
+      throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Payment cancel' });
     }
 
     const newOrderStatus = ORDERS_STATUS.CONFIRM;
@@ -131,7 +122,8 @@ export const returnPaymentMoMoController = async (req) => {
 
     const newOrderHistory = newOrderStatusHistoryService({
       status: newOrderStatus,
-      orderId: orderExisted._id
+      orderId: orderExisted._id,
+      // assignedTo: Types.ObjectId,
     });
     await newOrderHistory.save({ session })
 
@@ -170,29 +162,29 @@ export const returnPaymentVnPayController = async (req) => {
   });
 };
 
-export const returnPaymentCodController = async (req) => {
-  return TransactionalServiceWrapper.execute(async (session) => {
-    const { orderId, resultCode, amount, transId, orderInfo, responseTime } = req.query;
+// export const returnPaymentCodController = async (req) => {
+//   return TransactionalServiceWrapper.execute(async (session) => {
+//     const { orderId, resultCode, amount, transId, orderInfo, responseTime } = req.query;
 
-    const orderExisted = await getOrderByIdService(orderId);
-    if (!orderExisted) {
-      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
-    }
+//     const orderExisted = await getOrderByIdService(orderId);
+//     if (!orderExisted) {
+//       throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
+//     }
 
-    if (resultCode == false) {
-      await updateOrderByIdService(orderExisted._id, {
-        status: ORDERS_STATUS.CANCELLED,
-      }, session);
-    }
+//     if (resultCode == false) {
+//       await updateOrderByIdService(orderExisted._id, {
+//         status: ORDERS_STATUS.CANCELLED,
+//       }, session);
+//     }
 
-    const updatedPayment = await updatePaymentByIdService(orderExisted.paymentId._id, {
-      transactionId: transId,
-      amountPaid: amount,
-      paidDate: responseTime,
-      notes: orderInfo,
-    }, session);
+//     const updatedPayment = await updatePaymentByIdService(orderExisted.paymentId._id, {
+//       transactionId: transId,
+//       amountPaid: amount,
+//       paidDate: responseTime,
+//       notes: orderInfo,
+//     }, session);
 
-    const paymentDto = ModelDto.new(PaymentDto, updatedPayment);
-    return ApiResponse.success(paymentDto);
-  });
-};
+//     const paymentDto = ModelDto.new(PaymentDto, updatedPayment);
+//     return ApiResponse.success(paymentDto);
+//   });
+// };

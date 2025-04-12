@@ -1,13 +1,10 @@
 import {
-  getAllOrdersByUserService,
   getOrderByIdService,
-  updateOrderByIdService,
-  removeOrderByIdService,
   countAllOrdersService,
   newOrderService,
   updateOrderStatusByIdService,
+  getAllOrdersService,
 } from '#src/app/orders/orders.service';
-import HttpStatus from 'http-status-codes';
 import { HttpException } from '#src/core/exception/http-exception';
 import { TransactionalServiceWrapper } from '#src/core/transaction/TransactionalServiceWrapper';
 import moment from 'moment-timezone';
@@ -18,24 +15,40 @@ import {
 } from '#src/modules/GHN/ghn.service';
 import { Code } from '#src/core/code/Code';
 import { ORDERS_STATUS, PAYMENT_METHOD } from '#src/core/constant';
-import { getOrderDetailsByOrderIdService, newOrderDetailService } from '#src/app/order-details/order-details.service';
+import {
+  getOrderDetailsByOrderIdService,
+  newOrderDetailService
+} from '#src/app/order-details/order-details.service';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { OrderDto } from '#src/app/orders/dtos/order.dto';
-import { getProductVariantByIdService, updateProductVariantByIdService } from '#src/app/product-variants/product-variants.service';
+import { getProductVariantByIdService } from '#src/app/product-variants/product-variants.service';
 import { randomCodeOrder } from '#src/utils/string.util';
-import { calculateDiscount } from '#src/utils/handle-create-order';
-import { newPaymentService } from '#src/app/payments/payments.service';
+import {
+  calculateDiscount,
+  updateCancelOrderQuantityProductUtil
+} from '#src/utils/handle-create-order';
+import {
+  getPaymentByIdService,
+  newPaymentService,
+  updatePaymentByIdService
+} from '#src/app/payments/payments.service';
 import { createMomoPayment } from '#src/utils/paymentMomo';
 import {
   createOrderStatusHistoryService,
-  getOrderIdByTrackingIdService,
+  getOrderStatusHistoryByTrackingIdService,
   newOrderStatusHistoryService
 } from '#src/app/order-status-history/order-status-history.service';
 
 export const createOrderController = async (req) => {
   return TransactionalServiceWrapper.execute(async (session) => {
-    const { customerName, customerEmail, customerPhone, customerAddress, productVariants, paymentMethod } = req.body;
+    const {
+      customerName,
+      customerEmail,
+      customerPhone,
+      customerAddress,
+      productVariants,
+      paymentMethod } = req.body;
 
     const newOrder = newOrderService({
       code: randomCodeOrder(14),
@@ -126,7 +139,8 @@ export const createOrderController = async (req) => {
 
     const newOrderHistory = newOrderStatusHistoryService({
       status: ORDERS_STATUS.PENDING,
-      orderId: newOrder._id
+      orderId: newOrder._id,
+      // assignedTo: Types.ObjectId,
     }, session);
     newOrder.orderStatusHistory = newOrderHistory._id;
 
@@ -248,9 +262,9 @@ export const createShippingOrderController = async (req) => {
 
 export const webHookUpdateOrder = async (req) => {
   return TransactionalServiceWrapper.execute(async (session) => {
-    const { OrderCode, Status } = req.body;
+    const { CODAmount, Time, OrderCode, Status } = req.body;
 
-    const orderStatusHistory = await getOrderIdByTrackingIdService(OrderCode);
+    const orderStatusHistory = await getOrderStatusHistoryByTrackingIdService(OrderCode);
 
     const orderExisted = await getOrderByIdService(orderStatusHistory.orderId);
     if (!orderExisted) {
@@ -262,10 +276,6 @@ export const webHookUpdateOrder = async (req) => {
     if (!validStatuses.includes(orderExisted.status)) {
       throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Invalid order status' });
     }
-
-    // if (!orderExisted.paymentId) {
-    //   throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Payment not found' });
-    // }
 
     const statusMap = {
       picked: ORDERS_STATUS.SHIPPING,
@@ -287,6 +297,23 @@ export const webHookUpdateOrder = async (req) => {
       // assignedTo: Types.ObjectId,
     }, session);
 
+    if (newOrderStatus === ORDERS_STATUS.DELIVERED) {
+      const payment = await getPaymentByIdService(orderExisted.paymentId);
+      if (!payment) {
+        throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Payment not found' });
+      }
+      if (payment.paymentMethod === PAYMENT_METHOD.COD && CODAmount || Time) {
+        await updatePaymentByIdService(payment._id, {
+          ...(CODAmount ? { amountPaid: CODAmount } : {}),
+          ...(Time ? { paidDate: Time } : {})
+        }, session)
+      }
+    }
+
+    if (newOrderStatus === ORDERS_STATUS.CANCELLED) {
+      await updateCancelOrderQuantityProductUtil(orderExisted._id, session);
+    }
+
     const updatedOrder = await updateOrderStatusByIdService(orderExisted._id, newOrderStatus, newOrderHistory[0]._id, session);
 
     const orderDto = ModelDto.new(OrderDto, updatedOrder);
@@ -294,9 +321,147 @@ export const webHookUpdateOrder = async (req) => {
   });
 }
 
+export const cancelOrderController = async (req) => {
+  return TransactionalServiceWrapper.execute(async (session) => {
+    const { orderId } = req.body;
 
+    const orderExisted = await getOrderByIdService(orderId);
+    if (!orderExisted) {
+      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
+    }
 
+    if (orderExisted.status === ORDERS_STATUS.CANCELLED || orderExisted.status === ORDERS_STATUS.DELIVERED) {
+      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Invalid order status' });
+    }
 
+    if (orderExisted.status === ORDERS_STATUS.SHIPPING) {
+      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order is shipping can not cancel' });
+    }
+
+    const newOrderStatus = ORDERS_STATUS.CANCELLED;
+
+    const newOrderHistory = await createOrderStatusHistoryService({
+      status: newOrderStatus,
+      orderId: orderExisted._id,
+      // assignedTo: Types.ObjectId,
+    }, session);
+
+    await updateCancelOrderQuantityProductUtil(orderExisted._id, session);
+
+    if (orderExisted?.paymentId?.paidDate) {
+      // refund
+    }
+
+    const updatedOrder = await updateOrderStatusByIdService(orderExisted._id, newOrderStatus, newOrderHistory[0]._id, session);
+
+    const orderDto = ModelDto.new(OrderDto, updatedOrder);
+    return ApiResponse.success(orderDto);
+  });
+}
+
+export const cancelOrderByCustomerController = async (req) => {
+  return TransactionalServiceWrapper.execute(async (session) => {
+    const { id } = req.user;
+    const { orderId } = req.body;
+
+    const orderExisted = await getOrderByIdService(orderId, { customerId: id });
+    if (!orderExisted) {
+      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
+    }
+
+    if (orderExisted.status === ORDERS_STATUS.CANCELLED || orderExisted.status === ORDERS_STATUS.DELIVERED) {
+      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Invalid order status' });
+    }
+
+    if (orderExisted.status === ORDERS_STATUS.SHIPPING) {
+      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order is shipping can not cancel' });
+    }
+
+    const newOrderStatus = ORDERS_STATUS.CANCELLED;
+
+    const newOrderHistory = await createOrderStatusHistoryService({
+      status: newOrderStatus,
+      orderId: orderExisted._id,
+      // assignedTo: Types.ObjectId,
+    }, session);
+
+    await updateCancelOrderQuantityProductUtil(orderExisted._id, session);
+
+    if (orderExisted?.paymentId?.paidDate) {
+      // refund
+    }
+
+    const updatedOrder = await updateOrderStatusByIdService(orderExisted._id, newOrderStatus, newOrderHistory[0]._id, session);
+
+    const orderDto = ModelDto.new(OrderDto, updatedOrder);
+    return ApiResponse.success(orderDto);
+  });
+}
+
+export const getAllOrdersController = async (req) => {
+  const { customerId, paymentId, limit, page, sortBy, sortOrder } = req.query;
+
+  const filters = {
+    ...(customerId ? { customerId: customerId } : {}),
+    ...(paymentId ? { paymentId: paymentId } : {}),
+  };
+
+  const totalCount = await countAllOrdersService(filters);
+  const orders = await getAllOrdersService({
+    filters: filters,
+    page,
+    limit,
+    sortBy,
+    sortOrder,
+  });
+
+  const ordersDto = ModelDto.newList(OrderDto, orders);
+  return ApiResponse.success({ totalCount, list: ordersDto });
+};
+
+export const getAllOrdersByCustomerIdController = async (req) => {
+  const { id } = req.user;
+  const { limit, page, sortBy, sortOrder } = req.query;
+
+  const filters = {
+    customerId: id,
+  };
+
+  const totalCount = await countAllOrdersService(filters);
+  const orders = await getAllOrdersService({
+    filters: filters,
+    page,
+    limit,
+    sortBy,
+    sortOrder,
+  });
+
+  const ordersDto = ModelDto.newList(OrderDto, orders);
+  return ApiResponse.success({ totalCount, list: ordersDto });
+};
+
+export const getOrderByIdController = async (req) => {
+  const { orderId } = req.params;
+  const order = await getOrderByIdService(orderId);
+  if (!order) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
+  }
+  const orderDto = ModelDto.new(OrderDto, order);
+  return ApiResponse.success(orderDto);
+};
+
+export const getOrderByCustomerIdController = async (req) => {
+  const { id } = req.user;
+  const { orderId } = req.params;
+  const order = await getOrderByIdService(orderId, { customerId: id });
+  if (!order) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
+  }
+  const orderDto = ModelDto.new(OrderDto, order);
+  return ApiResponse.success(orderDto);
+};
+
+/////////////////
 export const cancelExpiredOrders = async () => {
   const now = moment(); // Thời gian hiện tại
   const expirationThreshold = now.clone().subtract(24, 'hours'); // Thời điểm cách 24 giờ trước
@@ -319,92 +484,4 @@ export const cancelExpiredOrders = async () => {
     { status: 'Cancelled', updatedAt: new Date() }
   );
   console.log(`Đã hủy ${expiredOrders.length} đơn hàng quá hạn.`);
-};
-
-export const getAllOrdersByUserController = async (req) => {
-  let { keyword = '', limit = 10, page = 1, status, startDate, endDate, sortBy } = req.query;
-
-  let filterOptions = {};
-
-  if (keyword) {
-    filterOptions.$or = [
-      { customerName: { $regex: keyword, $options: 'i' } },
-      { code: { $regex: keyword, $options: 'i' } },
-    ];
-  }
-
-  if (startDate && endDate) {
-    filterOptions.orderDate = {
-      $gte: moment(startDate, 'YYYY-MM-DD').startOf('day').toDate(), // 00:00:00
-      $lte: moment(endDate, 'YYYY-MM-DD').endOf('day').toDate(),
-    };
-  }
-
-  if (status) {
-    filterOptions.status = status;
-  }
-
-  // Sort by oldest newest
-  let sortOptions = { orderDate: -1 };
-  if (sortBy === 'oldest') {
-    sortOptions.orderDate = 1;
-  }
-
-  const totalCount = await countAllOrdersService(filterOptions);
-
-  const orders = await getAllOrdersByUserService({
-    filters: filterOptions,
-    offset: metaData.offset,
-    limit: metaData.limit,
-    sortOptions,
-  });
-
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Get all order successfully',
-    data: orders,
-  };
-};
-
-export const getOrderByIdController = async (req) => {
-  const orderExisted = await getOrderByIdService(req.params.id);
-  if (!orderExisted) {
-    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
-  }
-  const orderDto = ModelDto.new(OrderDto, orderExisted);
-  return ApiResponse.success(orderDto);
-};
-
-export const updateOrderByIdController = async (req) => {
-  const orderExisted = await getOrderByIdService(req.params.id);
-  if (!orderExisted) {
-    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
-  }
-
-  const orderUpdated = await updateOrderByIdService(req.params.id, req.body);
-  const orderDto = ModelDto.new(OrderDto, orderUpdated);
-  return ApiResponse.success(orderDto);
-};
-
-export const removeOrderByIdController = async (req) => {
-  const orderExisted = await getOrderByIdService(req.params.id);
-  if (!orderExisted) {
-    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
-  }
-
-  const orderGhn = await getOrderGhnByClientOrderCode(orderExisted.code);
-  if (!orderGhn) {
-    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order Ghn not found' });
-  }
-
-  await removeOrderGhn(orderGhn.order_code);
-
-  await removeOrderByIdService(req.params.id);
-  const orderDto = ModelDto.new(OrderDto, orderExisted);
-  return ApiResponse.success(orderDto);
-  return {
-    statusCode: HttpStatus.OK,
-    message: 'Remove order successfully',
-    data: {},
-  };
 };
