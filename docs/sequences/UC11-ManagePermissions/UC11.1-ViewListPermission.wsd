@@ -180,10 +180,10 @@ group Business Logic Flow
     PermissionModel -> MongoDB: query count
     activate MongoDB
 
-    alt MongoDB error
-        MongoDB -->> PermissionModel: return null
-        PermissionModel -->> PermissionsService: return null
-        PermissionsService -->> PermissionsController: return null
+    alt Count fail
+        MongoDB --x PermissionModel: throw Error
+        PermissionModel --x PermissionsService: throw Error
+        PermissionsService --x PermissionsController: throw Error
         PermissionsController --x PermissionsController: throw(Error)
         PermissionsController ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
@@ -208,10 +208,10 @@ group Business Logic Flow
     PermissionModel -> MongoDB: query select
     activate MongoDB
 
-    alt MongoDB error
-        MongoDB -->> PermissionModel: return null
-        PermissionModel -->> PermissionsService: return null
-        PermissionsService -->> PermissionsController: return null
+    alt select fail
+        MongoDB --x PermissionModel: throw Error
+        PermissionModel --x PermissionsService: throw Error
+        PermissionsService --x PermissionsController: throw Error
         PermissionsController --x PermissionsController: throw(Error)
         PermissionsController ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware

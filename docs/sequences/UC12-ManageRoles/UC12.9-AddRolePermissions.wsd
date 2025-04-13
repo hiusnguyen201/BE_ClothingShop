@@ -202,7 +202,16 @@ group Business Logic Flow
     RoleModel -> MongoDB: query select
     activate MongoDB
 
-    alt role not found
+    alt select fail
+        MongoDB --x RoleModel: throw Error
+        RoleModel --x RolesService: throw Error
+        RolesService --x RolesController: throw Error
+        RolesController ->> AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        deactivate ErrorMiddleware
+    else role not found
         MongoDB -->> RoleModel: return null
         RoleModel -->> RolesService: return null
         RolesService -->> RolesController: return null
@@ -234,7 +243,16 @@ group Business Logic Flow
     PermissionModel -> MongoDB: query select
     activate MongoDB
 
-    alt permissions not found
+    alt select fail
+        MongoDB --x RoleModel: throw Error
+        RoleModel --x RolesService: throw Error
+        RolesService --x RolesController: throw Error
+        RolesController ->> AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        deactivate ErrorMiddleware
+    else permissions not found
         MongoDB -->> PermissionModel: return null
         PermissionModel -->> PermissionsService: return null
         PermissionsService -->> RolesController: return null
@@ -258,9 +276,9 @@ group Business Logic Flow
     activate MongoDB
 
     alt update false
-        MongoDB -->> RoleModel: return null
-        RoleModel -->> RolesService: return null
-        RolesService -->> RolesController: return null
+        MongoDB --x RoleModel: throw Error
+        RoleModel --x RolesService: throw Error
+        RolesService --x RolesController: throw Error
         RolesController --x RolesController: throw(HttpException(404))
         RolesController ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware

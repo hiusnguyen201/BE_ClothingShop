@@ -1,4 +1,4 @@
-@startuml Unassigned Role Permissions
+@startuml List Unassigned Role Permissions
 
 actor Client
 
@@ -200,7 +200,16 @@ group Business Logic Flow
     RoleModel -> MongoDB: query select
     activate MongoDB
 
-    alt role not found
+    alt select fail
+        MongoDB --x RoleModel: throw Error
+        RoleModel --x RolesService: throw Error
+        RolesService --x RolesController: throw Error
+        RolesController ->> AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        deactivate ErrorMiddleware
+    else role not found
         MongoDB -->> RoleModel: return null
         RoleModel -->> RolesService: return null
         RolesService -->> RolesController: return null
@@ -232,7 +241,16 @@ group Business Logic Flow
     RoleModel -> MongoDB: query select
     activate MongoDB
 
-    alt permissions not found
+    alt select fail
+        MongoDB --x RoleModel: throw Error
+        RoleModel --x RolesService: throw Error
+        RolesService --x RolesController: throw Error
+        RolesController ->> AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        deactivate ErrorMiddleware
+    else permissions not found
         MongoDB -->> RoleModel: return null
         RoleModel -->> RolesService: return null
         RolesService -->> RolesController: return null
@@ -252,7 +270,16 @@ group Business Logic Flow
     RoleModel -> MongoDB: query aggregate
     activate MongoDB
 
-    alt permissions not found
+    alt aggregate fail
+        MongoDB --x RoleModel: throw Error
+        RoleModel --x RolesService: throw Error
+        RolesService --x RolesController: throw Error
+        RolesController ->> AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        deactivate ErrorMiddleware
+    else permissions not found
         MongoDB -->> RoleModel: return null
         RoleModel -->> RolesService: return null
         RolesService -->> RolesController: return null

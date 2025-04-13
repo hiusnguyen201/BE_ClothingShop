@@ -1,9 +1,9 @@
-@startuml Remove Role Permissions
+@startuml View List Categories
 
 actor Client
 
 box "Application Layer"
-participant RolesRouter 
+participant CategoriesRouter 
 participant ErrorMiddleware 
 participant AsyncHandler 
 end box
@@ -25,23 +25,22 @@ participant RequestValidation
 end box
 
 box "Business Logic"
-participant RolesController
+participant CategoriesController
+participant ModelDto
 participant ApiResponse
-participant PermissionsService
-participant RolesService
+participant CategoriesService
 participant QueryUtil
-participant RoleModel
-participant PermissionModel
+participant CategoryModel
 end box
 
 database MongoDB
 
 ' Step 1
 group Request Initialization
-    Client -> RolesRouter: Delete /api/roles/:roleId/permissions/:permissionId
+    Client -> CategoriesRouter: GET /api/categories/get-categories
     activate Client
-    activate RolesRouter
-    RolesRouter -> AsyncHandler: asyncHandler(removeRolePermissionController)
+    activate CategoriesRouter
+    CategoriesRouter -> AsyncHandler: asyncHandler(getAllCategoriesController)
     activate AsyncHandler
 end
 
@@ -153,141 +152,98 @@ break
 
 ' Step 4
 group Validation Flow
-    JwtAuthMiddleware -> RequestValidation: validateParams(RemoveRolePermissionDto)
+    JwtAuthMiddleware -> RequestValidation: validateQuery(GetListCategoryDto)
     deactivate JwtAuthMiddleware
     activate RequestValidation
-    alt validation error
+        alt validation error
         RequestValidation ->> RequestValidation: next(HttpException(400))
         RequestValidation ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 400 Bad Request
         deactivate ErrorMiddleware
     end
-    
 end
 
 break
 break
 
 
-' step 5
+' Step 5
 group Business Logic Flow
-    RequestValidation -> RolesController: removeRolePermissionController
+    RequestValidation -> CategoriesController: getAllCategoriesController
     deactivate RequestValidation
-    activate RolesController
-    RolesController -> RolesService: getRolePermissionService(roleId, permissionId)
-    activate RolesService
-    RolesService -> RoleModel: findById(roleId)
-    activate RoleModel
-    RoleModel -> MongoDB: query select
+    activate CategoriesController
+    CategoriesController -> CategoriesService: getAndCountCategoriesService(null, filters, skip, limit, sortBy, sortOrder)
+    activate CategoriesService
+    CategoriesService -> QueryUtil: extendQueryOptionsWithPagination(skip, limit)
+    activate QueryUtil
+    QueryUtil -->> CategoriesService: return Options
+    deactivate QueryUtil
+    CategoriesService -> QueryUtil: extendQueryOptionsWithSort(sortBy, sortOrder)
+    activate QueryUtil
+    QueryUtil -->> CategoriesService: return Options
+    deactivate QueryUtil
+    CategoriesService -> CategoryModel: aggregate(filters, options)
+    activate CategoryModel
+    CategoryModel -> MongoDB: query aggregate
     activate MongoDB
 
-    alt select fail
-        MongoDB --x RoleModel: throw Error
-        RoleModel --x RolesService: throw Error
-        RolesService --x RolesController: throw Error
-        RolesController ->> AsyncHandler: catch Error and next(Error)
+    alt aggregate fail
+        MongoDB --x CategoryModel: throw Error
+        CategoryModel --x CategoriesService: throw Error
+        CategoriesService --x CategoriesController: throw Error
+        CategoriesController --x AsyncHandler: catch Error and next(Error)
         AsyncHandler ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
-    else role not found
-        MongoDB -->> RoleModel: return null
-        RoleModel -->> RolesService: return null
-        RolesService -->> RolesController: return null
-        RolesController ->> RolesController: next(HttpException(404))
-        RolesController ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 404 Not Found
-        deactivate ErrorMiddleware
     end
 
-    MongoDB -->> RoleModel: return role
-    deactivate MongoDB 
-    RoleModel -->> RolesService: return role
-    deactivate RoleModel
-    RolesService -->> RolesController: return role
-    deactivate RolesService
-    RolesController -> PermissionsService: getPermissionByIdService(permissionId)
-    activate PermissionsService
-
-    alt permissionId not provided
-        PermissionsService -->> RolesController: return null
-        RolesController --x RolesController: throw(HttpException(400))
-        RolesController ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
-    end
-
-    PermissionsService -> PermissionModel: findOne(filter)
-    activate PermissionModel
-    PermissionModel -> MongoDB: query select
+    MongoDB -->> CategoryModel: return list categories
+    deactivate MongoDB
+    CategoryModel -->> CategoriesService: return list categories
+    deactivate CategoryModel
+    CategoriesService -> CategoryModel: aggregate(filters, options)
+    activate CategoryModel
+    CategoryModel -> MongoDB: query aggregate
     activate MongoDB
 
-    alt select fail
-        MongoDB --x RoleModel: throw Error
-        RoleModel --x RolesService: throw Error
-        RolesService --x RolesController: throw Error
-        RolesController ->> AsyncHandler: catch Error and next(Error)
+    alt aggregate fail
+        MongoDB --x CategoryModel: throw Error
+        CategoryModel --x CategoriesService: throw Error
+        CategoriesService --x CategoriesController: throw Error
+        CategoriesController --x AsyncHandler: catch Error and next(Error)
         AsyncHandler ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
-    else permission not found
-        MongoDB -->> PermissionModel: return null
-        PermissionModel -->> PermissionsService: return null
-        PermissionsService -->> RolesController: return null
-        RolesController --x RolesController: throw(HttpException(404))
-        RolesController ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 404 Not Found
-        deactivate ErrorMiddleware
     end
 
-    MongoDB -->> PermissionModel: return permission
+    MongoDB -->> CategoryModel: return totalCount
     deactivate MongoDB
-    PermissionModel -->> PermissionsService: return permission
-    deactivate PermissionModel
-    PermissionsService -->> RolesController: return permission
-    deactivate PermissionsService
-    RolesController -> RolesService: removeRolePermissionService(rolePermission._id, permission._id)
-    activate RolesService
-    RolesService -> RoleModel: findByIdAndUpdate(RoleId, update)
-    activate RoleModel
-    RoleModel -> MongoDB: query update
-    activate MongoDB
+    CategoryModel -->> CategoriesService: return totalCount
+    deactivate CategoryModel
+    CategoriesService -->> CategoriesController: return totalCount and list categories
+    deactivate CategoriesService
 
-    alt update false
-        MongoDB --x RoleModel: throw Error
-        RoleModel --x RolesService: throw Error
-        RolesService --x RolesController: throw Error
-        RolesController --x RolesController: throw(HttpException(404))
-        RolesController ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 404 Not Found
-        deactivate ErrorMiddleware
-    end
+end
 
-    MongoDB -->> RoleModel: return role
-    deactivate MongoDB
-    RoleModel -->> RolesService: return role
-    deactivate RoleModel
-    RolesService -->> RolesController: return role
-    deactivate RolesService
-    RolesController -> ApiResponse: success(id, success message)
+group Transform data response
+    CategoriesController -> ModelDto: newList(CategoryDto, categories)
+    activate ModelDto
+    ModelDto -->> CategoriesController: return CategoryDto instance
+    deactivate ModelDto
+
+    CategoriesController -> ApiResponse: success(TotalCount, CategoryDto, success message)
     activate ApiResponse
-    ApiResponse -->> RolesController: return ApiResponse instance
+    ApiResponse -->> CategoriesController: return ApiResponse instance
     deactivate ApiResponse 
-end   
+end
 
-
-RolesController -->> AsyncHandler: return ApiResponse instance
-deactivate RolesController
+CategoriesController -->> AsyncHandler: return ApiResponse instance
+deactivate CategoriesController
 AsyncHandler --> Client: HTTP 200 Success
 deactivate AsyncHandler
-deactivate RolesRouter
-
-
+deactivate CategoriesRouter
 
 @enduml

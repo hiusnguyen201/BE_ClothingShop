@@ -23,7 +23,6 @@ end box
 box "Business Logic"
 participant CustomersController
 participant ApiResponse
-participant QueryUtil
 participant UserService 
 participant UserModel
 participant StringUtil
@@ -35,7 +34,7 @@ database MongoDB
 
 ' Step 1
 group Request Initialization
-    Client -> CustomersRouter: GET /api/customers/create-customers
+    Client -> CustomersRouter: POST /api/customers/create-customers
     activate Client
     activate CustomersRouter
     CustomersRouter -> AsyncHandler: asyncHandler(createCustomerController)
@@ -189,7 +188,7 @@ group Business Logic Flow
         ErrorMiddleware -->> Client: HTTP 400 Bad Request
         deactivate ErrorMiddleware
 
-        else database error
+        else select fail
         MongoDB --x UserModel: throw error
         UserModel --x UserService: throw error
         UserService --x CustomersController: throw error
@@ -244,7 +243,7 @@ group Business Logic Flow
 
     alt send email fail
         MailerService --x MailerService: throw Error
-        MailerService -->> CustomersController: throw Error
+        MailerService --x CustomersController: throw Error
         CustomersController --x CustomersController: throw Error
         CustomersController ->> AsyncHandler: catch Error and next(Error)
         AsyncHandler ->> ErrorMiddleware: handleError(Error)
@@ -263,17 +262,17 @@ break
 group Transform data response
     CustomersController -> ModelDto: new(CustomerDto, customers)
     activate ModelDto
-    ModelDto -->> CustomersController: return RoleDto instance
+    ModelDto -->> CustomersController: return CustomerDto instance
     deactivate ModelDto
 
-    CustomersController -> ApiResponse: success(RoleDto, success message)
+    CustomersController -> ApiResponse: success(CustomerDto, success message)
     activate ApiResponse
     ApiResponse -->> CustomersController: return ApiResponse instance
     deactivate ApiResponse 
 end
 CustomersController -->> AsyncHandler: return ApiResponse instance
 deactivate CustomersController
-AsyncHandler --> Client: HTTP 200 Success
+AsyncHandler --> Client: HTTP 201 Success
 deactivate AsyncHandler
 deactivate CustomersRouter
 

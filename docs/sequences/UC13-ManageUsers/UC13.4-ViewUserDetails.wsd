@@ -1,9 +1,9 @@
-@startuml View list Customer
+@startuml View Details User
 
 actor Client
 
 box "Application Layer"
-participant CustomersRouter 
+participant UsersRouter 
 participant ErrorMiddleware 
 participant AsyncHandler 
 end box
@@ -21,7 +21,7 @@ participant RequestValidation
 end box
 
 box "Business Logic"
-participant CustomersController
+participant UsersController
 participant ApiResponse
 participant QueryUtil
 participant UserService 
@@ -33,10 +33,10 @@ database MongoDB
 
 ' Step 1
 group Request Initialization
-    Client -> CustomersRouter: GET /api/customers/get-customers
+    Client -> UsersRouter: GET /api/users/get-user-by-id/:userId
     activate Client
-    activate CustomersRouter
-    CustomersRouter -> AsyncHandler: asyncHandler(getAllCustomersController)
+    activate UsersRouter
+    UsersRouter -> AsyncHandler: asyncHandler(getUserByIdController)
     activate AsyncHandler
 end
 
@@ -148,7 +148,7 @@ break
 
 ' Step 4
 group Validation Flow
-    JwtAuthMiddleware -> RequestValidation: validateQuery(GetListCustomerDto)
+    JwtAuthMiddleware -> RequestValidation: validateParams(GetUserDto)
     deactivate JwtAuthMiddleware
     activate RequestValidation
     alt validation error
@@ -167,83 +167,74 @@ break
 
 ' step 5
 group Business Logic Flow
-    RequestValidation -> CustomersController: getAllCustomersController
+    RequestValidation -> UsersController: getUserByIdController
     deactivate RequestValidation
-    activate CustomersController
-    CustomersController -> UserService: getAndCountUsersService(filters, skip, limit, sortBy, sortOrder)
+    activate UsersController
+    UsersController -> UserService: getUserByIdService(userId)
     activate UserService
-    UserService -> UserModel:countDocuments(filters)
-    activate UserModel
-    UserModel -> MongoDB: query count
-    activate MongoDB
 
-    alt MongoDB error
-        MongoDB -->> UserModel: return null
-        UserModel -->> UserService: return null
-        UserService -->> CustomersController: return null
-        CustomersController --x CustomersController: throw(Error)
-        CustomersController ->> ErrorMiddleware: handleError(Error)
+    alt userId not provided
+        UserService -->> UsersController: return null
+        UsersController --x UsersController: throw(HttpException(400))
+        UsersController ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        ErrorMiddleware -->> Client: HTTP 400 Bad Request
         deactivate ErrorMiddleware
     end
 
-    MongoDB -->> UserModel: return count
-    deactivate MongoDB
-    UserModel -->> UserService: return count
-    deactivate UserModel
-    UserService -> QueryUtil: extendQueryOptionsWithPagination(skip, limit)
-    activate QueryUtil
-    QueryUtil -->> UserService: return options
-    deactivate QueryUtil
-    UserService -> QueryUtil: extendQueryOptionsWithSort(sortBy, sortOrder)
-    activate QueryUtil
-    QueryUtil -->> UserService: return options
-    deactivate QueryUtil
-    UserService -> UserModel: find(filters, options)
+    UserService -> UserModel: findOne(filters)
     activate UserModel
     UserModel -> MongoDB: query select
     activate MongoDB
 
-    alt MongoDB error
-        MongoDB -->> UserModel: return null
-        UserModel -->> UserService: return null
-        UserService -->> CustomersController: return null
-        CustomersController --x CustomersController: throw(Error)
-        CustomersController ->> ErrorMiddleware: handleError(Error)
+    alt select fail 
+        MongoDB --x UserModel: throw Error
+        UserModel --x UserService: throw Error
+        UserService --x UsersController: throw Error
+        UsersController --x UsersController: throw(HttpException(500))
+        UsersController ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
+
+    else user not found
+        MongoDB -->> UserModel: return null
+        UserModel -->> UserService: return null
+        UserService -->> UsersController: return null
+        UsersController --x UsersController: throw(HttpException(404))
+        UsersController ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 404 Not Found
+        deactivate ErrorMiddleware
     end
 
-    MongoDB -->> UserModel: return customers
+    MongoDB -->> UserModel: return user
     deactivate MongoDB
-    UserModel -->> UserService: return customers
+    UserModel -->> UserService: return user
     deactivate UserModel
-    UserService -->> CustomersController: return customers and count
+    UserService -->> UsersController: return user
     deactivate UserService
-
 
 end
 break
 break
 
 group Transform data response
-    CustomersController -> ModelDto: newList(CustomerDto, customers)
+    UsersController -> ModelDto: new(UserDto, customer)
     activate ModelDto
-    ModelDto -->> CustomersController: return RoleDto instance
+    ModelDto -->> UsersController: return UserDto instance
     deactivate ModelDto
 
-    CustomersController -> ApiResponse: success(RoleDto, success message)
+    UsersController -> ApiResponse: success(UserDto, success message)
     activate ApiResponse
-    ApiResponse -->> CustomersController: return ApiResponse instance
+    ApiResponse -->> UsersController: return ApiResponse instance
     deactivate ApiResponse 
 end
-CustomersController -->> AsyncHandler: return ApiResponse instance
-deactivate CustomersController
+UsersController -->> AsyncHandler: return ApiResponse instance
+deactivate UsersController
 AsyncHandler --> Client: HTTP 200 Success
 deactivate AsyncHandler
-deactivate CustomersRouter
+deactivate UsersRouter
 
 
 

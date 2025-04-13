@@ -1,9 +1,9 @@
-@startuml Search Customer
+@startuml Search User
 
 actor Client
 
 box "Application Layer"
-participant CustomersRouter 
+participant UsersRouter 
 participant ErrorMiddleware 
 participant AsyncHandler 
 end box
@@ -21,10 +21,10 @@ participant RequestValidation
 end box
 
 box "Business Logic"
-participant CustomersController
+participant UsersController
 participant ApiResponse
-participant QueryUtil
 participant UserService 
+participant QueryUtil
 participant UserModel
 participant ModelDto
 end box
@@ -33,10 +33,10 @@ database MongoDB
 
 ' Step 1
 group Request Initialization
-    Client -> CustomersRouter: GET /api/customers/get-customers
+    Client -> UsersRouter: GET /api/users/get-users
     activate Client
-    activate CustomersRouter
-    CustomersRouter -> AsyncHandler: asyncHandler(getAllCustomersController)
+    activate UsersRouter
+    UsersRouter -> AsyncHandler: asyncHandler(getAllUsersController)
     activate AsyncHandler
 end
 
@@ -148,7 +148,7 @@ break
 
 ' Step 4
 group Validation Flow
-    JwtAuthMiddleware -> RequestValidation: validateQuery(GetListCustomerDto)
+    JwtAuthMiddleware -> RequestValidation: validateQuery(GetListUserDto)
     deactivate JwtAuthMiddleware
     activate RequestValidation
     alt validation error
@@ -167,22 +167,22 @@ break
 
 ' step 5
 group Business Logic Flow
-    RequestValidation -> CustomersController: getAllCustomersController
+    RequestValidation -> UsersController: getAllUsersController
     deactivate RequestValidation
-    activate CustomersController
-    CustomersController -> UserService: getAndCountUsersService(filters, skip, limit, sortBy, sortOrder)
+    activate UsersController
+    UsersController -> UserService: getAndCountUsersService(filters, skip, limit, sortBy, sortOrder)
     activate UserService
     UserService -> UserModel:countDocuments(filters)
     activate UserModel
     UserModel -> MongoDB: query count
     activate MongoDB
 
-    alt MongoDB error
-        MongoDB -->> UserModel: return null
-        UserModel -->> UserService: return null
-        UserService -->> CustomersController: return null
-        CustomersController --x CustomersController: throw(Error)
-        CustomersController ->> ErrorMiddleware: handleError(Error)
+    alt count fail
+        MongoDB --x UserModel: throw Error
+        UserModel --x UserService: throw Error
+        UserService --x UsersController: throw Error
+        UsersController --x UsersController: throw(HttpException(500))
+        UsersController ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
@@ -205,22 +205,22 @@ group Business Logic Flow
     UserModel -> MongoDB: query select
     activate MongoDB
 
-    alt MongoDB error
-        MongoDB -->> UserModel: return null
-        UserModel -->> UserService: return null
-        UserService -->> CustomersController: return null
-        CustomersController --x CustomersController: throw(Error)
-        CustomersController ->> ErrorMiddleware: handleError(Error)
+  alt select fail
+        MongoDB --x UserModel: throw Error
+        UserModel --x UserService: throw Error
+        UserService --x UsersController: throw Error
+        UsersController --x UsersController: throw(HttpException(500))
+        UsersController ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
     end
 
-    MongoDB -->> UserModel: return customers
+    MongoDB -->> UserModel: return users
     deactivate MongoDB
-    UserModel -->> UserService: return customers
+    UserModel -->> UserService: return users
     deactivate UserModel
-    UserService -->> CustomersController: return customers and count
+    UserService -->> UsersController: return users and count
     deactivate UserService
 
 
@@ -229,21 +229,21 @@ break
 break
 
 group Transform data response
-    CustomersController -> ModelDto: newList(CustomerDto, customers)
+    UsersController -> ModelDto: newList(UserDto, users)
     activate ModelDto
-    ModelDto -->> CustomersController: return RoleDto instance
+    ModelDto -->> UsersController: return UserDto instance
     deactivate ModelDto
 
-    CustomersController -> ApiResponse: success(RoleDto, success message)
+    UsersController -> ApiResponse: success(UserDto, success message)
     activate ApiResponse
-    ApiResponse -->> CustomersController: return ApiResponse instance
+    ApiResponse -->> UsersController: return ApiResponse instance
     deactivate ApiResponse 
 end
-CustomersController -->> AsyncHandler: return ApiResponse instance
-deactivate CustomersController
+UsersController -->> AsyncHandler: return ApiResponse instance
+deactivate UsersController
 AsyncHandler --> Client: HTTP 200 Success
 deactivate AsyncHandler
-deactivate CustomersRouter
+deactivate UsersRouter
 
 
 

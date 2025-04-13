@@ -1,4 +1,4 @@
-@startuml Remove Customer
+@startuml View Details Customer
 
 actor Client
 
@@ -23,18 +23,20 @@ end box
 box "Business Logic"
 participant CustomersController
 participant ApiResponse
+participant QueryUtil
 participant UserService 
 participant UserModel
+participant ModelDto
 end box
 
 database MongoDB
 
 ' Step 1
 group Request Initialization
-    Client -> CustomersRouter: PUT /api/customers/remove-customer-by-id/:customerId
+    Client -> CustomersRouter: GET /api/customers/get-customer-by-id/:customerId
     activate Client
     activate CustomersRouter
-    CustomersRouter -> AsyncHandler: asyncHandler(removeCustomerByIdController)
+    CustomersRouter -> AsyncHandler: asyncHandler(getCustomerByIdController)
     activate AsyncHandler
 end
 
@@ -162,14 +164,15 @@ end
 break
 break
 
-' Step 5
+
+' step 5
 group Business Logic Flow
-    RequestValidation -> CustomersController: removeCustomerByIdController
+    RequestValidation -> CustomersController: getCustomerByIdController
     deactivate RequestValidation
     activate CustomersController
     CustomersController -> UserService: getUserByIdService(customerId)
     activate UserService
-    
+
     alt customerId not provided
         UserService -->> CustomersController: return null
         CustomersController --x CustomersController: throw(HttpException(400))
@@ -184,7 +187,17 @@ group Business Logic Flow
     UserModel -> MongoDB: query select
     activate MongoDB
 
-    alt user not found
+    alt select fail 
+        MongoDB --x UserModel: throw Error
+        UserModel --x UserService: throw Error
+        UserService --x CustomersController: throw Error
+        CustomersController --x CustomersController: throw(HttpException(500))
+        CustomersController ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        deactivate ErrorMiddleware
+
+    else user not found
         MongoDB -->> UserModel: return null
         UserModel -->> UserService: return null
         UserService -->> CustomersController: return null
@@ -193,40 +206,6 @@ group Business Logic Flow
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 404 Not Found
         deactivate ErrorMiddleware
-
-        else database error
-        MongoDB --x UserModel: throw error
-        UserModel --x UserService: throw error
-        UserService --x CustomersController: throw error
-        CustomersController --x CustomersController: throw(HttpException(500))
-        CustomersController ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
-    end
-
-    MongoDB -->> UserModel: return user
-    deactivate MongoDB
-    UserModel -->> UserService: return user
-    deactivate UserModel
-    UserService -->> CustomersController: return user
-    deactivate UserService
-    CustomersController -> UserService: removeUserByIdService(customerId)
-    activate UserService
-    UserService -> UserModel: findByIdAndSoftDelete(id)
-    activate UserModel
-    UserModel -> MongoDB: query update
-    activate MongoDB
-
-    alt MongoDB error
-        MongoDB --x UserModel: throw error
-        UserModel --x UserService: throw error
-        UserService --x CustomersController: throw error
-        CustomersController --x CustomersController: throw(HttpException(500))
-        CustomersController ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
     end
 
     MongoDB -->> UserModel: return user
@@ -236,20 +215,27 @@ group Business Logic Flow
     UserService -->> CustomersController: return user
     deactivate UserService
 
-    
 end
-break 
+break
 break
 
-CustomersController -> ApiResponse: success(RoleDto, success message)
-activate ApiResponse
-ApiResponse -->> CustomersController: return ApiResponse instance
-deactivate ApiResponse 
+group Transform data response
+    CustomersController -> ModelDto: new(CustomerDto, customer)
+    activate ModelDto
+    ModelDto -->> CustomersController: return CustomerDto instance
+    deactivate ModelDto
+
+    CustomersController -> ApiResponse: success(CustomerDto, success message)
+    activate ApiResponse
+    ApiResponse -->> CustomersController: return ApiResponse instance
+    deactivate ApiResponse 
+end
 CustomersController -->> AsyncHandler: return ApiResponse instance
 deactivate CustomersController
 AsyncHandler --> Client: HTTP 200 Success
 deactivate AsyncHandler
 deactivate CustomersRouter
+
 
 
 @enduml
