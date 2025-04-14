@@ -15,16 +15,22 @@ import { HttpException } from "#src/core/exception/http-exception";
 import { Code } from "#src/core/code/Code";
 
 export const createShippingAddressController = async (req) => {
-  // const { id } = req.user;
-  const id = "67ed3bb1b80e7de1f2a03c0e"
+  const { id } = req.user;
 
   const totalCount = await countAllShippingAddressService({
     customer: id,
   });
 
+  if (totalCount < 1) {
+    req.body.isDefault = true;
+  }
+
+  if (totalCount > 0 && req.body.isDefault === true) {
+    await unsetDefaultCurrentShippingAddressService(id);
+  }
+
   const newShippingAddress = await createShippingAddressService({
     ...req.body,
-    ...(totalCount === 0 ? { isDefault: true } : {}),
     customer: id,
   });
 
@@ -34,18 +40,20 @@ export const createShippingAddressController = async (req) => {
 
 export const getAllShippingAddressController = async (req) => {
   const { id } = req.user;
-  const { limit, page } = req.query;
+  const { limit, page, sortBy, sortOrder } = req.query;
 
-  const filterOptions = {
+  const filters = {
     customer: id,
   };
 
-  const totalCount = await countAllShippingAddressService(filterOptions);
+  const totalCount = await countAllShippingAddressService(filters);
 
   const shippingAddress = await getAllShippingAddressService({
-    filters: filterOptions,
+    filters: filters,
     page,
     limit,
+    sortBy,
+    sortOrder,
   });
 
   const shippingAddressDto = ModelDto.newList(ShippingAddressDto, shippingAddress);
@@ -53,11 +61,12 @@ export const getAllShippingAddressController = async (req) => {
 };
 
 export const getShippingAddressByIdController = async (req) => {
+  const { id } = req.user;
   const { shippingAddressId } = req.params;
-  const existShippingAddress = await getShippingAddressByIdService(
-    shippingAddressId,
-    req.user.id
-  );
+
+  const existShippingAddress = await getShippingAddressByIdService(shippingAddressId, {
+    customer: id
+  });
 
   if (!existShippingAddress) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Shipping address not found' })
@@ -68,14 +77,24 @@ export const getShippingAddressByIdController = async (req) => {
 };
 
 export const updateShippingAddressByIdController = async (req) => {
+  const { id } = req.user;
   const { shippingAddressId } = req.params;
-  const existShippingAddress = await getShippingAddressByIdService(
-    shippingAddressId,
-    req.user._id
-  );
+  const { isDefault } = req.body;
+
+  const existShippingAddress = await getShippingAddressByIdService(shippingAddressId, {
+    customer: id
+  });
 
   if (!existShippingAddress) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Shipping address not found' })
+  }
+
+  if (isDefault) {
+    await unsetDefaultCurrentShippingAddressService(id);
+  }
+
+  if (existShippingAddress.isDefault && isDefault === false) {
+    throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Have at least 1 shipping address as default' })
   }
 
   const updatedShippingAddress = await updateShippingAddressByIdService(
@@ -88,28 +107,29 @@ export const updateShippingAddressByIdController = async (req) => {
 };
 
 export const removeShippingAddressByIdController = async (req) => {
+  const { id } = req.user;
   const { shippingAddressId } = req.params;
-  const existShippingAddress = await getShippingAddressByIdService(
-    shippingAddressId,
-    req.user.id
-  );
+
+  const existShippingAddress = await getShippingAddressByIdService(shippingAddressId, {
+    customer: id
+  });
 
   if (!existShippingAddress) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Shipping address not found' })
   }
 
-  const shippingAddress = await removeShippingAddressByIdService(shippingAddressId);
+  const shippingAddress = await removeShippingAddressByIdService(existShippingAddress._id);
 
   return ApiResponse.success({ id: shippingAddress._id });
 };
 
 export const setDefaultShippingAddressByIdController = async (req) => {
-  const { shippingAddressId } = req.params;
   const { id } = req.user;
-  const existShippingAddress = await getShippingAddressByIdService(
-    shippingAddressId,
-    id
-  );
+  const { shippingAddressId } = req.params;
+
+  const existShippingAddress = await getShippingAddressByIdService(shippingAddressId, {
+    customer: id
+  });
 
   if (!existShippingAddress) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Shipping address not found' })
@@ -120,7 +140,7 @@ export const setDefaultShippingAddressByIdController = async (req) => {
   }
 
   await unsetDefaultCurrentShippingAddressService(id);
-  await setDefaultShippingAddressByIdService(shippingAddressId, id);
+  await setDefaultShippingAddressByIdService(existShippingAddress._id, id);
 
   return ApiResponse.success({ id: existShippingAddress._id });
 };

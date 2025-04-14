@@ -16,34 +16,35 @@ import {
   validateBody,
   validateQuery
 } from '#src/core/validations/request.validation';
+import { GetListShippingAddressDto } from "#src/app/shipping-address/dtos/get-list-shipping-address.dto";
 
 router
   .get(
     "/get-shipping-address",
-    // isAuthorizedAndIsCustomer,
-    // validateQuery(GetListUserDto),
+    isAuthorizedAndIsCustomer,
+    validateQuery(GetListShippingAddressDto),
     getAllShippingAddressController
   )
   .get(
     "/get-shipping-address-by-id/:shippingAddressId",
-    // isAuthorizedAndIsCustomer,
+    isAuthorizedAndIsCustomer,
     getShippingAddressByIdController
   )
   .post(
     "/create-shipping-address",
-    // isAuthorizedAndIsCustomer,
+    isAuthorizedAndIsCustomer,
     validateBody(createShippingAddressDto),
     createShippingAddressController
   )
-  .patch(
+  .put(
     "/update-shipping-address-by-id/:shippingAddressId",
-    // isAuthorizedAndIsCustomer,
+    isAuthorizedAndIsCustomer,
     validateBody(updateShippingAddressDto),
     updateShippingAddressByIdController
   )
   .delete(
     "/remove-shipping-address-by-id/:shippingAddressId",
-    // isAuthorizedAndIsCustomer,
+    isAuthorizedAndIsCustomer,
     removeShippingAddressByIdController
   )
   .patch(

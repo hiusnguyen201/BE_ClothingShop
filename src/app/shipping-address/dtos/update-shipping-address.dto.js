@@ -9,11 +9,13 @@ import {
 
 export const updateShippingAddressDto = Joi.object({
   address: Joi.string()
+    .required()
     .min(3)
     .max(100)
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
   province: Joi.string()
     .pattern(REGEX_PATTERNS.STRING_NUMBER)
+    .required()
     .custom((value, helpers) => {
       const province = getProvinceByCodeService(value);
       if (!province) {
@@ -24,6 +26,7 @@ export const updateShippingAddressDto = Joi.object({
     }),
   district: Joi.string()
     .pattern(REGEX_PATTERNS.STRING_NUMBER)
+    .required()
     .custom((value, helpers) => {
       const { province } = helpers.state.ancestors[0];
       const district = getDistrictByCodeService(value);
@@ -35,6 +38,7 @@ export const updateShippingAddressDto = Joi.object({
     }),
   ward: Joi.string()
     .pattern(REGEX_PATTERNS.STRING_NUMBER)
+    .required()
     .custom((value, helpers) => {
       const { district } = helpers.state.ancestors[0];
       const ward = getWardByCodeService(value);
@@ -44,13 +48,16 @@ export const updateShippingAddressDto = Joi.object({
       helpers.state.ancestors[0].details = { ...helpers.state.ancestors[0].details, wardName: ward.name };
       return value;
     }),
+  isDefault: Joi.bool()
+    .required(),
 }).custom((value, helpers) => {
-  const { address } = value;
+  const { address, isDefault } = value;
   const { provinceName, districtName, wardName } = value.details;
   return {
     address: address,
     province: provinceName,
     district: districtName,
     ward: wardName,
+    isDefault: isDefault
   }
 });
