@@ -16,7 +16,7 @@ export async function getOrCreateOptionService(data, session) {
     return existOption;
   }
 
-  const [option] = await OptionModel.insertMany([data], { session });
+  const [option] = await OptionModel.insertMany([data], { session, ordered: true });
   return option;
 }
 
@@ -26,7 +26,7 @@ export async function getOrCreateOptionService(data, session) {
  * @returns
  */
 export async function getListOptionService() {
-  return OptionModel.find().select(SELECTED_FIELDS).populate({
+  return OptionModel.find().populate({
     path: 'optionValues',
     select: '_id valueName',
   });
@@ -44,10 +44,10 @@ export async function getOptionByIdService(id, extraFilters) {
   if (isValidObjectId(id)) {
     filter._id = id;
   } else {
-    return null;
+    filter.name = id;
   }
 
-  return OptionModel.findOne(filter).select(SELECTED_FIELDS).populate({
+  return OptionModel.findOne(filter).populate({
     path: 'optionValues',
     match: extraFilters,
   });
@@ -68,7 +68,7 @@ export async function getOrCreateOptionValuesService(data = [], session) {
   const newOptionValuesData = data.filter((item) => !existingSet.has(item.valueName));
 
   if (newOptionValuesData.length > 0) {
-    const created = await OptionValueModel.insertMany(newOptionValuesData, { session });
+    const created = await OptionValueModel.insertMany(newOptionValuesData, { session, ordered: true });
     return [...existingOptionValues, ...created];
   }
 

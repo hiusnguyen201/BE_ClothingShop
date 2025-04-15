@@ -1,4 +1,4 @@
-export const uniqueProductVariants = (arr) => {
+export const makeUniqueProductVariants = (arr) => {
   let newArr = [];
   let uniqueVariantValues = new Set();
   arr = arr.map((variant) => ({

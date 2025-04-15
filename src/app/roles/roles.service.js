@@ -27,7 +27,7 @@ export async function getOrCreateRoleService(data, session) {
     return existRole;
   }
 
-  const [role] = await RoleModel.insertMany([{ ...data, slug: makeSlug(data.name) }], { session });
+  const [role] = await RoleModel.insertMany([{ ...data, slug: makeSlug(data.name) }], { session, ordered: true });
 
   return role;
 }

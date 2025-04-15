@@ -19,7 +19,7 @@ export async function getOrCreateListPermissionService(data = [], session) {
   const newPermissions = data.filter((p) => !existingSet.has(`${p.method} ${p.endpoint}`));
 
   if (newPermissions.length > 0) {
-    const created = await PermissionModel.insertMany(newPermissions, { session });
+    const created = await PermissionModel.insertMany(newPermissions, { session, ordered: true });
     return [...existingPermissions, ...created];
   }
 

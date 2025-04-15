@@ -2,11 +2,13 @@ import { HttpException } from '#src/core/exception/http-exception';
 import {
   getAllProductsService,
   getProductByIdService,
-  updateProductByIdService,
+  updateProductInfoByIdService,
   removeProductByIdService,
   checkExistProductNameService,
   countAllProductsService,
   createProductService,
+  updateProductVariantsByIdService,
+  checkProductExistByIdService,
 } from '#src/app/products/products.service';
 import { getOptionByIdService } from '#src/app/options/options.service';
 import {
@@ -19,7 +21,7 @@ import { ProductDto } from '#src/app/products/dtos/product.dto';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { getCategoryByIdService } from '#src/app/categories/categories.service';
-import { uniqueProductVariants } from '#src/utils/object.util';
+import { makeUniqueProductVariants } from '#src/utils/object.util';
 import { TransactionalServiceWrapper } from '#src/core/transaction/TransactionalServiceWrapper';
 import { uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
 import { PRODUCT_STATUS } from '#src/app/products/products.constant';
@@ -123,29 +125,32 @@ export const updateProductInfoController = async (req) => {
     req.body.thumbnail = result.url;
   }
 
-  const updatedProduct = await updateProductByIdService(existProduct._id, req.body);
+  const updatedProduct = await updateProductInfoByIdService(existProduct._id, req.body);
 
   const productDto = ModelDto.new(ProductDto, updatedProduct);
   return ApiResponse.success(productDto);
 };
 
 export const updateProductVariantsController = async (req) => {
-  return await TransactionalServiceWrapper.execute(async (session) => {
-    const { productId } = req.params;
-    const existProduct = await getProductByIdService(productId, '_id');
-    if (!existProduct) {
-      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product not found' });
-    }
+  const { productVariants } = req.body;
+  const { productId } = req.params;
 
-    const { productVariants } = req.body;
+  // Validation
+  const existProduct = await checkProductExistByIdService(productId);
+  if (!existProduct) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product not found' });
+  }
 
-    const uniqueProductVariants = uniqueProductVariants(productVariants);
-
+  // Logic
+  await TransactionalServiceWrapper.execute(async (session) => {
     await removeProductVariantsByProductIdService(existProduct._id, session);
 
+    const uniqueProductVariants = makeUniqueProductVariants(productVariants);
+    const selectedOptions = {};
+
     const productVariantsInstance = await Promise.all(
-      productVariants.map(async (productVariant) => {
-        const { variantValues, quantity, price, sku } = uniqueProductVariants;
+      uniqueProductVariants.map(async (productVariant) => {
+        const { variantValues, quantity, price, sku } = productVariant;
 
         const productVariantInstance = newProductVariantsService({
           quantity,
@@ -155,18 +160,28 @@ export const updateProductVariantsController = async (req) => {
         });
 
         await Promise.all(
-          variantValues.map(async (variantValue) => {
-            const option = await getOptionByIdService(variantValue.option, { _id: variantValue.optionValue });
+          variantValues.map(async (variantValue, index) => {
+            const option = await getOptionByIdService(variantValue.option, { valueName: variantValue.optionValue });
             if (!option) {
               throw HttpException.new({
                 code: Code.RESOURCE_NOT_FOUND,
                 overrideMessage: 'Option or Option value not found',
               });
             }
+
+            if (selectedOptions[option._id] && Array.isArray(selectedOptions[option._id])) {
+              selectedOptions[option._id].push(option.optionValues[0]._id);
+            } else {
+              selectedOptions[option._id] = [option.optionValues[0]._id];
+            }
+
+            variantValues[index].option = option._id;
+            variantValues[index].optionValue = option.optionValues[0]._id;
           }),
         );
 
         productVariantInstance.variantValues = variantValues;
+
         return productVariantInstance;
       }),
     );
@@ -174,17 +189,21 @@ export const updateProductVariantsController = async (req) => {
     const createdProductVariants = await saveProductVariantsService(productVariantsInstance);
 
     const productVariantIds = createdProductVariants.map((variant) => variant._id);
-    const updatedProduct = await updateProductByIdService(
+
+    await updateProductVariantsByIdService(
       existProduct._id,
       {
+        productOptions: Object.entries(selectedOptions).map(([key, values]) => ({ option: key, optionValues: values })),
         productVariants: productVariantIds,
       },
       session,
     );
-
-    const productDto = ModelDto.new(ProductDto, updatedProduct);
-    return ApiResponse.success(productDto);
   });
+
+  // Transform data
+  const product = await getProductByIdService(existProduct._id);
+  const productDto = ModelDto.new(ProductDto, product);
+  return ApiResponse.success(productDto);
 };
 
 export const removeProductByIdController = async (req) => {

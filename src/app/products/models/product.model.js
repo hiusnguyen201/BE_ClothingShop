@@ -45,6 +45,16 @@ const productSchema = new Schema(
       default: null,
     },
 
+    productOptions: {
+      type: [
+        {
+          option: { type: Schema.Types.ObjectId, ref: 'Option' },
+          optionValues: [{ type: Schema.Types.ObjectId, ref: 'Option_Value' }],
+        },
+      ],
+      default: [],
+    },
+
     productVariants: [
       {
         type: Schema.Types.ObjectId,

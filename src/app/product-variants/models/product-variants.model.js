@@ -1,13 +1,13 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
-const PRODUCT_VARIANT_MODEL = "productVariants";
+const PRODUCT_VARIANT_MODEL = 'productVariants';
 
 const productVariantSchema = new Schema(
   {
     quantity: {
       type: Number,
-      default: 0
+      default: 0,
     },
     price: {
       type: Number,
@@ -15,7 +15,7 @@ const productVariantSchema = new Schema(
     },
     sku: {
       type: String,
-      required: true,
+      default: null,
     },
     image: {
       type: String,
@@ -26,25 +26,27 @@ const productVariantSchema = new Schema(
     },
 
     // Foreign Key
-    variantValues: [{
-      option: {
-        type: Schema.Types.ObjectId,
-        ref: "Option"
+    variantValues: [
+      {
+        option: {
+          type: Schema.Types.ObjectId,
+          ref: 'Option',
+        },
+        optionValue: {
+          type: Schema.Types.ObjectId,
+          ref: 'Option_Value',
+        },
       },
-      optionValue: {
-        type: Schema.Types.ObjectId,
-        ref: "Option_Value"
-      }
-    }],
+    ],
 
     product: {
       type: Schema.Types.ObjectId,
-      ref: "Product",
+      ref: 'Product',
       required: true,
     },
     productDiscount: {
       type: Schema.Types.ObjectId,
-      ref: "Product_Discount"
+      ref: 'Product_Discount',
     },
   },
   {
@@ -53,8 +55,8 @@ const productVariantSchema = new Schema(
     _id: true,
     id: false,
     collection: PRODUCT_VARIANT_MODEL,
-  }
+  },
 );
 
-const ProductVariantModel = mongoose.model("Product_Variant", productVariantSchema);
+const ProductVariantModel = mongoose.model('Product_Variant', productVariantSchema);
 export { ProductVariantModel };

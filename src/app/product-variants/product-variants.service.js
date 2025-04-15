@@ -1,5 +1,6 @@
 import { isValidObjectId } from 'mongoose';
 import { ProductVariantModel } from '#src/app/product-variants/models/product-variants.model';
+import { makeSlug } from '#src/utils/string.util';
 
 const SELECTED_FIELDS = '_id quantity price sku image sold variantValues product productDiscount createdAt updatedAt';
 
@@ -18,7 +19,7 @@ export function newProductVariantsService(data) {
  * @returns
  */
 export function saveProductVariantsService(data, session) {
-  return ProductVariantModel.insertMany(data, { session });
+  return ProductVariantModel.insertMany(data, { session, ordered: true });
 }
 
 /**

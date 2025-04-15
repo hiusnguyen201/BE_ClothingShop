@@ -9,5 +9,6 @@ export const ProductDto = Joi.object({
   category: Joi.any().required(),
   subCategory: Joi.any().allow(null),
   status: Joi.string().required(),
-  productVariants: Joi.array().items(Joi.string()).required(),
+  productOptions: Joi.array().items(Joi.any()).required(),
+  productVariants: Joi.array().items(Joi.any()).required(),
 });

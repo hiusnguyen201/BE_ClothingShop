@@ -62,7 +62,58 @@ export async function getProductByIdService(id) {
     return null;
   }
 
-  return ProductModel.findOne(filter).lean();
+  return ProductModel.findOne(filter)
+    .populate({
+      path: 'productOptions',
+      populate: [
+        { path: 'option', options: { lean: true }, select: '_id name' },
+        { path: 'optionValues', options: { lean: true }, select: '_id valueName' },
+      ],
+    })
+    .populate({
+      path: 'productVariants',
+      populate: {
+        path: 'variantValues',
+        populate: [
+          { path: 'option', options: { lean: true }, select: '_id name' },
+          { path: 'optionValue', options: { lean: true }, select: '_id valueName' },
+        ],
+        options: { lean: true },
+        select: '_id option optionValue',
+      },
+      select: '_id price product quantity sku variantValues',
+      sort: {
+        createdAt: 'asc',
+      },
+    })
+    .lean();
+}
+
+export async function checkProductExistByIdService(id) {
+  if (!id) return null;
+  const filter = {};
+
+  if (isValidObjectId(id)) {
+    filter._id = id;
+  } else {
+    return null;
+  }
+
+  return ProductModel.exists(filter).lean();
+}
+
+/**
+ * Update product info by id
+ * @param {*} id
+ * @param {*} data
+ * @returns``
+ */
+export async function updateProductInfoByIdService(id, data, session) {
+  data.slug = makeSlug(data.name);
+  return await ProductModel.findByIdAndUpdate(id, data, {
+    new: true,
+    session,
+  }).lean();
 }
 
 /**
@@ -71,12 +122,19 @@ export async function getProductByIdService(id) {
  * @param {*} data
  * @returns
  */
-export async function updateProductByIdService(id, data, session) {
-  data.slug = makeSlug(data.name);
-  return await ProductModel.findByIdAndUpdate(id, data, {
-    new: true,
-    session,
-  });
+export async function updateProductVariantsByIdService(id, data, session) {
+  const { productOptions, productVariants } = data;
+  return ProductModel.updateOne(
+    { _id: id },
+    {
+      productOptions,
+      productVariants,
+    },
+    {
+      new: true,
+      session,
+    },
+  );
 }
 
 /**

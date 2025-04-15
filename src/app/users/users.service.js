@@ -36,7 +36,7 @@ export async function getOrCreateUsersService(data, session) {
   if (newUsers.length > 0) {
     const created = await UserModel.insertMany(
       newUsers.map((item) => ({ ...item, password: hashSync(item.password, genSaltSync()) })),
-      { session },
+      { session, ordered: true },
     );
     return [...existingUsers, ...created];
   }

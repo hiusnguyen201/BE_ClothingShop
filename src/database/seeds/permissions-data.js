@@ -230,7 +230,7 @@ const PRODUCTS_PERMISSIONS = [
     name: 'edit:product_variants',
     description: 'Edit product variants',
     module: 'products',
-    endpoint: '/api/products/update-variants-info/:productId',
+    endpoint: '/api/products/update-product-variants/:productId',
     method: 'PUT',
   },
   {

@@ -18,6 +18,7 @@ import { isAuthorizedAndHasPermission } from '#src/middlewares/jwt-auth.middlewa
 import { GetListProductDto } from '#src/app/products/dtos/get-list-product.dto';
 import { GetProductDto } from '#src/app/products/dtos/get-product.dto';
 import { UploadUtils } from '#src/utils/upload.util';
+import { updateProductVariantsDto } from '#src/app/products/dtos/update-product-variants.dto';
 
 router.post('/is-exist-product-name', validateBody(checkExistProductNameDto), isExistProductNameController);
 
@@ -47,10 +48,9 @@ router
   .put(
     '/update-product-variants/:productId',
     isAuthorizedAndHasPermission,
-    UploadUtils.single({ field: 'thumbnail' }),
     validateParams(GetProductDto),
-    validateBody(updateProductInfoDto),
-    updateProductInfoController,
+    validateBody(updateProductVariantsDto),
+    updateProductVariantsController,
   )
   .delete(
     '/remove-product-by-id/:productId',
