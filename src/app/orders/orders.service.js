@@ -1,5 +1,8 @@
 import { OrderModel } from '#src/app/orders/models/orders.model';
-import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
+import {
+  extendQueryOptionsWithPagination,
+  extendQueryOptionsWithSort
+} from '#src/utils/query.util';
 import { isValidObjectId } from 'mongoose';
 import { ORDER_SELECTED_FIELDS } from '#src/app/orders/orders.constant';
 
@@ -18,7 +21,7 @@ export function newOrderService(data) {
  * @returns
  */
 export async function createOrdersService(data, session) {
-  return await OrderModel.create(data, { session });
+  return OrderModel.create(data, { session });
 }
 
 /**
@@ -38,7 +41,7 @@ export async function getOrderByIdService(id, extras = {}) {
     return null;
   }
 
-  return await OrderModel.findOne(filters)
+  return OrderModel.findOne(filters)
     .select(ORDER_SELECTED_FIELDS)
     .populate('paymentId')
     .lean();
@@ -70,11 +73,14 @@ export async function getAllOrdersService(payload) {
 
 /**
  * Update order status
- * @param {*} query
+ * @param {*} orderId
+ * @param {*} newOrderStatus
+ * @param {*} orderStatusHistoryId
+ * @param {*} session
  * @returns
  */
 export async function updateOrderStatusByIdService(orderId, newOrderStatus, orderStatusHistoryId, session) {
-  return await OrderModel.findByIdAndUpdate(orderId, {
+  return OrderModel.findByIdAndUpdate(orderId, {
     status: newOrderStatus,
     $push: { orderStatusHistory: orderStatusHistoryId }
   }, {

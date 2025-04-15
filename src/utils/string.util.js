@@ -1,4 +1,5 @@
 import { REGEX_PATTERNS } from '#src/core/constant';
+import mongoose from 'mongoose';
 import slugifyLib from 'slugify';
 
 export const generateNumericOTP = (length = 6) => {
@@ -46,4 +47,11 @@ export const makeSlug = (str) => {
 
 export const replaceMultiSpacesToSingleSpace = (str) => {
   return str.replace(REGEX_PATTERNS.WHITESPACE, ' ').trim();
+};
+
+export const objectIdValidator = (value, helpers) => {
+  if (!mongoose.Types.ObjectId.isValid(value)) {
+    return helpers.error('any.invalid');
+  }
+  return value;
 };

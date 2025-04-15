@@ -15,6 +15,7 @@ import paymentsRouter from '#src/routers/payments.route';
 import productsRouter from '#src/routers/products.router';
 import shippingAddressRouter from '#src/routers/shipping-address.router';
 import productDiscountsRouter from "#src/routers/product-discounts.route";
+import cartsRouter from "#src/routers/carts.router";
 // import productReviewsRouter from '#src/routers/product-reviews.route';
 // import reviewFeedbacksRouter from '#src/routers/review-feedbacks.route';
 // import tagsRouter from "#src/routers/tags.route";
@@ -53,6 +54,8 @@ router.use('/shipping-address', shippingAddressRouter);
 router.use("/products", productsRouter);
 
 router.use("/product-discounts", productDiscountsRouter);
+
+router.use("/carts", cartsRouter);
 
 // router.use("/product-reviews", productReviewsRouter);
 

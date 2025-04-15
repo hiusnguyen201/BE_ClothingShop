@@ -399,11 +399,12 @@ export const cancelOrderByCustomerController = async (req) => {
 }
 
 export const getAllOrdersController = async (req) => {
-  const { customerId, paymentId, limit, page, sortBy, sortOrder } = req.query;
+  const { customerId, paymentId, code, limit, page, sortBy, sortOrder } = req.query;
 
   const filters = {
     ...(customerId ? { customerId: customerId } : {}),
     ...(paymentId ? { paymentId: paymentId } : {}),
+    ...(code ? { code: code } : {}),
   };
 
   const totalCount = await countAllOrdersService(filters);
@@ -421,10 +422,11 @@ export const getAllOrdersController = async (req) => {
 
 export const getAllOrdersByCustomerIdController = async (req) => {
   const { id } = req.user;
-  const { limit, page, sortBy, sortOrder } = req.query;
+  const { code, limit, page, sortBy, sortOrder } = req.query;
 
   const filters = {
     customerId: id,
+    ...(code ? { code: code } : {}),
   };
 
   const totalCount = await countAllOrdersService(filters);
