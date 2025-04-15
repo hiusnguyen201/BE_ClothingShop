@@ -8,7 +8,6 @@ import {
   countAllProductsService,
   createProductService,
   updateProductVariantsByIdService,
-  checkProductExistByIdService,
 } from '#src/app/products/products.service';
 import { getOptionByIdService } from '#src/app/options/options.service';
 import {
@@ -132,11 +131,13 @@ export const updateProductInfoController = async (req) => {
 };
 
 export const updateProductVariantsController = async (req) => {
-  const { productVariants } = req.body;
+  const { productVariants, options } = req.body;
   const { productId } = req.params;
 
+  console.log(options);
+
   // Validation
-  const existProduct = await checkProductExistByIdService(productId);
+  const existProduct = await getProductByIdService(productId, '_id');
   if (!existProduct) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product not found' });
   }
@@ -145,9 +146,25 @@ export const updateProductVariantsController = async (req) => {
   await TransactionalServiceWrapper.execute(async (session) => {
     await removeProductVariantsByProductIdService(existProduct._id, session);
 
-    const uniqueProductVariants = makeUniqueProductVariants(productVariants);
-    const selectedOptions = {};
+    // Create List Product Option
+    const productOptionsInstance = await Promise.all(
+      options.map(async (opt) => {
+        const { option: optionName, selectedValues } = opt;
 
+        const option = await getOptionByIdService(optionName, { valueName: { $in: selectedValues } });
+        if (!option) {
+          throw HttpException.new({
+            code: Code.RESOURCE_NOT_FOUND,
+            overrideMessage: 'Option or Option value not found',
+          });
+        }
+
+        return { option: option._id, optionValues: option.optionValues.filter(Boolean).map((item) => item._id) };
+      }),
+    );
+
+    // Create List Product Variant
+    const uniqueProductVariants = makeUniqueProductVariants(productVariants);
     const productVariantsInstance = await Promise.all(
       uniqueProductVariants.map(async (productVariant) => {
         const { variantValues, quantity, price, sku } = productVariant;
@@ -169,12 +186,6 @@ export const updateProductVariantsController = async (req) => {
               });
             }
 
-            if (selectedOptions[option._id] && Array.isArray(selectedOptions[option._id])) {
-              selectedOptions[option._id].push(option.optionValues[0]._id);
-            } else {
-              selectedOptions[option._id] = [option.optionValues[0]._id];
-            }
-
             variantValues[index].option = option._id;
             variantValues[index].optionValue = option.optionValues[0]._id;
           }),
@@ -185,15 +196,15 @@ export const updateProductVariantsController = async (req) => {
         return productVariantInstance;
       }),
     );
-
+    // Save List Product Variant
     const createdProductVariants = await saveProductVariantsService(productVariantsInstance);
 
+    // Update Product
     const productVariantIds = createdProductVariants.map((variant) => variant._id);
-
     await updateProductVariantsByIdService(
       existProduct._id,
       {
-        productOptions: Object.entries(selectedOptions).map(([key, values]) => ({ option: key, optionValues: values })),
+        productOptions: productOptionsInstance,
         productVariants: productVariantIds,
       },
       session,

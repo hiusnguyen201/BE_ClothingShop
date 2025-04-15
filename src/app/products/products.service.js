@@ -1,6 +1,7 @@
 import { isValidObjectId } from 'mongoose';
 import { ProductModel } from '#src/app/products/models/product.model';
 import { makeSlug } from '#src/utils/string.util';
+import { PRODUCT_SELECT_FIELDS } from '#src/app/products/products.constant';
 
 /**
  * Create product
@@ -52,7 +53,7 @@ export async function countAllProductsService(filters) {
  * @param {*} selectFields
  * @returns
  */
-export async function getProductByIdService(id) {
+export async function getProductByIdService(id, selectFields = PRODUCT_SELECT_FIELDS) {
   if (!id) return null;
   const filter = {};
 
@@ -82,24 +83,9 @@ export async function getProductByIdService(id) {
         select: '_id option optionValue',
       },
       select: '_id price product quantity sku variantValues',
-      sort: {
-        createdAt: 'asc',
-      },
     })
+    .select(selectFields)
     .lean();
-}
-
-export async function checkProductExistByIdService(id) {
-  if (!id) return null;
-  const filter = {};
-
-  if (isValidObjectId(id)) {
-    filter._id = id;
-  } else {
-    return null;
-  }
-
-  return ProductModel.exists(filter).lean();
 }
 
 /**
@@ -110,10 +96,34 @@ export async function checkProductExistByIdService(id) {
  */
 export async function updateProductInfoByIdService(id, data, session) {
   data.slug = makeSlug(data.name);
-  return await ProductModel.findByIdAndUpdate(id, data, {
+  return ProductModel.findByIdAndUpdate(id, data, {
     new: true,
     session,
-  }).lean();
+  })
+    .populate({
+      path: 'productOptions',
+      populate: [
+        { path: 'option', options: { lean: true }, select: '_id name' },
+        { path: 'optionValues', options: { lean: true }, select: '_id valueName' },
+      ],
+    })
+    .populate({
+      path: 'productVariants',
+      populate: {
+        path: 'variantValues',
+        populate: [
+          { path: 'option', options: { lean: true }, select: '_id name' },
+          { path: 'optionValue', options: { lean: true }, select: '_id valueName' },
+        ],
+        options: { lean: true },
+        select: '_id option optionValue',
+      },
+      select: '_id price product quantity sku variantValues',
+      sort: {
+        createdAt: 'asc',
+      },
+    })
+    .lean();
 }
 
 /**
