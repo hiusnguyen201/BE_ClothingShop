@@ -1,4 +1,5 @@
 import { REGEX_PATTERNS } from '#src/core/constant';
+import mongoose from 'mongoose';
 import slugifyLib from 'slugify';
 
 export const generateNumericOTP = (length = 6) => {
@@ -21,6 +22,18 @@ export const randomStr = (length) => {
   return result;
 };
 
+export const randomCodeOrder = (length) => {
+  let result = '';
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const charactersLength = characters.length;
+  let counter = 0;
+  while (counter < length) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    counter += 1;
+  }
+  return result;
+};
+
 export const makeSlug = (str) => {
   return slugifyLib(str, {
     replacement: '-', // replace spaces with replacement character, defaults to `-`
@@ -34,4 +47,11 @@ export const makeSlug = (str) => {
 
 export const replaceMultiSpacesToSingleSpace = (str) => {
   return str.replace(REGEX_PATTERNS.WHITESPACE, ' ').trim();
+};
+
+export const objectIdValidator = (value, helpers) => {
+  if (!mongoose.Types.ObjectId.isValid(value)) {
+    return helpers.error('any.invalid');
+  }
+  return value;
 };

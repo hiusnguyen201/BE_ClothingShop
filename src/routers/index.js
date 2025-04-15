@@ -9,8 +9,11 @@ import customersRouter from '#src/routers/customers.router';
 import categoriesRouter from '#src/routers/categories.router';
 import accountRouter from '#src/routers/account.router';
 import productsRouter from '#src/routers/products.router';
-import productDiscountsRouter from '#src/routers/product-discounts.router';
 import optionsRouter from '#src/routers/options.router';
+import ordersRouter from '#src/routers/orders.route';
+import paymentsRouter from '#src/routers/payments.route';
+import shippingAddressRouter from '#src/routers/shipping-address.router';
+import cartsRouter from '#src/routers/carts.router';
 
 router.get('/ping', () => {
   return 'Hello world! PING 1';
@@ -34,6 +37,12 @@ router.use('/options', optionsRouter);
 
 router.use('/products', productsRouter);
 
-router.use('/product-discounts', productDiscountsRouter);
+router.use('/orders', ordersRouter);
+
+router.use('/payments', paymentsRouter);
+
+router.use('/shipping-address', shippingAddressRouter);
+
+router.use('/carts', cartsRouter);
 
 export default router;

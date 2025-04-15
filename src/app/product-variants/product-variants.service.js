@@ -1,6 +1,5 @@
 import { isValidObjectId } from 'mongoose';
 import { ProductVariantModel } from '#src/app/product-variants/models/product-variants.model';
-import { makeSlug } from '#src/utils/string.util';
 
 const SELECTED_FIELDS = '_id quantity price sku image sold variantValues product productDiscount createdAt updatedAt';
 
@@ -74,7 +73,32 @@ export async function getProductVariantByIdService(id, selectFields = SELECTED_F
     filter.product;
   }
 
-  return await ProductVariantModel.findOne(filter).select(selectFields);
+  return await ProductVariantModel.findOne(filter)
+    .select(selectFields)
+    .populate({
+      path: 'product',
+      model: 'Product',
+      select: '-productVariants',
+    })
+    .populate({
+      path: 'variantValues',
+      model: 'productVariants',
+      populate: [
+        {
+          path: 'option',
+          model: 'Option',
+          select: '-optionValues',
+        },
+        {
+          path: 'optionValue',
+          model: 'Option_Value',
+        },
+      ],
+    })
+    .populate({
+      path: 'productDiscount',
+      model: 'Product_Discount',
+    });
 }
 
 /**
@@ -83,9 +107,10 @@ export async function getProductVariantByIdService(id, selectFields = SELECTED_F
  * @param {*} data
  * @returns
  */
-export async function updateProductVariantByIdService(id, data) {
+export async function updateProductVariantByIdService(id, data, session) {
   return await ProductVariantModel.findByIdAndUpdate(id, data, {
     new: true,
+    session,
   }).select(SELECTED_FIELDS);
 }
 
@@ -138,4 +163,23 @@ export async function updateProductDiscountByProductVariantIdService(id, product
 
 export async function removeProductVariantsByProductIdService(productId, session) {
   return await ProductVariantModel.deleteMany({ product: productId }, { session });
+}
+
+/**
+ * Update product variant quantity by id
+ * @param {*} id
+ * @param {*} productDiscountId
+ * @returns
+ */
+export async function updateProductVariantQuantityByIdService(id, quantity, session) {
+  return await ProductVariantModel.findByIdAndUpdate(
+    id,
+    {
+      quantity: quantity,
+    },
+    {
+      new: true,
+      session,
+    },
+  ).select(SELECTED_FIELDS);
 }
