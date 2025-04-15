@@ -134,8 +134,6 @@ export const updateProductVariantsController = async (req) => {
   const { productVariants, options } = req.body;
   const { productId } = req.params;
 
-  console.log(options);
-
   // Validation
   const existProduct = await getProductByIdService(productId, '_id');
   if (!existProduct) {
@@ -219,10 +217,14 @@ export const updateProductVariantsController = async (req) => {
 
 export const removeProductByIdController = async (req) => {
   const { productId } = req.params;
-  const existProduct = await getProductByIdService(productId, '_id');
+  const existProduct = await getProductByIdService(productId, '_id status');
 
   if (!existProduct) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product not found' });
+  }
+
+  if (existProduct.status === PRODUCT_STATUS.ACTIVE) {
+    throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Cannot remove active product' });
   }
 
   await removeProductByIdService(productId);

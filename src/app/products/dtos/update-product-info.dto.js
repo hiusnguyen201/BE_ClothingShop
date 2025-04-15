@@ -16,26 +16,8 @@ export const updateProductInfoDto = Joi.object({
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
 
   category: Joi.string().required(),
-  subCategory: Joi.string().required().allow(null),
+  subCategory: Joi.string().allow(null),
   status: Joi.string()
     .valid(...Object.values(PRODUCT_STATUS))
     .required(),
-
-  // import { createProductVariantDto } from '#src/app/products/dtos/create-product-variant.dto';
-
-  // productVariants: Joi.array()
-  //   .items(createProductVariantDto)
-  //   .required()
-  //   .min(1)
-  //   .custom((value, helper) => {
-  //     const length = value[0].variantValues.length;
-
-  //     for (const variant of value) {
-  //       if (variant.variantValues.length !== length) {
-  //         return helper.message('Variant value length not match');
-  //       }
-  //     }
-
-  //     return value;
-  //   }),
 });
