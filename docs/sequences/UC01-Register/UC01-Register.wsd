@@ -1,0 +1,144 @@
+@startuml Register
+
+actor Client
+
+box "Application Layer"
+participant AuthRouter 
+participant ErrorMiddleware 
+participant AsyncHandler 
+end box
+
+box "Validation"
+participant RequestValidation
+end box
+
+box "Business Logic"
+participant AuthController
+participant ApiResponse
+participant UsersService
+participant UserModel
+participant ModelDto
+end box
+
+database MongoDB
+
+' Step 1
+group Request Initialization
+    Client -> AuthRouter: POST /api/auth/register
+    activate Client
+    activate AuthRouter
+    AuthRouter -> AsyncHandler: asyncHandler(registerController)
+    activate AsyncHandler
+end
+
+break
+break
+
+
+' Step 2
+group Validation Flow
+    AsyncHandler -> RequestValidation: validateBody(RegisterDto)
+    activate RequestValidation
+    alt validation error
+        RequestValidation ->> RequestValidation: next(HttpException(400))
+        RequestValidation ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 400 Bad Request
+        deactivate ErrorMiddleware
+    end
+    
+end
+
+break
+break
+
+
+' step 3
+group Business Logic Flow
+    RequestValidation -> AuthController: registerController
+    deactivate RequestValidation
+    activate AuthController
+    AuthController -> UsersService: checkExistEmailService(email)
+    activate UsersService
+    UsersService -> UserModel: findOne()
+    activate UserModel
+    UserModel -> MongoDB: query select 
+    activate MongoDB
+    
+    alt query fail
+        MongoDB --x UserModel: throw Error
+        UserModel --x UsersService: throw Error
+        UsersService --x AuthController: throw Error
+        AuthController --x AuthController: throw(HttpException(500))
+        AuthController ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        deactivate ErrorMiddleware
+    else email already exists
+        MongoDB -->> UserModel: return user
+        UserModel -->> UsersService: return user
+        UsersService -->> AuthController: return user
+        AuthController --x AuthController: throw(HttpException(400))
+        AuthController ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 400 Bad Request
+        deactivate ErrorMiddleware
+    end
+        
+    MongoDB -->> UserModel: return null
+    deactivate MongoDB
+    UserModel -->> UsersService: return null
+    deactivate UserModel
+    UsersService -->> AuthController: return null
+    deactivate UsersService
+    AuthController -> UsersService: createUserService()
+    activate UsersService
+    UsersService -> UsersService: genSaltSync()
+    UsersService -> UsersService: hashSync(password, salt)
+    UsersService -> UserModel: create()
+    activate UserModel
+    UserModel -> MongoDB: query create
+    activate MongoDB
+
+    alt create fail
+        MongoDB --x UserModel: throw Error
+        UserModel --x UsersService: throw Error
+        UsersService --x AuthController: throw Error
+        AuthController --x AuthController: throw(HttpException(500))
+        AuthController ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> UserModel: return user
+    deactivate MongoDB
+    UserModel -->> UsersService: return user
+    deactivate UserModel
+    UsersService -> UsersService: toJSON()
+    UsersService -->> AuthController: return user
+    deactivate UsersService
+   
+end   
+break 
+break
+
+group Transform data response
+    AuthController -> ModelDto: new(UserDto, customer)
+    activate ModelDto
+    ModelDto -->> AuthController: return UserDto instance
+    deactivate ModelDto
+
+    AuthController -> ApiResponse: success(UserDto, success message)
+    activate ApiResponse
+    ApiResponse -->> AuthController: return ApiResponse instance
+    deactivate ApiResponse 
+end
+AuthController -->> AsyncHandler: return ApiResponse instance
+deactivate AuthController
+AsyncHandler --> Client: HTTP 200 Success
+deactivate AsyncHandler
+deactivate AuthRouter
+
+
+@enduml

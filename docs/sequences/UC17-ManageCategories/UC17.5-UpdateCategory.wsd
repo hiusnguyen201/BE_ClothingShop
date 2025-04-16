@@ -235,6 +235,7 @@ group Business Logic Flow
     alt categoryId not provided
         CategoriesService -->> CategoriesController: return null
         CategoriesController --x CategoriesController: throw(HttpException(400))
+        CategoriesController -->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 400 Bad Request
         deactivate ErrorMiddleware
@@ -250,6 +251,7 @@ group Business Logic Flow
         CategoryModel --x CategoriesService: throw Error
         CategoriesService --x CategoriesController: throw Error
         CategoriesController --x CategoriesController: throw(HttpException(500))
+        CategoriesController -->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
@@ -258,6 +260,7 @@ group Business Logic Flow
         CategoryModel -->> CategoriesService: return null
         CategoriesService -->> CategoriesController: return null
         CategoriesController --x CategoriesController: throw(HttpException(404))
+        CategoriesController -->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 404 Not Found
         deactivate ErrorMiddleware
@@ -281,6 +284,7 @@ group Business Logic Flow
         CategoryModel --x CategoriesService: throw Error
         CategoriesService --x CategoriesController: throw Error
         CategoriesController --x CategoriesController: throw(HttpException(500))
+        CategoriesController -->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
@@ -290,6 +294,7 @@ group Business Logic Flow
         CategoryModel -->> CategoriesService: return true
         CategoriesService -->> CategoriesController: return true
         CategoriesController --x CategoriesController: throw(HttpException(400))
+        CategoriesController -->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 400 Bad Request
         deactivate ErrorMiddleware
@@ -311,6 +316,7 @@ group Business Logic Flow
         Cloudinary --x CloudinaryService: throw Error
         CloudinaryService --x CategoriesController: throw Error
         CategoriesController --x CategoriesController: throw(HttpException(500))
+        CategoriesController -->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
@@ -332,6 +338,7 @@ group Business Logic Flow
         CategoryModel --x CategoriesService: throw Error
         CategoriesService --x CategoriesController: throw Error
         CategoriesController --x CategoriesController: throw(HttpException(500))
+        CategoriesController -->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware

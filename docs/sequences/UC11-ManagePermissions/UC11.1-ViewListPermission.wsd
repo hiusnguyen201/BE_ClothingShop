@@ -232,10 +232,10 @@ break
 group Transform data response
     PermissionsController -> ModelDto: newList(PermissionDto, permissions)
     activate ModelDto
-    ModelDto -->> PermissionsController: return RoleDto instance
+    ModelDto -->> PermissionsController: return permissionDto instance
     deactivate ModelDto
 
-    PermissionsController -> ApiResponse: success(RoleDto, success message)
+    PermissionsController -> ApiResponse: success(PermissionDto, success message)
     activate ApiResponse
     ApiResponse -->> PermissionsController: return ApiResponse instance
     deactivate ApiResponse 

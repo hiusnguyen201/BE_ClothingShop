@@ -1,0 +1,248 @@
+@startuml Send OTP Via Email
+
+actor Client
+
+box "Application Layer"
+participant AuthRouter 
+participant ErrorMiddleware 
+participant AsyncHandler 
+end box
+
+box "Validation"
+participant RequestValidation
+end box
+
+box "Business Logic"
+participant AuthController
+participant ApiResponse
+participant AuthService
+participant UsersService
+participant MailerService
+participant StringUtil
+participant UserOtpModel
+participant UserModel
+end box
+
+database MongoDB
+
+' Step 1
+group Request Initialization
+    Client -> AuthRouter: POST /api/auth/send-otp-via-email
+    activate Client
+    activate AuthRouter
+    AuthRouter -> AsyncHandler: asyncHandler(sendOtpViaEmailController)
+    activate AsyncHandler
+end
+
+break
+break
+
+
+' Step 2
+group Validation Flow
+    AsyncHandler -> RequestValidation: validateBody(SendOtpViaEmailDto)
+    activate RequestValidation
+    alt validation error
+        RequestValidation ->> RequestValidation: next(HttpException(400))
+        RequestValidation ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 400 Bad Request
+        deactivate ErrorMiddleware
+    end
+    
+end
+
+break
+break
+
+
+' step 3
+group Business Logic Flow
+    RequestValidation -> AuthController: sendOtpViaEmailController
+    deactivate RequestValidation
+    activate AuthController
+    AuthController -> UsersService: getUserByIdService(userId)
+    activate UsersService
+
+    alt userId not provided
+        UsersService -->> AuthController: return null
+        AuthController --x AuthController: throw(HttpException(400))
+        AuthController ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 400 Bad Request
+        deactivate ErrorMiddleware
+    end
+
+    UsersService -> UserModel: findOne(filters)
+    activate UserModel
+    UserModel -> MongoDB: query select
+    activate MongoDB
+
+    alt select fail 
+        MongoDB --x UserModel: throw Error
+        UserModel --x UsersService: throw Error
+        UsersService --x AuthController: throw Error
+        AuthController --x AuthController: throw(HttpException(500))
+        AuthController ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        deactivate ErrorMiddleware
+
+    else user not found
+        MongoDB -->> UserModel: return null
+        UserModel -->> UsersService: return null
+        UsersService -->> AuthController: return null
+        AuthController --x AuthController: throw(HttpException(404))
+        AuthController ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 404 Not Found
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> UserModel: return user
+    deactivate MongoDB
+    UserModel -->> UsersService: return user
+    deactivate UserModel
+    UsersService -->> AuthController: return user
+    deactivate UsersService
+    AuthController -> AuthService: checkTimeLeftToResendOTPService(userId)
+    activate AuthService
+    AuthService -> UserOtpModel: findOne(filters)
+    activate UserOtpModel
+    UserOtpModel -> MongoDB: query select
+    activate MongoDB
+
+    alt select fail 
+        MongoDB --x UserOtpModel: throw Error
+        UserOtpModel --x AuthService: throw Error
+        AuthService --x AuthController: throw Error
+        AuthController --x AuthController: throw(HttpException(500))
+        AuthController ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        deactivate ErrorMiddleware
+
+    else user not found
+        MongoDB -->> UserOtpModel: return null
+        UserOtpModel -->> AuthService: return null
+        AuthService -->> AuthController: return null
+        AuthController --x AuthController: throw(HttpException(404))
+        AuthController ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 404 Not Found
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> UserOtpModel: return userOtp
+    deactivate MongoDB
+    UserOtpModel -->> AuthService: return userOtp
+    deactivate UserOtpModel
+    AuthService -->> AuthController: return userOtp
+    deactivate AuthService
+    AuthController -> AuthService: removeUserOtpsInUserService(userId)
+    activate AuthService
+    AuthService -> UserOtpModel: deleteMany(filters)
+    activate UserOtpModel
+    UserOtpModel -> MongoDB: query delete
+    activate MongoDB
+
+    alt delete fail
+        MongoDB --x UserOtpModel: throw Error
+        UserOtpModel --x AuthService: throw Error
+        AuthService --x AuthController: throw Error
+        AuthController --x AuthController: throw(HttpException(500))
+        AuthController ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        deactivate ErrorMiddleware
+
+    else user not found
+        MongoDB -->> UserOtpModel: return null
+        UserOtpModel -->> AuthService: return null
+        AuthService -->> AuthController: return null
+        AuthController --x AuthController: throw(HttpException(404))
+        AuthController ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 404 Not Found
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> UserOtpModel: return void
+    deactivate MongoDB
+    UserOtpModel -->> AuthService: return void
+    deactivate UserOtpModel
+    AuthService -->> AuthController: return void
+    deactivate AuthService
+    AuthController -> AuthService: createUserOtpService(userId)
+    activate AuthService
+    AuthService -> StringUtil: generateNumericOTP()
+    activate StringUtil
+    StringUtil -->> AuthService: return otpCode
+    deactivate StringUtil
+    AuthService -> UserOtpModel: create(userId, otpCode)
+    activate UserOtpModel
+    UserOtpModel -> MongoDB: query create
+    activate MongoDB
+
+    alt create fail
+        MongoDB --x UserOtpModel: throw Error
+        UserOtpModel --x AuthService: throw Error
+        AuthService --x AuthController: throw Error
+        AuthController --x AuthController: throw(HttpException(500))
+        AuthController ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        deactivate ErrorMiddleware
+
+    else user not found
+        MongoDB -->> UserOtpModel: return null
+        UserOtpModel -->> AuthService: return null
+        AuthService -->> AuthController: return null
+        AuthController --x AuthController: throw(HttpException(404))
+        AuthController ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 404 Not Found
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> UserOtpModel: return userOtp
+    deactivate MongoDB
+    UserOtpModel -->> AuthService: return userOtp
+    deactivate UserOtpModel
+    AuthService -->> AuthController: return userOtp
+    deactivate AuthService
+    AuthController -> MailerService: sendOtpCodeService(email, otpCode)
+    activate MailerService
+    MailerService -> MailerService: getEmailTemplateToString()
+    MailerService -> MailerService: sendMail()
+       
+    alt send mail fail
+        MailerService --x MailerService: throw error
+        MailerService --x AuthController: throw error
+        AuthController --x AuthController: throw(HttpException(500))
+        AuthController ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        deactivate ErrorMiddleware
+    end
+
+    MailerService -->> AuthController: return result
+    deactivate MailerService
+       
+end   
+break 
+break
+
+
+AuthController -> ApiResponse: success(null, success message)
+activate ApiResponse
+ApiResponse -->> AuthController: return ApiResponse instance
+deactivate ApiResponse 
+AuthController -->> AsyncHandler: return ApiResponse instance
+deactivate AuthController
+AsyncHandler --> Client: HTTP 200 Success
+deactivate AsyncHandler
+deactivate AuthRouter
+
+
+@enduml
