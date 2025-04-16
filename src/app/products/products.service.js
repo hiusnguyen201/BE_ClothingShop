@@ -2,6 +2,7 @@ import { isValidObjectId } from 'mongoose';
 import { ProductModel } from '#src/app/products/models/product.model';
 import { makeSlug } from '#src/utils/string.util';
 import { PRODUCT_SELECT_FIELDS } from '#src/app/products/products.constant';
+import { CATEGORY_SELECTED_FIELDS } from '#src/app/categories/categories.constant';
 
 /**
  * Create product
@@ -64,6 +65,14 @@ export async function getProductByIdService(id, selectFields = PRODUCT_SELECT_FI
   }
 
   return ProductModel.findOne(filter)
+    .populate({
+      path: 'category',
+      select: CATEGORY_SELECTED_FIELDS,
+    })
+    .populate({
+      path: 'subCategory',
+      select: CATEGORY_SELECTED_FIELDS,
+    })
     .populate({
       path: 'productOptions',
       populate: [

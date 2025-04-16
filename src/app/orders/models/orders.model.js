@@ -75,14 +75,12 @@ export const orderSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'Payment',
     },
-    employeeId: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
-    },
-    orderStatusHistory: [{
-      type: Schema.Types.ObjectId,
-      ref: 'Order_Status_History',
-    }]
+    orderStatusHistory: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Order_Status_History',
+      },
+    ],
   },
   {
     versionKey: false,

@@ -1,10 +1,8 @@
 import { OrderModel } from '#src/app/orders/models/orders.model';
-import {
-  extendQueryOptionsWithPagination,
-  extendQueryOptionsWithSort
-} from '#src/utils/query.util';
+import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
 import { isValidObjectId } from 'mongoose';
 import { ORDER_SELECTED_FIELDS } from '#src/app/orders/orders.constant';
+import { USER_SELECTED_FIELDS } from '#src/app/users/users.constant';
 
 /**
  * New order
@@ -41,10 +39,7 @@ export async function getOrderByIdService(id, extras = {}) {
     return null;
   }
 
-  return OrderModel.findOne(filters)
-    .select(ORDER_SELECTED_FIELDS)
-    .populate('paymentId')
-    .lean();
+  return OrderModel.findOne(filters).select(ORDER_SELECTED_FIELDS).populate('paymentId').lean();
 }
 
 /**
@@ -57,18 +52,28 @@ export async function countAllOrdersService(filters) {
 }
 
 /**
- * Get all orders
- * @param {*} query
+ * Get and count orders
+ * @param {object} filters
+ * @param {number} skip
+ * @param {number} limit
+ * @param {string} sortBy
+ * @param {string} sortOrder
  * @returns
  */
-export async function getAllOrdersService(payload) {
-  const { filters = {}, page, limit, sortBy, sortOrder } = payload;
+export async function getAndCountOrdersService(filters, skip, limit, sortBy, sortOrder) {
+  const totalCount = await OrderModel.countDocuments(filters);
 
-  let queryOptions = {};
-  queryOptions = extendQueryOptionsWithPagination({ page, limit }, queryOptions);
-  queryOptions = extendQueryOptionsWithSort({ sortBy, sortOrder }, queryOptions);
+  const queryOptions = {
+    ...extendQueryOptionsWithPagination(skip, limit),
+    ...extendQueryOptionsWithSort(sortBy, sortOrder),
+  };
 
-  return OrderModel.find(filters, ORDER_SELECTED_FIELDS, queryOptions).lean();
+  const list = await OrderModel.find(filters, ORDER_SELECTED_FIELDS, queryOptions)
+    .populate({ path: 'customer', select: USER_SELECTED_FIELDS })
+    .populate({ path: 'orderStatusHistory' })
+    .lean();
+
+  return [totalCount, list];
 }
 
 /**
@@ -80,13 +85,18 @@ export async function getAllOrdersService(payload) {
  * @returns
  */
 export async function updateOrderStatusByIdService(orderId, newOrderStatus, orderStatusHistoryId, session) {
-  return OrderModel.findByIdAndUpdate(orderId, {
-    status: newOrderStatus,
-    $push: { orderStatusHistory: orderStatusHistoryId }
-  }, {
-    new: true,
-    session
-  }).select(ORDER_SELECTED_FIELDS)
+  return OrderModel.findByIdAndUpdate(
+    orderId,
+    {
+      status: newOrderStatus,
+      $push: { orderStatusHistory: orderStatusHistoryId },
+    },
+    {
+      new: true,
+      session,
+    },
+  )
+    .select(ORDER_SELECTED_FIELDS)
     .lean();
 }
 

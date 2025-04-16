@@ -8,47 +8,31 @@ import {
   processOrderController,
   cancelOrderController,
   getAllOrdersController,
-  getAllOrdersByCustomerIdController,
-  getOrderByCustomerIdController,
   cancelOrderByCustomerController,
   updateOrderController,
   deleteOrderController,
 } from '#src/app/orders/orders.controller';
-import {
-  isAuthorized,
-  isAuthorizedAndHasPermission
-} from '#src/middlewares/jwt-auth.middleware';
+import { isAuthorizedAndHasPermission } from '#src/middlewares/jwt-auth.middleware';
 import { createOrderDto } from '#src/app/orders/dtos/create-order.dto';
-import {
-  validateBody,
-  validateQuery
-} from '#src/core/validations/request.validation';
+import { validateBody, validateParams, validateQuery } from '#src/core/validations/request.validation';
 import { createOrderGhnDto } from '#src/app/orders/dtos/create-order-ghn.dto';
 import { GetListOrderDto } from '#src/app/orders/dtos/get-list-order.dto';
 import { updateOrderDto } from '#src/app/orders/dtos/update-order.dto';
+import { GetOrderDto } from '#src/app/orders/dtos/get-order.dto';
 
 const router = express.Router();
 
-//***Có permistion thì thay isAuthorized = isAuthorizedAndHasPermission
 router
-  .post('/create-order',
-    // isAuthorized, 
-    validateBody(createOrderDto),
-    createOrderController)
-  .get('/get-all-orders',
-    // isAuthorized,
-    validateQuery(GetListOrderDto),
-    getAllOrdersController)
-  .get('/get-all-orders-by-customer',
-    // isAuthorized,
-    validateQuery(GetListOrderDto),
-    getAllOrdersByCustomerIdController)
-  .get('/get-order-by-id/:orderId',
-    // isAuthorized,
-    getOrderByIdController)
-  .get('/get-order-by-customer-id/:orderId',
-    // isAuthorized,
-    getOrderByCustomerIdController)
+  .post('/create-order', isAuthorizedAndHasPermission, validateBody(createOrderDto), createOrderController)
+  .get('/get-orders', isAuthorizedAndHasPermission, validateQuery(GetListOrderDto), getAllOrdersController)
+  .get('/get-order-by-id/:orderId', isAuthorizedAndHasPermission, validateParams(GetOrderDto), getOrderByIdController)
+  // .get('/get-all-orders-by-customer',
+  //   // isAuthorized,
+  //   validateQuery(GetListOrderDto),
+  //   getAllOrdersByCustomerIdController)
+  // .get('/get-order-by-customer-id/:orderId',
+  //   // isAuthorized,
+  //   getOrderByCustomerIdController)
   .post('/confirm-order',
     // isAuthorized,
     validateBody(createOrderGhnDto),
@@ -79,6 +63,4 @@ router
     deleteOrderController)
 
 
-  .post('/webhook/update-order-status',
-    webHookUpdateOrder)
 export default router;

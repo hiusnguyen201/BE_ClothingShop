@@ -22,8 +22,6 @@ wards.forEach((ward) => {
 });
 
 export const getAllProvincesService = () => provinces;
-export const getAllDistrictsService = () => districts;
-export const getAllWardsService = () => wards;
 
 export const getAllDistrictsByProvinceCodeService = (provinceCode) =>
   districtsGroupedByProvinceCode.get(provinceCode) || [];

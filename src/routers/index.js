@@ -14,6 +14,7 @@ import ordersRouter from '#src/routers/orders.route';
 import paymentsRouter from '#src/routers/payments.route';
 import shippingAddressRouter from '#src/routers/shipping-address.router';
 import cartsRouter from '#src/routers/carts.router';
+import divisionsRouter from '#src/routers/divisions.router';
 
 router.get('/ping', () => {
   return 'Hello world! PING 1';
@@ -26,6 +27,8 @@ router.use('/account', accountRouter);
 router.use('/users', usersRouter);
 
 router.use('/roles', rolesRouter);
+
+router.use('/divisions', divisionsRouter);
 
 router.use('/permissions', permissionsRouter);
 
