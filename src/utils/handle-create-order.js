@@ -14,7 +14,7 @@ export const updateOrderStatusUtil = async (orderId, newStatus, session) => {
     const newOrderHistory = newOrderStatusHistoryService({
         status: newStatus,
         orderId: orderId,
-        // assignedTo: Types.ObjectId,
+        // assignedTo: id,,
     });
     await newOrderHistory.save({ session });
     await updateOrderStatusByIdService(orderId, newStatus, newOrderHistory._id, session);

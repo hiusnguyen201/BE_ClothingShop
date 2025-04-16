@@ -11,6 +11,8 @@ import {
   getAllOrdersByCustomerIdController,
   getOrderByCustomerIdController,
   cancelOrderByCustomerController,
+  updateOrderController,
+  deleteOrderController,
 } from '#src/app/orders/orders.controller';
 import {
   isAuthorized,
@@ -23,6 +25,7 @@ import {
 } from '#src/core/validations/request.validation';
 import { createOrderGhnDto } from '#src/app/orders/dtos/create-order-ghn.dto';
 import { GetListOrderDto } from '#src/app/orders/dtos/get-list-order.dto';
+import { updateOrderDto } from '#src/app/orders/dtos/update-order.dto';
 
 const router = express.Router();
 
@@ -66,6 +69,15 @@ router
     // isAuthorized,
     validateBody(createOrderGhnDto),
     cancelOrderByCustomerController)
+  .put('/update-order-by-id/:orderId',
+    // isAuthorized,
+    validateBody(updateOrderDto),
+    updateOrderController)
+  .delete('/remove-order-by-id/:orderId',
+    // isAuthorized,
+    // validateBody(createOrderGhnDto),
+    deleteOrderController)
+
 
   .post('/webhook/update-order-status',
     webHookUpdateOrder)

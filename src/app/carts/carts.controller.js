@@ -25,10 +25,10 @@ export const addToCartController = async (req) => {
     }
 
     const productData = {
+        productId: productVariant.product._id,
         productVariantId: productVariant._id,
         name: productVariant.product.name,
         quantity,
-        price: productVariant.price,
     };
     await addToCartService(id, productData);
 

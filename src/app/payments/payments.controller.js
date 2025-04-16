@@ -123,7 +123,7 @@ export const returnPaymentMoMoController = async (req) => {
     const newOrderHistory = newOrderStatusHistoryService({
       status: newOrderStatus,
       orderId: orderExisted._id,
-      // assignedTo: Types.ObjectId,
+      // assignedTo: id,,
     });
     await newOrderHistory.save({ session })
 

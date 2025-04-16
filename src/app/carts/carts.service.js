@@ -1,4 +1,4 @@
-import redisClient from '#src/modules/redis/redis';
+import redisClient from '#src/modules/redis/redis.service';
 
 /**
  * Add to cart
@@ -9,9 +9,10 @@ import redisClient from '#src/modules/redis/redis';
 export async function addToCartService(customerId, product) {
     const cartKey = `cart:${customerId}`;
     const productData = {
+        productId: product.productId,
+        productVariantId: product.productVariantId,
         name: product.name,
         quantity: product.quantity,
-        price: product.price,
     };
 
     return await redisClient.hSet(cartKey, String(product.productVariantId), JSON.stringify(productData));

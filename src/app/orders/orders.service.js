@@ -89,3 +89,27 @@ export async function updateOrderStatusByIdService(orderId, newOrderStatus, orde
   }).select(ORDER_SELECTED_FIELDS)
     .lean();
 }
+
+/**
+ * Update order
+ * @param {*} orderId
+ * @param {*} data
+ * @param {*} session
+ * @returns
+ */
+export async function updateOrderByIdService(orderId, data, session) {
+  return OrderModel.findByIdAndUpdate(orderId, data, {
+    new: true,
+    session
+  }).select(ORDER_SELECTED_FIELDS)
+    .lean();
+}
+
+/**
+ * Remove order by id
+ * @param {*} id
+ * @returns
+ */
+export async function removeOrderByIdService(id) {
+  return OrderModel.findByIdAndDelete(id).select(ORDER_SELECTED_FIELDS).lean();
+}
