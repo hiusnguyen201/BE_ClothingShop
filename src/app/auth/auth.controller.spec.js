@@ -26,6 +26,11 @@ describe('Auth API Endpoints', () => {
           data: { ...loginData, email: 'invalid-email' },
           invalidPaths: ['email'],
         },
+        {
+          name: 'Invalid password format',
+          data: { ...loginData, password: '123' },
+          invalidPaths: ['password'],
+        },
       ];
 
       test.each(validationTestCases)('$name', async ({ data, invalidPaths }) => {
@@ -42,7 +47,7 @@ describe('Auth API Endpoints', () => {
             password: 'password123',
           },
         });
-        expectError(response, HttpStatus.UNAUTHORIZED, Code.INVALID_TOKEN.codeMessage);
+        expectError(response, HttpStatus.UNAUTHORIZED, Code.INVALID_CREDENTIALS.codeMessage);
       });
 
       test('Invalid password', async () => {
@@ -53,7 +58,7 @@ describe('Auth API Endpoints', () => {
             password: 'wrongpassword',
           },
         });
-        expectError(response, HttpStatus.UNAUTHORIZED, Code.INVALID_TOKEN.codeMessage);
+        expectError(response, HttpStatus.UNAUTHORIZED, Code.INVALID_CREDENTIALS.codeMessage);
       });
 
       test('User not verified', async () => {

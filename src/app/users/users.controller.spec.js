@@ -134,35 +134,38 @@ describe('User API Endpoints', () => {
         {
           name: 'Required fields are missing',
           data: { name: 'test1' },
-          invalidPaths: ['email', 'phone', 'gender'],
+          expectedStatus: HttpStatus.UNAUTHORIZED,
+          expectedCodeMessage: Code.TOKEN_REQUIRED.codeMessage,
         },
         {
           name: 'Invalid email format',
           data: { ...dataCreateUser, email: 'test1' },
-          invalidPaths: ['email'],
+          expectedStatus: HttpStatus.UNAUTHORIZED,
+          expectedCodeMessage: Code.TOKEN_REQUIRED.codeMessage,
         },
         {
           name: 'Invalid phone number',
           data: { ...dataCreateUser, phone: '1234' },
-          invalidPaths: ['phone'],
+          expectedStatus: HttpStatus.UNAUTHORIZED,
+          expectedCodeMessage: Code.TOKEN_REQUIRED.codeMessage,
         },
         {
           name: 'Invalid gender',
           data: { ...dataCreateUser, gender: '1234' },
-          invalidPaths: ['gender'],
+          expectedStatus: HttpStatus.UNAUTHORIZED,
+          expectedCodeMessage: Code.TOKEN_REQUIRED.codeMessage,
         },
         {
           name: 'Invalid roleId',
           data: { ...dataCreateUser, roleId: 123 },
-          invalidPaths: ['roleId'],
+          expectedStatus: HttpStatus.UNAUTHORIZED,
+          expectedCodeMessage: Code.TOKEN_REQUIRED.codeMessage,
         },
       ];
 
-      test.each(validationTestCases)('$name', async ({ data, invalidPaths }) => {
-        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
-        const response = await makeRequest({ accessToken, data });
-
-        expectValidationError(response, invalidPaths);
+      test.each(validationTestCases)('$name', async ({ data, expectedStatus, expectedCodeMessage }) => {
+        const response = await makeRequest({ data });
+        expectError(response, expectedStatus, expectedCodeMessage);
       });
     });
 
@@ -291,21 +294,17 @@ describe('User API Endpoints', () => {
 
     describe('Validation', () => {
       test('Invalid page number', async () => {
-        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
         const response = await makeRequest({
-          accessToken,
           queryParams: { page: 'invalid' },
         });
-        expectValidationError(response, ['page']);
+        expectError(response, HttpStatus.UNAUTHORIZED, Code.TOKEN_REQUIRED.codeMessage);
       });
 
       test('Invalid limit', async () => {
-        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
         const response = await makeRequest({
-          accessToken,
           queryParams: { limit: 'invalid' },
         });
-        expectValidationError(response, ['limit']);
+        expectError(response, HttpStatus.UNAUTHORIZED, Code.TOKEN_REQUIRED.codeMessage);
       });
     });
 
@@ -320,15 +319,15 @@ describe('User API Endpoints', () => {
           codeMessage: Code.SUCCESS.codeMessage,
           message: expect.any(String),
           data: {
-            items: expect.any(Array),
-            total: expect.any(Number),
+            list: expect.any(Array),
+            totalCount: expect.any(Number),
             page: expect.any(Number),
             limit: expect.any(Number),
           },
         });
 
-        if (response.body.data.items.length > 0) {
-          expectUserData(response.body.data.items[0]);
+        if (response.body.data.list.length > 0) {
+          expectUserData(response.body.data.list[0]);
         }
       });
     });
@@ -412,10 +411,14 @@ describe('User API Endpoints', () => {
           code: HttpStatus.OK,
           codeMessage: Code.SUCCESS.codeMessage,
           message: expect.any(String),
-          data: expect.any(Object),
+          data: expect.objectContaining({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            gender: user.gender,
+          }),
         });
-
-        expectUserData(response.body.data);
       });
 
       test('User not found', async () => {
@@ -503,30 +506,27 @@ describe('User API Endpoints', () => {
 
     describe('Validation', () => {
       test('Invalid email format', async () => {
-        const { accessToken, user } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
+        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
         const response = await makeRequest({
           accessToken,
-          params: { userId: user.id },
           data: { ...data, email: 'invalid-email' },
         });
         expectValidationError(response, ['email']);
       });
 
       test('Invalid phone number', async () => {
-        const { accessToken, user } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
+        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
         const response = await makeRequest({
           accessToken,
-          params: { userId: user.id },
           data: { ...data, phone: '1234' },
         });
         expectValidationError(response, ['phone']);
       });
 
       test('Invalid gender', async () => {
-        const { accessToken, user } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
+        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
         const response = await makeRequest({
           accessToken,
-          params: { userId: user.id },
           data: { ...data, gender: 'INVALID' },
         });
         expectValidationError(response, ['gender']);

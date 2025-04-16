@@ -75,23 +75,22 @@ describe('Role API Endpoints', () => {
     });
 
     describe('Validation', () => {
-      const validationTestCases = [
-        {
-          name: 'Required fields are missing',
-          data: { name: 'Test Role' },
-          invalidPaths: ['description', 'permissions'],
-        },
-        {
-          name: 'Invalid permissions format',
-          data: { ...roleData, permissions: 'invalid' },
-          invalidPaths: ['permissions'],
-        },
-      ];
-
-      test.each(validationTestCases)('$name', async ({ data, invalidPaths }) => {
+      test('Invalid name format', async () => {
         const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
-        const response = await makeRequest({ accessToken, data });
-        expectValidationError(response, invalidPaths);
+        const response = await makeRequest({
+          accessToken,
+          data: { ...roleData, name: '' },
+        });
+        expectValidationError(response, ['name']);
+      });
+
+      test('Invalid description format', async () => {
+        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
+        const response = await makeRequest({
+          accessToken,
+          data: { ...roleData, description: '' },
+        });
+        expectValidationError(response, ['description']);
       });
     });
 

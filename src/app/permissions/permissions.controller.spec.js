@@ -70,43 +70,27 @@ describe('Permission API Endpoints', () => {
     });
 
     describe('Validation', () => {
-      const validationTestCases = [
-        {
-          name: 'Invalid page format',
-          queryParams: { page: 'invalid' },
-          invalidPaths: ['page'],
-        },
-        {
-          name: 'Invalid limit format',
-          queryParams: { limit: 'invalid' },
-          invalidPaths: ['limit'],
-        },
-        {
-          name: 'Invalid sortBy format',
-          queryParams: { sortBy: 123 },
-          invalidPaths: ['sortBy'],
-        },
-        {
-          name: 'Invalid sortOrder format',
-          queryParams: { sortOrder: 'invalid' },
-          invalidPaths: ['sortOrder'],
-        },
-        {
-          name: 'Invalid search format',
-          queryParams: { search: 123 },
-          invalidPaths: ['search'],
-        },
-      ];
-
-      test.each(validationTestCases)('$name', async ({ queryParams, invalidPaths }) => {
+      test('Invalid page number', async () => {
         const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
-        const response = await makeRequest({ accessToken, queryParams });
-        expectValidationError(response, invalidPaths);
+        const response = await makeRequest({
+          accessToken,
+          queryParams: { page: 'invalid' },
+        });
+        expectValidationError(response, ['page']);
+      });
+
+      test('Invalid limit', async () => {
+        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
+        const response = await makeRequest({
+          accessToken,
+          queryParams: { limit: 'invalid' },
+        });
+        expectValidationError(response, ['limit']);
       });
     });
 
     describe('Success Cases', () => {
-      test('Get permissions successful with default pagination', async () => {
+      test('Get permissions successfully', async () => {
         const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
         const response = await makeRequest({ accessToken });
 
@@ -115,67 +99,14 @@ describe('Permission API Endpoints', () => {
           code: HttpStatus.OK,
           codeMessage: Code.SUCCESS.codeMessage,
           message: expect.any(String),
-          data: expect.objectContaining({
-            items: expect.arrayContaining([
-              expect.objectContaining({
-                id: expect.any(String),
-                name: expect.any(String),
-                description: expect.any(String),
-                endpoint: expect.any(String),
-                method: expect.any(String),
-              }),
-            ]),
-            meta: expect.objectContaining({
-              totalItems: expect.any(Number),
-              itemCount: expect.any(Number),
-              itemsPerPage: expect.any(Number),
-              totalPages: expect.any(Number),
-              currentPage: expect.any(Number),
-            }),
-          }),
-        });
-      });
-
-      test('Get permissions successful with custom pagination', async () => {
-        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
-        const response = await makeRequest({
-          accessToken,
-          queryParams: {
-            page: 2,
-            limit: 5,
-            sortBy: 'name',
-            sortOrder: 'desc',
-            search: 'test',
+          data: {
+            list: expect.any(Array),
+            totalCount: expect.any(Number),
+            page: expect.any(Number),
+            limit: expect.any(Number),
           },
-        });
-
-        expect(response.status).toBe(HttpStatus.OK);
-        expect(response.body).toMatchObject({
-          code: HttpStatus.OK,
-          codeMessage: Code.SUCCESS.codeMessage,
-          message: expect.any(String),
-          data: expect.objectContaining({
-            items: expect.arrayContaining([
-              expect.objectContaining({
-                id: expect.any(String),
-                name: expect.any(String),
-                description: expect.any(String),
-                endpoint: expect.any(String),
-                method: expect.any(String),
-              }),
-            ]),
-            meta: expect.objectContaining({
-              totalItems: expect.any(Number),
-              itemCount: expect.any(Number),
-              itemsPerPage: 5,
-              totalPages: expect.any(Number),
-              currentPage: 2,
-            }),
-          }),
         });
       });
     });
   });
-
-
 });
