@@ -20,6 +20,8 @@ function convertId(obj) {
         acc[key] = null;
       } else if (isValidObjectId(value)) {
         acc[key === '_id' ? 'id' : key] = typeof value === 'number' ? +value : value.toString();
+      } else if (value instanceof Date) {
+        acc[key] = value;
       } else {
         acc[key] = convertId(value);
       }
@@ -37,7 +39,9 @@ export class ModelDto {
     }
 
     // Convert ObjectId to string
-    data._id = data._id.toString();
+    if (data._id) {
+      data._id = data._id.toString();
+    }
 
     let { error, value } = schema.validate(data, options);
     if (error) {

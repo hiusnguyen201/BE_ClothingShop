@@ -6,6 +6,10 @@ const PAYMENT_MODEL = 'payments';
 
 export const paymentSchema = new Schema(
   {
+    paymentUrl: {
+      type: String,
+      default: null,
+    },
     paymentMethod: {
       type: String,
       required: true,
@@ -13,11 +17,11 @@ export const paymentSchema = new Schema(
     },
     amountPaid: {
       type: Number,
-      default: null
+      default: null,
     },
     paidDate: {
       type: Date,
-      default: null
+      default: null,
     },
     transactionId: {
       type: String,
@@ -25,13 +29,13 @@ export const paymentSchema = new Schema(
     },
     notes: {
       type: String,
-      default: null
+      default: null,
     },
     // Foreign Key
     orderId: {
       type: Schema.Types.ObjectId,
       ref: 'Order',
-      required: true
+      required: true,
     },
   },
   {

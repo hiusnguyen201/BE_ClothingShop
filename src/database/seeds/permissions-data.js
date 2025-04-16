@@ -244,11 +244,39 @@ const PRODUCTS_PERMISSIONS = [
 
 const ORDER_PERMISSIONS = [
   {
+    name: 'read:orders',
+    description: 'View list order',
+    module: 'orders',
+    endpoint: '/api/orders/get-orders',
+    method: 'GET',
+  },
+  {
+    name: 'read:details:order',
+    description: 'View details order',
+    module: 'orders',
+    endpoint: '/api/orders/get-order-by-id/:orderId',
+    method: 'GET',
+  },
+  {
     name: 'create:order',
     description: 'Create order',
     module: 'orders',
     endpoint: '/api/orders/create-order',
     method: 'POST',
+  },
+  {
+    name: 'edit:order_info',
+    description: 'Edit order info',
+    module: 'orders',
+    endpoint: '/api/orders/update-order-info/:orderId',
+    method: 'PUT',
+  },
+  {
+    name: 'remove:order',
+    description: 'Remove order',
+    module: 'orders',
+    endpoint: '/api/orders/remove-order-by-id/:orderId',
+    method: 'DELETE',
   },
 ];
 

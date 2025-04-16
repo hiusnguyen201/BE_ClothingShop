@@ -1,22 +1,11 @@
 import {
   getDistrictByCodeService,
   getProvinceByCodeService,
-  getWardByCodeService
+  getWardByCodeService,
 } from '#src/app/divisions/divisions.service';
-import {
-  PAYMENT_METHOD,
-  REGEX_PATTERNS
-} from '#src/core/constant';
+import { PAYMENT_METHOD, REGEX_PATTERNS } from '#src/core/constant';
 import { replaceMultiSpacesToSingleSpace } from '#src/utils/string.util';
 import Joi from 'joi';
-import mongoose from 'mongoose';
-
-const objectIdValidator = (value, helpers) => {
-  if (!mongoose.Types.ObjectId.isValid(value)) {
-    return helpers.error('any.invalid');
-  }
-  return value;
-};
 
 const createShippingAddressDto = Joi.object({
   address: Joi.string()
@@ -30,7 +19,7 @@ const createShippingAddressDto = Joi.object({
     .custom((value, helpers) => {
       const province = getProvinceByCodeService(value);
       if (!province) {
-        return helpers.message("Province is not found");
+        return helpers.message('Province is not found');
       }
       helpers.state.ancestors[0].details = { ...helpers.state.ancestors[0].details, provinceName: province.name };
       return value;
@@ -42,7 +31,7 @@ const createShippingAddressDto = Joi.object({
       const { province } = helpers.state.ancestors[0];
       const district = getDistrictByCodeService(value);
       if (!district || district.province_code !== province) {
-        return helpers.message("District is not found");
+        return helpers.message('District is not found');
       }
       helpers.state.ancestors[0].details = { ...helpers.state.ancestors[0].details, districtName: district.name };
       return value;
@@ -54,7 +43,7 @@ const createShippingAddressDto = Joi.object({
       const { district } = helpers.state.ancestors[0];
       const ward = getWardByCodeService(value);
       if (!ward || ward.district_code !== district) {
-        return helpers.message("Ward is not found");
+        return helpers.message('Ward is not found');
       }
       helpers.state.ancestors[0].details = { ...helpers.state.ancestors[0].details, wardName: ward.name };
       return value;
@@ -66,49 +55,49 @@ const createShippingAddressDto = Joi.object({
     address: address,
     province: provinceName,
     district: districtName,
-    ward: wardName
-  }
+    ward: wardName,
+  };
 });
 
 export const createOrderDto = Joi.object({
+  customerId: Joi.string().required(),
   customerName: Joi.string().min(3).max(100).required(),
   customerEmail: Joi.string().email().required(),
   customerPhone: Joi.phoneNumber('VN').required(),
+
   productVariants: Joi.array()
     .items(
       Joi.object({
-        variantId: Joi.string().custom(objectIdValidator),
+        variantId: Joi.string().required(),
         quantity: Joi.number().required(),
       }),
     )
     .min(1)
     .required(),
-  customerAddress: createShippingAddressDto
-    .required(),
+  customerAddress: createShippingAddressDto.required(),
   paymentMethod: Joi.string()
     .required()
-    .valid(...Object.values(PAYMENT_METHOD))
+    .valid(...Object.values(PAYMENT_METHOD)),
 });
 
-export const createOrderCustomerDto = Joi.object({
-  customerId: Joi.string().custom(objectIdValidator),
-  provinceName: Joi.string().min(3).max(50),
-  districtName: Joi.string().min(3).max(50),
-  wardName: Joi.string().min(3).max(50),
-  address: Joi.string().min(3).max(255),
-  customerName: Joi.string().min(3).max(100).required(),
-  customerEmail: Joi.string().email().required(),
-  customerPhone: Joi.phoneNumber('VN').required(),
-  shippingAddressId: Joi.string().required(),
-  voucherId: Joi.string().custom(objectIdValidator).optional(),
-  cartIds: Joi.array()
-    .items(
-      Joi.object({
-        variantId: Joi.string().custom(objectIdValidator),
-        productId: Joi.string().custom(objectIdValidator),
-        quantity: Joi.number().required(),
-      }),
-    )
-    .min(1)
-    .required(),
-});
+// export const createOrderCustomerDto = Joi.object({
+//   customerId: Joi.string().required(),
+//   provinceName: Joi.string().min(3).max(50),
+//   districtName: Joi.string().min(3).max(50),
+//   wardName: Joi.string().min(3).max(50),
+//   address: Joi.string().min(3).max(255),
+//   customerName: Joi.string().min(3).max(100).required(),
+//   customerEmail: Joi.string().email().required(),
+//   customerPhone: Joi.phoneNumber('VN').required(),
+//   shippingAddressId: Joi.string().required(),
+//   cartIds: Joi.array()
+//     .items(
+//       Joi.object({
+//         variantId: Joi.string().required(),
+//         productId: Joi.string().required(),
+//         quantity: Joi.number().required(),
+//       }),
+//     )
+//     .min(1)
+//     .required(),
+// });
