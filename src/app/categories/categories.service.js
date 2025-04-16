@@ -32,7 +32,7 @@ export async function saveCategoryService(categoryDoc) {
  * @param {string} sortOrder
  * @returns
  */
-export async function getAndCountCategoriesService(filters, skip, limit, sortBy, sortOrder) {
+export async function getAndCountCategoriesService(parentId = null, filters, skip, limit, sortBy, sortOrder) {
   const queryOptions = {
     ...extendQueryOptionsWithPagination(skip, limit),
     ...extendQueryOptionsWithSort(sortBy, sortOrder),
@@ -40,7 +40,7 @@ export async function getAndCountCategoriesService(filters, skip, limit, sortBy,
 
   // Get List
   const list = await CategoryModel.aggregate([
-    { $match: { parent: null } },
+    { $match: { parent: parentId } },
     {
       $lookup: {
         from: 'categories',
@@ -59,7 +59,7 @@ export async function getAndCountCategoriesService(filters, skip, limit, sortBy,
 
   // Count
   const category = await CategoryModel.aggregate([
-    { $match: { parent: null } },
+    { $match: { parent: parentId } },
     {
       $lookup: {
         from: 'categories',
@@ -74,6 +74,15 @@ export async function getAndCountCategoriesService(filters, skip, limit, sortBy,
   ]);
 
   return [category.length > 0 ? category[0]?.totalCount : 0, list];
+}
+
+/**
+ * Count subcategories in parent
+ * @param {*} parentId
+ * @returns
+ */
+export async function countSubcategoriesService(parentId) {
+  return CategoryModel.countDocuments({ parent: parentId });
 }
 
 /**
@@ -124,7 +133,7 @@ export async function removeCategoryByIdService(id) {
 }
 
 /**
- * Check is exist permission name
+ * Check is exist category name
  * @param {*} name
  * @param {*} skipId
  * @returns

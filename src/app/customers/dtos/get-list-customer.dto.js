@@ -1,5 +1,6 @@
 import Joi from 'joi';
 import { GENDER } from '#src/app/users/users.constant';
+import { replaceMultiSpacesToSingleSpace } from '#src/utils/string.util';
 
 export const GetListCustomerDto = Joi.object({
   keyword: Joi.string()

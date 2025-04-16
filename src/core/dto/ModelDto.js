@@ -1,5 +1,5 @@
 'use strict';
-import mongoose from 'mongoose';
+import mongoose, { isValidObjectId } from 'mongoose';
 import { HttpException } from '#src/core/exception/http-exception';
 import { Code } from '#src/core/code/Code';
 
@@ -12,18 +12,19 @@ const options = {
 function convertId(obj) {
   if (Array.isArray(obj)) {
     return obj.map(convertId);
-  } else if (obj && typeof obj === 'object') {
-    const result = {};
+  }
 
-    for (const [key, value] of Object.entries(obj)) {
-      if (key === '_id') {
-        result['id'] = value.toString();
+  if (obj && typeof obj === 'object') {
+    return Object.entries(obj).reduce((acc, [key, value]) => {
+      if (!value) {
+        acc[key] = null;
+      } else if (isValidObjectId(value)) {
+        acc[key === '_id' ? 'id' : key] = typeof value === 'number' ? +value : value.toString();
       } else {
-        result[key] = convertId(value);
+        acc[key] = convertId(value);
       }
-    }
-
-    return result;
+      return acc;
+    }, {});
   }
 
   return obj;
@@ -34,6 +35,7 @@ export class ModelDto {
     if (data && data instanceof mongoose.Document) {
       data = data.toObject();
     }
+
     // Convert ObjectId to string
     data._id = data._id.toString();
 

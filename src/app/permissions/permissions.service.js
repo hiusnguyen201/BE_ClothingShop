@@ -8,7 +8,7 @@ import { PERMISSION_SELECTED_FIELDS } from '#src/app/permissions/permissions.con
  * @param {*} data
  * @returns
  */
-export async function getOrCreateListPermissionServiceWithTransaction(data = [], session) {
+export async function getOrCreateListPermissionService(data = [], session) {
   const existingPermissions = await PermissionModel.find({
     endpoint: { $in: data.map((p) => p.endpoint) },
     method: { $in: data.map((p) => p.method) },
@@ -19,7 +19,7 @@ export async function getOrCreateListPermissionServiceWithTransaction(data = [],
   const newPermissions = data.filter((p) => !existingSet.has(`${p.method} ${p.endpoint}`));
 
   if (newPermissions.length > 0) {
-    const created = await PermissionModel.insertMany(newPermissions, { session });
+    const created = await PermissionModel.insertMany(newPermissions, { session, ordered: true });
     return [...existingPermissions, ...created];
   }
 

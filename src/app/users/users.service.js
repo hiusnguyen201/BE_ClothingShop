@@ -24,7 +24,7 @@ export async function createUserService(data) {
  * @param {*} data
  * @returns
  */
-export async function getOrCreateUsersWithTransaction(data, session) {
+export async function getOrCreateUsersService(data, session) {
   const existingUsers = await UserModel.find({
     email: data.map((item) => item.email),
   }).lean();
@@ -36,7 +36,7 @@ export async function getOrCreateUsersWithTransaction(data, session) {
   if (newUsers.length > 0) {
     const created = await UserModel.insertMany(
       newUsers.map((item) => ({ ...item, password: hashSync(item.password, genSaltSync()) })),
-      { session },
+      { session, ordered: true },
     );
     return [...existingUsers, ...created];
   }

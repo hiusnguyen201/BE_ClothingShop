@@ -20,21 +20,16 @@ export async function createRoleService(data) {
  * @param {*} data
  * @returns
  */
-export async function getOrCreateRoleServiceWithTransaction(data, session) {
-  const role = await RoleModel.findOne({ name: data.name }).lean();
+export async function getOrCreateRoleService(data, session) {
+  const existRole = await RoleModel.findOne({ name: data.name }).lean();
 
-  if (role) {
-    if (data.permissions.length !== role.permissions.length) {
-      return RoleModel.findByIdAndUpdate(role._id, { permissions: data.permissions });
-    } else {
-      return role;
-    }
+  if (existRole) {
+    return existRole;
   }
 
-  const [created] = await RoleModel.insertMany([{ ...data, slug: makeSlug(data.name) }], {
-    session,
-  });
-  return created;
+  const [role] = await RoleModel.insertMany([{ ...data, slug: makeSlug(data.name) }], { session, ordered: true });
+
+  return role;
 }
 
 /**
