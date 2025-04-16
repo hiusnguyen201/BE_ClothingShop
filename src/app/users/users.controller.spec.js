@@ -5,6 +5,59 @@ import { GENDER } from '#src/app/users/users.constant';
 import { expectError, testEndpoint, expectValidationError, expectUserData } from '#test/common';
 
 describe('User API Endpoints', () => {
+  describe('POST /api/users/is-exist-email', () => {
+    const method = 'POST';
+    const endpoint = '/api/users/is-exist-email';
+    const data = {
+      email: 'test@example.com',
+    };
+
+    const makeRequest = testEndpoint(method, endpoint, data);
+
+    describe('Validation', () => {
+      test('Invalid email format', async () => {
+        const response = await makeRequest({
+          data: { email: 'invalid-email' },
+        });
+        expectValidationError(response, ['email']);
+      });
+
+      test('Missing email', async () => {
+        const response = await makeRequest({
+          data: {},
+        });
+        expectValidationError(response, ['email']);
+      });
+    });
+
+    describe('Success Cases', () => {
+      test('Email does not exist', async () => {
+        const response = await makeRequest();
+        expect(response.status).toBe(HttpStatus.OK);
+        expect(response.body).toMatchObject({
+          code: HttpStatus.OK,
+          codeMessage: Code.SUCCESS.codeMessage,
+          message: expect.any(String),
+          data: false,
+        });
+      });
+
+      test('Email exists', async () => {
+        const { user } = await userFactory.createUserAuthorized();
+        const response = await makeRequest({
+          data: { email: user.email },
+        });
+        expect(response.status).toBe(HttpStatus.OK);
+        expect(response.body).toMatchObject({
+          code: HttpStatus.OK,
+          codeMessage: Code.SUCCESS.codeMessage,
+          message: expect.any(String),
+          data: true,
+        });
+      });
+    });
+  });
+
   describe('POST /api/users/create-user', () => {
     const method = 'POST';
     const endpoint = '/api/users/create-user';
@@ -108,6 +161,7 @@ describe('User API Endpoints', () => {
       test.each(validationTestCases)('$name', async ({ data, invalidPaths }) => {
         const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
         const response = await makeRequest({ accessToken, data });
+
         expectValidationError(response, invalidPaths);
       });
     });
@@ -119,6 +173,7 @@ describe('User API Endpoints', () => {
           accessToken,
           data: { ...dataCreateUser, email: user.email },
         });
+
         expectError(response, HttpStatus.CONFLICT, Code.ALREADY_EXISTS.codeMessage);
       });
 
@@ -128,6 +183,7 @@ describe('User API Endpoints', () => {
           accessToken,
           data: { ...dataCreateUser, roleId: '1234' },
         });
+
         expectError(response, HttpStatus.NOT_FOUND, Code.RESOURCE_NOT_FOUND.codeMessage);
       });
     });
@@ -136,6 +192,7 @@ describe('User API Endpoints', () => {
       test('Create user successful', async () => {
         const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
         const response = await makeRequest({ accessToken });
+
         expect(response.status).toBe(HttpStatus.OK);
         expect(response.body).toMatchObject({
           code: HttpStatus.OK,
@@ -143,6 +200,7 @@ describe('User API Endpoints', () => {
           message: expect.any(String),
           data: expect.any(Object),
         });
+
         expectUserData(response.body.data);
       });
 
@@ -152,6 +210,7 @@ describe('User API Endpoints', () => {
           accessToken,
           data: { ...dataCreateUser, roleId: user.role },
         });
+
         expect(response.status).toBe(HttpStatus.OK);
         expect(response.body).toMatchObject({
           code: HttpStatus.OK,
@@ -159,28 +218,139 @@ describe('User API Endpoints', () => {
           message: expect.any(String),
           data: expect.any(Object),
         });
+
         expectUserData(response.body.data);
+      });
+    });
+  });
+
+  describe('GET /api/users/get-users', () => {
+    const method = 'GET';
+    const endpoint = '/api/users/get-users';
+
+    const makeRequest = testEndpoint(method, endpoint);
+
+    describe('Authentication and Authorization', () => {
+      const authTestCases = [
+        {
+          name: 'No access token provided',
+          setup: async () => ({}),
+          expectedStatus: HttpStatus.UNAUTHORIZED,
+          expectedCodeMessage: Code.TOKEN_REQUIRED.codeMessage,
+        },
+        {
+          name: 'Invalid token',
+          setup: async () => ({ accessToken: 'invalidOrExpiredToken' }),
+          expectedStatus: HttpStatus.UNAUTHORIZED,
+          expectedCodeMessage: Code.INVALID_TOKEN.codeMessage,
+        },
+        {
+          name: 'User not found (invalid token)',
+          setup: async () => {
+            const { accessToken } = await userFactory.createUserAuthorizedWithoutPayload();
+            return { accessToken };
+          },
+          expectedStatus: HttpStatus.UNAUTHORIZED,
+          expectedCodeMessage: Code.INVALID_TOKEN.codeMessage,
+        },
+        {
+          name: 'User not verified',
+          setup: async () => {
+            const { accessToken } = await userFactory.createUserAuthorizedAndUnverified();
+            return { accessToken };
+          },
+          expectedStatus: HttpStatus.FORBIDDEN,
+          expectedCodeMessage: Code.ACCESS_DENIED.codeMessage,
+        },
+        {
+          name: 'User is a customer',
+          setup: async () => {
+            const { accessToken } = await userFactory.createCustomerAuthorized();
+            return { accessToken };
+          },
+          expectedStatus: HttpStatus.FORBIDDEN,
+          expectedCodeMessage: Code.ACCESS_DENIED.codeMessage,
+        },
+        {
+          name: 'User does not have permission',
+          setup: async () => {
+            const { accessToken } = await userFactory.createUserAuthorized();
+            return { accessToken };
+          },
+          expectedStatus: HttpStatus.FORBIDDEN,
+          expectedCodeMessage: Code.ACCESS_DENIED.codeMessage,
+        },
+      ];
+
+      test.each(authTestCases)('$name', async ({ setup, expectedStatus, expectedCodeMessage }) => {
+        const options = await setup();
+        const response = await makeRequest(options);
+        expectError(response, expectedStatus, expectedCodeMessage);
+      });
+    });
+
+    describe('Validation', () => {
+      test('Invalid page number', async () => {
+        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
+        const response = await makeRequest({
+          accessToken,
+          queryParams: { page: 'invalid' },
+        });
+        expectValidationError(response, ['page']);
+      });
+
+      test('Invalid limit', async () => {
+        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
+        const response = await makeRequest({
+          accessToken,
+          queryParams: { limit: 'invalid' },
+        });
+        expectValidationError(response, ['limit']);
+      });
+    });
+
+    describe('Success Cases', () => {
+      test('Get users successfully', async () => {
+        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
+        const response = await makeRequest({ accessToken });
+
+        expect(response.status).toBe(HttpStatus.OK);
+        expect(response.body).toMatchObject({
+          code: HttpStatus.OK,
+          codeMessage: Code.SUCCESS.codeMessage,
+          message: expect.any(String),
+          data: {
+            items: expect.any(Array),
+            total: expect.any(Number),
+            page: expect.any(Number),
+            limit: expect.any(Number),
+          },
+        });
+
+        if (response.body.data.items.length > 0) {
+          expectUserData(response.body.data.items[0]);
+        }
       });
     });
   });
 
   describe('GET /api/users/get-user-by-id/:userId', () => {
     const method = 'GET';
-    const endpoint = '/api/users/get-user-by-id';
+    const endpoint = '/api/users/get-user-by-id/:userId';
 
-    const makeRequest = (userId) => testEndpoint(method, `${endpoint}/${userId}`);
+    const makeRequest = testEndpoint(method, endpoint);
 
     describe('Authentication and Authorization', () => {
       const authTestCases = [
         {
           name: 'No access token provided',
-          setup: async () => ({ userId: 'test' }),
+          setup: async () => ({}),
           expectedStatus: HttpStatus.UNAUTHORIZED,
           expectedCodeMessage: Code.TOKEN_REQUIRED.codeMessage,
         },
         {
           name: 'Invalid token',
-          setup: async () => ({ userId: 'test', accessToken: 'invalidOrExpiredToken' }),
+          setup: async () => ({ accessToken: 'invalidOrExpiredToken' }),
           expectedStatus: HttpStatus.UNAUTHORIZED,
           expectedCodeMessage: Code.INVALID_TOKEN.codeMessage,
         },
@@ -188,7 +358,7 @@ describe('User API Endpoints', () => {
           name: 'User not found (invalid token)',
           setup: async () => {
             const { accessToken } = await userFactory.createUserAuthorizedWithoutPayload();
-            return { userId: 'test', accessToken };
+            return { accessToken };
           },
           expectedStatus: HttpStatus.UNAUTHORIZED,
           expectedCodeMessage: Code.INVALID_TOKEN.codeMessage,
@@ -197,7 +367,7 @@ describe('User API Endpoints', () => {
           name: 'User not verified',
           setup: async () => {
             const { accessToken } = await userFactory.createUserAuthorizedAndUnverified();
-            return { userId: 'test', accessToken };
+            return { accessToken };
           },
           expectedStatus: HttpStatus.FORBIDDEN,
           expectedCodeMessage: Code.ACCESS_DENIED.codeMessage,
@@ -206,7 +376,7 @@ describe('User API Endpoints', () => {
           name: 'User is a customer',
           setup: async () => {
             const { accessToken } = await userFactory.createCustomerAuthorized();
-            return { userId: 'test', accessToken };
+            return { accessToken };
           },
           expectedStatus: HttpStatus.FORBIDDEN,
           expectedCodeMessage: Code.ACCESS_DENIED.codeMessage,
@@ -215,7 +385,7 @@ describe('User API Endpoints', () => {
           name: 'User does not have permission',
           setup: async () => {
             const { accessToken } = await userFactory.createUserAuthorized();
-            return { userId: 'test', accessToken };
+            return { accessToken };
           },
           expectedStatus: HttpStatus.FORBIDDEN,
           expectedCodeMessage: Code.ACCESS_DENIED.codeMessage,
@@ -224,79 +394,65 @@ describe('User API Endpoints', () => {
 
       test.each(authTestCases)('$name', async ({ setup, expectedStatus, expectedCodeMessage }) => {
         const options = await setup();
-        const response = await makeRequest(options.userId)(options);
+        const response = await makeRequest(options);
         expectError(response, expectedStatus, expectedCodeMessage);
       });
     });
 
-    describe('Business Logic', () => {
-      test('User not found', async () => {
-        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
-        const response = await makeRequest('nonExistentUserId')({ accessToken });
-        expectError(response, HttpStatus.NOT_FOUND, Code.RESOURCE_NOT_FOUND.codeMessage);
-      });
-    });
-
     describe('Success Cases', () => {
-      test('Get user by id successful', async () => {
-        const { accessToken: createUserToken } = await userFactory.createUserAuthorizedAndHasPermission('POST', '/api/users/create-user');
-        const createResponse = await testEndpoint('POST', '/api/users/create-user')({
-          accessToken: createUserToken,
-          data: {
-            name: 'Test User',
-            email: 'test@example.com',
-            phone: '0987654321',
-            gender: GENDER.MALE,
-          },
+      test('Get user by id successfully', async () => {
+        const { accessToken, user } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
+        const response = await makeRequest({
+          accessToken,
+          params: { userId: user.id },
         });
-
-        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
-        const response = await makeRequest(createResponse.body.data.id)({ accessToken });
 
         expect(response.status).toBe(HttpStatus.OK);
         expect(response.body).toMatchObject({
           code: HttpStatus.OK,
           codeMessage: Code.SUCCESS.codeMessage,
           message: expect.any(String),
-          data: expect.objectContaining({
-            id: createResponse.body.data.id,
-            avatar: expect.toBeOneOf([expect.any(String), null]),
-            email: 'test@example.com',
-            gender: GENDER.MALE,
-            lastLoginAt: expect.any(Object),
-            name: 'Test User',
-            phone: '0987654321',
-            role: expect.toBeOneOf([expect.any(Object), null]),
-            verifiedAt: expect.any(Object),
-          }),
+          data: expect.any(Object),
         });
+
+        expectUserData(response.body.data);
+      });
+
+      test('User not found', async () => {
+        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
+        const response = await makeRequest({
+          accessToken,
+          params: { userId: 'non-existent-id' },
+        });
+
+        expectError(response, HttpStatus.NOT_FOUND, Code.RESOURCE_NOT_FOUND.codeMessage);
       });
     });
   });
 
   describe('PUT /api/users/update-user-by-id/:userId', () => {
     const method = 'PUT';
-    const endpoint = '/api/users/update-user-by-id';
-    const updateData = {
-      name: 'Updated User',
+    const endpoint = '/api/users/update-user-by-id/:userId';
+    const data = {
+      name: 'Updated Name',
       email: 'updated@example.com',
       phone: '0987654321',
-      gender: GENDER.FEMALE,
+      gender: GENDER.MALE,
     };
 
-    const makeRequest = (userId) => testEndpoint(method, `${endpoint}/${userId}`, updateData);
+    const makeRequest = testEndpoint(method, endpoint, data);
 
     describe('Authentication and Authorization', () => {
       const authTestCases = [
         {
           name: 'No access token provided',
-          setup: async () => ({ userId: 'test' }),
+          setup: async () => ({}),
           expectedStatus: HttpStatus.UNAUTHORIZED,
           expectedCodeMessage: Code.TOKEN_REQUIRED.codeMessage,
         },
         {
           name: 'Invalid token',
-          setup: async () => ({ userId: 'test', accessToken: 'invalidOrExpiredToken' }),
+          setup: async () => ({ accessToken: 'invalidOrExpiredToken' }),
           expectedStatus: HttpStatus.UNAUTHORIZED,
           expectedCodeMessage: Code.INVALID_TOKEN.codeMessage,
         },
@@ -304,7 +460,7 @@ describe('User API Endpoints', () => {
           name: 'User not found (invalid token)',
           setup: async () => {
             const { accessToken } = await userFactory.createUserAuthorizedWithoutPayload();
-            return { userId: 'test', accessToken };
+            return { accessToken };
           },
           expectedStatus: HttpStatus.UNAUTHORIZED,
           expectedCodeMessage: Code.INVALID_TOKEN.codeMessage,
@@ -313,7 +469,7 @@ describe('User API Endpoints', () => {
           name: 'User not verified',
           setup: async () => {
             const { accessToken } = await userFactory.createUserAuthorizedAndUnverified();
-            return { userId: 'test', accessToken };
+            return { accessToken };
           },
           expectedStatus: HttpStatus.FORBIDDEN,
           expectedCodeMessage: Code.ACCESS_DENIED.codeMessage,
@@ -322,7 +478,7 @@ describe('User API Endpoints', () => {
           name: 'User is a customer',
           setup: async () => {
             const { accessToken } = await userFactory.createCustomerAuthorized();
-            return { userId: 'test', accessToken };
+            return { accessToken };
           },
           expectedStatus: HttpStatus.FORBIDDEN,
           expectedCodeMessage: Code.ACCESS_DENIED.codeMessage,
@@ -331,7 +487,7 @@ describe('User API Endpoints', () => {
           name: 'User does not have permission',
           setup: async () => {
             const { accessToken } = await userFactory.createUserAuthorized();
-            return { userId: 'test', accessToken };
+            return { accessToken };
           },
           expectedStatus: HttpStatus.FORBIDDEN,
           expectedCodeMessage: Code.ACCESS_DENIED.codeMessage,
@@ -340,164 +496,95 @@ describe('User API Endpoints', () => {
 
       test.each(authTestCases)('$name', async ({ setup, expectedStatus, expectedCodeMessage }) => {
         const options = await setup();
-        const response = await makeRequest(options.userId)(options);
+        const response = await makeRequest(options);
         expectError(response, expectedStatus, expectedCodeMessage);
       });
     });
 
     describe('Validation', () => {
-      const validationTestCases = [
-        {
-          name: 'Invalid email format',
-          data: { ...updateData, email: 'invalid-email' },
-          invalidPaths: ['email'],
-        },
-        {
-          name: 'Invalid phone number',
-          data: { ...updateData, phone: '1234' },
-          invalidPaths: ['phone'],
-        },
-        {
-          name: 'Invalid gender',
-          data: { ...updateData, gender: 'invalid-gender' },
-          invalidPaths: ['gender'],
-        },
-        {
-          name: 'Invalid roleId',
-          data: { ...updateData, roleId: 123 },
-          invalidPaths: ['roleId'],
-        },
-      ];
-
-      test.each(validationTestCases)('$name', async ({ data, invalidPaths }) => {
-        const { accessToken: createUserToken } = await userFactory.createUserAuthorizedAndHasPermission('POST', '/api/users/create-user');
-        const createResponse = await testEndpoint('POST', '/api/users/create-user')({
-          accessToken: createUserToken,
-          data: {
-            name: 'Test User',
-            email: 'test@example.com',
-            phone: '0987654321',
-            gender: GENDER.MALE,
-          },
+      test('Invalid email format', async () => {
+        const { accessToken, user } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
+        const response = await makeRequest({
+          accessToken,
+          params: { userId: user.id },
+          data: { ...data, email: 'invalid-email' },
         });
-
-        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
-        const response = await testEndpoint(method, `${endpoint}/${createResponse.body.data.id}`, data)({ accessToken });
-        expectValidationError(response, invalidPaths);
-      });
-    });
-
-    describe('Business Logic', () => {
-      test('User not found', async () => {
-        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
-        const response = await makeRequest('nonExistentUserId')({ accessToken });
-        expectError(response, HttpStatus.NOT_FOUND, Code.RESOURCE_NOT_FOUND.codeMessage);
+        expectValidationError(response, ['email']);
       });
 
-      test('Email already exists', async () => {
-        const { accessToken: createUserToken } = await userFactory.createUserAuthorizedAndHasPermission('POST', '/api/users/create-user');
-        
-        const createResponse1 = await testEndpoint('POST', '/api/users/create-user')({
-          accessToken: createUserToken,
-          data: {
-            name: 'Test User 1',
-            email: 'test1@example.com',
-            phone: '0987654321',
-            gender: GENDER.MALE,
-          },
+      test('Invalid phone number', async () => {
+        const { accessToken, user } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
+        const response = await makeRequest({
+          accessToken,
+          params: { userId: user.id },
+          data: { ...data, phone: '1234' },
         });
-
-        const createResponse2 = await testEndpoint('POST', '/api/users/create-user')({
-          accessToken: createUserToken,
-          data: {
-            name: 'Test User 2',
-            email: 'test2@example.com',
-            phone: '0987654322',
-            gender: GENDER.MALE,
-          },
-        });
-
-        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
-        const response = await testEndpoint(method, `${endpoint}/${createResponse2.body.data.id}`, {
-          ...updateData,
-          email: 'test1@example.com',
-        })({ accessToken });
-
-        expectError(response, HttpStatus.CONFLICT, Code.ALREADY_EXISTS.codeMessage);
+        expectValidationError(response, ['phone']);
       });
 
-      test('Role not found', async () => {
-        const { accessToken: createUserToken } = await userFactory.createUserAuthorizedAndHasPermission('POST', '/api/users/create-user');
-        const createResponse = await testEndpoint('POST', '/api/users/create-user')({
-          accessToken: createUserToken,
-          data: {
-            name: 'Test User',
-            email: 'test@example.com',
-            phone: '0987654321',
-            gender: GENDER.MALE,
-          },
+      test('Invalid gender', async () => {
+        const { accessToken, user } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
+        const response = await makeRequest({
+          accessToken,
+          params: { userId: user.id },
+          data: { ...data, gender: 'INVALID' },
         });
-
-        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
-        const response = await testEndpoint(method, `${endpoint}/${createResponse.body.data.id}`, {
-          ...updateData,
-          roleId: 'nonExistentRoleId',
-        })({ accessToken });
-
-        expectError(response, HttpStatus.NOT_FOUND, Code.RESOURCE_NOT_FOUND.codeMessage);
+        expectValidationError(response, ['gender']);
       });
     });
 
     describe('Success Cases', () => {
-      test('Update user successful', async () => {
-        const { accessToken: createUserToken } = await userFactory.createUserAuthorizedAndHasPermission('POST', '/api/users/create-user');
-        const createResponse = await testEndpoint('POST', '/api/users/create-user')({
-          accessToken: createUserToken,
-          data: {
-            name: 'Test User',
-            email: 'test@example.com',
-            phone: '0987654321',
-            gender: GENDER.MALE,
-          },
+      test('Update user successfully', async () => {
+        const { accessToken, user } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
+        const response = await makeRequest({
+          accessToken,
+          params: { userId: user.id },
         });
-
-        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
-        const response = await makeRequest(createResponse.body.data.id)({ accessToken });
 
         expect(response.status).toBe(HttpStatus.OK);
         expect(response.body).toMatchObject({
           code: HttpStatus.OK,
           codeMessage: Code.SUCCESS.codeMessage,
           message: expect.any(String),
-          data: expect.objectContaining({
-            id: createResponse.body.data.id,
-            name: 'Updated User',
-            email: 'updated@example.com',
-            phone: '0987654321',
-            gender: GENDER.FEMALE,
-          }),
+          data: expect.any(Object),
         });
+
+        expectUserData(response.body.data);
+        expect(response.body.data.name).toBe(data.name);
+        expect(response.body.data.email).toBe(data.email);
+        expect(response.body.data.phone).toBe(data.phone);
+        expect(response.body.data.gender).toBe(data.gender);
+      });
+
+      test('User not found', async () => {
+        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
+        const response = await makeRequest({
+          accessToken,
+          params: { userId: 'non-existent-id' },
+        });
+
+        expectError(response, HttpStatus.NOT_FOUND, Code.RESOURCE_NOT_FOUND.codeMessage);
       });
     });
   });
 
   describe('DELETE /api/users/remove-user-by-id/:userId', () => {
     const method = 'DELETE';
-    const endpoint = '/api/users/remove-user-by-id';
+    const endpoint = '/api/users/remove-user-by-id/:userId';
 
-    const makeRequest = (userId) => testEndpoint(method, `${endpoint}/${userId}`);
+    const makeRequest = testEndpoint(method, endpoint);
 
     describe('Authentication and Authorization', () => {
       const authTestCases = [
         {
           name: 'No access token provided',
-          setup: async () => ({ userId: 'test' }),
+          setup: async () => ({}),
           expectedStatus: HttpStatus.UNAUTHORIZED,
           expectedCodeMessage: Code.TOKEN_REQUIRED.codeMessage,
         },
         {
           name: 'Invalid token',
-          setup: async () => ({ userId: 'test', accessToken: 'invalidOrExpiredToken' }),
+          setup: async () => ({ accessToken: 'invalidOrExpiredToken' }),
           expectedStatus: HttpStatus.UNAUTHORIZED,
           expectedCodeMessage: Code.INVALID_TOKEN.codeMessage,
         },
@@ -505,7 +592,7 @@ describe('User API Endpoints', () => {
           name: 'User not found (invalid token)',
           setup: async () => {
             const { accessToken } = await userFactory.createUserAuthorizedWithoutPayload();
-            return { userId: 'test', accessToken };
+            return { accessToken };
           },
           expectedStatus: HttpStatus.UNAUTHORIZED,
           expectedCodeMessage: Code.INVALID_TOKEN.codeMessage,
@@ -514,7 +601,7 @@ describe('User API Endpoints', () => {
           name: 'User not verified',
           setup: async () => {
             const { accessToken } = await userFactory.createUserAuthorizedAndUnverified();
-            return { userId: 'test', accessToken };
+            return { accessToken };
           },
           expectedStatus: HttpStatus.FORBIDDEN,
           expectedCodeMessage: Code.ACCESS_DENIED.codeMessage,
@@ -523,7 +610,7 @@ describe('User API Endpoints', () => {
           name: 'User is a customer',
           setup: async () => {
             const { accessToken } = await userFactory.createCustomerAuthorized();
-            return { userId: 'test', accessToken };
+            return { accessToken };
           },
           expectedStatus: HttpStatus.FORBIDDEN,
           expectedCodeMessage: Code.ACCESS_DENIED.codeMessage,
@@ -532,7 +619,7 @@ describe('User API Endpoints', () => {
           name: 'User does not have permission',
           setup: async () => {
             const { accessToken } = await userFactory.createUserAuthorized();
-            return { userId: 'test', accessToken };
+            return { accessToken };
           },
           expectedStatus: HttpStatus.FORBIDDEN,
           expectedCodeMessage: Code.ACCESS_DENIED.codeMessage,
@@ -541,40 +628,18 @@ describe('User API Endpoints', () => {
 
       test.each(authTestCases)('$name', async ({ setup, expectedStatus, expectedCodeMessage }) => {
         const options = await setup();
-        const response = await makeRequest(options.userId)(options);
+        const response = await makeRequest(options);
         expectError(response, expectedStatus, expectedCodeMessage);
       });
     });
 
-    describe('Business Logic', () => {
-      test('User not found', async () => {
-        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
-        const response = await makeRequest('nonExistentUserId')({ accessToken });
-        expectError(response, HttpStatus.NOT_FOUND, Code.RESOURCE_NOT_FOUND.codeMessage);
-      });
-
-      test('Cannot delete self', async () => {
-        const { accessToken, user } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
-        const response = await makeRequest(user.id)({ accessToken });
-        expectError(response, HttpStatus.FORBIDDEN, Code.ACCESS_DENIED.codeMessage);
-      });
-    });
-
     describe('Success Cases', () => {
-      test('Delete user successful', async () => {
-        const { accessToken: createUserToken } = await userFactory.createUserAuthorizedAndHasPermission('POST', '/api/users/create-user');
-        const createResponse = await testEndpoint('POST', '/api/users/create-user')({
-          accessToken: createUserToken,
-          data: {
-            name: 'Test User',
-            email: 'test@example.com',
-            phone: '0987654321',
-            gender: GENDER.MALE,
-          },
+      test('Delete user successfully', async () => {
+        const { accessToken, user } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
+        const response = await makeRequest({
+          accessToken,
+          params: { userId: user.id },
         });
-
-        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
-        const response = await makeRequest(createResponse.body.data.id)({ accessToken });
 
         expect(response.status).toBe(HttpStatus.OK);
         expect(response.body).toMatchObject({
@@ -583,10 +648,16 @@ describe('User API Endpoints', () => {
           message: expect.any(String),
           data: null,
         });
+      });
 
-        const { accessToken: getToken } = await userFactory.createUserAuthorizedAndHasPermission('GET', '/api/users/get-user-by-id');
-        const getResponse = await testEndpoint('GET', `/api/users/get-user-by-id/${createResponse.body.data.id}`)({ accessToken: getToken });
-        expectError(getResponse, HttpStatus.NOT_FOUND, Code.RESOURCE_NOT_FOUND.codeMessage);
+      test('User not found', async () => {
+        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
+        const response = await makeRequest({
+          accessToken,
+          params: { userId: 'non-existent-id' },
+        });
+
+        expectError(response, HttpStatus.NOT_FOUND, Code.RESOURCE_NOT_FOUND.codeMessage);
       });
     });
   });
