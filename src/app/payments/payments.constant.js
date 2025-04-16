@@ -5,5 +5,5 @@ export const PAYMENT_SELECTED_FIELDS = {
   paidDate: true,
   transactionId: true,
   notes: true,
-  orderId: true,
+  order: true,
 };

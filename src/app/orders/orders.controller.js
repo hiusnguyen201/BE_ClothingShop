@@ -4,6 +4,7 @@ import {
   updateOrderStatusByIdService,
   getAndCountOrdersService,
   updateOrderByIdService,
+  removeOrderByIdService,
 } from '#src/app/orders/orders.service';
 import { HttpException } from '#src/core/exception/http-exception';
 import { TransactionalServiceWrapper } from '#src/core/transaction/TransactionalServiceWrapper';
@@ -60,16 +61,16 @@ export const createOrderController = async (req) => {
         const orderDetail = newOrderDetailService({
           quantity: productVariant.quantity,
           unitPrice: productVariantPrice,
-          orderId: newOrder._id,
-          productId: productVariantExited.product._id,
-          variantId: productVariantExited._id,
+          order: newOrder._id,
+          product: productVariantExited.product,
+          variant: productVariantExited._id,
         });
 
-        if (productVariantExited.productDiscount) {
-          orderDetail.discount = productVariantExited.productDiscount.amount;
-          orderDetail.isFixed = productVariantExited.productDiscount.isFixed;
-          orderDetail.unitPrice = calculateDiscount(productVariantPrice, orderDetail.discount, orderDetail.isFixed);
-        }
+        // if (productVariantExited.productDiscount) {
+        //   orderDetail.discount = productVariantExited.productDiscount.amount;
+        //   orderDetail.isFixed = productVariantExited.productDiscount.isFixed;
+        //   orderDetail.unitPrice = calculateDiscount(productVariantPrice, orderDetail.discount, orderDetail.isFixed);
+        // }
         orderDetail.totalPrice = orderDetail.unitPrice * productVariant.quantity;
         productVariantExited.quantity = productVariantExited.quantity - productVariant.quantity;
 
@@ -94,7 +95,7 @@ export const createOrderController = async (req) => {
     newOrder.total = subTotal + newOrder.shippingFee;
 
     const newPayment = newPaymentService({
-      orderId: newOrder._id,
+      order: newOrder._id,
       paymentMethod,
     });
 
@@ -116,14 +117,14 @@ export const createOrderController = async (req) => {
       newPayment.notes = 'Cash on Delivery';
     }
 
-    newOrder.paymentId = newPayment._id;
+    newOrder.payment = newPayment._id;
     if (paymentUrl) {
       newOrder.payUrl = paymentUrl;
     }
 
     const newOrderHistory = newOrderStatusHistoryService({
       status: newStatus,
-      orderId: newOrder._id,
+      order: newOrder._id,
       // assignedTo: id,,
     }, session);
     newOrder.orderStatusHistory = newOrderHistory._id;
@@ -150,7 +151,7 @@ export const confirmOrderController = async (req) => {
       throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Invalid order status' });
     }
 
-    if (!orderExisted.paymentId) {
+    if (!orderExisted.payment) {
       throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Payment not found' });
     }
 
@@ -158,7 +159,7 @@ export const confirmOrderController = async (req) => {
 
     const newOrderHistory = await createOrderStatusHistoryService({
       status: newOrderStatus,
-      orderId: orderExisted._id,
+      order: orderExisted._id,
       // assignedTo: id,,
     }, session);
 
@@ -187,7 +188,7 @@ export const processOrderController = async (req) => {
       throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Invalid order status' });
     }
 
-    // if (!orderExisted.paymentId) {
+    // if (!orderExisted.payment) {
     //   throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Payment not found' });
     // }
 
@@ -195,7 +196,7 @@ export const processOrderController = async (req) => {
 
     const newOrderHistory = await createOrderStatusHistoryService({
       status: newOrderStatus,
-      orderId: orderExisted._id,
+      order: orderExisted._id,
       // assignedTo: id,,
     }, session);
 
@@ -226,7 +227,7 @@ export const createShippingOrderController = async (req) => {
       throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Invalid order status' });
     }
 
-    if (!orderExisted.paymentId) {
+    if (!orderExisted.payment) {
       throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Payment not found' });
     }
 
@@ -244,7 +245,7 @@ export const createShippingOrderController = async (req) => {
       shippingCarrier: "GHN",
       trackingNumber: newOrderGhn.data.order_code,
       expectedShipDate: newOrderGhn.data.expected_delivery_time,
-      orderId: orderExisted._id,
+      order: orderExisted._id,
       // assignedTo: id,,
     }, session);
 
@@ -266,7 +267,7 @@ export const webHookUpdateOrder = async (req) => {
 
     const orderStatusHistory = await getOrderStatusHistoryByTrackingIdService(OrderCode);
 
-    const orderExisted = await getOrderByIdService(orderStatusHistory.orderId);
+    const orderExisted = await getOrderByIdService(orderStatusHistory.order);
     if (!orderExisted) {
       throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
     }
@@ -293,12 +294,12 @@ export const webHookUpdateOrder = async (req) => {
       shippingCarrier: "GHN",
       trackingNumber: orderStatusHistory.trackingNumber,
       expectedShipDate: orderStatusHistory.expectedShipDate,
-      orderId: orderExisted._id,
+      order: orderExisted._id,
       // assignedTo: id,,
     }, session);
 
     if (newOrderStatus === ORDERS_STATUS.DELIVERED) {
-      const payment = await getPaymentByIdService(orderExisted.paymentId);
+      const payment = await getPaymentByIdService(orderExisted.payment);
       if (!payment) {
         throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Payment not found' });
       }
@@ -351,13 +352,13 @@ export const cancelOrderController = async (req) => {
 
     const newOrderHistory = await createOrderStatusHistoryService({
       status: newOrderStatus,
-      orderId: orderExisted._id,
+      order: orderExisted._id,
       // assignedTo: id,,
     }, session);
 
     await updateCancelOrderQuantityProductUtil(orderExisted._id, session);
 
-    if (orderExisted?.paymentId?.paidDate) {
+    if (orderExisted?.payment?.paidDate) {
       // refund
     }
 
@@ -395,13 +396,13 @@ export const cancelOrderByCustomerController = async (req) => {
 
     const newOrderHistory = await createOrderStatusHistoryService({
       status: newOrderStatus,
-      orderId: orderExisted._id,
+      order: orderExisted._id,
       // assignedTo: id,
     }, session);
 
     await updateCancelOrderQuantityProductUtil(orderExisted._id, session);
 
-    if (orderExisted?.paymentId?.paidDate) {
+    if (orderExisted?.payment?.paidDate) {
       // refund
     }
 
@@ -527,16 +528,16 @@ export const updateOrderController = async (req) => {
       const orderDetail = newOrderDetailService({
         quantity: productVariant.quantity,
         unitPrice: productVariantPrice,
-        orderId: orderExisted._id,
-        productId: productVariantExited.product._id,
-        variantId: productVariantExited._id
+        order: orderExisted._id,
+        product: productVariantExited.product,
+        variant: productVariantExited._id
       })
 
-      if (productVariantExited.productDiscount) {
-        orderDetail.discount = productVariantExited.productDiscount.amount;
-        orderDetail.isFixed = productVariantExited.productDiscount.isFixed;
-        orderDetail.unitPrice = calculateDiscount(productVariantPrice, orderDetail.discount, orderDetail.isFixed);
-      }
+      // if (productVariantExited.productDiscount) {
+      //   orderDetail.discount = productVariantExited.productDiscount.amount;
+      //   orderDetail.isFixed = productVariantExited.productDiscount.isFixed;
+      //   orderDetail.unitPrice = calculateDiscount(productVariantPrice, orderDetail.discount, orderDetail.isFixed);
+      // }
       orderDetail.totalPrice = orderDetail.unitPrice * productVariant.quantity;
       productVariantExited.quantity = productVariantExited.quantity - productVariant.quantity;
 
@@ -561,7 +562,7 @@ export const updateOrderController = async (req) => {
     const newOrderStatus = ORDERS_STATUS.PENDING;
     const newOrderHistory = await createOrderStatusHistoryService({
       status: newOrderStatus,
-      orderId: orderExisted._id,
+      order: orderExisted._id,
       // assignedTo: id,,
     }, session);
 

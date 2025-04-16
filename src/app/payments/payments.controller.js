@@ -113,7 +113,7 @@ export const returnPaymentMoMoController = async (req) => {
       throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Order history status already exists' });
     }
 
-    const updatedPayment = await updatePaymentByIdService(orderExisted.paymentId._id, {
+    const updatedPayment = await updatePaymentByIdService(orderExisted.payment._id, {
       transactionId: transId,
       amountPaid: amount,
       paidDate: responseTime,
@@ -122,7 +122,7 @@ export const returnPaymentMoMoController = async (req) => {
 
     const newOrderHistory = newOrderStatusHistoryService({
       status: newOrderStatus,
-      orderId: orderExisted._id,
+      order: orderExisted._id,
       // assignedTo: id,,
     });
     await newOrderHistory.save({ session })
@@ -150,7 +150,7 @@ export const returnPaymentVnPayController = async (req) => {
       throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
     }
 
-    const updatedPayment = await updatePaymentByIdService(orderExisted.paymentId._id, {
+    const updatedPayment = await updatePaymentByIdService(orderExisted.payment._id, {
       transactionId: vnp_TransactionNo,
       amountPaid: vnp_Amount / 100,
       paidDate: vnp_PayDate,

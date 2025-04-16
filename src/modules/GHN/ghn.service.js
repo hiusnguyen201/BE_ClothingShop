@@ -12,7 +12,7 @@ const ghnAPI = axios.create({
 // create order GHN
 export const createGhnOrder = async (order, orderDetails) => {
   let isPaid = false;
-  if (order?.paymentId?.paidDate) {
+  if (order?.payment?.paidDate) {
     isPaid = true;
   }
 
@@ -53,7 +53,7 @@ export const createGhnOrder = async (order, orderDetails) => {
     pickup_time: pickupTime,
     pick_shift: [2],
     items: orderDetails.map((item) => ({
-      name: item.variantId.sku,
+      name: item.variant.sku,
       code: item.productId,
       quantity: item.quantity,
       price: isPaid ? 0 : item.unitPrice,

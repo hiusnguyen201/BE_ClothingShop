@@ -23,11 +23,11 @@ export async function createOrderStatusHistoryService(data, session) {
  * @param {*} data
  * @returns
  */
-export async function duplicateCheckOrderStatusHistoryService(orderId, orderStatus) {
-  if (!orderId) return null;
+export async function duplicateCheckOrderStatusHistoryService(order, orderStatus) {
+  if (!order) return null;
 
   return await OrderStatusHistoryModel.findOne({
-    orderId,
+    order,
     status: orderStatus
   });
 }

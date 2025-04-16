@@ -75,11 +75,11 @@ export async function getProductVariantByIdService(id, selectFields = SELECTED_F
 
   return await ProductVariantModel.findOne(filter)
     .select(selectFields)
-    .populate({
-      path: 'product',
-      model: 'Product',
-      select: '-productVariants',
-    })
+    // .populate({
+    //   path: 'product',
+    //   model: 'Product',
+    //   select: '-productVariants',
+    // })
     .populate({
       path: 'variantValues',
       model: 'productVariants',
@@ -95,10 +95,10 @@ export async function getProductVariantByIdService(id, selectFields = SELECTED_F
         },
       ],
     })
-    .populate({
-      path: 'productDiscount',
-      model: 'Product_Discount',
-    });
+  // .populate({
+  //   path: 'productDiscount',
+  //   model: 'Product_Discount',
+  // });
 }
 
 /**

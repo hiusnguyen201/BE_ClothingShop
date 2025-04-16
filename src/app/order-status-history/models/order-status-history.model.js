@@ -25,7 +25,7 @@ export const orderStatusHistorySchema = new Schema(
     },
 
     // Foreign Key
-    orderId: {
+    order: {
       type: Schema.Types.ObjectId,
       ref: 'Order',
     },

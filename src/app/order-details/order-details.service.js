@@ -20,26 +20,26 @@ export const createOrderDetailService = async (data) => {
 
 /**
  * Get order detail
- * @param {*} orderId
+ * @param {*} order
  * @returns
  */
-export const getOrderDetailsByOrderIdService = async (orderId) => {
-  return await OrderDetailModel.find({ orderId })
+export const getOrderDetailsByOrderIdService = async (order) => {
+  return await OrderDetailModel.find({ order })
     .populate({
-      path: 'variantId',
+      path: 'variant',
       model: 'Product_Variant',
     });
 };
 
 /**
  * Delete order detail by orderId
- * @param {*} orderId
+ * @param {*} order
  * @param {*} session
  * @returns
  */
-export const removeOrderDetailByOrderIdService = async (orderId, session) => {
+export const removeOrderDetailByOrderIdService = async (order, session) => {
   return await OrderDetailModel.deleteMany({
-    orderId
+    order
   }, {
     session
   });

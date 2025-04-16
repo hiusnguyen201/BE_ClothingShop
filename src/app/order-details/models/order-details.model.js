@@ -17,27 +17,30 @@ export const orderDetailSchema = new Schema(
       type: Number,
       required: true,
     },
-    isFixed: {
-      type: Boolean,
-      default: null,
-    },
-    discount: {
-      type: Number,
-      default: null,
-    },
+    // isFixed: {
+    //   type: Boolean,
+    //   default: null,
+    // },
+    // discount: {
+    //   type: Number,
+    //   default: null,
+    // },
 
     // Foreign Key
-    orderId: {
+    order: {
       type: Schema.Types.ObjectId,
-      ref: 'Order', required: true
+      ref: 'Order',
+      required: true
     },
-    productId: {
+    product: {
       type: Schema.Types.ObjectId,
-      ref: 'Product', required: true
+      ref: 'Product',
+      required: true
     },
-    variantId: {
+    variant: {
       type: Schema.Types.ObjectId,
-      ref: 'Product_Variant', required: true
+      ref: 'Product_Variant',
+      required: true
     },
   },
   {

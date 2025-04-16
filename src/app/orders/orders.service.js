@@ -39,7 +39,7 @@ export async function getOrderByIdService(id, extras = {}) {
     return null;
   }
 
-  return OrderModel.findOne(filters).select(ORDER_SELECTED_FIELDS).populate('paymentId').lean();
+  return OrderModel.findOne(filters).select(ORDER_SELECTED_FIELDS).populate('payment').lean();
 }
 
 /**
@@ -78,15 +78,15 @@ export async function getAndCountOrdersService(filters, skip, limit, sortBy, sor
 
 /**
  * Update order status
- * @param {*} orderId
+ * @param {*} order
  * @param {*} newOrderStatus
  * @param {*} orderStatusHistoryId
  * @param {*} session
  * @returns
  */
-export async function updateOrderStatusByIdService(orderId, newOrderStatus, orderStatusHistoryId, session) {
+export async function updateOrderStatusByIdService(order, newOrderStatus, orderStatusHistoryId, session) {
   return OrderModel.findByIdAndUpdate(
-    orderId,
+    order,
     {
       status: newOrderStatus,
       $push: { orderStatusHistory: orderStatusHistoryId },
@@ -102,13 +102,13 @@ export async function updateOrderStatusByIdService(orderId, newOrderStatus, orde
 
 /**
  * Update order
- * @param {*} orderId
+ * @param {*} order
  * @param {*} data
  * @param {*} session
  * @returns
  */
-export async function updateOrderByIdService(orderId, data, session) {
-  return OrderModel.findByIdAndUpdate(orderId, data, {
+export async function updateOrderByIdService(order, data, session) {
+  return OrderModel.findByIdAndUpdate(order, data, {
     new: true,
     session
   }).select(ORDER_SELECTED_FIELDS)

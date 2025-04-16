@@ -16,8 +16,8 @@ export const OrderDto = Joi.object({
   total: Joi.number().required(),
   status: Joi.string().required(),
   payUrl: Joi.string().allow(null),
-  customerId: Joi.any().allow(null),
-  paymentId: Joi.any().allow(null),
-  employeeId: Joi.any().allow(null),
+  customer: Joi.any().allow(null),
+  payment: Joi.any().allow(null),
+  employee: Joi.any().allow(null),
   orderStatusHistory: Joi.array().items(Joi.any()),
 });

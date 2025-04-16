@@ -23,7 +23,9 @@ import { GetOrderDto } from '#src/app/orders/dtos/get-order.dto';
 const router = express.Router();
 
 router
-  .post('/create-order', isAuthorizedAndHasPermission, validateBody(createOrderDto), createOrderController)
+  .post('/create-order',
+    // isAuthorizedAndHasPermission, 
+    validateBody(createOrderDto), createOrderController)
   .get('/get-orders', isAuthorizedAndHasPermission, validateQuery(GetListOrderDto), getAllOrdersController)
   .get('/get-order-by-id/:orderId', isAuthorizedAndHasPermission, validateParams(GetOrderDto), getOrderByIdController)
   // .get('/get-all-orders-by-customer',

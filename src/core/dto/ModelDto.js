@@ -20,7 +20,7 @@ function convertId(obj) {
         acc[key] = null;
       } else if (isValidObjectId(value)) {
         acc[key === '_id' ? 'id' : key] = typeof value === 'number' ? +value : value.toString();
-      } else if (value instanceof Date) {
+      } else if (value instanceof Date || Array.isArray(value)) {
         acc[key] = value;
       } else {
         acc[key] = convertId(value);

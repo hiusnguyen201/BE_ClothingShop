@@ -14,8 +14,8 @@ export const ORDER_SELECTED_FIELDS = {
     total: true,
     status: true,
     payUrl: true,
-    customerId: true,
-    paymentId: true,
-    employeeId: true,
+    customer: true,
+    payment: true,
+    employee: true,
     orderStatusHistory: true,
 };

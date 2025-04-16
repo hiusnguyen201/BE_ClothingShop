@@ -13,7 +13,7 @@ export const calculateDiscount = (price, amount, isFixed) => {
 export const updateOrderStatusUtil = async (orderId, newStatus, session) => {
     const newOrderHistory = newOrderStatusHistoryService({
         status: newStatus,
-        orderId: orderId,
+        order: orderId,
         // assignedTo: id,,
     });
     await newOrderHistory.save({ session });
@@ -26,7 +26,7 @@ export const updateCancelOrderQuantityProductUtil = async (orderId, session) => 
 
     await Promise.all(
         orderDetails.map(async (orderDetail) => {
-            const productVariant = await getProductVariantByIdService(orderDetail.variantId._id, "_id quantity");
+            const productVariant = await getProductVariantByIdService(orderDetail.variant._id, "_id quantity");
             if (productVariant) {
                 await updateProductVariantQuantityByIdService(productVariant._id, productVariant.quantity + orderDetail.quantity, session);
             }

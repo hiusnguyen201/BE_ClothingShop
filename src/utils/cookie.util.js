@@ -14,7 +14,7 @@ export function setSession(res, tokens) {
     secure: process.env.NODE_ENV === 'production',
     maxAge: accessTokenTTL,
     path: '/',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'none',
   });
 
   res.cookie(REFRESH_TOKEN_KEY, refreshToken, {
@@ -22,7 +22,7 @@ export function setSession(res, tokens) {
     secure: process.env.NODE_ENV === 'production',
     maxAge: refreshTokenTTL,
     path: '/',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'none',
   });
 }
 

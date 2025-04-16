@@ -67,11 +67,11 @@ export const orderSchema = new Schema(
     },
 
     // Foreign Key
-    customerId: {
+    customer: {
       type: Schema.Types.ObjectId,
       ref: 'User',
     },
-    paymentId: {
+    payment: {
       type: Schema.Types.ObjectId,
       ref: 'Payment',
     },
