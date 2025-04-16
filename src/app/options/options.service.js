@@ -1,22 +1,35 @@
-import { isValidObjectId } from "mongoose";
-import { OptionModel } from "#src/app/options/models/option.model";
+import { isValidObjectId } from 'mongoose';
+import { OptionModel } from '#src/app/options/models/option.model';
+import { OptionValueModel } from '#src/app/options/models/option-value.model';
 
-const SELECTED_FIELDS =
-  "_id name optionValues createdAt updatedAt";
+const SELECTED_FIELDS = '_id name optionValues';
 
 /**
- * Create option
+ * Create option within transaction
  * @param {*} data
  * @returns
  */
-export async function createOptionService(data) {
-  const existOption = await OptionModel.findOne({ name: data.name })
+export async function getOrCreateOptionService(data, session) {
+  const existOption = await OptionModel.findOne({ name: data.name });
 
   if (existOption) {
-    return existOption
+    return existOption;
   }
 
-  return OptionModel.create(data);
+  const [option] = await OptionModel.insertMany([data], { session, ordered: true });
+  return option;
+}
+
+/**
+ * Get all options
+ * @param {*} id
+ * @returns
+ */
+export async function getListOptionService() {
+  return OptionModel.find().populate({
+    path: 'optionValues',
+    select: '_id valueName',
+  });
 }
 
 /**
@@ -24,75 +37,40 @@ export async function createOptionService(data) {
  * @param {*} id
  * @returns
  */
-export async function getOptionByIdService(
-  id,
-  extraFilters
-) {
+export async function getOptionByIdService(id, extraFilters) {
   if (!id) return null;
   const filter = {};
 
   if (isValidObjectId(id)) {
     filter._id = id;
   } else {
-    return null;
+    filter.name = id;
   }
 
-  return OptionModel.findOne(filter).select(SELECTED_FIELDS).populate({
-    path: "optionValues",
-    match: extraFilters
+  return OptionModel.findOne(filter).populate({
+    path: 'optionValues',
+    match: extraFilters,
   });
 }
 
 /**
- * Update product option by id
- * @param {*} id
+ * Create option values within transaction
  * @param {*} data
  * @returns
  */
-export async function updateOptionByIdService(id, data) {
-  return OptionModel.findByIdAndUpdate(id, data, {
-    new: true,
-  }).select(SELECTED_FIELDS);
-}
+export async function getOrCreateOptionValuesService(data = [], session) {
+  const existingOptionValues = await OptionValueModel.find({
+    valueName: { $in: data.map((item) => item.valueName) },
+  }).lean();
 
-/**
- * Remove product option by id
- * @param {*} id
- * @returns
- */
-export async function removeOptionByIdService(id) {
-  return await OptionModel.findByIdAndDelete(id)
-    .select(SELECTED_FIELDS)
-}
+  const existingSet = new Set(existingOptionValues.map((item) => item.valueName));
 
-/**
- * Update product option sizes by id
- * @param {*} id
- * @param {*} optionSizes
- * @returns
- */
-export async function updateOptionSizesByIdService(id, optionSizes) {
-  return await OptionModel.findByIdAndUpdate(
-    id,
-    {
-      $addToSet: { option_sizes: { $each: optionSizes } }
-    },
-    { new: true }
-  ).select(SELECTED_FIELDS);
-}
+  const newOptionValuesData = data.filter((item) => !existingSet.has(item.valueName));
 
-/**
- * Remove product option sizes by id
- * @param {*} id
- * @param {*} optionSizes
- * @returns
- */
-export async function removeOptionSizesByIdService(id, optionSizes) {
-  return await OptionModel.findByIdAndUpdate(
-    id,
-    {
-      $pull: { option_sizes: { $each: optionSizes } }
-    },
-    { new: true }
-  ).select(SELECTED_FIELDS);
+  if (newOptionValuesData.length > 0) {
+    const created = await OptionValueModel.insertMany(newOptionValuesData, { session, ordered: true });
+    return [...existingOptionValues, ...created];
+  }
+
+  return existingOptionValues;
 }

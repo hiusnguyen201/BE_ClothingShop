@@ -1,39 +1,35 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
-const PRODUCT_DISCOUNTS_MODEL = "productDiscounts";
+const PRODUCT_DISCOUNTS_MODEL = 'productDiscounts';
 
 const productDiscountSchema = new Schema(
   {
     name: {
       type: String,
-      required: true
+      required: true,
     },
     amount: {
       type: Number,
-      required: true
+      required: true,
     },
     isFixed: {
       type: Boolean,
-      required: true
+      required: true,
     },
     startDate: {
       type: Date,
-      required: true
+      required: true,
     },
     endDate: {
       type: Date,
-      required: true
-    },
-    removedAt: {
-      type: Date,
-      default: null
+      required: true,
     },
 
     // FK
     productVariant: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Product_Variant'
+      ref: 'Product_Variant',
     },
   },
   {
@@ -42,8 +38,8 @@ const productDiscountSchema = new Schema(
     _id: true,
     id: false,
     collection: PRODUCT_DISCOUNTS_MODEL,
-  }
+  },
 );
 
-const ProductDiscountModel = mongoose.model("Product_Discount", productDiscountSchema);
+const ProductDiscountModel = mongoose.model('Product_Discount', productDiscountSchema);
 export { ProductDiscountModel };

@@ -8,11 +8,12 @@ const ghnAPI = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
 // create order GHN
 export const createGhnOrder = async (order, orderDetails) => {
   let isPaid = false;
   if (order?.paymentId?.paidDate) {
-    isPaid = true
+    isPaid = true;
   }
 
   const pickupTime = moment().unix();

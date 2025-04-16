@@ -1,5 +1,5 @@
 'use strict';
-import mongoose from 'mongoose';
+import mongoose, { isValidObjectId } from 'mongoose';
 import { HttpException } from '#src/core/exception/http-exception';
 import { Code } from '#src/core/code/Code';
 
@@ -9,11 +9,33 @@ const options = {
   stripUnknown: true, //  when true, ignores unknown keys with a function value. Defaults to false.
 };
 
+function convertId(obj) {
+  if (Array.isArray(obj)) {
+    return obj.map(convertId);
+  }
+
+  if (obj && typeof obj === 'object') {
+    return Object.entries(obj).reduce((acc, [key, value]) => {
+      if (!value) {
+        acc[key] = null;
+      } else if (isValidObjectId(value)) {
+        acc[key === '_id' ? 'id' : key] = typeof value === 'number' ? +value : value.toString();
+      } else {
+        acc[key] = convertId(value);
+      }
+      return acc;
+    }, {});
+  }
+
+  return obj;
+}
+
 export class ModelDto {
   static new(schema, data) {
     if (data && data instanceof mongoose.Document) {
       data = data.toObject();
     }
+
     // Convert ObjectId to string
     data._id = data._id.toString();
 
@@ -24,8 +46,7 @@ export class ModelDto {
     }
 
     // Convert _id to id
-    value = { id: value._id, ...value };
-    delete value._id;
+    value = convertId(value);
 
     return value;
   }

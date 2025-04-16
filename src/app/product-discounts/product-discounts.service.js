@@ -1,8 +1,7 @@
-import { isValidObjectId } from "mongoose";
-import { ProductDiscountModel } from "#src/app/product-discounts/models/product-discount.model";
+import { isValidObjectId } from 'mongoose';
+import { ProductDiscountModel } from '#src/app/product-discounts/models/product-discount.model';
 
-const SELECTED_FIELDS =
-  "_id name amount isFixed endDate productVariant createdAt updatedAt";
+const SELECTED_FIELDS = '_id name amount isFixed endDate productVariant createdAt updatedAt';
 
 /**
  * Create product discount
@@ -19,10 +18,7 @@ export async function createProductDiscountsService(data, session) {
  * @param {*} selectFields
  * @returns
  */
-export async function getProductDiscountByIdService(
-  id,
-  selectFields = SELECTED_FIELDS,
-) {
+export async function getProductDiscountByIdService(id, selectFields = SELECTED_FIELDS) {
   if (!id) return null;
   const filter = {};
 
@@ -47,11 +43,7 @@ export async function getAllProductDiscountsService({
   limit = 10,
   selectFields = SELECTED_FIELDS,
 }) {
-  return ProductDiscountModel.find(filters)
-    .skip(offset)
-    .limit(limit)
-    .select(selectFields)
-    .sort({ createdAt: -1 });
+  return ProductDiscountModel.find(filters).skip(offset).limit(limit).select(selectFields).sort({ createdAt: -1 });
 }
 
 /**
@@ -72,7 +64,7 @@ export async function countAllProductDiscountsService(filters) {
 export async function updateProductDiscountByIdService(id, data, session) {
   return ProductDiscountModel.findByIdAndUpdate(id, data, {
     new: true,
-    session
+    session,
   }).select(SELECTED_FIELDS);
 }
 
@@ -82,9 +74,5 @@ export async function updateProductDiscountByIdService(id, data, session) {
  * @returns
  */
 export async function removeProductDiscountByIdService(id) {
-  return ProductDiscountModel.findByIdAndUpdate(id, {
-    removedAt: new Date()
-  }, {
-    new: true,
-  }).select(SELECTED_FIELDS);
+  return ProductDiscountModel.findByIdAndSoftDelete(id).select('_id');
 }

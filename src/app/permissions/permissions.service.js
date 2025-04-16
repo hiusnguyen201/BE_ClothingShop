@@ -8,7 +8,7 @@ import { PERMISSION_SELECTED_FIELDS } from '#src/app/permissions/permissions.con
  * @param {*} data
  * @returns
  */
-export async function getOrCreateListPermissionServiceWithTransaction(data = [], session) {
+export async function getOrCreateListPermissionService(data = [], session) {
   const existingPermissions = await PermissionModel.find({
     endpoint: { $in: data.map((p) => p.endpoint) },
     method: { $in: data.map((p) => p.method) },
@@ -19,7 +19,7 @@ export async function getOrCreateListPermissionServiceWithTransaction(data = [],
   const newPermissions = data.filter((p) => !existingSet.has(`${p.method} ${p.endpoint}`));
 
   if (newPermissions.length > 0) {
-    const created = await PermissionModel.insertMany(newPermissions, { session });
+    const created = await PermissionModel.insertMany(newPermissions, { session, ordered: true });
     return [...existingPermissions, ...created];
   }
 
@@ -27,27 +27,45 @@ export async function getOrCreateListPermissionServiceWithTransaction(data = [],
 }
 
 /**
- * Get all permissions
- * @param {*} param0
+ * Get and count permissions
+ * @param {object} filters
+ * @param {number} skip
+ * @param {number} limit
+ * @param {string} sortBy
+ * @param {string} sortOrder
  * @returns
  */
-export async function getAllPermissionsService(payload) {
-  const { filters = {}, page, limit, sortBy, sortOrder } = payload;
+export async function getAndCountPermissionsService(filters, skip, limit, sortBy, sortOrder) {
+  const totalCount = await PermissionModel.countDocuments(filters);
 
-  let queryOptions = {};
-  queryOptions = extendQueryOptionsWithPagination({ page, limit }, queryOptions);
-  queryOptions = extendQueryOptionsWithSort({ sortBy, sortOrder }, queryOptions);
+  const queryOptions = {
+    ...extendQueryOptionsWithPagination(skip, limit),
+    ...extendQueryOptionsWithSort(sortBy, sortOrder),
+  };
 
-  return PermissionModel.find(filters, PERMISSION_SELECTED_FIELDS, queryOptions).lean();
+  const list = await PermissionModel.find(filters, PERMISSION_SELECTED_FIELDS, queryOptions).lean();
+
+  return [totalCount, list];
 }
 
 /**
- * Count all permissions
- * @param {*} filters
+ * Get permissions
+ * @param {object} filters
+ * @param {number} skip
+ * @param {number} limit
+ * @param {string} sortBy
+ * @param {string} sortOrder
  * @returns
  */
-export async function countAllPermissionsService(filters) {
-  return PermissionModel.countDocuments(filters);
+export async function getPermissionsService(filters, skip, limit, sortBy, sortOrder) {
+  const queryOptions = {
+    ...extendQueryOptionsWithPagination(skip, limit),
+    ...extendQueryOptionsWithSort(sortBy, sortOrder),
+  };
+
+  const list = await PermissionModel.find(filters, PERMISSION_SELECTED_FIELDS, queryOptions).lean();
+
+  return list;
 }
 
 /**

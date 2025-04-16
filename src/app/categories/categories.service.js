@@ -3,44 +3,91 @@ import { CategoryModel } from '#src/app/categories/models/category.model';
 import { REGEX_PATTERNS } from '#src/core/constant';
 import { makeSlug } from '#src/utils/string.util';
 import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
-import { CATEGORY_SELECTED_FIELDS } from '#src/app/categories/categories.constant';
+import { CATEGORY_SELECTED_FIELDS, MAXIMUM_CHILDREN_CATEGORY_LEVEL } from '#src/app/categories/categories.constant';
 
 /**
- * Create category instance
- * @param {*} data
+ * New category instance
+ * @param {object} data
  * @returns
  */
-export async function createCategoryService(data) {
-  return CategoryModel.create({ ...data, slug: makeSlug(data.name) });
+export async function newCategoryService(data) {
+  return new CategoryModel({ ...data, slug: makeSlug(data.name) });
 }
 
 /**
- * Get all categories
- * @param {*} query
+ * Save category
+ * @param {CategoryModel} categoryDoc
  * @returns
  */
-export async function getAllCategoriesService(payload) {
-  const { filters = {}, page, limit, sortBy, sortOrder } = payload;
-
-  let queryOptions = {};
-  queryOptions = extendQueryOptionsWithPagination({ page, limit }, queryOptions);
-  queryOptions = extendQueryOptionsWithSort({ sortBy, sortOrder }, queryOptions);
-
-  return CategoryModel.find(filters, CATEGORY_SELECTED_FIELDS, queryOptions).lean();
+export async function saveCategoryService(categoryDoc) {
+  return categoryDoc.save();
 }
 
 /**
- * Count all categories
- * @param {*} filters
+ * Get and count categories
+ * @param {object} filters
+ * @param {number} skip
+ * @param {number} limit
+ * @param {string} sortBy
+ * @param {string} sortOrder
  * @returns
  */
-export async function countAllCategoriesService(filters) {
-  return CategoryModel.countDocuments(filters);
+export async function getAndCountCategoriesService(parentId = null, filters, skip, limit, sortBy, sortOrder) {
+  const queryOptions = {
+    ...extendQueryOptionsWithPagination(skip, limit),
+    ...extendQueryOptionsWithSort(sortBy, sortOrder),
+  };
+
+  // Get List
+  const list = await CategoryModel.aggregate([
+    { $match: { parent: parentId } },
+    {
+      $lookup: {
+        from: 'categories',
+        localField: '_id',
+        foreignField: 'parent',
+        as: 'children',
+        pipeline: [{ $match: filters }],
+      },
+    },
+    { $match: { $or: [filters, { 'children.0': { $exists: true } }] } },
+    { $project: { ...CATEGORY_SELECTED_FIELDS, children: CATEGORY_SELECTED_FIELDS } },
+  ])
+    .skip(queryOptions.skip)
+    .limit(queryOptions.limit)
+    .sort(queryOptions.sort);
+
+  // Count
+  const category = await CategoryModel.aggregate([
+    { $match: { parent: parentId } },
+    {
+      $lookup: {
+        from: 'categories',
+        localField: '_id',
+        foreignField: 'parent',
+        as: 'children',
+        pipeline: [{ $match: filters }],
+      },
+    },
+    { $match: { $or: [filters, { 'children.0': { $exists: true } }] } },
+    { $count: 'totalCount' },
+  ]);
+
+  return [category.length > 0 ? category[0]?.totalCount : 0, list];
+}
+
+/**
+ * Count subcategories in parent
+ * @param {*} parentId
+ * @returns
+ */
+export async function countSubcategoriesService(parentId) {
+  return CategoryModel.countDocuments({ parent: parentId });
 }
 
 /**
  * Get one category by id
- * @param {*} id
+ * @param {string} id
  * @returns
  */
 export async function getCategoryByIdService(id) {
@@ -86,7 +133,7 @@ export async function removeCategoryByIdService(id) {
 }
 
 /**
- * Check is exist permission name
+ * Check is exist category name
  * @param {*} name
  * @param {*} skipId
  * @returns

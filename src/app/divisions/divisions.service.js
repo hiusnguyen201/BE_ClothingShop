@@ -1,4 +1,4 @@
-import pkg from "vietnam-provinces";
+import pkg from 'vietnam-provinces';
 const { provinces, districts, wards } = pkg;
 
 const provincesMap = new Map(provinces.map((item) => [item.code, item]));
@@ -10,9 +10,7 @@ districts.forEach((district) => {
   if (!districtsGroupedByProvinceCode.has(district.province_code)) {
     districtsGroupedByProvinceCode.set(district.province_code, []);
   }
-  districtsGroupedByProvinceCode
-    .get(district.province_code)
-    .push(district);
+  districtsGroupedByProvinceCode.get(district.province_code).push(district);
 });
 
 const wardsGroupedByDistrictCode = new Map();
@@ -29,8 +27,7 @@ export const getAllWardsService = () => wards;
 
 export const getAllDistrictsByProvinceCodeService = (provinceCode) =>
   districtsGroupedByProvinceCode.get(provinceCode) || [];
-export const getAllWardsByDistrictCodeService = (districtCode) =>
-  wardsGroupedByDistrictCode.get(districtCode) || [];
+export const getAllWardsByDistrictCodeService = (districtCode) => wardsGroupedByDistrictCode.get(districtCode) || [];
 
 export const getProvinceByCodeService = (code) => provincesMap.get(code);
 export const getDistrictByCodeService = (code) => districtsMap.get(code);

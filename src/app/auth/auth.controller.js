@@ -68,7 +68,7 @@ export const refreshTokenController = async (req, res) => {
   return ApiResponse.success(userDto, 'Refresh token successful');
 };
 
-export const loginAdminController = async (req, res) => {
+export const loginAdminController = async (req) => {
   const { email, password } = req.body;
 
   const user = await authenticateUserService(email, password);

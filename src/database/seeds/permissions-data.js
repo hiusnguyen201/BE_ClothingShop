@@ -27,7 +27,7 @@ const USERS_PERMISSIONS = [
     description: 'Edit user',
     module: 'users',
     endpoint: '/api/users/update-user-by-id/:userId',
-    method: 'PATCH',
+    method: 'PUT',
   },
   {
     name: 'remove:user',
@@ -65,7 +65,7 @@ const ROLES_PERMISSIONS = [
     description: 'Edit role',
     module: 'roles',
     endpoint: '/api/roles/update-role-by-id/:roleId',
-    method: 'PATCH',
+    method: 'PUT',
   },
   {
     name: 'remove:role',
@@ -75,18 +75,32 @@ const ROLES_PERMISSIONS = [
     method: 'DELETE',
   },
   {
-    name: 'read:role_permissions',
-    description: 'View list role permissions',
+    name: 'read:assigned_role_permissions',
+    description: 'View list assigned role permissions',
     module: 'roles',
-    endpoint: '/api/roles/get-role-permissions-by-id',
+    endpoint: '/api/roles/:roleId/assigned-permissions',
     method: 'GET',
   },
   {
-    name: 'edit:role_permissions',
-    description: 'Edit role permissions',
+    name: 'read:unassigned_role_permissions',
+    description: 'View list unassigned role permissions',
     module: 'roles',
-    endpoint: '/api/roles/update-role-permissions-by-id',
-    method: 'PUT',
+    endpoint: '/api/roles/:roleId/unassigned-permissions',
+    method: 'GET',
+  },
+  {
+    name: 'add:role_permissions',
+    description: 'Add role permission',
+    module: 'roles',
+    endpoint: '/api/roles/:roleId/permissions',
+    method: 'PATCH',
+  },
+  {
+    name: 'remove:role_permissions',
+    description: 'Remove role permission',
+    module: 'roles',
+    endpoint: '/api/roles/:roleId/permissions/:permissionId',
+    method: 'DELETE',
   },
 ];
 
@@ -127,7 +141,7 @@ const CATEGORIES_PERMISSIONS = [
     description: 'Edit category',
     module: 'categories',
     endpoint: '/api/categories/update-category-by-id/:categoryId',
-    method: 'PATCH',
+    method: 'PUT',
   },
   {
     name: 'remove:category',
@@ -135,6 +149,13 @@ const CATEGORIES_PERMISSIONS = [
     module: 'categories',
     endpoint: '/api/categories/remove-category-by-id/:categoryId',
     method: 'DELETE',
+  },
+  {
+    name: 'get:sub_categories',
+    description: 'Get list subcategories',
+    module: 'categories',
+    endpoint: '/api/categories/:categoryId/subcategories',
+    method: 'GET',
   },
 ];
 
@@ -163,58 +184,63 @@ const CUSTOMERS_PERMISSIONS = [
   {
     name: 'edit:customer',
     description: 'Edit customer',
-    name: 'Update customer by id',
     module: 'customers',
     endpoint: '/api/customers/update-customer-by-id/:customerId',
-    method: 'PATCH',
+    method: 'PUT',
   },
   {
     name: 'remove:customer',
     description: 'Remove customer',
-    name: 'Remove customer by id',
     module: 'customers',
     endpoint: '/api/customers/remove-customer-by-id/:customerId',
     method: 'DELETE',
   },
 ];
 
-// const VOUCHERS_PERMISSIONS = [
-//   {
-//     name: 'view:vouchers',
-//     description: 'View list voucher',
-//     module: 'vouchers',
-//     endpoint: '/api/vouchers/get-vouchers',
-//     method: 'GET',
-//   },
-//   {
-//     name: 'view:details:voucher',
-//     description: 'View details voucher',
-//     module: 'vouchers',
-//     endpoint: '/api/vouchers/get-voucher-by-id/:voucherId',
-//     method: 'GET',
-//   },
-//   {
-//     name: 'create:voucher',
-//     description: 'Create voucher',
-//     module: 'vouchers',
-//     endpoint: '/api/vouchers/create-voucher',
-//     method: 'POST',
-//   },
-//   {
-//     name: 'edit:voucher',
-//     description: 'Edit voucher',
-//     module: 'vouchers',
-//     endpoint: '/api/vouchers/update-voucher-by-id/:voucherId',
-//     method: 'PATCH',
-//   },
-//   {
-//     name: 'remove:voucher',
-//     description: 'Remove voucher',
-//     module: 'vouchers',
-//     endpoint: '/api/vouchers/remove-voucher-by-id/:voucherId',
-//     method: 'DELETE',
-//   },
-// ];
+const PRODUCTS_PERMISSIONS = [
+  {
+    name: 'read:products',
+    description: 'View list product',
+    module: 'products',
+    endpoint: '/api/products/get-products',
+    method: 'GET',
+  },
+  {
+    name: 'read:details:product',
+    description: 'View details product',
+    module: 'products',
+    endpoint: '/api/products/get-product-by-id/:productId',
+    method: 'GET',
+  },
+  {
+    name: 'create:product',
+    description: 'Create product',
+    module: 'products',
+    endpoint: '/api/products/create-product',
+    method: 'POST',
+  },
+  {
+    name: 'edit:product_info',
+    description: 'Edit product info',
+    module: 'products',
+    endpoint: '/api/products/update-product-info/:productId',
+    method: 'PUT',
+  },
+  {
+    name: 'edit:product_variants',
+    description: 'Edit product variants',
+    module: 'products',
+    endpoint: '/api/products/update-product-variants/:productId',
+    method: 'PUT',
+  },
+  {
+    name: 'remove:product',
+    description: 'Remove product',
+    module: 'products',
+    endpoint: '/api/products/remove-product-by-id/:productId',
+    method: 'DELETE',
+  },
+];
 
 const ORDER_PERMISSIONS = [
   {
@@ -232,6 +258,6 @@ export const PERMISSIONS_LIST = [
   ...PERMISSIONS_PERMISSIONS,
   ...CATEGORIES_PERMISSIONS,
   ...CUSTOMERS_PERMISSIONS,
+  ...PRODUCTS_PERMISSIONS,
   ...ORDER_PERMISSIONS,
-  // ...VOUCHERS_PERMISSIONS,
 ];

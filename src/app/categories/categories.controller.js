@@ -1,37 +1,46 @@
 'use strict';
 import { HttpException } from '#src/core/exception/http-exception';
 import {
-  createCategoryService,
-  getAllCategoriesService,
   getCategoryByIdService,
   updateCategoryInfoByIdService,
   removeCategoryByIdService,
   checkExistCategoryNameService,
-  countAllCategoriesService,
+  getAndCountCategoriesService,
+  newCategoryService,
+  saveCategoryService,
+  countSubcategoriesService,
 } from '#src/app/categories/categories.service';
 import { CategoryDto } from '#src/app/categories/dtos/category.dto';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
 import { Code } from '#src/core/code/Code';
+import { MAXIMUM_CHILDREN_CATEGORY_LEVEL } from '#src/app/categories/categories.constant';
 
-const MAXIMUM_CHILDREN_CATEGORY_LEVEL = 2;
+export const isExistCategoryNameController = async (req) => {
+  const { name } = req.body;
+
+  const isExistName = await checkExistCategoryNameService(name);
+
+  return ApiResponse.success(isExistName, isExistName ? 'Category name exists' : 'Category name does not exist');
+};
 
 export const createCategoryController = async (req) => {
   const { name, parentId, image } = req.body;
-  let level = 1;
 
   const isExistName = await checkExistCategoryNameService(name);
   if (isExistName) {
     throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Category name already exists' });
   }
 
+  const category = await newCategoryService({ ...req.body, level: 1 });
+
   if (parentId) {
     const existParent = await getCategoryByIdService(parentId);
-
     if (!existParent) {
       throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Parent category not found' });
     }
+    category.parent = existParent._id;
 
     const nextCategoryLevel = existParent.level + 1;
     if (nextCategoryLevel > MAXIMUM_CHILDREN_CATEGORY_LEVEL) {
@@ -40,45 +49,36 @@ export const createCategoryController = async (req) => {
         overrideMessage: `Parent category has a maximum ${MAXIMUM_CHILDREN_CATEGORY_LEVEL} levels only`,
       });
     }
-    level = nextCategoryLevel;
+    category.level = nextCategoryLevel;
   }
 
-  if (image instanceof Buffer) {
+  if (image) {
     const result = await uploadImageBufferService({ buffer: req.file.buffer, folderName: 'categories-image' });
-    req.body.image = result.url;
+    category.image = result.url;
   }
 
-  const category = await createCategoryService({ ...req.body, level });
+  await saveCategoryService(category);
 
   const categoryDto = ModelDto.new(CategoryDto, category);
   return ApiResponse.success(categoryDto, 'Create category successful');
 };
 
 export const getAllCategoriesController = async (req) => {
-  const { keyword, limit, page, sortBy, sortOrder } = req.query;
+  const { keyword = '', page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
 
+  const searchFields = ['name'];
   const filters = {
-    $or: [{ name: { $regex: keyword, $options: 'i' } }],
+    $or: searchFields.map((field) => ({
+      [field]: { $regex: keyword, $options: 'i' },
+    })),
   };
 
-  const totalCount = await countAllCategoriesService(filters);
-
-  const categories = await getAllCategoriesService({
-    filters,
-    page,
-    limit,
-    sortBy,
-    sortOrder,
-  });
+  const skip = (page - 1) * limit;
+  const [totalCount, categories] = await getAndCountCategoriesService(null, filters, skip, limit, sortBy, sortOrder);
 
   const categoriesDto = ModelDto.newList(CategoryDto, categories);
-  return ApiResponse.success(
-    {
-      totalCount,
-      list: categoriesDto,
-    },
-    'Get all categories successful',
-  );
+
+  return ApiResponse.success({ totalCount, list: categoriesDto }, 'Get all categories successful');
 };
 
 export const getCategoryByIdController = async (req) => {
@@ -101,14 +101,12 @@ export const updateCategoryByIdController = async (req) => {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Category not found' });
   }
 
-  if (name) {
-    const isExistName = await checkExistCategoryNameService(name, categoryId);
-    if (isExistName) {
-      throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Category name already exist' });
-    }
+  const isExistName = await checkExistCategoryNameService(name, categoryId);
+  if (isExistName) {
+    throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Category name already exist' });
   }
 
-  if (image) {
+  if (image instanceof Buffer) {
     const result = await uploadImageBufferService({ buffer: req.file.buffer, folderName: 'categories-image' });
     req.body.image = result.url;
   }
@@ -126,15 +124,43 @@ export const removeCategoryByIdController = async (req) => {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Category not found' });
   }
 
+  const subcategoryCount = await countSubcategoriesService(existCategory._id);
+  if (subcategoryCount > 0) {
+    throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Category includes subcategories' });
+  }
+
   await removeCategoryByIdService(categoryId);
 
   return ApiResponse.success({ id: existCategory._id }, 'Remove category successful');
 };
 
-export const isExistCategoryNameController = async (req) => {
-  const { name } = req.body;
+export const getAllSubcategoriesController = async (req) => {
+  const { categoryId } = req.params;
+  const existCategory = await getCategoryByIdService(categoryId);
+  if (!existCategory) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Category not found' });
+  }
 
-  const isExistName = await checkExistCategoryNameService(name);
+  const { keyword = '', page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
 
-  return ApiResponse.success(isExistName, isExistName ? 'Category name exists' : 'Category name does not exist');
+  const searchFields = ['name'];
+  const filters = {
+    $or: searchFields.map((field) => ({
+      [field]: { $regex: keyword, $options: 'i' },
+    })),
+  };
+
+  const skip = (page - 1) * limit;
+  const [totalCount, categories] = await getAndCountCategoriesService(
+    existCategory._id,
+    filters,
+    skip,
+    limit,
+    sortBy,
+    sortOrder,
+  );
+
+  const categoriesDto = ModelDto.newList(CategoryDto, categories);
+
+  return ApiResponse.success({ totalCount, list: categoriesDto }, 'Get all subcategories successful');
 };

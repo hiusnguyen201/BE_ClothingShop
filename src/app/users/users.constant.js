@@ -17,6 +17,7 @@ export const USER_SELECTED_FIELDS = {
   email: true,
   phone: true,
   gender: true,
+  role: true,
   verifiedAt: true,
   lastLoginAt: true,
 };

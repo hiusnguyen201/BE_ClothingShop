@@ -1,21 +1,23 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
-export const OPTIONS_MODEL = "options";
+export const OPTIONS_MODEL = 'options';
 
 const OptionSchema = new Schema(
   {
     name: {
       type: String,
       required: true,
-      unique: true
+      unique: true,
     },
 
     // FK
-    optionValues: [{
-      type: Schema.Types.ObjectId,
-      ref: "Option_Value"
-    }]
+    optionValues: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Option_Value',
+      },
+    ],
   },
   {
     versionKey: false,
@@ -23,8 +25,8 @@ const OptionSchema = new Schema(
     _id: true,
     id: false,
     collection: OPTIONS_MODEL,
-  }
+  },
 );
 
-const OptionModel = mongoose.model("Option", OptionSchema);
+const OptionModel = mongoose.model('Option', OptionSchema);
 export { OptionModel };

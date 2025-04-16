@@ -1,12 +1,15 @@
 'use strict';
 import {
   createUserService,
-  getAllUsersService,
   getUserByIdService,
   removeUserByIdService,
   checkExistEmailService,
   updateUserInfoByIdService,
-  countAllUsersService,
+  getAndCountUserPermissionsService,
+  addUserPermissionsService,
+  removeUserPermissionByIdService,
+  getAndCountUsersService,
+  getUserPermissionService,
 } from '#src/app/users/users.service';
 import { getRoleByIdService } from '#src/app/roles/roles.service';
 import { sendPasswordService } from '#src/modules/mailer/mailer.service';
@@ -17,6 +20,8 @@ import { ApiResponse } from '#src/core/api/ApiResponse';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { UserDto } from '#src/app/users/dtos/user.dto';
 import { Code } from '#src/core/code/Code';
+import { PermissionDto } from '#src/app/permissions/dtos/permission.dto';
+import { getPermissionByIdService, getPermissionsService } from '#src/app/permissions/permissions.service';
 
 export const createUserController = async (req) => {
   const { email, roleId } = req.body;
@@ -31,6 +36,7 @@ export const createUserController = async (req) => {
     if (!existRole) {
       throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' });
     }
+    req.body.role = existRole._id;
   }
 
   const password = randomStr(32);
@@ -47,29 +53,31 @@ export const createUserController = async (req) => {
 };
 
 export const getAllUsersController = async (req) => {
-  const { keyword, limit, page, sortBy, sortOrder, gender } = req.query;
+  const {
+    keyword = '',
+    page = 1,
+    limit = 10,
+    sortBy = 'createdAt',
+    sortOrder = 'desc',
+    roleId = null,
+    gender,
+  } = req.query;
 
+  const searchFields = ['name', 'email', 'phone'];
   const filters = {
-    $or: [
-      { name: { $regex: keyword, $options: 'i' } },
-      { email: { $regex: keyword, $options: 'i' } },
-      { phone: { $regex: keyword, $options: 'i' } },
-    ],
+    $or: searchFields.map((field) => ({
+      [field]: { $regex: keyword, $options: 'i' },
+    })),
     ...(gender ? { gender } : {}),
+    ...(roleId ? { role: roleId } : {}),
     type: USER_TYPE.USER,
   };
 
-  const totalCount = await countAllUsersService(filters);
-
-  const users = await getAllUsersService({
-    filters: filters,
-    page,
-    limit,
-    sortBy,
-    sortOrder,
-  });
+  const skip = (page - 1) * limit;
+  const [totalCount, users] = await getAndCountUsersService(filters, skip, limit, sortBy, sortOrder);
 
   const usersDto = ModelDto.newList(UserDto, users);
+
   return ApiResponse.success({ totalCount, list: usersDto });
 };
 
@@ -93,11 +101,9 @@ export const updateUserByIdController = async (req) => {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'User not found' });
   }
 
-  if (email) {
-    const isExistEmail = await checkExistEmailService(email, userId);
-    if (isExistEmail) {
-      throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Email already exist' });
-    }
+  const isExistEmail = await checkExistEmailService(email, userId);
+  if (isExistEmail) {
+    throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Email already exist' });
   }
 
   if (roleId) {
@@ -107,7 +113,7 @@ export const updateUserByIdController = async (req) => {
     }
   }
 
-  const updatedUser = await updateUserInfoByIdService(userId, req.body);
+  const updatedUser = await updateUserInfoByIdService(userId, { ...req.body, role: roleId });
 
   const userDto = ModelDto.new(UserDto, updatedUser);
   return ApiResponse.success(userDto);
@@ -132,4 +138,84 @@ export const checkExistEmailController = async (req) => {
   const isExistEmail = await checkExistEmailService(email);
 
   return ApiResponse.success(isExistEmail);
+};
+
+export const getListUserPermissionsController = async (req) => {
+  const { userId } = req.params;
+
+  const existUser = await getUserByIdService(userId, { type: USER_TYPE.USER });
+  if (!existUser) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'User not found' });
+  }
+
+  const { keyword = '', page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+
+  const searchFields = ['name', 'description', 'module'];
+  const filters = {
+    $or: searchFields.map((field) => ({
+      [field]: { $regex: keyword, $options: 'i' },
+    })),
+  };
+
+  const skip = (page - 1) * limit;
+  const [totalCount, permissions] = await getAndCountUserPermissionsService(
+    userId,
+    filters,
+    skip,
+    limit,
+    sortBy,
+    sortOrder,
+  );
+
+  const permissionsDto = ModelDto.newList(PermissionDto, permissions);
+  return ApiResponse.success({ totalCount, list: permissionsDto }, 'Get all user permissions successful');
+};
+
+export const addUserPermissionsController = async (req) => {
+  const { userId } = req.params;
+  const { permissionIds } = req.body;
+
+  const user = await getUserByIdService(userId, { type: USER_TYPE.USER });
+  if (!user) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'User not found' });
+  }
+
+  const filters = {
+    _id: { $in: permissionIds },
+  };
+
+  const permissions = await getPermissionsService(filters);
+
+  await addUserPermissionsService(
+    user._id,
+    permissions.filter(Boolean).map((item) => item._id),
+  );
+
+  const permissionsDto = ModelDto.newList(PermissionDto, permissions);
+  return ApiResponse.success(permissionsDto, 'Add user permissions successful');
+};
+
+export const removeUserPermissionController = async (req) => {
+  const { userId, permissionId } = req.params;
+
+  const userPermission = await getUserPermissionService(userId, permissionId);
+  if (!userPermission) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'User not found' });
+  }
+
+  const permission = await getPermissionByIdService(permissionId);
+  if (!permission) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Permission not found' });
+  }
+
+  if (userPermission.permissions.length === 0) {
+    throw HttpException.new({
+      code: Code.RESOURCE_NOT_FOUND,
+      overrideMessage: 'Permission does not exist in the user',
+    });
+  }
+
+  await removeUserPermissionByIdService(userPermission._id, permission._id);
+
+  return ApiResponse.success({ id: permission._id }, 'Remove user permission successful');
 };

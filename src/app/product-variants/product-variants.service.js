@@ -1,8 +1,7 @@
-import { isValidObjectId } from "mongoose";
-import { ProductVariantModel } from "#src/app/product-variants/models/product-variants.model";
+import { isValidObjectId } from 'mongoose';
+import { ProductVariantModel } from '#src/app/product-variants/models/product-variants.model';
 
-const SELECTED_FIELDS =
-  "_id quantity price sku image sold variantValues product productDiscount createdAt updatedAt";
+const SELECTED_FIELDS = '_id quantity price sku image sold variantValues product productDiscount createdAt updatedAt';
 
 /**
  * New product variant instance
@@ -19,9 +18,8 @@ export function newProductVariantsService(data) {
  * @returns
  */
 export function saveProductVariantsService(data, session) {
-  return ProductVariantModel.insertMany(data, { session });
+  return ProductVariantModel.insertMany(data, { session, ordered: true });
 }
-
 
 /**
  * Create product variant
@@ -31,7 +29,7 @@ export function saveProductVariantsService(data, session) {
 export async function createProductVariantsService(data, session) {
   return await ProductVariantModel.create(data, {
     session,
-    ordered: true
+    ordered: true,
   });
 }
 
@@ -47,11 +45,7 @@ export async function getAllProductVariantsService({
   limit = 10,
   selectFields = SELECTED_FIELDS,
 }) {
-  return ProductVariantModel.find(filters)
-    .skip(offset)
-    .limit(limit)
-    .select(selectFields)
-    .sort({ createdAt: -1 });
+  return ProductVariantModel.find(filters).skip(offset).limit(limit).select(selectFields).sort({ createdAt: -1 });
 }
 
 // /**
@@ -69,10 +63,7 @@ export async function getAllProductVariantsService({
  * @param {*} selectFields
  * @returns
  */
-export async function getProductVariantByIdService(
-  id,
-  selectFields = SELECTED_FIELDS
-) {
+export async function getProductVariantByIdService(id, selectFields = SELECTED_FIELDS) {
   if (!id) return null;
   const filter = {};
 
@@ -87,7 +78,7 @@ export async function getProductVariantByIdService(
     .populate({
       path: 'product',
       model: 'Product',
-      select: '-productVariants'
+      select: '-productVariants',
     })
     .populate({
       path: 'variantValues',
@@ -96,17 +87,17 @@ export async function getProductVariantByIdService(
         {
           path: 'option',
           model: 'Option',
-          select: '-optionValues'
+          select: '-optionValues',
         },
         {
-          path: "optionValue",
-          model: 'Option_Value'
-        }
+          path: 'optionValue',
+          model: 'Option_Value',
+        },
       ],
     })
     .populate({
       path: 'productDiscount',
-      model: 'Product_Discount'
+      model: 'Product_Discount',
     });
 }
 
@@ -119,7 +110,7 @@ export async function getProductVariantByIdService(
 export async function updateProductVariantByIdService(id, data, session) {
   return await ProductVariantModel.findByIdAndUpdate(id, data, {
     new: true,
-    session
+    session,
   }).select(SELECTED_FIELDS);
 }
 
@@ -139,12 +130,16 @@ export async function removeProductVariantByIdService(id) {
  * @returns
  */
 export async function updateProductVariantValueByIdService(id, data, session) {
-  return await ProductVariantModel.findByIdAndUpdate(id, {
-    $push: { variantValues: data }
-  }, {
-    new: true,
-    session
-  }).select(SELECTED_FIELDS);
+  return await ProductVariantModel.findByIdAndUpdate(
+    id,
+    {
+      $push: { variantValues: data },
+    },
+    {
+      new: true,
+      session,
+    },
+  ).select(SELECTED_FIELDS);
 }
 
 /**
@@ -154,17 +149,20 @@ export async function updateProductVariantValueByIdService(id, data, session) {
  * @returns
  */
 export async function updateProductDiscountByProductVariantIdService(id, productDiscountId, session) {
-  return await ProductVariantModel.findByIdAndUpdate(id, {
-    productDiscount: productDiscountId
-  }, {
-    new: true,
-    session
-  }
+  return await ProductVariantModel.findByIdAndUpdate(
+    id,
+    {
+      productDiscount: productDiscountId,
+    },
+    {
+      new: true,
+      session,
+    },
   ).select(SELECTED_FIELDS);
 }
 
 export async function removeProductVariantsByProductIdService(productId, session) {
-  return await ProductVariantModel.deleteMany({ product: productId }, { session })
+  return await ProductVariantModel.deleteMany({ product: productId }, { session });
 }
 
 /**
@@ -174,11 +172,14 @@ export async function removeProductVariantsByProductIdService(productId, session
  * @returns
  */
 export async function updateProductVariantQuantityByIdService(id, quantity, session) {
-  return await ProductVariantModel.findByIdAndUpdate(id, {
-    quantity: quantity
-  }, {
-    new: true,
-    session
-  }
+  return await ProductVariantModel.findByIdAndUpdate(
+    id,
+    {
+      quantity: quantity,
+    },
+    {
+      new: true,
+      session,
+    },
   ).select(SELECTED_FIELDS);
 }

@@ -7,19 +7,13 @@ import rolesRouter from '#src/routers/roles.router';
 import permissionsRouter from '#src/routers/permissions.router';
 import customersRouter from '#src/routers/customers.router';
 import categoriesRouter from '#src/routers/categories.router';
-import vouchersRouter from '#src/routers/vouchers.router';
 import accountRouter from '#src/routers/account.router';
+import productsRouter from '#src/routers/products.router';
+import optionsRouter from '#src/routers/options.router';
 import ordersRouter from '#src/routers/orders.route';
 import paymentsRouter from '#src/routers/payments.route';
-// import orderDetailsRouter from '#src/routers/order-details.router';
-import productsRouter from '#src/routers/products.router';
 import shippingAddressRouter from '#src/routers/shipping-address.router';
-import productDiscountsRouter from "#src/routers/product-discounts.route";
-import cartsRouter from "#src/routers/carts.router";
-// import productReviewsRouter from '#src/routers/product-reviews.route';
-// import reviewFeedbacksRouter from '#src/routers/review-feedbacks.route';
-// import tagsRouter from "#src/routers/tags.route";
-import { OptionValueModel } from "#src/app/option-values/models/option-value.model";
+import cartsRouter from '#src/routers/carts.router';
 
 router.get('/ping', () => {
   return 'Hello world! PING 1';
@@ -39,30 +33,16 @@ router.use('/categories', categoriesRouter);
 
 router.use('/customers', customersRouter);
 
-router.use('/vouchers', vouchersRouter);
+router.use('/options', optionsRouter);
+
+router.use('/products', productsRouter);
 
 router.use('/orders', ordersRouter);
 
 router.use('/payments', paymentsRouter);
 
-// router.use('/order-details', orderDetailsRouter);
-
-router.use('/products', productsRouter);
-
 router.use('/shipping-address', shippingAddressRouter);
 
-router.use("/products", productsRouter);
-
-router.use("/product-discounts", productDiscountsRouter);
-
-router.use("/carts", cartsRouter);
-
-// router.use("/product-reviews", productReviewsRouter);
-
-// router.use("/review-feedbacks", reviewFeedbacksRouter);
-
-// router.use("/product-variants", productVariantsRouter);
-
-// router.use("/tags", tagsRouter);
+router.use('/carts', cartsRouter);
 
 export default router;

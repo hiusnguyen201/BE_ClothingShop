@@ -1,100 +1,66 @@
-import { HttpException } from "#src/core/exception/http-exception";
-
+import { HttpException } from '#src/core/exception/http-exception';
 import {
   getAllProductsService,
   getProductByIdService,
-  updateProductByIdService,
+  updateProductInfoByIdService,
   removeProductByIdService,
   checkExistProductNameService,
   countAllProductsService,
-  newProductService,
-} from "#src/app/products/products.service";
-import {
-  getOptionByIdService
-} from "#src/app/options/options.service";
+  createProductService,
+  updateProductVariantsByIdService,
+} from '#src/app/products/products.service';
+import { getOptionByIdService } from '#src/app/options/options.service';
 import {
   newProductVariantsService,
   removeProductVariantsByProductIdService,
   saveProductVariantsService,
-} from "#src/app/product-variants/product-variants.service";
-import { Code } from "#src/core/code/Code";
-import { ProductDto } from "#src/app/products/dtos/product.dto";
-import { GetProductDto } from "#src/app/products/dtos/get-product.dto";
-import { ApiResponse } from "#src/core/api/ApiResponse";
-import { ModelDto } from "#src/core/dto/ModelDto";
-import { getCategoryByIdService } from "#src/app/categories/categories.service";
-import {
-  uniqueProductVariants
-} from "#src/utils/object.util";
-import { TransactionalServiceWrapper } from "#src/core/transaction/TransactionalServiceWrapper";
+} from '#src/app/product-variants/product-variants.service';
+import { Code } from '#src/core/code/Code';
+import { ProductDto } from '#src/app/products/dtos/product.dto';
+import { ApiResponse } from '#src/core/api/ApiResponse';
+import { ModelDto } from '#src/core/dto/ModelDto';
+import { getCategoryByIdService } from '#src/app/categories/categories.service';
+import { makeUniqueProductVariants } from '#src/utils/object.util';
+import { TransactionalServiceWrapper } from '#src/core/transaction/TransactionalServiceWrapper';
+import { uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
+import { PRODUCT_STATUS } from '#src/app/products/products.constant';
 
 export const createProductController = async (req) => {
-  return await TransactionalServiceWrapper.execute(async (session) => {
+  const { name, category, subCategory, thumbnail } = req.body;
 
-    let { name, category, subCategory, productVariants } = req.body;
-    delete req.body.productVariants;
+  const isExistProductName = await checkExistProductNameService(name);
+  if (isExistProductName) {
+    throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Product name already exist' });
+  }
 
-    const isExistProductName = await checkExistProductNameService(name);
-    if (isExistProductName) {
-      throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: "Product name already exist" });
+  const isExistCategory = await getCategoryByIdService(category);
+  if (!isExistCategory) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Category not found' });
+  }
+
+  if (subCategory) {
+    const isExistSubCategory = await getCategoryByIdService(subCategory);
+    if (!isExistSubCategory) {
+      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Subcategory not found' });
     }
+  }
 
-    const isExistCategory = await getCategoryByIdService(category);
-    if (!isExistCategory) {
-      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: "Category not found" });
-    }
+  if (thumbnail instanceof Buffer) {
+    const result = await uploadImageBufferService({ buffer: thumbnail, folderName: 'product-thumbnails' });
+    req.body.thumbnail = result.url;
+  }
 
-    if (subCategory) {
-      const isExistSubCategory = await getCategoryByIdService(subCategory);
-      if (!isExistSubCategory) {
-        throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: "Sub category not found" });
-      }
-    }
+  const newProduct = await createProductService(req.body);
 
-    const newProduct = newProductService(req.body)
-    productVariants = uniqueProductVariants(productVariants);
-
-    const productVariantsInstance = await Promise.all(productVariants.map(async (productVariant) => {
-      const { variantValues, quantity, price, sku, image } = productVariant;
-
-      const productVariantInstance = newProductVariantsService({
-        quantity,
-        price,
-        sku,
-        product: newProduct._id
-      })
-
-      await Promise.all(
-        variantValues.map(async (variantValue) => {
-          const option = await getOptionByIdService(variantValue.option, { _id: variantValue.optionValue });
-          if (!option) {
-            throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: "Option or Option value not found" });
-          }
-        })
-      )
-
-      productVariantInstance.variantValues = variantValues;
-      return productVariantInstance;
-    }))
-
-    const createdProductVariants = await saveProductVariantsService(productVariantsInstance)
-
-    newProduct.productVariants = createdProductVariants.map((variant) => variant._id);
-
-    const product = await newProduct.save({ session });
-
-    const productDto = ModelDto.new(ProductDto, product);
-    return ApiResponse.success(productDto);
-  })
+  const productDto = ModelDto.new(ProductDto, newProduct);
+  return ApiResponse.success(productDto);
 };
 
 export const getAllProductsController = async (req) => {
   const { keyword, category, limit, page, sortBy, sortOrder } = req.query;
 
   const filterOptions = {
-    $or: [
-      { name: { $regex: keyword, $options: "i" } },
-    ],
+    $or: [{ name: { $regex: keyword, $options: 'i' } }],
     ...(category ? { category } : {}),
   };
 
@@ -104,7 +70,7 @@ export const getAllProductsController = async (req) => {
     page,
     limit,
     sortBy,
-    sortOrder
+    sortOrder,
   });
 
   const productsDto = ModelDto.newList(ProductDto, products);
@@ -116,87 +82,149 @@ export const getProductByIdController = async (req) => {
   const existProduct = await getProductByIdService(productId);
 
   if (!existProduct) {
-    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: "Product not found" });
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product not found' });
   }
 
-  const productDto = ModelDto.new(GetProductDto, existProduct);
+  const productDto = ModelDto.new(ProductDto, existProduct);
   return ApiResponse.success(productDto);
 };
 
-export const updateProductByIdController = async (req) => {
-  return await TransactionalServiceWrapper.execute(async (session) => {
-    const { productId } = req.params;
-    const existProduct = await getProductByIdService(productId, "_id");
-    if (!existProduct) {
-      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: "Product not found" });
+export const updateProductInfoController = async (req) => {
+  const { productId } = req.params;
+  const existProduct = await getProductByIdService(productId, '_id');
+  if (!existProduct) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product not found' });
+  }
+
+  const { name, category, subCategory, thumbnail, status } = req.body;
+
+  if (existProduct.productVariants.length === 0 && status === PRODUCT_STATUS.ACTIVE) {
+    throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Cannot activate a product without variants' });
+  }
+
+  const isExistProductName = await checkExistProductNameService(name, existProduct._id);
+  if (isExistProductName) {
+    throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Product name already exist' });
+  }
+
+  const isExistCategory = await getCategoryByIdService(category);
+  if (!isExistCategory) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Category not found' });
+  }
+
+  if (subCategory) {
+    const isExistSubCategory = await getCategoryByIdService(subCategory);
+    if (!isExistSubCategory) {
+      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Subcategory not found' });
     }
+  }
 
-    let { name, category, productVariants, subCategory } = req.body;
-    delete req.body.productVariants;
+  if (thumbnail instanceof Buffer) {
+    const result = await uploadImageBufferService({ buffer: thumbnail, folderName: 'product-thumbnails' });
+    req.body.thumbnail = result.url;
+  }
 
-    const isExistProductName = await checkExistProductNameService(name, existProduct._id);
-    if (isExistProductName) {
-      throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: "Product name already exist" });
-    }
+  const updatedProduct = await updateProductInfoByIdService(existProduct._id, req.body);
 
-    const isExistCategory = await getCategoryByIdService(category);
-    if (!isExistCategory) {
-      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: "Category not found" });
-    }
+  const productDto = ModelDto.new(ProductDto, updatedProduct);
+  return ApiResponse.success(productDto);
+};
 
-    if (subCategory) {
-      const isExistSubCategory = await getCategoryByIdService(subCategory);
-      if (!isExistSubCategory) {
-        throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: "Sub category not found" });
-      }
-    }
+export const updateProductVariantsController = async (req) => {
+  const { productVariants, options } = req.body;
+  const { productId } = req.params;
 
-    productVariants = uniqueProductVariants(productVariants);
+  // Validation
+  const existProduct = await getProductByIdService(productId, '_id');
+  if (!existProduct) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product not found' });
+  }
 
-    await removeProductVariantsByProductIdService(existProduct._id, session)
+  // Logic
+  await TransactionalServiceWrapper.execute(async (session) => {
+    await removeProductVariantsByProductIdService(existProduct._id, session);
 
-    const productVariantsInstance = await Promise.all(productVariants.map(async (productVariant) => {
-      const { variantValues, quantity, price, sku, image } = productVariant;
+    // Create List Product Option
+    const productOptionsInstance = await Promise.all(
+      options.map(async (opt) => {
+        const { option: optionName, selectedValues } = opt;
 
-      const productVariantInstance = newProductVariantsService({
-        quantity,
-        price,
-        sku,
-        product: existProduct._id
-      })
+        const option = await getOptionByIdService(optionName, { valueName: { $in: selectedValues } });
+        if (!option) {
+          throw HttpException.new({
+            code: Code.RESOURCE_NOT_FOUND,
+            overrideMessage: 'Option or Option value not found',
+          });
+        }
 
-      await Promise.all(
-        variantValues.map(async (variantValue) => {
-          const option = await getOptionByIdService(variantValue.option, { _id: variantValue.optionValue });
-          if (!option) {
-            throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: "Option or Option value not found" });
-          }
-        })
-      )
+        return { option: option._id, optionValues: option.optionValues.filter(Boolean).map((item) => item._id) };
+      }),
+    );
 
-      productVariantInstance.variantValues = variantValues;
-      return productVariantInstance;
-    }))
+    // Create List Product Variant
+    const uniqueProductVariants = makeUniqueProductVariants(productVariants);
+    const productVariantsInstance = await Promise.all(
+      uniqueProductVariants.map(async (productVariant) => {
+        const { variantValues, quantity, price, sku } = productVariant;
 
-    const createdProductVariants = await saveProductVariantsService(productVariantsInstance)
+        const productVariantInstance = newProductVariantsService({
+          quantity,
+          price,
+          sku,
+          product: existProduct._id,
+        });
 
+        await Promise.all(
+          variantValues.map(async (variantValue, index) => {
+            const option = await getOptionByIdService(variantValue.option, { valueName: variantValue.optionValue });
+            if (!option) {
+              throw HttpException.new({
+                code: Code.RESOURCE_NOT_FOUND,
+                overrideMessage: 'Option or Option value not found',
+              });
+            }
+
+            variantValues[index].option = option._id;
+            variantValues[index].optionValue = option.optionValues[0]._id;
+          }),
+        );
+
+        productVariantInstance.variantValues = variantValues;
+
+        return productVariantInstance;
+      }),
+    );
+    // Save List Product Variant
+    const createdProductVariants = await saveProductVariantsService(productVariantsInstance);
+
+    // Update Product
     const productVariantIds = createdProductVariants.map((variant) => variant._id);
-    const updatedProduct = await updateProductByIdService(existProduct._id, {
-      ...req.body, productVariants: productVariantIds
-    }, session);
+    await updateProductVariantsByIdService(
+      existProduct._id,
+      {
+        productOptions: productOptionsInstance,
+        productVariants: productVariantIds,
+      },
+      session,
+    );
+  });
 
-
-    const productDto = ModelDto.new(ProductDto, updatedProduct);
-    return ApiResponse.success(productDto);
-  })
+  // Transform data
+  const product = await getProductByIdService(existProduct._id);
+  const productDto = ModelDto.new(ProductDto, product);
+  return ApiResponse.success(productDto);
 };
 
 export const removeProductByIdController = async (req) => {
   const { productId } = req.params;
-  const existProduct = await getProductByIdService(productId, "_id");
+  const existProduct = await getProductByIdService(productId, '_id status');
 
   if (!existProduct) {
-    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: "Product not found" });
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product not found' });
+  }
+
+  if (existProduct.status === PRODUCT_STATUS.ACTIVE) {
+    throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Cannot remove active product' });
   }
 
   await removeProductByIdService(productId);
@@ -205,8 +233,9 @@ export const removeProductByIdController = async (req) => {
 };
 
 export const isExistProductNameController = async (req) => {
-  const { name } = req.body;
-  const isExistName = await checkExistProductNameService(name);
+  const { name, skipId } = req.body;
+
+  const isExistName = await checkExistProductNameService(name, skipId);
 
   return ApiResponse.success(isExistName);
 };

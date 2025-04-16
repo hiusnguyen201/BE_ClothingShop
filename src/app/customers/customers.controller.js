@@ -4,10 +4,9 @@ import {
   checkExistEmailService,
   createUserService,
   getUserByIdService,
-  getAllUsersService,
   updateUserInfoByIdService,
   removeUserByIdService,
-  countAllUsersService,
+  getAndCountUsersService,
 } from '#src/app/users/users.service';
 import { USER_TYPE } from '#src/app/users/users.constant';
 import { randomStr } from '#src/utils/string.util';
@@ -38,29 +37,22 @@ export const createCustomerController = async (req) => {
 };
 
 export const getAllCustomersController = async (req) => {
-  const { keyword, limit, page, sortBy, sortOrder, gender } = req.query;
+  const { keyword = '', page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', gender } = req.query;
 
+  const searchFields = ['name', 'email', 'phone'];
   const filters = {
-    $or: [
-      { name: { $regex: keyword, $options: 'i' } },
-      { email: { $regex: keyword, $options: 'i' } },
-      { phone: { $regex: keyword, $options: 'i' } },
-    ],
+    $or: searchFields.map((field) => ({
+      [field]: { $regex: keyword, $options: 'i' },
+    })),
     ...(gender ? { gender } : {}),
     type: USER_TYPE.CUSTOMER,
   };
 
-  const totalCount = await countAllUsersService(filters);
-
-  const customers = await getAllUsersService({
-    filters,
-    page,
-    limit,
-    sortBy,
-    sortOrder,
-  });
+  const skip = (page - 1) * limit;
+  const [totalCount, customers] = await getAndCountUsersService(filters, skip, limit, sortBy, sortOrder);
 
   const customersDto = ModelDto.newList(CustomerDto, customers);
+
   return ApiResponse.success({ totalCount, list: customersDto }, 'Get all customers successful');
 };
 
@@ -85,11 +77,9 @@ export const updateCustomerByIdController = async (req) => {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Customer not found' });
   }
 
-  if (email) {
-    const isExistEmail = await checkExistEmailService(email, customerId);
-    if (isExistEmail) {
-      throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Email already exist' });
-    }
+  const isExistEmail = await checkExistEmailService(email, customerId);
+  if (isExistEmail) {
+    throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Email already exist' });
   }
 
   const updatedCustomer = await updateUserInfoByIdService(customerId, req.body);

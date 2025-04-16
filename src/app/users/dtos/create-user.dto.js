@@ -13,5 +13,5 @@ export const CreateUserDto = Joi.object({
     .required()
     .valid(...Object.values(GENDER)),
   phone: Joi.phoneNumber('VN').required(),
-  roleId: Joi.string(),
+  roleId: Joi.any().allow(null),
 });

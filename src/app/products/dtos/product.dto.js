@@ -2,13 +2,13 @@ import Joi from 'joi';
 
 export const ProductDto = Joi.object({
   _id: Joi.string().required(),
+  thumbnail: Joi.string().required(),
   name: Joi.string().required(),
   slug: Joi.string().required(),
-  shortDescription: Joi.string().allow(null),
-  content: Joi.string().allow(null),
+  description: Joi.string().required(),
   category: Joi.any().required(),
-  subCategory: Joi.string().allow(null),
-  productVariants: Joi.array().items(Joi.any()).allow(null),
-  createdAt: Joi.date().required(),
-  updatedAt: Joi.date().required(),
+  subCategory: Joi.any().allow(null),
+  status: Joi.string().required(),
+  productOptions: Joi.array().items(Joi.any()).required(),
+  productVariants: Joi.array().items(Joi.any()).required(),
 });

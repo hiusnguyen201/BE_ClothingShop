@@ -1,5 +1,5 @@
-import Joi from "joi";
-import { replaceMultiSpacesToSingleSpace } from "#src/utils/string.util";
+import Joi from 'joi';
+import { replaceMultiSpacesToSingleSpace } from '#src/utils/string.util';
 
 export const checkExistProductNameDto = Joi.object({
   name: Joi.string()
@@ -7,4 +7,5 @@ export const checkExistProductNameDto = Joi.object({
     .max(120)
     .required()
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
+  skipId: Joi.string(),
 });

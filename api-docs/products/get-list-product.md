@@ -49,7 +49,7 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/products/get-pro
         "id": "67e83b9acd9f98505b5e61d9",
         "name": "Product 21",
         "slug": "product-21",
-        "shortDescription": "abc",
+        "description": "abc",
         "content": "abc",
         "category": "67e81b0f118aaea8a91006a8",
         "productVariants": ["67e83b9acd9f98505b5e61da", "67e83b9acd9f98505b5e61db"],
@@ -60,7 +60,7 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/products/get-pro
         "id": "67e81fef956727a0b7881bf1",
         "name": "Product 3202dce1",
         "slug": "product-3202dce1",
-        "shortDescription": "abc",
+        "description": "abc",
         "content": "abc",
         "category": "67e81b0f118aaea8a91006a8",
         "productVariants": ["67e81fef956727a0b7881bf2", "67e81fef956727a0b7881bf3"],
@@ -74,28 +74,28 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/products/get-pro
 
 ### Structure Data Response
 
-| Field            | Nullable | Type    | Description         |
-| ---------------- | -------- | ------- | ------------------- |
-| meta             |          | Object  | Meta                |
-| page             |          | Number  | Current page        |
-| limit            |          | Number  | Limit per page      |
-| totalCount       |          | Number  | Total count         |
-| offset           |          | Number  | Skip                |
-| totalPage        |          | Number  | Total page          |
-| isNext           |          | Boolean | Is next             |
-| isPrevious       |          | Boolean | Is previous         |
-| isFirst          |          | Boolean | Is first            |
-| isLast           |          | Boolean | Is last             |
-| list             |          | Array   | Array of products   |
-| id               |          | String  | Product ID          |
-| name             |          | String  | Product name        |
-| slug             |          | String  | Product slug        |
-| shortDescription | x        | String  | Short description   |
-| content          | x        | String  | Detailed content    |
-| category         |          | String  | Product category    |
-| subCategory      | x        | String  | Product subcategory |
-| createdAt        |          | String  | Created at          |
-| updatedAt        |          | String  | Updated at          |
+| Field       | Nullable | Type    | Description         |
+| ----------- | -------- | ------- | ------------------- |
+| meta        |          | Object  | Meta                |
+| page        |          | Number  | Current page        |
+| limit       |          | Number  | Limit per page      |
+| totalCount  |          | Number  | Total count         |
+| offset      |          | Number  | Skip                |
+| totalPage   |          | Number  | Total page          |
+| isNext      |          | Boolean | Is next             |
+| isPrevious  |          | Boolean | Is previous         |
+| isFirst     |          | Boolean | Is first            |
+| isLast      |          | Boolean | Is last             |
+| list        |          | Array   | Array of products   |
+| id          |          | String  | Product ID          |
+| name        |          | String  | Product name        |
+| slug        |          | String  | Product slug        |
+| description | x        | String  | Short description   |
+| content     | x        | String  | Detailed content    |
+| category    |          | String  | Product category    |
+| subCategory | x        | String  | Product subcategory |
+| createdAt   |          | String  | Created at          |
+| updatedAt   |          | String  | Updated at          |
 
 ### Invalid Data (400)
 

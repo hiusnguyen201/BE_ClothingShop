@@ -1,9 +1,8 @@
-export const extendQueryOptionsWithPagination = (pagination, options = {}) => {
-  const { page, limit } = pagination;
+export const extendQueryOptionsWithPagination = (skip, limit) => {
+  const options = {};
 
-  if (page) {
-    const offset = (page - 1) * limit;
-    options.skip = offset;
+  if (skip || skip === 0) {
+    options.skip = skip;
   }
   if (limit) {
     options.limit = limit;
@@ -12,8 +11,8 @@ export const extendQueryOptionsWithPagination = (pagination, options = {}) => {
   return options;
 };
 
-export const extendQueryOptionsWithSort = (sort, options = {}) => {
-  const { sortBy, sortOrder } = sort;
+export const extendQueryOptionsWithSort = (sortBy, sortOrder) => {
+  const options = {};
   if (!sortBy || !sortOrder) return options;
 
   options.sort = { [sortBy]: sortOrder };

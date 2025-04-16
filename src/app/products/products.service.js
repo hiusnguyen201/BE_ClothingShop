@@ -1,18 +1,16 @@
-import { isValidObjectId } from "mongoose";
-import { ProductModel } from "#src/app/products/models/product.model";
-import { makeSlug } from "#src/utils/string.util";
-
-const SELECTED_FIELDS =
-  "_id name slug shortDescription content category subCategory productVariants createdAt updatedAt removedAt";
+import { isValidObjectId } from 'mongoose';
+import { ProductModel } from '#src/app/products/models/product.model';
+import { makeSlug } from '#src/utils/string.util';
+import { PRODUCT_SELECT_FIELDS } from '#src/app/products/products.constant';
 
 /**
- * New product
+ * Create product
  * @param {*} data
  * @returns
  */
-export function newProductService(data) {
+export function createProductService(data) {
   data.slug = makeSlug(data.name);
-  return new ProductModel(data)
+  return ProductModel.create(data);
 }
 
 /**
@@ -21,9 +19,9 @@ export function newProductService(data) {
  * @returns
  */
 export async function createProductsService(data, session) {
-  data = data.map(item => ({ ...item, slug: makeSlug(item.name) }))
+  data = data.map((item) => ({ ...item, slug: makeSlug(item.name) }));
   return ProductModel.create(data, {
-    session
+    session,
   });
 }
 
@@ -33,18 +31,10 @@ export async function createProductsService(data, session) {
  * @param {*} selectFields
  * @returns
  */
-export async function getAllProductsService({
-  filters,
-  page,
-  limit,
-  sortBy,
-  sortOrder,
-  selectFields = SELECTED_FIELDS,
-}) {
+export async function getAllProductsService({ filters, page, limit, sortBy, sortOrder }) {
   return ProductModel.find(filters)
     .skip((page - 1) * limit)
     .limit(limit)
-    .select(selectFields)
     .sort({ [sortBy]: sortOrder });
 }
 
@@ -63,10 +53,7 @@ export async function countAllProductsService(filters) {
  * @param {*} selectFields
  * @returns
  */
-export async function getProductByIdService(
-  id,
-  selectFields = SELECTED_FIELDS
-) {
+export async function getProductByIdService(id, selectFields = PRODUCT_SELECT_FIELDS) {
   if (!id) return null;
   const filter = {};
 
@@ -76,36 +63,67 @@ export async function getProductByIdService(
     return null;
   }
 
-  return await ProductModel
-    .findOne(filter)
-    .populate('category')
+  return ProductModel.findOne(filter)
+    .populate({
+      path: 'productOptions',
+      populate: [
+        { path: 'option', options: { lean: true }, select: '_id name' },
+        { path: 'optionValues', options: { lean: true }, select: '_id valueName' },
+      ],
+    })
     .populate({
       path: 'productVariants',
       populate: {
         path: 'variantValues',
-        model: 'productVariants',
         populate: [
-          {
-            path: 'option',
-            model: 'Option',
-            select: '-optionValues'
-          },
-          {
-            path: "optionValue",
-            model: 'Option_Value'
-          }
+          { path: 'option', options: { lean: true }, select: '_id name' },
+          { path: 'optionValue', options: { lean: true }, select: '_id valueName' },
         ],
-      }
+        options: { lean: true },
+        select: '_id option optionValue',
+      },
+      select: '_id price product quantity sku variantValues',
+    })
+    .select(selectFields)
+    .lean();
+}
+
+/**
+ * Update product info by id
+ * @param {*} id
+ * @param {*} data
+ * @returns``
+ */
+export async function updateProductInfoByIdService(id, data, session) {
+  data.slug = makeSlug(data.name);
+  return ProductModel.findByIdAndUpdate(id, data, {
+    new: true,
+    session,
+  })
+    .populate({
+      path: 'productOptions',
+      populate: [
+        { path: 'option', options: { lean: true }, select: '_id name' },
+        { path: 'optionValues', options: { lean: true }, select: '_id valueName' },
+      ],
     })
     .populate({
       path: 'productVariants',
       populate: {
-        path: 'productDiscount',
-        model: 'Product_Discount',
-        select: '-productVariant'
-      }
+        path: 'variantValues',
+        populate: [
+          { path: 'option', options: { lean: true }, select: '_id name' },
+          { path: 'optionValue', options: { lean: true }, select: '_id valueName' },
+        ],
+        options: { lean: true },
+        select: '_id option optionValue',
+      },
+      select: '_id price product quantity sku variantValues',
+      sort: {
+        createdAt: 'asc',
+      },
     })
-    .select(selectFields).lean();
+    .lean();
 }
 
 /**
@@ -114,12 +132,19 @@ export async function getProductByIdService(
  * @param {*} data
  * @returns
  */
-export async function updateProductByIdService(id, data, session) {
-  data.slug = makeSlug(data.name);
-  return await ProductModel.findByIdAndUpdate(id, data, {
-    new: true,
-    session
-  }).select(SELECTED_FIELDS);
+export async function updateProductVariantsByIdService(id, data, session) {
+  const { productOptions, productVariants } = data;
+  return ProductModel.updateOne(
+    { _id: id },
+    {
+      productOptions,
+      productVariants,
+    },
+    {
+      new: true,
+      session,
+    },
+  );
 }
 
 /**
@@ -128,9 +153,7 @@ export async function updateProductByIdService(id, data, session) {
  * @returns
  */
 export async function removeProductByIdService(id) {
-  return await ProductModel.findByIdAndUpdate(id, {
-    removedAt: new Date()
-  }, { new: true }).select(SELECTED_FIELDS);
+  return await ProductModel.findByIdAndSoftDelete(id).select('_id');
 }
 
 /**
@@ -150,68 +173,6 @@ export async function checkExistProductNameService(name, skipId) {
       },
     ],
     _id: { $ne: skipId },
-  }).select("_id");
+  }).select('_id');
   return Boolean(product);
-}
-
-/**
- * Update product rating by productId
- * @param {*} id
- * @returns
- */
-export async function updateProductRatingAndTotalReviewByProductIdService(id) {
-  const filterOptions = {
-    product: id
-  };
-
-  const reviews = await getAllProductReviewsService({
-    filters: filterOptions
-  });
-  const reviewsLength = reviews.length;
-
-  const rating = reviews.reduce(
-    (accumulator, currentValue) => accumulator + currentValue.score,
-    0);
-  const avgRating = rating / reviewsLength;
-
-  return await ProductModel.findByIdAndUpdate(
-    id,
-    {
-      avgRating: avgRating,
-      total_review: reviewsLength
-    },
-    { new: true }
-  ).select(SELECTED_FIELDS);
-}
-
-/**
- * Update product variant by productId
- * @param {*} id
- * @param {*} productVariantIds
- * @returns
- */
-export async function updateProductVariantsByProductIdService(id, productVariantIds) {
-  return await ProductModel.findByIdAndUpdate(
-    id,
-    {
-      $addToSet: { productVariants: { $each: productVariantIds } }
-    },
-    { new: true }
-  ).select(SELECTED_FIELDS);
-}
-
-/**
- * Remove product variant by productId
- * @param {*} id
- * @param {*} productVariantId
- * @returns
- */
-export async function removeProductVariantsByProductIdService(id, productVariantId) {
-  return await ProductModel.findByIdAndUpdate(
-    id,
-    {
-      $pull: { productVariants: productVariantId }
-    },
-    { new: true }
-  ).select(SELECTED_FIELDS);
 }

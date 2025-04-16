@@ -31,7 +31,7 @@ const CategorySchema = new Schema(
     },
 
     // Foreign key
-    parent: { type: Schema.Types.ObjectId, ref: 'Category' },
+    parent: { type: Schema.Types.ObjectId, ref: 'Category', default: null },
   },
   {
     versionKey: false,

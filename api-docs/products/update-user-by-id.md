@@ -26,7 +26,7 @@ curl --request PATCH 'https://server-clothes-store.vercel.app/api/products/updat
     "name": "Product 1",
     "category": "67e81b0f118aaea8a91006a8",
     "subCategory": "67e81b0f118aaea8a91006a9",
-    "shortDescription": "Short description",
+    "description": "Short description",
     "content": "Content",
     "productVariants": [
         {
@@ -51,15 +51,15 @@ curl --request PATCH 'https://server-clothes-store.vercel.app/api/products/updat
 
 ### Parameter
 
-| Param            | Require | Path   | Type         | Description       |
-| ---------------- | ------- | ------ | ------------ | ----------------- |
-| token            | x       | header | String       | Token             |
-| name             | x       | body   | String       | Product name      |
-| category         | x       | body   | String       | Category Id       |
-| subCategory      |         | body   | String       | Sub Category Id   |
-| shortDescription |         | body   | String       | Short description |
-| content          |         | body   | String       | Content           |
-| productVariants  | x       | body   | Array object | Product variant   |
+| Param           | Require | Path   | Type         | Description       |
+| --------------- | ------- | ------ | ------------ | ----------------- |
+| token           | x       | header | String       | Token             |
+| name            | x       | body   | String       | Product name      |
+| category        | x       | body   | String       | Category Id       |
+| subCategory     |         | body   | String       | Sub Category Id   |
+| description     |         | body   | String       | Short description |
+| content         |         | body   | String       | Content           |
+| productVariants | x       | body   | Array object | Product variant   |
 
 ### Success (200)
 
@@ -73,7 +73,7 @@ curl --request PATCH 'https://server-clothes-store.vercel.app/api/products/updat
     "id": "67e83b9acd9f98505b5e61d9",
     "name": "Product 21",
     "slug": "product-21",
-    "shortDescription": "abc",
+    "description": "abc",
     "content": "abc",
     "category": "67e81b0f118aaea8a91006a8",
     "productVariants": ["67e83b9acd9f98505b5e61da", "67e83b9acd9f98505b5e61db"],
@@ -85,18 +85,18 @@ curl --request PATCH 'https://server-clothes-store.vercel.app/api/products/updat
 
 ### Structure Data Response
 
-| Field            | Nullable | Type   | Description               |
-| ---------------- | -------- | ------ | ------------------------- |
-| id               |          | String | Product Id                |
-| name             |          | String | Product name              |
-| slug             |          | String | Product slung             |
-| shortDescription | x        | String | Product short description |
-| content          | x        | String | Product content           |
-| category         |          | String | Product category          |
-| subCategory      | x        | String | Product sub category      |
-| productVariants  |          | Array  | Product variants          |
-| createdAt        |          | String | Created At                |
-| updatedAt        |          | String | Updated At                |
+| Field           | Nullable | Type   | Description               |
+| --------------- | -------- | ------ | ------------------------- |
+| id              |          | String | Product Id                |
+| name            |          | String | Product name              |
+| slug            |          | String | Product slung             |
+| description     | x        | String | Product short description |
+| content         | x        | String | Product content           |
+| category        |          | String | Product category          |
+| subCategory     | x        | String | Product sub category      |
+| productVariants |          | Array  | Product variants          |
+| createdAt       |          | String | Created At                |
+| updatedAt       |          | String | Updated At                |
 
 ### INVALID_DATA (400)
 

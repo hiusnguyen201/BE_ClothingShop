@@ -2,7 +2,7 @@
 
 This endpoint is used to update the profile information for the account.
 
-[PATCH](#)
+[PUT](#)
 
 #### Production
 
@@ -19,7 +19,7 @@ https://server-clothes-store.vercel.app/api/account/edit-profile
 #### Curl
 
 ```bash
-curl --request PATCH 'https://server-clothes-store.vercel.app/api/account/edit-profile' \
+curl --request PUT 'https://server-clothes-store.vercel.app/api/account/edit-profile' \
 --header 'Content-Type: application/json' \
 --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZDJhMzMyYzhhMjEzYjA1MDI4MzNjNiIsInR5cGUiOiJVc2VyIiwiaWF0IjoxNzQyMjAxMDU5LCJleHAiOjE3NDIyMDE5NTl9.gsqLAzSlJKDPU3D9gvKg_I42NJ3NhI2d5svf-MYywDo' \
 --data-raw '{

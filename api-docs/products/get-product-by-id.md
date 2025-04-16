@@ -41,7 +41,7 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/users/get-user-b
     "id": "67e81fef956727a0b7881bf1",
     "name": "Product 3202dce1",
     "slug": "product-3202dce1",
-    "shortDescription": "abc",
+    "description": "abc",
     "content": "abc",
     "category": {
       "_id": "67e81b0f118aaea8a91006a8",
@@ -161,18 +161,18 @@ curl --request GET 'https://server-clothes-store.vercel.app/api/users/get-user-b
 
 ### Structure Data Response
 
-| Field            | Nullable | Type   | Description               |
-| ---------------- | -------- | ------ | ------------------------- |
-| id               |          | String | Product Id                |
-| name             |          | String | Product name              |
-| slug             |          | String | Product slug              |
-| shortDescription |          | String | Proudct short description |
-| content          |          | String | Product content           |
-| category         |          | Object | Product category          |
-| subCategory      | x        | Object | Product subCategory       |
-| productVariants  |          | Array  | Product variants          |
-| createdAt        |          | String | Created At                |
-| updatedAt        |          | String | Updated At                |
+| Field           | Nullable | Type   | Description               |
+| --------------- | -------- | ------ | ------------------------- |
+| id              |          | String | Product Id                |
+| name            |          | String | Product name              |
+| slug            |          | String | Product slug              |
+| description     |          | String | Proudct short description |
+| content         |          | String | Product content           |
+| category        |          | Object | Product category          |
+| subCategory     | x        | Object | Product subCategory       |
+| productVariants |          | Array  | Product variants          |
+| createdAt       |          | String | Created At                |
+| updatedAt       |          | String | Updated At                |
 
 ### Product Not Found (404)
 
