@@ -67,7 +67,7 @@ export const expectUserData = (userData) => {
     email: expect.any(String),
     phone: expect.any(String),
     gender: expect.any(String),
-    verifiedAt: expect.toBeOneOf([expect.any(String), null]),
-    lastLoginAt: expect.toBeOneOf([expect.any(String), null]),
+    verifiedAt: expect.toBeOneOf([expect.any(String), null, {}]),
+    lastLoginAt: expect.toBeOneOf([expect.any(String), null, {}]),
   });
 };

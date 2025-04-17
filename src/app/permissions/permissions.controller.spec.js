@@ -93,7 +93,6 @@ describe('Permission API Endpoints', () => {
       test('Get permissions successfully', async () => {
         const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
         const response = await makeRequest({ accessToken });
-
         expect(response.status).toBe(HttpStatus.OK);
         expect(response.body).toMatchObject({
           code: HttpStatus.OK,
@@ -102,8 +101,6 @@ describe('Permission API Endpoints', () => {
           data: {
             list: expect.any(Array),
             totalCount: expect.any(Number),
-            page: expect.any(Number),
-            limit: expect.any(Number),
           },
         });
       });

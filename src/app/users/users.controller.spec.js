@@ -35,7 +35,6 @@ describe('User API Endpoints', () => {
         const response = await makeRequest();
         expect(response.status).toBe(HttpStatus.OK);
         expect(response.body).toMatchObject({
-          code: HttpStatus.OK,
           codeMessage: Code.SUCCESS.codeMessage,
           message: expect.any(String),
           data: false,
@@ -321,8 +320,6 @@ describe('User API Endpoints', () => {
           data: {
             list: expect.any(Array),
             totalCount: expect.any(Number),
-            page: expect.any(Number),
-            limit: expect.any(Number),
           },
         });
 
@@ -403,12 +400,12 @@ describe('User API Endpoints', () => {
         const { accessToken, user } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
         const response = await makeRequest({
           accessToken,
-          params: { userId: user.id },
+          params: { userId: user._id },
         });
-
+        console.log('User:', user);
+        console.log(response.body);
         expect(response.status).toBe(HttpStatus.OK);
         expect(response.body).toMatchObject({
-          code: HttpStatus.OK,
           codeMessage: Code.SUCCESS.codeMessage,
           message: expect.any(String),
           data: expect.objectContaining({

@@ -1,5 +1,6 @@
 import HttpStatus from 'http-status-codes';
 import userFactory from '#src/app/users/factory/user.factory';
+import roleFactory from '#src/app/roles/factory/role.factory';
 import { Code } from '#src/core/code/Code';
 import { expectError, testEndpoint, expectValidationError } from '#test/common';
 
@@ -96,7 +97,8 @@ describe('Role API Endpoints', () => {
 
     describe('Business Logic', () => {
       test('Role name already exists', async () => {
-        const { accessToken, role } = await userFactory.createRole();
+        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
+        const role = await roleFactory.createRole();
         const response = await makeRequest({
           accessToken,
           data: { ...roleData, name: role.name },
@@ -119,7 +121,7 @@ describe('Role API Endpoints', () => {
             id: expect.any(String),
             name: roleData.name,
             description: roleData.description,
-            permissions: expect.arrayContaining(roleData.permissions),
+            slug: expect.any(String),
           }),
         });
       });
@@ -193,7 +195,7 @@ describe('Role API Endpoints', () => {
 
     describe('Business Logic', () => {
       test('Role not found', async () => {
-        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
+        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, `${endpoint}/:roleId`);
         const response = await makeRequest('nonExistentRoleId')({ accessToken });
         expectError(response, HttpStatus.NOT_FOUND, Code.RESOURCE_NOT_FOUND.codeMessage);
       });
@@ -201,7 +203,8 @@ describe('Role API Endpoints', () => {
 
     describe('Success Cases', () => {
       test('Get role by id successful', async () => {
-        const { accessToken, role } = await userFactory.createRole();
+        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, `${endpoint}/:roleId`);
+        const role = await roleFactory.createRole();
         const response = await makeRequest(role.id)({ accessToken });
 
         expect(response.status).toBe(HttpStatus.OK);
@@ -213,7 +216,7 @@ describe('Role API Endpoints', () => {
             id: role.id,
             name: role.name,
             description: role.description,
-            permissions: expect.arrayContaining(role.permissions),
+            slug: expect.any(String),
           }),
         });
       });
@@ -295,17 +298,23 @@ describe('Role API Endpoints', () => {
         {
           name: 'Required fields are missing',
           data: { name: 'Updated Role' },
-          invalidPaths: ['description', 'permissions'],
+          invalidPaths: ['description'],
         },
         {
-          name: 'Invalid permissions format',
-          data: { ...updateData, permissions: 'invalid' },
-          invalidPaths: ['permissions'],
+          name: 'Invalid name format',
+          data: { name: 'ab', description: 'Test Description' },
+          invalidPaths: ['name'],
+        },
+        {
+          name: 'Invalid description format',
+          data: { name: 'Updated Role', description: 'ab' },
+          invalidPaths: ['description'],
         },
       ];
 
       test.each(validationTestCases)('$name', async ({ data, invalidPaths }) => {
-        const { accessToken, role } = await userFactory.createRole();
+        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, `${endpoint}/:roleId`);
+        const role = await roleFactory.createRole();
         const response = await testEndpoint(method, `${endpoint}/${role.id}`, data)({ accessToken });
         expectValidationError(response, invalidPaths);
       });
@@ -313,14 +322,15 @@ describe('Role API Endpoints', () => {
 
     describe('Business Logic', () => {
       test('Role not found', async () => {
-        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
+        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, `${endpoint}/:roleId`);
         const response = await makeRequest('nonExistentRoleId')({ accessToken });
         expectError(response, HttpStatus.NOT_FOUND, Code.RESOURCE_NOT_FOUND.codeMessage);
       });
 
       test('Role name already exists', async () => {
-        const { accessToken, role: role1 } = await userFactory.createRole();
-        const { role: role2 } = await userFactory.createRole();
+        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, `${endpoint}/:roleId`);
+        const role1 = await roleFactory.createRole();
+        const role2 = await roleFactory.createRole();
         const response = await testEndpoint(method, `${endpoint}/${role1.id}`, {
           ...updateData,
           name: role2.name,
@@ -331,7 +341,8 @@ describe('Role API Endpoints', () => {
 
     describe('Success Cases', () => {
       test('Update role successful', async () => {
-        const { accessToken, role } = await userFactory.createRole();
+        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, `${endpoint}/:roleId`);
+        const role = await roleFactory.createRole();
         const response = await makeRequest(role.id)({ accessToken });
 
         expect(response.status).toBe(HttpStatus.OK);
@@ -343,7 +354,7 @@ describe('Role API Endpoints', () => {
             id: role.id,
             name: updateData.name,
             description: updateData.description,
-            permissions: expect.arrayContaining(updateData.permissions),
+            slug: expect.any(String),
           }),
         });
       });
@@ -417,13 +428,15 @@ describe('Role API Endpoints', () => {
 
     describe('Business Logic', () => {
       test('Role not found', async () => {
-        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
+        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, `${endpoint}/:roleId`);
         const response = await makeRequest('nonExistentRoleId')({ accessToken });
         expectError(response, HttpStatus.NOT_FOUND, Code.RESOURCE_NOT_FOUND.codeMessage);
       });
 
       test('Role is in use', async () => {
-        const { accessToken, role } = await userFactory.createRoleInUse();
+        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, `${endpoint}/:roleId`);
+        const role = await roleFactory.createRole();
+        await userFactory.createUserAuthorized({ roleId: role.id });
         const response = await makeRequest(role.id)({ accessToken });
         expectError(response, HttpStatus.CONFLICT, Code.ALREADY_EXISTS.codeMessage);
       });
@@ -431,7 +444,8 @@ describe('Role API Endpoints', () => {
 
     describe('Success Cases', () => {
       test('Delete role successful', async () => {
-        const { accessToken, role } = await userFactory.createRole();
+        const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, `${endpoint}/:roleId`);
+        const role = await roleFactory.createRole();
         const response = await makeRequest(role.id)({ accessToken });
 
         expect(response.status).toBe(HttpStatus.OK);
@@ -442,8 +456,7 @@ describe('Role API Endpoints', () => {
           data: null,
         });
 
-        const { accessToken: getToken } = await userFactory.createUserAuthorizedAndHasPermission('GET', '/api/roles/get-role-by-id');
-        const getResponse = await testEndpoint('GET', `/api/roles/get-role-by-id/${role.id}`)({ accessToken: getToken });
+        const getResponse = await testEndpoint('GET', `/api/roles/get-role-by-id/${role.id}`)({ accessToken });
         expectError(getResponse, HttpStatus.NOT_FOUND, Code.RESOURCE_NOT_FOUND.codeMessage);
       });
     });
