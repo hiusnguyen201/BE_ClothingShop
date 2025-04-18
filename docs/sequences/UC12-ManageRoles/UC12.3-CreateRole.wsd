@@ -241,7 +241,7 @@ end
 
 RolesController -->> AsyncHandler: return ApiResponse instance
 deactivate RolesController
-AsyncHandler --> Client: HTTP 201 Success
+AsyncHandler --> Client: HTTP 200 Success
 deactivate AsyncHandler
 deactivate RolesRouter
 

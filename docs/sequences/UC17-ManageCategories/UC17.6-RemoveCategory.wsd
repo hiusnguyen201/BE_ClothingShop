@@ -179,6 +179,8 @@ group Business Logic Flow
     alt categoryId not provided
         CategoriesService -->> CategoriesController: return null
         CategoriesController --x CategoriesController: throw(HttpException(400))
+        CategoriesController --x AsyncHandler: catch HttpException and next(HttpException(400))
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 400 Bad Request
         deactivate ErrorMiddleware
@@ -193,8 +195,8 @@ group Business Logic Flow
         MongoDB --x CategoryModel: throw Error
         CategoryModel --x CategoriesService: throw Error
         CategoriesService --x CategoriesController: throw Error
-        CategoriesController --x CategoriesController: throw(HttpException(500))
-        CategoriesController -->> ErrorMiddleware: handleError(Error)
+        CategoriesController --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
@@ -203,6 +205,8 @@ group Business Logic Flow
         CategoryModel -->> CategoriesService: return null
         CategoriesService -->> CategoriesController: return null
         CategoriesController --x CategoriesController: throw(HttpException(404))
+        CategoriesController --x AsyncHandler: catch HttpException and next(HttpException(404))
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
         CategoriesController -->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 404 Not Found
@@ -226,8 +230,8 @@ group Business Logic Flow
         MongoDB --x CategoryModel: throw Error
         CategoryModel --x CategoriesService: throw Error
         CategoriesService --x CategoriesController: throw Error
-        CategoriesController --x CategoriesController: throw(HttpException(500))
-        CategoriesController -->> ErrorMiddleware: handleError(Error)
+        CategoriesController --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
@@ -236,7 +240,8 @@ group Business Logic Flow
         CategoryModel -->> CategoriesService: return count
         CategoriesService -->> CategoriesController: return count
         CategoriesController --x CategoriesController: throw(HttpException(400))
-        CategoriesController -->> ErrorMiddleware: handleError(Error)
+        CategoriesController --x AsyncHandler: catch HttpException and next(HttpException(400))
+        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 400 Bad Request
         deactivate ErrorMiddleware
@@ -260,8 +265,8 @@ group Business Logic Flow
         MongoDB --x CategoryModel: throw error
         CategoryModel --x CategoriesService: throw error
         CategoriesService --x CategoriesController: throw error
-        CategoriesController --x CategoriesController: throw(HttpException(500))
-        CategoriesController -->> ErrorMiddleware: handleError(Error)
+        CategoriesController --x AsyncHandler: catch error and next(error)
+        AsyncHandler ->> ErrorMiddleware: handleError(error) 
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware

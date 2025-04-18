@@ -183,7 +183,8 @@ group Business Logic Flow
         UserModel -->> UserService: return user
         UserService -->> CustomersController: return user
         CustomersController --x CustomersController: throw(HttpException(400))
-        CustomersController ->> ErrorMiddleware: handleError(Error)
+        CustomersController --x AsyncHandler: catch HttpException and next(HttpException(400))
+        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 400 Bad Request
         deactivate ErrorMiddleware
@@ -192,8 +193,8 @@ group Business Logic Flow
         MongoDB --x UserModel: throw error
         UserModel --x UserService: throw error
         UserService --x CustomersController: throw error
-        CustomersController --x CustomersController: throw(HttpException(500))
-        CustomersController ->> ErrorMiddleware: handleError(Error)
+        CustomersController --x AsyncHandler: catch error and next(error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
@@ -272,7 +273,7 @@ group Transform data response
 end
 CustomersController -->> AsyncHandler: return ApiResponse instance
 deactivate CustomersController
-AsyncHandler --> Client: HTTP 201 Success
+AsyncHandler --> Client: HTTP 200 Success
 deactivate AsyncHandler
 deactivate CustomersRouter
 

@@ -44,7 +44,7 @@ database Cloudinary
 
 ' Step 1
 group Request Initialization
-    Client -> CategoriesRouter: POST /api/categories/get-categories
+    Client -> CategoriesRouter: POST /api/categories/create-categories
     activate Client
     activate CategoriesRouter
     CategoriesRouter -> AsyncHandler: asyncHandler(createCategoryController)
@@ -166,25 +166,25 @@ group Upload Image Flow
     activate multer
 
     alt invalid file type
-        multer -->> UploadUtil: return Error
-        UploadUtil -->> UploadUtil: next(HttpException(400))
-        UploadUtil ->> ErrorMiddleware: handleError(Error)
+        multer --x UploadUtil: return Error
+        UploadUtil --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 400 Bad Request
         deactivate ErrorMiddleware
 
     else Limit file size
-        multer -->> UploadUtil: return Error
-        UploadUtil -->> UploadUtil: next(HttpException(400))
-        UploadUtil ->> ErrorMiddleware: handleError(Error)
+        multer --x UploadUtil: return Error
+        UploadUtil --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 400 Bad Request
         deactivate ErrorMiddleware
 
     else Limit file count
-        multer -->> UploadUtil: return Error
-        UploadUtil -->> UploadUtil: next(HttpException(400))
-        UploadUtil ->> ErrorMiddleware: handleError(Error)
+        multer --x UploadUtil: return Error
+        UploadUtil --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 400 Bad Request
         deactivate ErrorMiddleware
@@ -232,8 +232,8 @@ group Business Logic Flow
         MongoDB --x CategoryModel: throw Error
         CategoryModel --x CategoriesService: throw Error
         CategoriesService --x CategoriesController: throw Error
-        CategoriesController --x CategoriesController: throw(HttpException(500))
-        CategoriesController -->> ErrorMiddleware: handleError(Error)
+        CategoriesController --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
@@ -243,7 +243,8 @@ group Business Logic Flow
         CategoryModel -->> CategoriesService: return true
         CategoriesService -->> CategoriesController: return true
         CategoriesController --x CategoriesController: throw(HttpException(400))
-        CategoriesController -->> ErrorMiddleware: handleError(Error)
+        CategoriesController --x AsyncHandler: catch HttpException and next(HttpException(400))
+        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 400 Bad Request
         deactivate ErrorMiddleware
@@ -269,6 +270,8 @@ group Business Logic Flow
     alt parentId not provided
         CategoriesService -->> CategoriesController: return null
         CategoriesController --x CategoriesController: throw(HttpException(400))
+        CategoriesController --x AsyncHandler: catch HttpException and next(HttpException(400))
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 400 Bad Request
         deactivate ErrorMiddleware
@@ -283,8 +286,8 @@ group Business Logic Flow
         MongoDB --x CategoryModel: throw Error
         CategoryModel --x CategoriesService: throw Error
         CategoriesService --x CategoriesController: throw Error
-        CategoriesController --x CategoriesController: throw(HttpException(500))
-        CategoriesController -->> ErrorMiddleware: handleError(Error)
+        CategoriesController --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
@@ -293,7 +296,8 @@ group Business Logic Flow
         CategoryModel -->> CategoriesService: return null
         CategoriesService -->> CategoriesController: return null
         CategoriesController --x CategoriesController: throw(HttpException(404))
-        CategoriesController -->> ErrorMiddleware: handleError(Error)
+        CategoriesController --x AsyncHandler: catch HttpException and next(HttpException(404))
+        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 404 Not Found
         deactivate ErrorMiddleware
@@ -314,8 +318,8 @@ group Business Logic Flow
     alt upload fail
         Cloudinary --x CloudinaryService: throw Error
         CloudinaryService --x CategoriesController: throw Error
-        CategoriesController --x CategoriesController: throw(HttpException(500))
-        CategoriesController -->> ErrorMiddleware: handleError(Error)
+        CategoriesController --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
@@ -336,8 +340,8 @@ group Business Logic Flow
         MongoDB --x CategoryModel: throw Error
         CategoryModel --x CategoriesService: throw Error
         CategoriesService --x CategoriesController: throw Error
-        CategoriesController --x CategoriesController: throw(HttpException(500))
-        CategoriesController -->> ErrorMiddleware: handleError(Error)
+        CategoriesController --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
@@ -367,7 +371,7 @@ end
 
 CategoriesController -->> AsyncHandler: return ApiResponse instance
 deactivate CategoriesController
-AsyncHandler --> Client: HTTP 201 Success
+AsyncHandler --> Client: HTTP 200 Success
 deactivate AsyncHandler
 deactivate CategoriesRouter
 

@@ -189,7 +189,8 @@ group Business Logic Flow
     alt roleId not provided
         RolesService -->> RolesController: return null
         RolesController -> RolesController: throw(HttpException(400))
-        RolesController ->> ErrorMiddleware: handleError(Error)
+        RolesController ->> AsyncHandler: catch HttpException and next(HttpException(400))
+        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 400 Bad Request
         deactivate ErrorMiddleware
@@ -214,7 +215,8 @@ group Business Logic Flow
         RoleModel -->> RolesService: return null
         RolesService -->> RolesController: return null
         RolesController --x RolesController: throw(HttpException(404))
-        RolesController ->> ErrorMiddleware: handleError(Error)
+        RolesController --x AsyncHandler: catch HttpException and next(HttpException(404))
+        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 404 Not Found
         deactivate ErrorMiddleware
@@ -255,7 +257,8 @@ group Business Logic Flow
         RoleModel -->> RolesService: return null
         RolesService -->> RolesController: return null
         RolesController --x RolesController: throw(HttpException(404))
-        RolesController ->> ErrorMiddleware: handleError(Error)
+        RolesController --x AsyncHandler: catch HttpException and next(HttpException(404))
+        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 404 Not Found
         deactivate ErrorMiddleware
@@ -284,7 +287,8 @@ group Business Logic Flow
         RoleModel -->> RolesService: return null
         RolesService -->> RolesController: return null
         RolesController --x RolesController: throw(HttpException(404))
-        RolesController ->> ErrorMiddleware: handleError(Error)
+        RolesController --x AsyncHandler: catch HttpException and next(HttpException(404))
+        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 404 Not Found
         deactivate ErrorMiddleware

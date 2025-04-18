@@ -67,7 +67,8 @@ group Business Logic Flow
     alt userId not provided
         UsersService -->> AuthController: return null
         AuthController --x AuthController: throw(HttpException(400))
-        AuthController ->> ErrorMiddleware: handleError(Error)
+        AuthController --x AsyncHandler: catch HttpException and next(HttpException(400))
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 400 Bad Request
         deactivate ErrorMiddleware
@@ -82,8 +83,8 @@ group Business Logic Flow
         MongoDB --x UserModel: throw Error
         UserModel --x UsersService: throw Error
         UsersService --x AuthController: throw Error
-        AuthController --x AuthController: throw(HttpException(500))
-        AuthController ->> ErrorMiddleware: handleError(Error)
+        AuthController --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
@@ -93,7 +94,8 @@ group Business Logic Flow
         UserModel -->> UsersService: return null
         UsersService -->> AuthController: return null
         AuthController --x AuthController: throw(HttpException(404))
-        AuthController ->> ErrorMiddleware: handleError(Error)
+        AuthController --x AsyncHandler: catch HttpException and next(HttpException(404))
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 404 Not Found
         deactivate ErrorMiddleware
@@ -116,8 +118,8 @@ group Business Logic Flow
         MongoDB --x UserOtpModel: throw Error
         UserOtpModel --x AuthService: throw Error
         AuthService --x AuthController: throw Error
-        AuthController --x AuthController: throw(HttpException(500))
-        AuthController ->> ErrorMiddleware: handleError(Error)
+        AuthController --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
@@ -127,7 +129,8 @@ group Business Logic Flow
         UserOtpModel -->> AuthService: return null
         AuthService -->> AuthController: return null
         AuthController --x AuthController: throw(HttpException(404))
-        AuthController ->> ErrorMiddleware: handleError(Error)
+        AuthController --x AsyncHandler: catch HttpException and next(HttpException(404))
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 404 Not Found
         deactivate ErrorMiddleware
@@ -150,8 +153,8 @@ group Business Logic Flow
         MongoDB --x UserOtpModel: throw Error
         UserOtpModel --x AuthService: throw Error
         AuthService --x AuthController: throw Error
-        AuthController --x AuthController: throw(HttpException(500))
-        AuthController ->> ErrorMiddleware: handleError(Error)
+        AuthController --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
@@ -161,7 +164,8 @@ group Business Logic Flow
         UserOtpModel -->> AuthService: return null
         AuthService -->> AuthController: return null
         AuthController --x AuthController: throw(HttpException(404))
-        AuthController ->> ErrorMiddleware: handleError(Error)
+        AuthController --x AsyncHandler: catch HttpException and next(HttpException(404))
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 404 Not Found
         deactivate ErrorMiddleware
@@ -188,8 +192,8 @@ group Business Logic Flow
         MongoDB --x UserOtpModel: throw Error
         UserOtpModel --x AuthService: throw Error
         AuthService --x AuthController: throw Error
-        AuthController --x AuthController: throw(HttpException(500))
-        AuthController ->> ErrorMiddleware: handleError(Error)
+        AuthController --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
@@ -199,7 +203,8 @@ group Business Logic Flow
         UserOtpModel -->> AuthService: return null
         AuthService -->> AuthController: return null
         AuthController --x AuthController: throw(HttpException(404))
-        AuthController ->> ErrorMiddleware: handleError(Error)
+        AuthController --x AsyncHandler: catch HttpException and next(HttpException(404))
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 404 Not Found
         deactivate ErrorMiddleware
@@ -219,8 +224,8 @@ group Business Logic Flow
     alt send mail fail
         MailerService --x MailerService: throw error
         MailerService --x AuthController: throw error
-        AuthController --x AuthController: throw(HttpException(500))
-        AuthController ->> ErrorMiddleware: handleError(Error)
+        AuthController --x AsyncHandler: catch error and next(error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware

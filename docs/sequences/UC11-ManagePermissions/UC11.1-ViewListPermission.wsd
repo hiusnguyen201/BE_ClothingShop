@@ -184,8 +184,8 @@ group Business Logic Flow
         MongoDB --x PermissionModel: throw Error
         PermissionModel --x PermissionsService: throw Error
         PermissionsService --x PermissionsController: throw Error
-        PermissionsController --x PermissionsController: throw(Error)
-        PermissionsController ->> ErrorMiddleware: handleError(Error)
+        PermissionsController --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
@@ -212,8 +212,8 @@ group Business Logic Flow
         MongoDB --x PermissionModel: throw Error
         PermissionModel --x PermissionsService: throw Error
         PermissionsService --x PermissionsController: throw Error
-        PermissionsController --x PermissionsController: throw(Error)
-        PermissionsController ->> ErrorMiddleware: handleError(Error)
+        PermissionsController --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware

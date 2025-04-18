@@ -1,0 +1,65 @@
+@startuml View list Provinces
+
+actor Client
+
+box "Application Layer"
+participant DivisionsRouter 
+participant ErrorMiddleware 
+participant AsyncHandler 
+end box
+
+
+box "Business Logic"
+participant DivisionsController
+participant ApiResponse
+participant DivisionsService 
+participant ModelDto
+end box
+
+database MongoDB
+
+' Step 1
+group Request Initialization
+    Client -> DivisionsRouter: GET /api/divisions/get-provinces
+    activate Client
+    activate DivisionsRouter
+    DivisionsRouter -> AsyncHandler: asyncHandler(getAllProvincesController)
+    activate AsyncHandler
+end
+
+break
+break
+
+' step 2
+group Business Logic Flow
+    AsyncHandler -> DivisionsController: getAllProvincesController
+    activate DivisionsController
+    DivisionsController -> DivisionsService: getAllProvincesService()
+    activate DivisionsService
+    DivisionsService --> DivisionsController: return provinces
+    deactivate DivisionsService
+
+end
+break
+break
+
+group Transform data response
+    DivisionsController -> ModelDto: newList(ProvinceDto, provinces)
+    activate ModelDto
+    ModelDto -->> DivisionsController: return ProvinceDto instance
+    deactivate ModelDto
+
+    DivisionsController -> ApiResponse: success(ProvinceDto, success message)
+    activate ApiResponse
+    ApiResponse -->> DivisionsController: return ApiResponse instance
+    deactivate ApiResponse 
+end
+DivisionsController -->> AsyncHandler: return ApiResponse instance
+deactivate DivisionsController
+AsyncHandler --> Client: HTTP 200 Success
+deactivate AsyncHandler
+deactivate DivisionsRouter
+
+
+
+@enduml

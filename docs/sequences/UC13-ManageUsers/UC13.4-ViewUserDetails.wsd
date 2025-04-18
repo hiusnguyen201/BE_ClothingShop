@@ -176,7 +176,8 @@ group Business Logic Flow
     alt userId not provided
         UsersService -->> UsersController: return null
         UsersController --x UsersController: throw(HttpException(400))
-        UsersController ->> ErrorMiddleware: handleError(Error)
+        UsersController --x AsyncHandler: catch HttpException and next(HttpException(400))
+        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 400 Bad Request
         deactivate ErrorMiddleware
@@ -191,8 +192,8 @@ group Business Logic Flow
         MongoDB --x UserModel: throw Error
         UserModel --x UsersService: throw Error
         UsersService --x UsersController: throw Error
-        UsersController --x UsersController: throw(HttpException(500))
-        UsersController ->> ErrorMiddleware: handleError(Error)
+        UsersController --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
@@ -202,7 +203,8 @@ group Business Logic Flow
         UserModel -->> UsersService: return null
         UsersService -->> UsersController: return null
         UsersController --x UsersController: throw(HttpException(404))
-        UsersController ->> ErrorMiddleware: handleError(Error)
+        UsersController --x AsyncHandler: catch HttpException and next(HttpException(404))
+        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 404 Not Found
         deactivate ErrorMiddleware

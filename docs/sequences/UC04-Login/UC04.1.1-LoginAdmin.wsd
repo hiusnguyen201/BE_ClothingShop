@@ -71,8 +71,8 @@ group Business Logic Flow
         MongoDB --x UserModel: throw error
         UserModel --x AuthService: throw error
         AuthService --x AuthController: throw error
-        AuthController --x AuthController: throw(HttpException(500))
-        AuthController ->> ErrorMiddleware: handleError(Error)
+        AuthController --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
@@ -90,7 +90,8 @@ group Business Logic Flow
         UserModel -->> AuthService: return user
         AuthService -->> AuthController: return user
         AuthController --x AuthController: throw(HttpException(400))
-        AuthController ->> ErrorMiddleware: handleError(Error)
+        AuthController --x AsyncHandler: catch HttpException and next(HttpException(400))
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 400 Bad Request
         deactivate ErrorMiddleware
@@ -121,8 +122,8 @@ group Business Logic Flow
         MongoDB --x UserModel: throw error
         UserModel --x AuthService: throw error
         AuthService --x AuthController: throw error
-        AuthController --x AuthController: throw(HttpException(500))
-        AuthController ->> ErrorMiddleware: handleError(Error)
+        AuthController --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware

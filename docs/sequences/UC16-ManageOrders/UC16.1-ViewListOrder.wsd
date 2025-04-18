@@ -1,0 +1,248 @@
+@startuml List Order
+
+actor Client
+
+box "Application Layer"
+participant OrdersRouter 
+participant ErrorMiddleware 
+participant AsyncHandler 
+end box
+
+box "Authentication"
+participant JwtAuthMiddleware 
+participant CookieUtil
+participant AuthService
+participant jsonwebtoken
+end box
+
+box "Authorization"
+participant UserService 
+participant UserModel
+end box
+
+box "Validation"
+participant RequestValidation
+end box
+
+box "Business Logic"
+participant OrdersController
+participant ModelDto
+participant ApiResponse
+participant OrdersService
+participant QueryUtil
+participant OrderModel
+end box
+
+database MongoDB
+
+' Step 1
+group Request Initialization
+    Client -> OrdersRouter: GET /api/orders/get-orders
+    activate Client
+    activate OrdersRouter
+    OrdersRouter -> AsyncHandler: asyncHandler(getAllOrdersController)
+    activate AsyncHandler
+end
+
+break
+break
+
+' Step 2
+group Authentication Flow
+    AsyncHandler -> JwtAuthMiddleware: isAuthorizedAndHasPermission
+    activate JwtAuthMiddleware
+
+    JwtAuthMiddleware -> JwtAuthMiddleware: extract token
+    alt token not provided
+        JwtAuthMiddleware -> CookieUtil: clearSession(res)
+        activate CookieUtil
+        CookieUtil -->> JwtAuthMiddleware: return void
+        deactivate CookieUtil
+        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
+        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
+        deactivate ErrorMiddleware
+    end 
+
+    JwtAuthMiddleware -> AuthService: verifyTokenService(token)
+    activate AuthService
+    AuthService -> jsonwebtoken: verify(token, SECRET)
+    activate jsonwebtoken
+    alt token invalid
+        jsonwebtoken --x AuthService: throw Error
+        AuthService -->> JwtAuthMiddleware: catch Error and return null
+        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
+        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
+        deactivate ErrorMiddleware
+    end
+
+    jsonwebtoken -->> AuthService: return data decoded
+    deactivate jsonwebtoken
+    AuthService -->> JwtAuthMiddleware: return data decoded
+    deactivate AuthService
+    JwtAuthMiddleware -> UserService: getUserByIdService(decoded.id)
+    activate UserService
+    UserService -> UserModel: findOne(filters)
+    activate UserModel
+    UserModel -> MongoDB: query select
+    activate MongoDB
+
+    alt user not found
+        MongoDB -->> UserModel: return null
+        UserModel -->> UserService: return null
+        UserService -->> JwtAuthMiddleware: return null
+        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
+        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> UserModel: return user
+    deactivate MongoDB
+    UserModel -->> UserService: return user
+    deactivate UserModel
+    UserService -->> JwtAuthMiddleware: return user
+    deactivate UserService
+
+    alt unverified account
+        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(403))
+        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 403 Forbidden
+        deactivate ErrorMiddleware
+    end
+end
+
+break
+break
+
+' Step 3
+group Authorization Flow
+    JwtAuthMiddleware -> UserService: checkUserHasPermissionService(userId, method, endpoint)
+    activate UserService
+    UserService -> UserModel: findById(id).populate(role).populate(permissions)
+    activate UserModel
+    UserModel -> MongoDB: query select
+    activate MongoDB
+
+    alt User doesn't have permissions 
+        MongoDB -->> UserModel: return empty permissions
+        UserModel -->> UserService: return empty permissions
+        UserService -->> JwtAuthMiddleware: return false
+        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 403 Forbidden
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> UserModel: return permissions
+    deactivate MongoDB
+    UserModel -->> UserService: return permissions
+    deactivate UserModel
+    UserService -->> JwtAuthMiddleware: return true
+    deactivate UserService
+end
+
+break
+break
+
+' Step 4
+group Validation Flow
+    JwtAuthMiddleware -> RequestValidation: validateQuery(GetListOrderDto)
+    deactivate JwtAuthMiddleware
+    activate RequestValidation
+        alt validation error
+        RequestValidation ->> RequestValidation: next(HttpException(400))
+        RequestValidation ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 400 Bad Request
+        deactivate ErrorMiddleware
+    end
+end
+
+break
+break
+
+
+' Step 5
+group Business Logic Flow
+    RequestValidation -> OrdersController: getAllOrdersController
+    deactivate RequestValidation
+    activate OrdersController
+    OrdersController -> OrdersService: getAndCountOrdersService(filters, skip, limit, sortBy, sortOrder)
+    activate OrdersService
+    OrdersService -> OrderModel: countDocuments(filters)
+    activate OrderModel
+    OrderModel -> MongoDB: query count 
+    activate MongoDB
+
+    alt count false
+        MongoDB --x OrderModel:throw Error
+        OrderModel --x OrdersService:throw Error
+        OrdersService --x OrdersController: throw Error
+        OrdersController --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500  Server Error
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> OrderModel: return count
+    deactivate MongoDB
+    OrderModel -->> OrdersService: return count
+    deactivate OrderModel
+    OrdersService -> QueryUtil : extendQueryOptionsWithPagination(skip, limit)
+    activate QueryUtil
+    QueryUtil -->> OrdersService: return options
+    deactivate QueryUtil
+    OrdersService -> QueryUtil : extendQueryOptionsWithSort(sortBy, sortOrder)
+    activate QueryUtil
+    QueryUtil -->> OrdersService: return options
+    deactivate QueryUtil
+    OrdersService -> OrderModel: find(filters, ORDER_SELECTED_FIELDS, queryOptions)
+    activate OrderModel
+    OrderModel -> MongoDB: query select
+    activate MongoDB
+
+    alt select false
+        MongoDB --x OrderModel:throw Error
+        OrderModel --x OrdersService:throw Error
+        OrdersService --x OrdersController: throw Error
+        OrdersController ->> AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500  Server Error
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> OrderModel: return orders
+    deactivate MongoDB
+    OrderModel -->> OrdersService: return orders
+    deactivate OrderModel
+    OrdersService -->> OrdersController: return orders
+    deactivate OrdersService
+end
+
+group Transform data response
+    OrdersController -> ModelDto: newList(OrderDto, orders)
+    activate ModelDto
+    ModelDto -->> OrdersController: return OrderDto instance
+    deactivate ModelDto
+
+    OrdersController -> ApiResponse: success(TotalCount, OrderDto, success message)
+    activate ApiResponse
+    ApiResponse -->> OrdersController: return ApiResponse instance
+    deactivate ApiResponse 
+end
+
+OrdersController -->> AsyncHandler: return ApiResponse instance
+deactivate OrdersController
+AsyncHandler --> Client: HTTP 200 Success
+deactivate AsyncHandler
+deactivate OrdersRouter
+
+@enduml

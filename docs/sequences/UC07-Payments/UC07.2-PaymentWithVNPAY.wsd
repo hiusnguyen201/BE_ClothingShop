@@ -1,0 +1,219 @@
+@startuml Payment with momo
+
+actor Client
+
+box "Application Layer"
+participant PaymentsRouter 
+participant ErrorMiddleware 
+participant AsyncHandler 
+end box
+
+
+box "Business Logic"
+participant PaymentsController
+participant ApiResponse
+participant TransactionalServiceWrapper 
+participant PaymentsService
+participant OrdersService
+participant HandleCreateOrder
+participant OrderStatusHistoryService
+participant OrderModel
+participant PaymentModel
+participant OrderStatusHistoryModel
+participant ModelDto
+end box
+
+database MongoDB
+
+' Step 1
+group Request Initialization
+    Client -> PaymentsRouter: GET /api/payments/return-payment-vnpay
+    activate Client
+    activate PaymentsRouter
+    PaymentsRouter -> AsyncHandler: asyncHandler(returnPaymentVnPayController)
+    activate AsyncHandler
+end
+
+break
+break
+
+' step 2
+group Business Logic Flow
+    AsyncHandler -> PaymentsController: returnPaymentVnPayController
+    activate PaymentsController
+    PaymentsController -> TransactionalServiceWrapper: execute()
+    activate TransactionalServiceWrapper
+    alt payment failed
+        TransactionalServiceWrapper -> HandleCreateOrder: updateOrderStatusUtils(orderId, newStatus, sessionId)
+        activate HandleCreateOrder
+        HandleCreateOrder -> OrderStatusHistoryService: newOrderStatusHistoryService()
+        activate OrderStatusHistoryService
+        OrderStatusHistoryService -> OrderStatusHistoryModel: new OrderStatusHistoryModel()
+        activate OrderStatusHistoryModel
+        OrderStatusHistoryModel -->> OrderStatusHistoryService: return OrderStatusHistoryModel instance
+        deactivate OrderStatusHistoryModel
+        OrderStatusHistoryService -->> HandleCreateOrder: return newOrderHistory
+        deactivate OrderStatusHistoryService
+        HandleCreateOrder -> HandleCreateOrder: save(session)
+        HandleCreateOrder -> OrdersService: updateOrderStatusByIdService()
+        activate OrdersService
+        OrdersService -> OrderModel: findOneAndUpdate()
+        OrderModel -> MongoDB: query update
+        activate MongoDB
+
+        alt update fail
+            MongoDB --x OrderModel: throw Error
+            OrderModel --x OrdersService: throw Error
+            OrdersService --x HandleCreateOrder: throw Error
+            HandleCreateOrder --x TransactionalServiceWrapper: throw Error
+            TransactionalServiceWrapper --x AsyncHandler: catch Error and next(Error)
+            AsyncHandler -->> ErrorMiddleware: handleError(error) 
+            activate ErrorMiddleware
+            ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+            deactivate ErrorMiddleware
+        end
+
+        MongoDB -->> OrderModel: return order
+        deactivate MongoDB
+        OrderModel -->> OrdersService: return order
+        deactivate OrderModel
+        OrdersService -->> HandleCreateOrder: return order
+        deactivate OrdersService
+        HandleCreateOrder -->> TransactionalServiceWrapper: return order
+        deactivate HandleCreateOrder
+        TransactionalServiceWrapper --x TransactionalServiceWrapper: throw(HttpException(400))
+        TransactionalServiceWrapper -->> ErrorMiddleware: handleError(error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 400 Bad Request
+        deactivate ErrorMiddleware
+    end
+
+    TransactionalServiceWrapper -> OrdersService: getOrderByIdService(orderId)
+    activate OrdersService
+
+    alt orderId not provided 
+        OrdersService -> TransactionalServiceWrapper: return null
+        TransactionalServiceWrapper --x TransactionalServiceWrapper: throw(HttpException(400))
+        TransactionalServiceWrapper --x AsyncHandler: catch HttpException and next(HttpException(400))
+        AsyncHandler -->> ErrorMiddleware: handleError(error) 
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 400 Bad Request
+        deactivate ErrorMiddleware
+    end
+    
+    OrdersService -> OrderModel: findOne(filters)
+    OrderModel -> MongoDB: quere select 
+    activate MongoDB
+
+    alt select fail 
+        MongoDB --x OrderModel: throw Error
+        OrderModel --x OrdersService: throw Error
+        OrdersService --x TransactionalServiceWrapper: throw Error
+        TransactionalServiceWrapper --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler -->> ErrorMiddleware: handleError(error) 
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        deactivate ErrorMiddleware
+    else order not found
+        MongoDB -->> OrderModel: return null
+        OrderModel -->> OrdersService: return null
+        OrdersService -->> TransactionalServiceWrapper: return null
+        TransactionalServiceWrapper --x TransactionalServiceWrapper: throw(HttpException(404))
+        TransactionalServiceWrapper --x AsyncHandler: catch HttpException and next(HttpException(404))
+        AsyncHandler -->> ErrorMiddleware: handleError(error) 
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 404 Not Found
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> OrderModel: return order
+    deactivate MongoDB
+    OrderModel -->> OrdersService: return order
+    deactivate OrderModel
+    OrdersService -->> TransactionalServiceWrapper: return order
+    deactivate OrdersService
+
+    TransactionalServiceWrapper -> PaymentsService: updatePaymentByIdService()
+    activate PaymentsService
+    PaymentsService -> PaymentModel: findByIdAndUpdate()
+    activate PaymentModel
+    PaymentModel -> MongoDB: query update
+    activate MongoDB
+
+    alt update fail
+        MongoDB --x PaymentModel: throw Error
+        PaymentModel --x PaymentsService: throw Error
+        PaymentsService --x TransactionalServiceWrapper: throw Error
+        TransactionalServiceWrapper --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler -->> ErrorMiddleware: handleError(error) 
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> PaymentModel: return payment
+    deactivate MongoDB
+    PaymentModel -->> PaymentsService: return payment
+    deactivate PaymentModel
+    PaymentsService -->> TransactionalServiceWrapper: return payment
+    deactivate PaymentsService
+    TransactionalServiceWrapper -> OrderStatusHistoryService: newOrderStatusHistoryService()
+    activate OrderStatusHistoryService
+    OrderStatusHistoryService -> OrderStatusHistoryModel: new OrderStatusHistoryModel()
+    activate OrderStatusHistoryModel
+    OrderStatusHistoryModel -->> OrderStatusHistoryService: return OrderStatusHistoryModel instance
+    deactivate OrderStatusHistoryModel
+    OrderStatusHistoryService -->> TransactionalServiceWrapper: return newOrderHistory
+    deactivate OrderStatusHistoryService
+    TransactionalServiceWrapper -> TransactionalServiceWrapper: save(session)
+    TransactionalServiceWrapper -> OrdersService: updateOrderStatusByIdService()
+    activate OrdersService
+    OrdersService -> OrderModel: findByIdAndUpdate()
+    activate OrderModel
+    OrderModel -> MongoDB: query update
+    activate MongoDB
+
+    alt update fail
+        MongoDB --x OrderModel: throw Error
+        OrderModel --x OrdersService: throw Error
+        OrdersService --x TransactionalServiceWrapper: throw Error
+        TransactionalServiceWrapper --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler -->> ErrorMiddleware: handleError(error) 
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> OrderModel: return order
+    deactivate MongoDB
+    OrderModel -->> OrdersService: return order
+    deactivate OrderModel
+    OrdersService -->> TransactionalServiceWrapper: return order
+    deactivate OrdersService
+
+end
+break
+break
+
+group Transform data response
+    TransactionalServiceWrapper -> ModelDto: new(PaymentDto, updatedPayment)
+    activate ModelDto
+    ModelDto -->> TransactionalServiceWrapper: return PaymentDto instance
+    deactivate ModelDto
+
+    TransactionalServiceWrapper -> ApiResponse: success(PaymentDto)
+    activate ApiResponse
+    ApiResponse -->> TransactionalServiceWrapper: return ApiResponse instance
+    deactivate ApiResponse 
+end
+TransactionalServiceWrapper -->> PaymentsController: return ApiResponse instance
+deactivate TransactionalServiceWrapper
+PaymentsController -->> AsyncHandler: return ApiResponse instance
+deactivate PaymentsController
+AsyncHandler --> Client: HTTP 200 Success
+deactivate AsyncHandler
+deactivate PaymentsRouter
+
+
+
+@enduml

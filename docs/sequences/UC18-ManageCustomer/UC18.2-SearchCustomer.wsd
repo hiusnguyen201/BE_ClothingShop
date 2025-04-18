@@ -181,8 +181,8 @@ group Business Logic Flow
         MongoDB --x UserModel: throw Error
         UserModel --x UserService: throw Error
         UserService --x CustomersController: throw Error
-        CustomersController --x CustomersController: throw(HttpException(500))
-        CustomersController ->> ErrorMiddleware: handleError(Error)
+        CustomersController --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
@@ -209,8 +209,8 @@ group Business Logic Flow
         MongoDB --x UserModel: throw Error
         UserModel --x UserService: throw Error
         UserService --x CustomersController: throw Error
-        CustomersController --x CustomersController: throw(HttpException(500))
-        CustomersController ->> ErrorMiddleware: handleError(Error)
+        CustomersController --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
         deactivate ErrorMiddleware
