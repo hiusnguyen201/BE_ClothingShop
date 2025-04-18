@@ -1,4 +1,4 @@
-@startuml View Detail Shipping Address
+@startuml Remove Shipping Address
 
 actor Client
 
@@ -33,10 +33,10 @@ database MongoDB
 
 ' Step 1
 group Request Initialization
-    Client -> ShippingAddressRouter: GET /api/shipping-address/get-shipping-address-by-id/:shippingAddressId
+    Client -> ShippingAddressRouter: DELETE /api/shipping-address/remove-shipping-address-by-id/:shippingAddressId
     activate Client
     activate ShippingAddressRouter
-    ShippingAddressRouter -> AsyncHandler: asyncHandler(getShippingAddressByIdController)
+    ShippingAddressRouter -> AsyncHandler: asyncHandler(removeShippingAddressByIdController)
     activate AsyncHandler
 end
 
@@ -149,7 +149,7 @@ break
 
 ' Step 4
 group Business Logic Flow
-    JwtAuthMiddleware -> ShippingAddressController: getShippingAddressByIdController
+    JwtAuthMiddleware -> ShippingAddressController: removeShippingAddressByIdController
     deactivate JwtAuthMiddleware
     activate ShippingAddressController
     ShippingAddressController -> ShippingAddressService: getShippingAddressByIdService(shippingAddressId)
@@ -197,22 +197,39 @@ group Business Logic Flow
     deactivate ShippingAddressModel
     ShippingAddressService -->> ShippingAddressController: return shippingAddress
     deactivate ShippingAddressService
+    ShippingAddressController -> ShippingAddressService: removeShippingAddressByIdService()
+    activate ShippingAddressService
+    ShippingAddressService -> ShippingAddressModel: findbyIdAndDelete()
+    activate ShippingAddressModel
+    ShippingAddressModel -> MongoDB: query delete
+    activate MongoDB
+
+    alt delete fail
+        MongoDB --x ShippingAddressModel: throw Error
+        ShippingAddressModel --x ShippingAddressService: throw Error
+        ShippingAddressService --x ShippingAddressController: throw Error
+        ShippingAddressController --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> ShippingAddressModel: return shippingAddress
+    deactivate MongoDB
+    ShippingAddressModel -->> ShippingAddressService: return shippingAddress
+    deactivate ShippingAddressModel
+    ShippingAddressService -->> ShippingAddressController: return shippingAddress
+    deactivate ShippingAddressService
+
 
 
 end
 
-group Transform data response
-    ShippingAddressController -> ModelDto: newList(ShippingAddressDto, existShippingAddress)
-    activate ModelDto
-    ModelDto -->> ShippingAddressController: return ShippingAddressDto instance
-    deactivate ModelDto
-
-    ShippingAddressController -> ApiResponse: success(ShippingAddressDto)
-    activate ApiResponse
-    ApiResponse -->> ShippingAddressController: return ApiResponse instance
-    deactivate ApiResponse 
-end
-
+ShippingAddressController -> ApiResponse: success(id)
+activate ApiResponse
+ApiResponse -->> ShippingAddressController: return ApiResponse instance
+deactivate ApiResponse 
 ShippingAddressController -->> AsyncHandler: return ApiResponse instance
 deactivate ShippingAddressController
 AsyncHandler --> Client: HTTP 200 Success

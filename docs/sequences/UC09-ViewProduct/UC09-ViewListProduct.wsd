@@ -1,9 +1,9 @@
-@startuml View Detail Shipping Address
+@startuml List Product
 
 actor Client
 
 box "Application Layer"
-participant ShippingAddressRouter 
+participant ProductRouter 
 participant ErrorMiddleware 
 participant AsyncHandler 
 end box
@@ -20,23 +20,27 @@ participant UserService
 participant UserModel
 end box
 
+box "Validation"
+participant RequestValidation
+end box
+
 box "Business Logic"
-participant ShippingAddressController
+participant ProductsController
 participant ModelDto
 participant ApiResponse
-participant ShippingAddressService
+participant ProductsService
 participant QueryUtil
-participant ShippingAddressModel
+participant ProductModel
 end box
 
 database MongoDB
 
 ' Step 1
 group Request Initialization
-    Client -> ShippingAddressRouter: GET /api/shipping-address/get-shipping-address-by-id/:shippingAddressId
+    Client -> ProductRouter: GET /api/products/get-products
     activate Client
-    activate ShippingAddressRouter
-    ShippingAddressRouter -> AsyncHandler: asyncHandler(getShippingAddressByIdController)
+    activate ProductRouter
+    ProductRouter -> AsyncHandler: asyncHandler(getAllProductsController)
     activate AsyncHandler
 end
 
@@ -146,77 +150,95 @@ end
 break
 break
 
-
 ' Step 4
-group Business Logic Flow
-    JwtAuthMiddleware -> ShippingAddressController: getShippingAddressByIdController
-    deactivate JwtAuthMiddleware
-    activate ShippingAddressController
-    ShippingAddressController -> ShippingAddressService: getShippingAddressByIdService(shippingAddressId)
-    activate ShippingAddressService
-    
-    alt shippingAddressId not provided
-        ShippingAddressService -->> ShippingAddressController: return null
-        ShippingAddressController --x ShippingAddressService: next(HttpException(400))
-        ShippingAddressController --x AsyncHandler: catch HttpException and next(HttpException(400))
-        AsyncHandler ->> ErrorMiddleware: handleError(Error)
+group Validation Flow
+    JwtAuthMiddleware -> RequestValidation: validateQuery(GetListProductDto)
+    activate RequestValidation
+        alt validation error
+        RequestValidation ->> RequestValidation: next(HttpException(400))
+        RequestValidation ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 400 Bad Request
         deactivate ErrorMiddleware
     end
-    
-    ShippingAddressService -> ShippingAddressModel: findOne(filters)
-    activate ShippingAddressModel
-    ShippingAddressModel -> MongoDB: query select
+end
+
+break
+break
+
+
+' Step 5
+group Business Logic Flow
+    RequestValidation -> ProductsController: getAllProductsController
+    deactivate RequestValidation
+    activate ProductsController
+    ProductsController -> ProductsService: countAllProductsService(filterOptions)
+    activate ProductsService
+    ProductsService -> ProductModel: countDocuments(filters)
+    activate ProductModel
+    ProductModel -> MongoDB: query count 
     activate MongoDB
 
-    alt select fail
-        MongoDB --x ShippingAddressModel: throw Error
-        ShippingAddressModel --x ShippingAddressService: throw Error
-        ShippingAddressService --x ShippingAddressController: throw Error
-        ShippingAddressController --x AsyncHandler: catch Error and next(Error)
+    alt count false
+        MongoDB --x ProductModel:throw Error
+        ProductModel --x ProductsService:throw Error
+        ProductsService --x ProductsController: throw Error
+        ProductsController --x AsyncHandler: catch Error and next(Error)
         AsyncHandler ->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
-    else shippingAddress not found
-        MongoDB -->> ShippingAddressModel: return null
-        ShippingAddressModel -->> ShippingAddressService: return null
-        ShippingAddressService -->> ShippingAddressController: return null
-        ShippingAddressController --x ShippingAddressController: next(HttpException(404))
-        ShippingAddressController --x AsyncHandler: catch HttpException and next(HttpException(404))
-        AsyncHandler ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 404 Not Found
+        ErrorMiddleware -->> Client: HTTP 500  Server Error
         deactivate ErrorMiddleware
     end
 
-    MongoDB -->> ShippingAddressModel: return shippingAddress
+    MongoDB -->> ProductModel: return count
     deactivate MongoDB
-    ShippingAddressModel -->> ShippingAddressService: return shippingAddress
-    deactivate ShippingAddressModel
-    ShippingAddressService -->> ShippingAddressController: return shippingAddress
-    deactivate ShippingAddressService
+    ProductModel -->> ProductsService: return count
+    deactivate ProductModel
+    ProductsService -->> ProductsController: return count
+    deactivate ProductsService
+    ProductsController -> ProductsService: getAllProductsService(filters, page, limit, sortBy, sortOrder)
+    activate ProductsService
+    ProductsService -> ProductModel: find(filters)
+    activate ProductModel
+    ProductModel -> MongoDB: query select
+    activate MongoDB
 
+    alt select fail
+        MongoDB --x ProductModel: throw Error
+        ProductModel --x ProductsService: throw Error
+        ProductsService --x ProductsController: throw Error
+        ProductsController --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500  Server Error
+        deactivate ErrorMiddleware
+    end
 
+    MongoDB -->> ProductModel: return products
+    deactivate MongoDB
+    ProductModel -->> ProductsService: return products
+    deactivate ProductModele
+    ProductsService -->> ProductsController: return products
+    deactivate ProductsService
+    
 end
 
 group Transform data response
-    ShippingAddressController -> ModelDto: newList(ShippingAddressDto, existShippingAddress)
+    ProductsController -> ModelDto: newList(ProductDto, products)
     activate ModelDto
-    ModelDto -->> ShippingAddressController: return ShippingAddressDto instance
+    ModelDto -->> ProductsController: return ProductDto instance
     deactivate ModelDto
 
-    ShippingAddressController -> ApiResponse: success(ShippingAddressDto)
+    ProductsController -> ApiResponse: success(TotalCount, ProductDto, success message)
     activate ApiResponse
-    ApiResponse -->> ShippingAddressController: return ApiResponse instance
+    ApiResponse -->> ProductsController: return ApiResponse instance
     deactivate ApiResponse 
 end
 
-ShippingAddressController -->> AsyncHandler: return ApiResponse instance
-deactivate ShippingAddressController
+ProductsController -->> AsyncHandler: return ApiResponse instance
+deactivate ProductsController
 AsyncHandler --> Client: HTTP 200 Success
 deactivate AsyncHandler
-deactivate ShippingAddressRouter
+deactivate ProductRouter
 
 @enduml
