@@ -28,7 +28,7 @@ describe('Auth API Endpoints', () => {
         },
         {
           name: 'Invalid password format',
-          data: { ...loginData, password: '123' },
+          data: { ...loginData, password: 'invalid-123' },
           invalidPaths: ['password'],
         },
       ];
@@ -52,6 +52,7 @@ describe('Auth API Endpoints', () => {
 
       test('Invalid password', async () => {
         const { user } = await userFactory.createUser();
+        console.log('Created user:', user); // Debugging line
         const response = await makeRequest({
           data: {
             email: user.email,

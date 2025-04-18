@@ -397,13 +397,15 @@ describe('User API Endpoints', () => {
 
     describe('Success Cases', () => {
       test('Get user by id successfully', async () => {
-        const { accessToken, user } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
+        const { accessToken, user } = await userFactory.createUserAuthorizedAndHasPermission(
+          method,
+          endpoint
+        );
         const response = await makeRequest({
           accessToken,
-          params: { userId: user._id },
+          params: { userId: user.id },
         });
-        console.log('User:', user);
-        console.log(response.body);
+        
         expect(response.status).toBe(HttpStatus.OK);
         expect(response.body).toMatchObject({
           codeMessage: Code.SUCCESS.codeMessage,
@@ -635,7 +637,7 @@ describe('User API Endpoints', () => {
         const { accessToken, user } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);
         const response = await makeRequest({
           accessToken,
-          params: { userId: user.id },
+          params: { userId: user._id },
         });
 
         expect(response.status).toBe(HttpStatus.OK);
