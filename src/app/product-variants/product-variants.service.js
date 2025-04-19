@@ -13,6 +13,15 @@ export function newProductVariantsService(data) {
 }
 
 /**
+ * Save product variant
+ * @param {*} data
+ * @returns
+ */
+export async function saveProductVariantService(productVariant, session) {
+  return await productVariant.save({ session });
+}
+
+/**
  * Save product variant instance
  * @param {*} data
  * @returns
@@ -94,7 +103,7 @@ export async function getProductVariantByIdService(id, selectFields = SELECTED_F
           model: 'Option_Value',
         },
       ],
-    })
+    });
   // .populate({
   //   path: 'productDiscount',
   //   model: 'Product_Discount',

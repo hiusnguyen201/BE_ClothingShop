@@ -1,3 +1,4 @@
+import fetch from 'node-fetch';
 import pkg from 'vietnam-provinces';
 const { provinces, districts, wards } = pkg;
 
@@ -30,3 +31,39 @@ export const getAllWardsByDistrictCodeService = (districtCode) => wardsGroupedBy
 export const getProvinceByCodeService = (code) => provincesMap.get(code);
 export const getDistrictByCodeService = (code) => districtsMap.get(code);
 export const getWardByCodeService = (code) => wardsMap.get(code);
+
+export const checkValidAddressService = async (address, wardName, districtName, provinceName) => {
+  const fullAddress = `${address}, ${wardName}, ${districtName}, ${provinceName}`;
+
+  const response = await fetch(
+    `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(fullAddress)}&apiKey=${
+      process.env.GEOAPIFY_KEY
+    }&filter=countrycode:vn`,
+    {
+      method: 'GET',
+    },
+  );
+
+  const result = await response.json();
+
+  if (!result.features || result.features.length === 0) {
+    return false;
+  }
+
+  const feature = result.features[0];
+
+  const requiredFields = [
+    feature.properties.city,
+    feature.properties.street,
+    feature.properties.postcode,
+    feature.properties.housenumber,
+  ];
+
+  const missingData = requiredFields.filter((f) => !f);
+
+  if (missingData.length > 2) {
+    return false;
+  }
+
+  return true;
+};

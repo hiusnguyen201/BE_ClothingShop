@@ -1,8 +1,8 @@
-import { PAYMENT_METHOD } from '#src/core/constant';
+import { ONLINE_PAYMENT_METHOD } from '#src/app/payments/payments.constant';
 import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
-const PAYMENT_MODEL = 'payments';
+export const PAYMENT_MODEL = 'payments';
 
 export const paymentSchema = new Schema(
   {
@@ -10,10 +10,14 @@ export const paymentSchema = new Schema(
       type: String,
       default: null,
     },
+    qrCodeUrl: {
+      type: String,
+      default: null,
+    },
     paymentMethod: {
       type: String,
       required: true,
-      enum: Object.values(PAYMENT_METHOD),
+      enum: Object.values(ONLINE_PAYMENT_METHOD),
     },
     amountPaid: {
       type: Number,
@@ -25,7 +29,7 @@ export const paymentSchema = new Schema(
     },
     transactionId: {
       type: String,
-      required: true,
+      required: false,
     },
     notes: {
       type: String,

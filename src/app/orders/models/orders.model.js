@@ -1,16 +1,22 @@
-import { ORDERS_STATUS } from '#src/core/constant';
+import SoftDelete from '#src/core/plugins/soft-delete.plugin';
 import mongoose from 'mongoose';
 const { Schema } = mongoose;
+import mongooseSequence from 'mongoose-sequence';
+const AutoIncrement = mongooseSequence(mongoose);
 
-const ORDER_MODEL = 'orders';
+export const ORDER_MODEL = 'orders';
 
-export const orderSchema = new Schema(
+export const OrderSchema = new Schema(
   {
     code: {
-      type: String,
-      required: true,
-      length: 14,
+      type: Number,
+      unique: true,
     },
+    orderDate: {
+      type: Date,
+      require: true,
+    },
+
     provinceName: {
       type: String,
       required: true,
@@ -27,6 +33,7 @@ export const orderSchema = new Schema(
       type: String,
       required: true,
     },
+
     customerName: {
       type: String,
       required: true,
@@ -39,6 +46,7 @@ export const orderSchema = new Schema(
       type: String,
       required: true,
     },
+
     quantity: {
       type: Number,
       required: true,
@@ -56,29 +64,35 @@ export const orderSchema = new Schema(
       type: Number,
       required: true,
     },
-    status: {
+
+    notes: {
       type: String,
-      required: true,
-      enum: Object.values(ORDERS_STATUS),
-    },
-    payUrl: {
-      type: String,
-      default: null,
+      require: false,
     },
 
     // Foreign Key
     customer: {
       type: Schema.Types.ObjectId,
       ref: 'User',
+      default: null,
     },
     payment: {
       type: Schema.Types.ObjectId,
       ref: 'Payment',
+      default: null,
     },
+    orderDetails: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Order_Detail',
+        default: [],
+      },
+    ],
     orderStatusHistory: [
       {
         type: Schema.Types.ObjectId,
         ref: 'Order_Status_History',
+        default: [],
       },
     ],
   },
@@ -91,5 +105,8 @@ export const orderSchema = new Schema(
   },
 );
 
-const OrderModel = mongoose.model('Order', orderSchema);
+OrderSchema.plugin(AutoIncrement, { inc_field: 'code' });
+OrderSchema.plugin(SoftDelete);
+
+const OrderModel = mongoose.model('Order', OrderSchema);
 export { OrderModel };

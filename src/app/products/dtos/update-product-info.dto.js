@@ -9,12 +9,7 @@ export const updateProductInfoDto = Joi.object({
     .max(100)
     .required()
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
-  description: Joi.string()
-    .min(30)
-    .max(3000)
-    .required()
-    .custom((value) => replaceMultiSpacesToSingleSpace(value)),
-
+  description: Joi.string().required(),
   category: Joi.string().required(),
   subCategory: Joi.string().allow(null),
   status: Joi.string()

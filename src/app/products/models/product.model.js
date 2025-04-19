@@ -3,7 +3,7 @@ import { PRODUCT_STATUS } from '#src/app/products/products.constant';
 import SoftDelete from '#src/core/plugins/soft-delete.plugin';
 const { Schema } = mongoose;
 
-const PRODUCT_MODEL = 'products';
+export const PRODUCT_MODEL = 'products';
 
 const productSchema = new Schema(
   {
@@ -23,7 +23,6 @@ const productSchema = new Schema(
     },
     description: {
       type: String,
-      length: 3000,
       required: true,
     },
 

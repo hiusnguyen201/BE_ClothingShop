@@ -33,7 +33,7 @@ export const createCategoryController = async (req) => {
     throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Category name already exists' });
   }
 
-  const category = await newCategoryService({ ...req.body, level: 1 });
+  const category = newCategoryService({ ...req.body, level: 1 });
 
   if (parentId) {
     const existParent = await getCategoryByIdService(parentId);

@@ -81,11 +81,6 @@ const UserSchema = new Schema(
       type: [{ type: Schema.Types.ObjectId, ref: 'Permission' }],
       default: [],
     },
-
-    vouchers: {
-      type: [{ type: Schema.Types.ObjectId, ref: 'Voucher' }],
-      default: [],
-    },
   },
   {
     collection: USER_MODEL,

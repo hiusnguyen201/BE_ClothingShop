@@ -6,7 +6,7 @@ const createVariantValueDto = Joi.object({
 });
 
 const createProductVariantDto = Joi.object({
-  quantity: Joi.number().required().min(1),
+  quantity: Joi.number().required(),
   price: Joi.number().required().min(1000),
   sku: Joi.string().min(8).max(16).allow(''),
   variantValues: Joi.array() // màu gì, size gì

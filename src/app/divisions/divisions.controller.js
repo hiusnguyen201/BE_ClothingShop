@@ -4,6 +4,7 @@ import {
   getAllWardsByDistrictCodeService,
   getDistrictByCodeService,
   getProvinceByCodeService,
+  checkValidAddressService,
 } from '#src/app/divisions/divisions.service';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { ModelDto } from '#src/core/dto/ModelDto';
@@ -62,4 +63,17 @@ export const getAllWardsByDistrictCodeController = async (req) => {
   const wardsDto = ModelDto.newList(WardDto, wards);
 
   return ApiResponse.success({ totalCount: wards.length, list: wardsDto }, 'Get all wards successfully');
+};
+
+/**
+ * Check valid address
+ * @param {*} req
+ * @returns
+ */
+export const checkValidAddressController = async (req) => {
+  const { address } = req.body;
+
+  const valid = checkValidAddressService(address);
+
+  return ApiResponse.success(valid);
 };

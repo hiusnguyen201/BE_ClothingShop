@@ -1,5 +1,5 @@
-import { PaymentModel } from "#src/app/payments/models/payments.model";
-import { PAYMENT_SELECTED_FIELDS } from "#src/app/payments/payments.constant";
+import { PaymentModel } from '#src/app/payments/models/payments.model';
+import { PAYMENT_SELECTED_FIELDS } from '#src/app/payments/payments.constant';
 
 /**
  * New payment
@@ -8,6 +8,15 @@ import { PAYMENT_SELECTED_FIELDS } from "#src/app/payments/payments.constant";
  */
 export const newPaymentService = (data) => {
   return new PaymentModel(data);
+};
+
+/**
+ * Save payment
+ * @param {*} data
+ * @returns
+ */
+export const savePaymentService = async (payment, session) => {
+  return await payment.save({ session });
 };
 
 /**
@@ -28,7 +37,8 @@ export const getPaymentByIdService = async (paymentId) => {
 export async function updatePaymentByIdService(paymentId, data, session) {
   return await PaymentModel.findByIdAndUpdate(paymentId, data, {
     new: true,
-    session
-  }).select(PAYMENT_SELECTED_FIELDS)
+    session,
+  })
+    .select(PAYMENT_SELECTED_FIELDS)
     .lean();
 }

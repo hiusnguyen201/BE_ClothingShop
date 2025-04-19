@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
-export const OPTION_VALUES_MODEL = 'optionValues';
+export const OPTION_VALUES_MODEL = 'option_values';
 
 const optionValueSchema = new Schema(
   {

@@ -7,29 +7,31 @@ import { ROLE_SELECTED_FIELDS } from '#src/app/roles/roles.constant';
 import { PERMISSION_SELECTED_FIELDS } from '#src/app/permissions/permissions.constant';
 
 /**
+ * New role instance
+ * @param {*} data
+ * @returns
+ */
+export function newRoleService(data) {
+  data.slug = makeSlug(data.name);
+  return new RoleModel(data);
+}
+
+/**
+ * Insert list role
+ * @param {*} data
+ * @returns
+ */
+export async function insertRolesService(data = [], session) {
+  return await RoleModel.insertMany(data, { session, ordered: true });
+}
+
+/**
  * Create role
  * @param {*} data
  * @returns
  */
 export async function createRoleService(data) {
   return RoleModel.create({ ...data, slug: makeSlug(data.name) });
-}
-
-/**
- * Get or create role with transaction
- * @param {*} data
- * @returns
- */
-export async function getOrCreateRoleService(data, session) {
-  const existRole = await RoleModel.findOne({ name: data.name }).lean();
-
-  if (existRole) {
-    return existRole;
-  }
-
-  const [role] = await RoleModel.insertMany([{ ...data, slug: makeSlug(data.name) }], { session, ordered: true });
-
-  return role;
 }
 
 /**

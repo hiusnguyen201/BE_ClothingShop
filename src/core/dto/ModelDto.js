@@ -11,16 +11,24 @@ const options = {
 
 function convertId(obj) {
   if (Array.isArray(obj)) {
-    return obj.map(convertId);
+    return obj.map((item) => {
+      if (isValidObjectId(item)) {
+        return item;
+      }
+
+      if (typeof item === 'string') {
+        return item;
+      }
+
+      return convertId(item);
+    });
   }
 
   if (obj && typeof obj === 'object') {
     return Object.entries(obj).reduce((acc, [key, value]) => {
-      if (!value) {
-        acc[key] = null;
-      } else if (isValidObjectId(value)) {
-        acc[key === '_id' ? 'id' : key] = typeof value === 'number' ? +value : value.toString();
-      } else if (value instanceof Date || Array.isArray(value)) {
+      if (isValidObjectId(value)) {
+        acc[key === '_id' ? 'id' : key] = value;
+      } else if (value instanceof Date) {
         acc[key] = value;
       } else {
         acc[key] = convertId(value);

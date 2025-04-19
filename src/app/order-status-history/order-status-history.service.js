@@ -10,6 +10,15 @@ export function newOrderStatusHistoryService(data) {
 }
 
 /**
+ * Save order status history
+ * @param {*} data
+ * @returns
+ */
+export async function saveOrderStatusHistoryService(history, session) {
+  return await history.save({ session });
+}
+
+/**
  * Create order status history
  * @param {*} data
  * @returns
@@ -28,7 +37,7 @@ export async function duplicateCheckOrderStatusHistoryService(order, orderStatus
 
   return await OrderStatusHistoryModel.findOne({
     order,
-    status: orderStatus
+    status: orderStatus,
   });
 }
 

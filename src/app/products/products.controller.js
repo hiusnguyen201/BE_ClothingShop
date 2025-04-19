@@ -57,10 +57,11 @@ export const createProductController = async (req) => {
 };
 
 export const getAllProductsController = async (req) => {
-  const { keyword, category, limit, page, sortBy, sortOrder } = req.query;
+  const { keyword, category, limit, page, sortBy, sortOrder, status } = req.query;
 
   const filterOptions = {
     $or: [{ name: { $regex: keyword, $options: 'i' } }],
+    ...(status ? { status } : {}),
     ...(category ? { category } : {}),
   };
 
@@ -124,7 +125,9 @@ export const updateProductInfoController = async (req) => {
     req.body.thumbnail = result.url;
   }
 
-  const updatedProduct = await updateProductInfoByIdService(existProduct._id, req.body);
+  await updateProductInfoByIdService(existProduct._id, req.body);
+
+  const updatedProduct = await getProductByIdService(existProduct._id);
 
   const productDto = ModelDto.new(ProductDto, updatedProduct);
   return ApiResponse.success(productDto);

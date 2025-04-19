@@ -1,5 +1,7 @@
 /** @type {import('#src/app/permissions/models/permission.model')} */
 
+import { newPermissionService } from '#src/app/permissions/permissions.service';
+
 const USERS_PERMISSIONS = [
   {
     name: 'read:users',
@@ -280,7 +282,7 @@ const ORDER_PERMISSIONS = [
   },
 ];
 
-export const PERMISSIONS_LIST = [
+const PERMISSIONS_LIST = [
   ...USERS_PERMISSIONS,
   ...ROLES_PERMISSIONS,
   ...PERMISSIONS_PERMISSIONS,
@@ -289,3 +291,7 @@ export const PERMISSIONS_LIST = [
   ...PRODUCTS_PERMISSIONS,
   ...ORDER_PERMISSIONS,
 ];
+
+const permissions = PERMISSIONS_LIST.map((per) => newPermissionService(per));
+
+export { permissions };

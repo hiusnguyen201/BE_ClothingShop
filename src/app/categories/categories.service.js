@@ -3,14 +3,14 @@ import { CategoryModel } from '#src/app/categories/models/category.model';
 import { REGEX_PATTERNS } from '#src/core/constant';
 import { makeSlug } from '#src/utils/string.util';
 import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
-import { CATEGORY_SELECTED_FIELDS, MAXIMUM_CHILDREN_CATEGORY_LEVEL } from '#src/app/categories/categories.constant';
+import { CATEGORY_SELECTED_FIELDS } from '#src/app/categories/categories.constant';
 
 /**
  * New category instance
  * @param {object} data
  * @returns
  */
-export async function newCategoryService(data) {
+export function newCategoryService(data) {
   return new CategoryModel({ ...data, slug: makeSlug(data.name) });
 }
 
@@ -21,6 +21,15 @@ export async function newCategoryService(data) {
  */
 export async function saveCategoryService(categoryDoc) {
   return categoryDoc.save();
+}
+
+/**
+ * Insert list category
+ * @param {object} data
+ * @returns
+ */
+export async function insertCategoriesService(data, session) {
+  return await CategoryModel.insertMany(data, { session, ordered: true });
 }
 
 /**

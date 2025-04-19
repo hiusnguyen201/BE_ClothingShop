@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
-const ORDER_DETAIL_MODEL = 'order-details';
+export const ORDER_DETAIL_MODEL = 'order_details';
 
 export const orderDetailSchema = new Schema(
   {
@@ -17,30 +17,22 @@ export const orderDetailSchema = new Schema(
       type: Number,
       required: true,
     },
-    // isFixed: {
-    //   type: Boolean,
-    //   default: null,
-    // },
-    // discount: {
-    //   type: Number,
-    //   default: null,
-    // },
 
     // Foreign Key
     order: {
       type: Schema.Types.ObjectId,
       ref: 'Order',
-      required: true
+      required: true,
     },
     product: {
       type: Schema.Types.ObjectId,
       ref: 'Product',
-      required: true
+      required: true,
     },
     variant: {
       type: Schema.Types.ObjectId,
       ref: 'Product_Variant',
-      required: true
+      required: true,
     },
   },
   {
@@ -52,5 +44,5 @@ export const orderDetailSchema = new Schema(
   },
 );
 
-const OrderDetailModel = mongoose.model('Order-detail', orderDetailSchema);
+const OrderDetailModel = mongoose.model('Order_Detail', orderDetailSchema);
 export { OrderDetailModel };

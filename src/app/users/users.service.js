@@ -8,6 +8,26 @@ import { PERMISSION_SELECTED_FIELDS } from '#src/app/permissions/permissions.con
 import { ROLE_SELECTED_FIELDS } from '#src/app/roles/roles.constant';
 
 /**
+ * New user service
+ * @param {*} data
+ * @returns
+ */
+export function newUserService(data) {
+  const salt = genSaltSync();
+  data.password = hashSync(data.password, salt);
+  return new UserModel(data);
+}
+
+/**
+ * Insert users service
+ * @param {*} data
+ * @returns
+ */
+export async function insertUsersService(data = [], session) {
+  return await UserModel.insertMany(data, { session, ordered: true });
+}
+
+/**
  * Create user
  * @param {*} data
  * @returns
@@ -17,31 +37,6 @@ export async function createUserService(data) {
   data.password = hashSync(data.password, salt);
   const user = await UserModel.create(data);
   return user.toJSON();
-}
-
-/**
- * Create users within transaction
- * @param {*} data
- * @returns
- */
-export async function getOrCreateUsersService(data, session) {
-  const existingUsers = await UserModel.find({
-    email: data.map((item) => item.email),
-  }).lean();
-
-  const existingSet = new Set(existingUsers.map((p) => p.email));
-
-  const newUsers = data.filter((p) => !existingSet.has(p.email));
-
-  if (newUsers.length > 0) {
-    const created = await UserModel.insertMany(
-      newUsers.map((item) => ({ ...item, password: hashSync(item.password, genSaltSync()) })),
-      { session, ordered: true },
-    );
-    return [...existingUsers, ...created];
-  }
-
-  return existingUsers;
 }
 
 /**
@@ -148,8 +143,7 @@ export async function updateUserInfoByIdService(id, data) {
 
 export async function checkUserHasPermissionService(id, method, endpoint) {
   const user = await UserModel.findById(id)
-    .lean()
-    .select('role')
+    .select('role permissions')
     .populate({
       path: 'role',
       select: 'permissions',
@@ -167,7 +161,8 @@ export async function checkUserHasPermissionService(id, method, endpoint) {
         method,
         endpoint,
       },
-    });
+    })
+    .lean();
 
   return Boolean(user?.role?.permissions?.length > 0 || user?.permissions.length > 0);
 }

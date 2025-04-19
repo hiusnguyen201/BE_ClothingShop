@@ -2,22 +2,40 @@ import { isValidObjectId } from 'mongoose';
 import { OptionModel } from '#src/app/options/models/option.model';
 import { OptionValueModel } from '#src/app/options/models/option-value.model';
 
-const SELECTED_FIELDS = '_id name optionValues';
-
 /**
- * Create option within transaction
+ * New Option Value instance
  * @param {*} data
  * @returns
  */
-export async function getOrCreateOptionService(data, session) {
-  const existOption = await OptionModel.findOne({ name: data.name });
+export function newOptionValueService(data) {
+  return new OptionValueModel(data);
+}
 
-  if (existOption) {
-    return existOption;
-  }
+/**
+ * Insert list option value
+ * @param {*} data
+ * @returns
+ */
+export async function insertOptionValuesService(data, session) {
+  return await OptionValueModel.insertMany(data, { session, ordered: true });
+}
 
-  const [option] = await OptionModel.insertMany([data], { session, ordered: true });
-  return option;
+/**
+ * New Option instance
+ * @param {*} data
+ * @returns
+ */
+export function newOptionService(data) {
+  return new OptionModel(data);
+}
+
+/**
+ * Insert list option
+ * @param {*} data
+ * @returns
+ */
+export async function insertOptionsService(data, session) {
+  return await OptionModel.insertMany(data, { session, ordered: true });
 }
 
 /**
@@ -51,26 +69,4 @@ export async function getOptionByIdService(id, extraFilters) {
     path: 'optionValues',
     match: extraFilters,
   });
-}
-
-/**
- * Create option values within transaction
- * @param {*} data
- * @returns
- */
-export async function getOrCreateOptionValuesService(data = [], session) {
-  const existingOptionValues = await OptionValueModel.find({
-    valueName: { $in: data.map((item) => item.valueName) },
-  }).lean();
-
-  const existingSet = new Set(existingOptionValues.map((item) => item.valueName));
-
-  const newOptionValuesData = data.filter((item) => !existingSet.has(item.valueName));
-
-  if (newOptionValuesData.length > 0) {
-    const created = await OptionValueModel.insertMany(newOptionValuesData, { session, ordered: true });
-    return [...existingOptionValues, ...created];
-  }
-
-  return existingOptionValues;
 }

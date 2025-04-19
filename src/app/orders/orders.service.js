@@ -1,8 +1,13 @@
 import { OrderModel } from '#src/app/orders/models/orders.model';
-import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
 import { isValidObjectId } from 'mongoose';
 import { ORDER_SELECTED_FIELDS } from '#src/app/orders/orders.constant';
 import { USER_SELECTED_FIELDS } from '#src/app/users/users.constant';
+import { ORDER_STATUS_HISTORY_MODEL } from '#src/app/order-status-history/models/order-status-history.model';
+import { USER_MODEL } from '#src/app/users/models/user.model';
+import { PAYMENT_MODEL } from '#src/app/payments/models/payments.model';
+import { PAYMENT_SELECTED_FIELDS } from '#src/app/payments/payments.constant';
+import { ORDER_DETAIL_MODEL } from '#src/app/order-details/models/order-details.model';
+import { PRODUCT_SELECT_FIELDS } from '#src/app/products/products.constant';
 
 /**
  * New order
@@ -11,6 +16,15 @@ import { USER_SELECTED_FIELDS } from '#src/app/users/users.constant';
  */
 export function newOrderService(data) {
   return new OrderModel(data);
+}
+
+/**
+ * Save order
+ * @param {*} data
+ * @returns
+ */
+export async function saveOrderService(order, session) {
+  return await order.save({ session });
 }
 
 /**
@@ -27,19 +41,39 @@ export async function createOrdersService(data, session) {
  * @param {*} id
  * @returns
  */
-export async function getOrderByIdService(id, extras = {}) {
+export async function getOrderByIdService(id, selectedFields = ORDER_SELECTED_FIELDS) {
   if (!id) return null;
-  const filters = {
-    ...extras,
-  };
+  const filters = {};
 
   if (isValidObjectId(id)) {
     filters._id = id;
   } else {
-    return null;
+    filters.code = id;
   }
 
-  return OrderModel.findOne(filters).select(ORDER_SELECTED_FIELDS).populate('payment').lean();
+  return OrderModel.findOne(filters)
+    .populate({ path: 'payment', select: PAYMENT_SELECTED_FIELDS })
+    .populate({ path: 'orderStatusHistory' })
+    .populate({
+      path: 'orderDetails',
+      populate: [
+        {
+          path: 'variant',
+          populate: {
+            path: 'variantValues',
+            populate: [
+              { path: 'option', options: { lean: true }, select: '_id name' },
+              { path: 'optionValue', options: { lean: true }, select: '_id valueName' },
+            ],
+          },
+        },
+        ,
+        { path: 'product', select: PRODUCT_SELECT_FIELDS },
+      ],
+    })
+    .populate({ path: 'customer', select: USER_SELECTED_FIELDS })
+    .select(selectedFields)
+    .lean();
 }
 
 /**
@@ -61,19 +95,104 @@ export async function countAllOrdersService(filters) {
  * @returns
  */
 export async function getAndCountOrdersService(filters, skip, limit, sortBy, sortOrder) {
-  const totalCount = await OrderModel.countDocuments(filters);
+  const totalCountResult = await OrderModel.aggregate([
+    {
+      $lookup: {
+        from: ORDER_STATUS_HISTORY_MODEL,
+        localField: 'orderStatusHistory',
+        foreignField: '_id',
+        as: 'orderStatusHistory',
+      },
+    },
+    {
+      $addFields: {
+        lastStatus: { $arrayElemAt: ['$orderStatusHistory', -1] },
+      },
+    },
+    ...(filters.status
+      ? [
+          {
+            $match: {
+              'lastStatus.status': filters.status,
+            },
+          },
+        ]
+      : []),
+    {
+      $count: 'totalCount',
+    },
+  ]);
 
-  const queryOptions = {
-    ...extendQueryOptionsWithPagination(skip, limit),
-    ...extendQueryOptionsWithSort(sortBy, sortOrder),
-  };
+  const orders = await OrderModel.aggregate([
+    {
+      $lookup: {
+        from: ORDER_STATUS_HISTORY_MODEL,
+        localField: 'orderStatusHistory',
+        foreignField: '_id',
+        as: 'orderStatusHistory',
+      },
+    },
+    {
+      $lookup: {
+        from: ORDER_DETAIL_MODEL,
+        localField: 'orderDetails',
+        foreignField: '_id',
+        as: 'orderDetails',
+      },
+    },
+    {
+      $lookup: {
+        from: USER_MODEL,
+        localField: 'customer',
+        foreignField: '_id',
+        as: 'customer',
+        pipeline: [{ $project: USER_SELECTED_FIELDS }],
+      },
+    },
+    {
+      $lookup: {
+        from: PAYMENT_MODEL,
+        localField: 'payment',
+        foreignField: '_id',
+        as: 'payment',
+        pipeline: [{ $project: PAYMENT_SELECTED_FIELDS }],
+      },
+    },
+    {
+      $addFields: {
+        lastStatus: { $arrayElemAt: ['$orderStatusHistory', -1] },
+      },
+    },
+    ...(filters.status
+      ? [
+          {
+            $match: {
+              'lastStatus.status': filters.status,
+            },
+          },
+        ]
+      : []),
+    {
+      $unwind: {
+        path: '$customer',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $unwind: {
+        path: '$payment',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $project: ORDER_SELECTED_FIELDS,
+    },
+  ])
+    .sort({ [sortBy]: sortOrder })
+    .skip(skip)
+    .limit(limit);
 
-  const list = await OrderModel.find(filters, ORDER_SELECTED_FIELDS, queryOptions)
-    .populate({ path: 'customer', select: USER_SELECTED_FIELDS })
-    .populate({ path: 'orderStatusHistory' })
-    .lean();
-
-  return [totalCount, list];
+  return [totalCountResult[0]?.totalCount || 0, orders];
 }
 
 /**
@@ -107,12 +226,8 @@ export async function updateOrderStatusByIdService(order, newOrderStatus, orderS
  * @param {*} session
  * @returns
  */
-export async function updateOrderByIdService(order, data, session) {
-  return OrderModel.findByIdAndUpdate(order, data, {
-    new: true,
-    session
-  }).select(ORDER_SELECTED_FIELDS)
-    .lean();
+export async function updateOrderByIdService(id, data, session) {
+  return await OrderModel.updateOne({ _id: id }, data, { session });
 }
 
 /**
@@ -123,3 +238,23 @@ export async function updateOrderByIdService(order, data, session) {
 export async function removeOrderByIdService(id) {
   return OrderModel.findByIdAndDelete(id).select(ORDER_SELECTED_FIELDS).lean();
 }
+
+/**
+ * Calculate order
+ * @param {*} data
+ * @returns
+ */
+export const calculateOrderService = (orderItems) => {
+  const result = orderItems.reduce(
+    (acc, item) => {
+      acc.totalQuantity += item.quantity;
+      acc.subTotal += item.totalPrice;
+      return acc;
+    },
+    { totalQuantity: 0, subTotal: 0 },
+  );
+
+  result.totalPrice = result.subTotal + 0; // shipping;
+
+  return result;
+};

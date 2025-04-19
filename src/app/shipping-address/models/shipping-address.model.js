@@ -1,7 +1,7 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
-const SHIPPING_ADDRESS_MODEL = "shipping_address";
+export const SHIPPING_ADDRESS_MODEL = 'shipping_address';
 
 const shippingAddressSchema = new Schema(
   {
@@ -33,7 +33,7 @@ const shippingAddressSchema = new Schema(
     // Foreign key
     customer: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: 'User',
     },
   },
   {
@@ -42,8 +42,8 @@ const shippingAddressSchema = new Schema(
     _id: true,
     id: false,
     collection: SHIPPING_ADDRESS_MODEL,
-  }
+  },
 );
 
-const ShippingAddressModel = mongoose.model("Shipping_Address", shippingAddressSchema);
+const ShippingAddressModel = mongoose.model('Shipping_Address', shippingAddressSchema);
 export { ShippingAddressModel };

@@ -1,8 +1,8 @@
-import { ORDERS_STATUS } from '#src/core/constant';
+import { ORDERS_STATUS } from '#src/app/orders/orders.constant';
 import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
-const ORDER_MODEL = 'order-status-history';
+export const ORDER_STATUS_HISTORY_MODEL = 'order_status_history';
 
 export const orderStatusHistorySchema = new Schema(
   {
@@ -39,7 +39,7 @@ export const orderStatusHistorySchema = new Schema(
     timestamps: true,
     _id: true,
     id: false,
-    collection: ORDER_MODEL,
+    collection: ORDER_STATUS_HISTORY_MODEL,
   },
 );
 

@@ -36,7 +36,36 @@ export async function getAllProductsService({ filters, page, limit, sortBy, sort
   return ProductModel.find(filters)
     .skip((page - 1) * limit)
     .limit(limit)
-    .sort({ [sortBy]: sortOrder });
+    .sort({ [sortBy]: sortOrder })
+    .populate({
+      path: 'category',
+      select: CATEGORY_SELECTED_FIELDS,
+    })
+    .populate({
+      path: 'subCategory',
+      select: CATEGORY_SELECTED_FIELDS,
+    })
+    .populate({
+      path: 'productOptions',
+      populate: [
+        { path: 'option', options: { lean: true }, select: '_id name' },
+        { path: 'optionValues', options: { lean: true }, select: '_id valueName' },
+      ],
+    })
+    .populate({
+      path: 'productVariants',
+      populate: {
+        path: 'variantValues',
+        populate: [
+          { path: 'option', options: { lean: true }, select: '_id name' },
+          { path: 'optionValue', options: { lean: true }, select: '_id valueName' },
+        ],
+        options: { lean: true },
+        select: '_id option optionValue',
+      },
+      select: '_id price product quantity sku variantValues',
+    })
+    .lean();
 }
 
 /**
@@ -105,34 +134,7 @@ export async function getProductByIdService(id, selectFields = PRODUCT_SELECT_FI
  */
 export async function updateProductInfoByIdService(id, data, session) {
   data.slug = makeSlug(data.name);
-  return ProductModel.findByIdAndUpdate(id, data, {
-    new: true,
-    session,
-  })
-    .populate({
-      path: 'productOptions',
-      populate: [
-        { path: 'option', options: { lean: true }, select: '_id name' },
-        { path: 'optionValues', options: { lean: true }, select: '_id valueName' },
-      ],
-    })
-    .populate({
-      path: 'productVariants',
-      populate: {
-        path: 'variantValues',
-        populate: [
-          { path: 'option', options: { lean: true }, select: '_id name' },
-          { path: 'optionValue', options: { lean: true }, select: '_id valueName' },
-        ],
-        options: { lean: true },
-        select: '_id option optionValue',
-      },
-      select: '_id price product quantity sku variantValues',
-      sort: {
-        createdAt: 'asc',
-      },
-    })
-    .lean();
+  return await ProductModel.updateOne({ _id: id }, data);
 }
 
 /**

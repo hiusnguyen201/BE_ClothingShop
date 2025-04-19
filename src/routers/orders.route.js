@@ -5,12 +5,11 @@ import {
   confirmOrderController,
   createShippingOrderController,
   webHookUpdateOrder,
-  processOrderController,
   cancelOrderController,
   getAllOrdersController,
-  cancelOrderByCustomerController,
+  // cancelOrderByCustomerController,
   updateOrderController,
-  deleteOrderController,
+  removeOrderController,
 } from '#src/app/orders/orders.controller';
 import { isAuthorizedAndHasPermission } from '#src/middlewares/jwt-auth.middleware';
 import { createOrderDto } from '#src/app/orders/dtos/create-order.dto';
@@ -23,9 +22,7 @@ import { GetOrderDto } from '#src/app/orders/dtos/get-order.dto';
 const router = express.Router();
 
 router
-  .post('/create-order',
-    // isAuthorizedAndHasPermission, 
-    validateBody(createOrderDto), createOrderController)
+  .post('/create-order', isAuthorizedAndHasPermission, validateBody(createOrderDto), createOrderController)
   .get('/get-orders', isAuthorizedAndHasPermission, validateQuery(GetListOrderDto), getAllOrdersController)
   .get('/get-order-by-id/:orderId', isAuthorizedAndHasPermission, validateParams(GetOrderDto), getOrderByIdController)
   // .get('/get-all-orders-by-customer',
@@ -35,34 +32,41 @@ router
   // .get('/get-order-by-customer-id/:orderId',
   //   // isAuthorized,
   //   getOrderByCustomerIdController)
-  .post('/confirm-order',
+  .post(
+    '/confirm-order',
     // isAuthorized,
     validateBody(createOrderGhnDto),
-    confirmOrderController)
-  .post('/process-order',
+    confirmOrderController,
+  )
+  .post(
+    '/create-shipping-order',
     // isAuthorized,
     validateBody(createOrderGhnDto),
-    processOrderController)
-  .post('/create-shipping-order',
+    createShippingOrderController,
+  )
+  .post(
+    '/cancel-order',
     // isAuthorized,
     validateBody(createOrderGhnDto),
-    createShippingOrderController)
-  .post('/cancel-order',
+    cancelOrderController,
+  )
+  .post(
+    '/cancel-order-by-customer',
     // isAuthorized,
     validateBody(createOrderGhnDto),
-    cancelOrderController)
-  .post('/cancel-order-by-customer',
-    // isAuthorized,
-    validateBody(createOrderGhnDto),
-    cancelOrderByCustomerController)
-  .put('/update-order-by-id/:orderId',
+    // cancelOrderByCustomerController,
+  )
+  .put(
+    '/update-order-by-id/:orderId',
     // isAuthorized,
     validateBody(updateOrderDto),
-    updateOrderController)
-  .delete('/remove-order-by-id/:orderId',
+    updateOrderController,
+  )
+  .delete(
+    '/remove-order-by-id/:orderId',
     // isAuthorized,
     // validateBody(createOrderGhnDto),
-    deleteOrderController)
-
+    removeOrderController,
+  );
 
 export default router;

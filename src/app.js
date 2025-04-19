@@ -45,6 +45,7 @@ app.use(handleTimeout);
 
 // Add ipv4 to req
 app.use((req, res, next) => {
+  req.baseUrl = req.protocol + '://' + req.get('host');
   req.ipv4 = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
   next();
 });
