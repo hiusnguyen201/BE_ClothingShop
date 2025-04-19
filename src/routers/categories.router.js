@@ -56,6 +56,14 @@ router
     validateParams(GetCategoryDto),
     validateQuery(GetListCategoryDto),
     getAllSubcategoriesController,
-  );
+  )
+
+  .get('/get-categories-by-customer',
+    validateQuery(GetListCategoryDto),
+    getAllCategoriesController)
+
+  .get('/get-category-by-customer/:categoryId',
+    validateQuery(GetCategoryDto),
+    getCategoryByIdController)
 
 export default router;
