@@ -77,6 +77,28 @@ export const getAllProductsController = async (req) => {
   return ApiResponse.success({ totalCount, list: productsDto });
 };
 
+export const getAllProductsByCustomerController = async (req) => {
+  const { keyword, category, limit, page, sortBy, sortOrder } = req.query;
+
+  const filterOptions = {
+    status: PRODUCT_STATUS.ACTIVE,
+    $or: [{ name: { $regex: keyword, $options: 'i' } }],
+    ...(category ? { category } : {}),
+  };
+
+  const totalCount = await countAllProductsService(filterOptions);
+  const products = await getAllProductsService({
+    filters: filterOptions,
+    page,
+    limit,
+    sortBy,
+    sortOrder,
+  });
+
+  const productsDto = ModelDto.newList(ProductDto, products);
+  return ApiResponse.success({ totalCount, list: productsDto });
+};
+
 export const getProductByIdController = async (req) => {
   const { productId } = req.params;
   const existProduct = await getProductByIdService(productId);

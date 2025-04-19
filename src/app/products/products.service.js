@@ -3,6 +3,7 @@ import { ProductModel } from '#src/app/products/models/product.model';
 import { makeSlug } from '#src/utils/string.util';
 import { PRODUCT_SELECT_FIELDS } from '#src/app/products/products.constant';
 import { CATEGORY_SELECTED_FIELDS } from '#src/app/categories/categories.constant';
+import { REGEX_PATTERNS } from '#src/core/constant';
 
 /**
  * Create product
@@ -60,8 +61,10 @@ export async function getProductByIdService(id, selectFields = PRODUCT_SELECT_FI
 
   if (isValidObjectId(id)) {
     filter._id = id;
+  } else if (id.match(REGEX_PATTERNS.SLUG)) {
+    filter.slug = id;
   } else {
-    return null;
+    filter.name = id;
   }
 
   return ProductModel.findOne(filter)

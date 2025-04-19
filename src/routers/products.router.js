@@ -9,6 +9,7 @@ import {
   removeProductByIdController,
   isExistProductNameController,
   updateProductInfoController,
+  getAllProductsByCustomerController,
 } from '#src/app/products/products.controller';
 import { CreateProductDto } from '#src/app/products/dtos/create-product.dto';
 import { updateProductInfoDto } from '#src/app/products/dtos/update-product-info.dto';
@@ -25,15 +26,25 @@ router.post('/is-exist-product-name', validateBody(checkExistProductNameDto), is
 router
   .post(
     '/create-product',
-    isAuthorizedAndHasPermission,
+    // isAuthorizedAndHasPermission,
     UploadUtils.single({ field: 'thumbnail' }),
     validateBody(CreateProductDto),
     createProductController,
   )
-  .get('/get-products', isAuthorizedAndHasPermission, validateQuery(GetListProductDto), getAllProductsController)
+  .get('/get-products',
+    isAuthorizedAndHasPermission,
+    validateQuery(GetListProductDto), getAllProductsController)
+  .get('/get-products-by-customer',
+    validateQuery(GetListProductDto),
+    getAllProductsByCustomerController)
   .get(
     '/get-product-by-id/:productId',
     isAuthorizedAndHasPermission,
+    validateParams(GetProductDto),
+    getProductByIdController,
+  )
+  .get(
+    '/get-product-by-customer/:productId',
     validateParams(GetProductDto),
     getProductByIdController,
   )
