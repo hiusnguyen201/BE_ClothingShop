@@ -9,7 +9,6 @@ import {
   removeProductByIdController,
   isExistProductNameController,
   updateProductInfoController,
-  getAllProductsByCustomerController,
 } from '#src/app/products/products.controller';
 import { CreateProductDto } from '#src/app/products/dtos/create-product.dto';
 import { updateProductInfoDto } from '#src/app/products/dtos/update-product-info.dto';

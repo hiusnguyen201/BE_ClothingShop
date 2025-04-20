@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
-export const PRODUCT_VARIANT_MODEL = 'product_variants';
+export const PRODUCT_VARIANT_MODEL = 'productVariants';
 
 const productVariantSchema = new Schema(
   {
