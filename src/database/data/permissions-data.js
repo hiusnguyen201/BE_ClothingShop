@@ -266,19 +266,40 @@ const ORDER_PERMISSIONS = [
     endpoint: '/api/orders/create-order',
     method: 'POST',
   },
-  {
-    name: 'edit:order_info',
-    description: 'Edit order info',
-    module: 'orders',
-    endpoint: '/api/orders/update-order-info/:orderId',
-    method: 'PUT',
-  },
+  // {
+  //   name: 'edit:order_info',
+  //   description: 'Edit order info',
+  //   module: 'orders',
+  //   endpoint: '/api/orders/update-order-info/:orderId',
+  //   method: 'PUT',
+  // },
   {
     name: 'remove:order',
     description: 'Remove order',
     module: 'orders',
     endpoint: '/api/orders/remove-order-by-id/:orderId',
     method: 'DELETE',
+  },
+  {
+    name: 'confirm:order',
+    description: 'Confirm order',
+    module: 'orders',
+    endpoint: '/api/orders/confirm-order',
+    method: 'POST',
+  },
+  {
+    name: 'cancel:order',
+    description: 'Cancel order',
+    module: 'orders',
+    endpoint: '/api/orders/cancel-order',
+    method: 'POST',
+  },
+  {
+    name: 'create-ship:order',
+    description: 'Create ship order',
+    module: 'orders',
+    endpoint: '/api/orders/create-ship-order',
+    method: 'POST',
   },
 ];
 

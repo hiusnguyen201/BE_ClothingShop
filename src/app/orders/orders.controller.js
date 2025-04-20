@@ -1,58 +1,50 @@
 import {
   getOrderByIdService,
   newOrderService,
-  updateOrderStatusByIdService,
+  addOrderStatusHistoryByIdService,
   getAndCountOrdersService,
-  updateOrderByIdService,
   removeOrderByIdService,
   calculateOrderService,
   saveOrderService,
 } from '#src/app/orders/orders.service';
 import { HttpException } from '#src/core/exception/http-exception';
 import { TransactionalServiceWrapper } from '#src/core/transaction/TransactionalServiceWrapper';
-import moment from 'moment-timezone';
-import { createGhnOrder, getOrderGhnByClientOrderCode, removeOrderGhn } from '#src/modules/GHN/ghn.service';
-import { Code } from '#src/core/code/Code';
-import { ONLINE_PAYMENT_METHOD } from '#src/app/payments/payments.constant';
-import { ORDERS_STATUS } from '#src/app/orders/orders.constant';
 import {
-  createOrderDetailService,
-  getListOrderDetailsByOrderIdService,
-  getOrderDetailsByOrderIdService,
-  newOrderDetailService,
-  removeOrderDetailByOrderIdService,
-  saveOrderItemsService,
-} from '#src/app/order-details/order-details.service';
+  createGHNOrderService,
+  getDistrictService,
+  getProvinceService,
+  getWardService,
+} from '#src/modules/GHN/ghn.service';
+import { Code } from '#src/core/code/Code';
+import { ONLINE_PAYMENT_METHOD, PAYMENT_STATUS } from '#src/app/payments/payments.constant';
+import { ORDERS_STATUS } from '#src/app/orders/orders.constant';
+import { newOrderDetailService, saveOrderItemsService } from '#src/app/order-details/order-details.service';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { OrderDto } from '#src/app/orders/dtos/order.dto';
 import {
   getProductVariantByIdService,
   saveProductVariantService,
+  updateProductVariantByIdService,
 } from '#src/app/product-variants/product-variants.service';
-import { updateCancelOrderQuantityProductUtil } from '#src/utils/handle-create-order';
 import {
   getPaymentByIdService,
   newPaymentService,
   savePaymentService,
   updatePaymentByIdService,
 } from '#src/app/payments/payments.service';
-import { createMomoPaymentService } from '#src/modules/online-banking/momo/momo.service';
+import { createMomoPaymentService, refundMomoPaymentService } from '#src/modules/online-banking/momo/momo.service';
 import {
   createOrderStatusHistoryService,
   getOrderStatusHistoryByTrackingIdService,
-  newOrderStatusHistoryService,
-  saveOrderStatusHistoryService,
 } from '#src/app/order-status-history/order-status-history.service';
-import {
-  checkValidAddressService,
-  getDistrictByCodeService,
-  getProvinceByCodeService,
-  getWardByCodeService,
-} from '#src/app/divisions/divisions.service';
+
 import { getUserByIdService } from '#src/app/users/users.service';
 import { USER_TYPE } from '#src/app/users/users.constant';
 import { createOrderJob, orderQueueEVent } from '#src/app/orders/orders.worker';
+import { uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
+import { generateQRCodeBuffer } from '#src/utils/qrcode.util';
+import { checkValidAddressService } from '#src/modules/geoapify/geoapify.service';
 
 export async function getAllOrdersController(req) {
   const { customerId, limit, page, sortBy, sortOrder, status } = req.query;
@@ -67,6 +59,17 @@ export async function getAllOrdersController(req) {
 
   const ordersDto = ModelDto.newList(OrderDto, orders);
   return ApiResponse.success({ totalCount, list: ordersDto });
+}
+
+export async function getOrderByIdController(req) {
+  const { orderId } = req.params;
+  const order = await getOrderByIdService(orderId);
+  if (!order) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
+  }
+
+  const orderDto = ModelDto.new(OrderDto, order);
+  return ApiResponse.success(orderDto);
 }
 
 export async function createOrderController(req) {
@@ -89,22 +92,23 @@ export async function createOrderController(req) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Customer not found' });
   }
 
-  const province = getProvinceByCodeService(provinceCode);
+  const province = await getProvinceService(provinceCode);
   if (!province) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Province not found' });
   }
 
-  const district = getDistrictByCodeService(districtCode);
-  if (!district || district.province_code !== provinceCode) {
+  const district = await getDistrictService(districtCode, provinceCode);
+  if (!district) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'District not found' });
   }
 
-  const ward = getWardByCodeService(wardCode);
-  if (!ward || ward.district_code !== districtCode) {
+  const ward = await getWardService(wardCode, districtCode);
+  if (!ward) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Ward not found' });
   }
 
-  const validAddress = await checkValidAddressService(address, ward.name, district.name, province.name);
+  const fullAddress = `${address}, ${ward.WardName}, ${district.DistrictName}, ${province.ProvinceName}`;
+  const validAddress = await checkValidAddressService(fullAddress);
   if (!validAddress) {
     throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Invalid address' });
   }
@@ -115,17 +119,19 @@ export async function createOrderController(req) {
     customerName: customerName,
     customerEmail: customerEmail,
     customerPhone: customerPhone,
-    provinceName: province.name,
-    districtName: district.name,
-    wardName: ward.name,
+    provinceName: province.ProvinceName,
+    districtName: district.DistrictName,
+    wardName: ward.WardName,
     address: address,
     productVariants: productVariants,
     paymentMethod: paymentMethod,
+    baseUrl: req.protocol + '://' + req.get('host'),
   });
   const newOrder = await job.waitUntilFinished(orderQueueEVent);
 
   // Transform
-  const orderDto = ModelDto.new(OrderDto, newOrder);
+  const orderDetail = await getOrderByIdService(newOrder._id);
+  const orderDto = ModelDto.new(OrderDto, orderDetail);
   return ApiResponse.success(orderDto);
 }
 
@@ -143,6 +149,8 @@ export async function createOrderControllerLogic(data) {
       productVariants,
       paymentMethod,
       assignedTo,
+      baseUrl,
+      paymentRedirectUrl = '',
     } = data;
 
     // Create order instance
@@ -160,12 +168,15 @@ export async function createOrderControllerLogic(data) {
     });
 
     // Create order history instance (PENDING)
-    const newOrderHistory = newOrderStatusHistoryService({
-      status: ORDERS_STATUS.PENDING,
-      order: newOrder._id,
-      assignedTo,
-    });
-    newOrder.orderStatusHistory.push(newOrderHistory);
+    const createdStatusPending = await createOrderStatusHistoryService(
+      {
+        status: ORDERS_STATUS.PENDING,
+        order: newOrder._id,
+        assignedTo,
+      },
+      session,
+    );
+    newOrder.orderStatusHistory.push(createdStatusPending._id);
 
     // Create order items instance
     const orderItems = await Promise.all(
@@ -193,141 +204,179 @@ export async function createOrderControllerLogic(data) {
         return orderDetail;
       }),
     );
-    newOrder.orderDetails = orderItems;
+
+    await saveOrderItemsService(orderItems, session);
+    newOrder.orderDetails = orderItems.map((item) => item._id);
 
     // Calculate order
     const calculation = calculateOrderService(orderItems);
     newOrder.quantity = calculation.totalQuantity;
     newOrder.subTotal = calculation.subTotal;
-    newOrder.totalPrice = calculation.totalPrice;
+    newOrder.total = calculation.totalPrice;
 
     // Create payment instance
     const newPayment = newPaymentService({
       order: newOrder._id,
       paymentMethod,
+      status: PAYMENT_STATUS.PENDING,
     });
-    newOrder.payment = newPayment;
+    newOrder.payment = newPayment._id;
 
     // Save order
     const insertResult = await saveOrderService(newOrder, session);
 
     // Handle payment method
-    switch (newPayment.paymentMethod) {
-      case ONLINE_PAYMENT_METHOD.MOMO:
-        const momoResponse = await createMomoPaymentService(insertResult.code, newOrder.total);
-        newPayment.paymentUrl = momoResponse.payUrl;
-        newPayment.qrCodeUrl = momoResponse.qrCodeUrl;
+    if (paymentMethod === ONLINE_PAYMENT_METHOD.MOMO) {
+      const momoResponse = await createMomoPaymentService(
+        baseUrl,
+        paymentRedirectUrl,
+        insertResult._id,
+        newOrder.total,
+      );
 
-        const newOrderHistory = newOrderStatusHistoryService({
+      const buffer = await generateQRCodeBuffer(momoResponse.qrCodeUrl);
+      const result = await uploadImageBufferService({ buffer, folderName: 'payment-qrcode' });
+      newPayment.paymentUrl = momoResponse.payUrl;
+      newPayment.qrCodeUrl = result.url;
+
+      const createdStatusPendingPayment = await createOrderStatusHistoryService(
+        {
           status: ORDERS_STATUS.PENDING_PAYMENT,
           order: newOrder._id,
-        });
-
-        newOrder.orderStatusHistory.push(newOrderHistory);
-        await updateOrderByIdService(newOrder._id, { orderStatusHistory: newOrder.orderStatusHistory }, session);
-
-        break;
+        },
+        session,
+      );
+      await addOrderStatusHistoryByIdService(insertResult._id, createdStatusPendingPayment, session);
     }
 
-    // Save order history
-    await saveOrderStatusHistoryService(newOrderHistory, session);
-    // Save order items
-    await saveOrderItemsService(orderItems, session);
-    // Save payment
     await savePaymentService(newPayment, session);
 
-    return { ...newOrder.toObject(), code: insertResult.code };
+    return insertResult;
   });
 }
 
 export async function confirmOrderController(req) {
-  return TransactionalServiceWrapper.execute(async (session) => {
-    const { orderId } = req.body;
+  const { orderId } = req.body;
+  const orderExisted = await getOrderByIdService(orderId, '_id orderStatusHistory');
+  if (!orderExisted) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
+  }
 
-    const orderExisted = await getOrderByIdService(orderId, '_id');
-    if (!orderExisted) {
-      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
-    }
+  const currentStatus = orderExisted.orderStatusHistory[orderExisted.orderStatusHistory.length - 1].status;
+  if (currentStatus !== ORDERS_STATUS.PENDING) {
+    throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Invalid order status' });
+  }
 
-    if (orderExisted.status !== ORDERS_STATUS.PENDING) {
-      throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Invalid order status' });
-    }
-
-    if (!orderExisted.payment) {
-      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Payment not found' });
-    }
-
-    const newOrderStatus = ORDERS_STATUS.CONFIRMED;
-
-    const newOrderHistory = await createOrderStatusHistoryService(
+  await TransactionalServiceWrapper.execute(async (session) => {
+    const createdStatusConfirmed = await createOrderStatusHistoryService(
       {
-        status: newOrderStatus,
+        status: ORDERS_STATUS.CONFIRMED,
         order: orderExisted._id,
-        // assignedTo: id,,
+        assignedTo: req.user.id,
       },
       session,
     );
 
-    const updatedOrder = await updateOrderStatusByIdService(
-      orderExisted._id,
-      newOrderStatus,
-      newOrderHistory[0]._id,
+    await addOrderStatusHistoryByIdService(orderExisted._id, createdStatusConfirmed, session);
+  });
+
+  const updatedOrder = await getOrderByIdService(orderId);
+  const orderDto = ModelDto.new(OrderDto, updatedOrder);
+  return ApiResponse.success(orderDto);
+}
+
+export async function cancelOrderController(req) {
+  const { orderId } = req.body;
+
+  const orderExisted = await getOrderByIdService(orderId, '_id orderStatusHistory orderDetails payment');
+  if (!orderExisted) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
+  }
+
+  const currentStatus = orderExisted.orderStatusHistory[orderExisted.orderStatusHistory.length - 1].status;
+  if ([ORDERS_STATUS.SHIPPING, ORDERS_STATUS.COMPLETED].includes(currentStatus)) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Invalid order status' });
+  }
+
+  await TransactionalServiceWrapper.execute(async (session) => {
+    // Update product variant quantity
+    await Promise.all(
+      orderExisted.orderDetails.map(async (item) => {
+        await updateProductVariantByIdService(
+          item.variant._id,
+          { quantity: item.variant.quantity + item.quantity },
+          session,
+        );
+      }),
+    );
+
+    // refund
+    if (orderExisted.payment.status === PAYMENT_STATUS.PAID) {
+      const result = await refundMomoPaymentService(orderExisted._id, orderExisted.payment);
+
+      if (!result) {
+        throw HttpException.new({ code: Code.SERVICE_UNAVAILABLE, overrideMessage: 'Refund payment failed' });
+      }
+
+      await updatePaymentByIdService(orderExisted.payment._id, { status: PAYMENT_STATUS.REFUND }, session);
+    } else {
+      await updatePaymentByIdService(orderExisted.payment._id, { status: PAYMENT_STATUS.CANCELLED }, session);
+    }
+
+    const createdStatusCancelled = await createOrderStatusHistoryService(
+      {
+        status: ORDERS_STATUS.CANCELLED,
+        order: orderExisted._id,
+        assignedTo: req.user.id,
+      },
       session,
     );
 
-    const orderDto = ModelDto.new(OrderDto, updatedOrder);
-    return ApiResponse.success(orderDto);
+    await addOrderStatusHistoryByIdService(orderExisted._id, createdStatusCancelled, session);
   });
+
+  const updatedOrder = await getOrderByIdService(orderId);
+  const orderDto = ModelDto.new(OrderDto, updatedOrder);
+  return ApiResponse.success(orderDto);
 }
 
 export async function createShippingOrderController(req) {
-  return TransactionalServiceWrapper.execute(async (session) => {
-    const { orderId } = req.body;
+  const { orderId } = req.body;
 
-    const orderExisted = await getOrderByIdService(orderId, '_id');
-    if (!orderExisted) {
-      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
-    }
+  const orderExisted = await getOrderByIdService(orderId);
+  if (!orderExisted) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
+  }
 
-    if (orderExisted.status !== ORDERS_STATUS.PROCESSING) {
-      throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Invalid order status' });
-    }
+  const currentStatus = orderExisted.orderStatusHistory[orderExisted.orderStatusHistory.length - 1].status;
+  if (currentStatus !== ORDERS_STATUS.CONFIRMED) {
+    throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Invalid order status' });
+  }
 
-    if (!orderExisted.payment) {
-      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Payment not found' });
-    }
-
-    const newOrderStatus = ORDERS_STATUS.WAITING_FOR_PICKUP;
-
-    const orderDetails = await getOrderDetailsByOrderIdService(orderExisted._id);
-    const newOrderGhn = await createGhnOrder(orderExisted, orderDetails);
-
+  await TransactionalServiceWrapper.execute(async (session) => {
+    const newOrderGhn = await createGHNOrderService(orderExisted);
     if (!newOrderGhn || newOrderGhn?.code != 200) {
-      throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Create shipping order false' });
+      throw HttpException.new({ code: Code.SERVICE_UNAVAILABLE, overrideMessage: 'Create order ship failed' });
     }
 
-    const newOrderHistory = await createOrderStatusHistoryService(
+    const createdStatusWaitingForPickup = await createOrderStatusHistoryService(
       {
-        status: newOrderStatus,
+        status: ORDERS_STATUS.WAITING_FOR_PICKUP,
         shippingCarrier: 'GHN',
         trackingNumber: newOrderGhn.data.order_code,
         expectedShipDate: newOrderGhn.data.expected_delivery_time,
         order: orderExisted._id,
-        // assignedTo: id,,
+        assignedTo: req.user.id,
       },
       session,
     );
 
-    const updatedOrder = await updateOrderStatusByIdService(
-      orderExisted._id,
-      newOrderStatus,
-      newOrderHistory[0]._id,
-      session,
-    );
-
-    const orderDto = ModelDto.new(OrderDto, updatedOrder);
-    return ApiResponse.success(orderDto);
+    await addOrderStatusHistoryByIdService(orderExisted._id, createdStatusWaitingForPickup, session);
   });
+
+  const updatedOrder = await getOrderByIdService(orderId);
+  const orderDto = ModelDto.new(OrderDto, updatedOrder);
+  return ApiResponse.success(orderDto);
 }
 
 export async function webHookUpdateOrder(req) {
@@ -343,7 +392,7 @@ export async function webHookUpdateOrder(req) {
 
     const validStatuses = [ORDERS_STATUS.WAITING_FOR_PICKUP, ORDERS_STATUS.SHIPPING];
 
-    if (!validStatuses.includes(orderExisted.status)) {
+    if (!validStatuses.includes(orderExisted.orderStatusHistory[orderExisted.orderStatusHistory.length - 1].status)) {
       throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Invalid order status' });
     }
 
@@ -388,53 +437,7 @@ export async function webHookUpdateOrder(req) {
     }
 
     if (newOrderStatus === ORDERS_STATUS.CANCELLED) {
-      await updateCancelOrderQuantityProductUtil(orderExisted._id, session);
-    }
-
-    const updatedOrder = await updateOrderStatusByIdService(
-      orderExisted._id,
-      newOrderStatus,
-      newOrderHistory[0]._id,
-      session,
-    );
-
-    const orderDto = ModelDto.new(OrderDto, updatedOrder);
-    return ApiResponse.success(orderDto);
-  });
-}
-
-export async function cancelOrderController(req) {
-  return TransactionalServiceWrapper.execute(async (session) => {
-    const { orderId } = req.body;
-
-    const orderExisted = await getOrderByIdService(orderId, '_id');
-    if (!orderExisted) {
-      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
-    }
-
-    if (orderExisted.status === ORDERS_STATUS.CANCELLED || orderExisted.status === ORDERS_STATUS.DELIVERED) {
-      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Invalid order status' });
-    }
-
-    if (orderExisted.status === ORDERS_STATUS.SHIPPING) {
-      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order is shipping can not cancel' });
-    }
-
-    const newOrderStatus = ORDERS_STATUS.CANCELLED;
-
-    const newOrderHistory = await createOrderStatusHistoryService(
-      {
-        status: newOrderStatus,
-        order: orderExisted._id,
-        // assignedTo: id,,
-      },
-      session,
-    );
-
-    await updateCancelOrderQuantityProductUtil(orderExisted._id, session);
-
-    if (orderExisted?.payment?.paidDate) {
-      // refund
+      // await updateCancelOrderQuantityProductUtil(orderExisted._id, session);
     }
 
     const updatedOrder = await updateOrderStatusByIdService(
@@ -518,126 +521,104 @@ export async function cancelOrderController(req) {
 //   return ApiResponse.success({ totalCount, list: ordersDto });
 // };
 
-export async function getOrderByIdController(req) {
-  const { orderId } = req.params;
-  const order = await getOrderByIdService(orderId);
-  if (!order) {
-    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
-  }
+// export async function updateOrderController(req) {
+//   return TransactionalServiceWrapper.execute(async (session) => {
+//     // const { id } = req.user;
+//     const { orderId } = req.params;
+//     const { customerName, customerEmail, customerPhone, customerAddress, productVariants, paymentMethod } = req.body;
 
-  const orderDto = ModelDto.new(OrderDto, order);
-  return ApiResponse.success(orderDto);
-}
+//     const orderExisted = await getOrderByIdService(orderId, '_id');
+//     if (!orderExisted) {
+//       throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
+//     }
 
-// export async function getOrderByCustomerIdController  (req)  {
-//   const { id } = req.user;
-//   const { orderId } = req.params;
-//   const order = await getOrderByIdService(orderId, { customerId: id });
-//   if (!order) {
-//     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
-//   }
-//   const orderDto = ModelDto.new(OrderDto, order);
-//   return ApiResponse.success(orderDto);
-// };
+//     if (orderExisted.status !== ORDERS_STATUS.PENDING) {
+//       throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Invalid order status' });
+//     }
 
-export async function updateOrderController(req) {
-  return TransactionalServiceWrapper.execute(async (session) => {
-    // const { id } = req.user;
-    const { orderId } = req.params;
-    const { customerName, customerEmail, customerPhone, customerAddress, productVariants, paymentMethod } = req.body;
+//     if (orderExisted.payUrl) {
+//       throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Can not update' });
+//     }
 
-    const orderExisted = await getOrderByIdService(orderId, '_id');
-    if (!orderExisted) {
-      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
-    }
+//     // await updateCancelOrderQuantityProductUtil(orderExisted._id, session);
+//     await removeOrderDetailByOrderIdService(orderExisted._id, session);
 
-    if (orderExisted.status !== ORDERS_STATUS.PENDING) {
-      throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Invalid order status' });
-    }
+//     const order = {
+//       customerName,
+//       customerEmail,
+//       customerPhone,
+//       provinceName: customerAddress.province,
+//       districtName: customerAddress.district,
+//       wardName: customerAddress.ward,
+//       address: customerAddress.address,
+//     };
 
-    if (orderExisted.payUrl) {
-      throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Can not update' });
-    }
+//     const orderDetails = await Promise.all(
+//       productVariants.map(async (productVariant) => {
+//         const productVariantExited = await getProductVariantByIdService(productVariant.variantId);
+//         if (!productVariantExited) {
+//           throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product variant not found' });
+//         }
+//         if (productVariantExited.quantity < productVariant.quantity) {
+//           throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Product variant quantity not enough' });
+//         }
 
-    await updateCancelOrderQuantityProductUtil(orderExisted._id, session);
-    await removeOrderDetailByOrderIdService(orderExisted._id, session);
+//         let productVariantPrice = productVariantExited.price;
 
-    const order = {
-      customerName,
-      customerEmail,
-      customerPhone,
-      provinceName: customerAddress.province,
-      districtName: customerAddress.district,
-      wardName: customerAddress.ward,
-      address: customerAddress.address,
-    };
+//         const orderDetail = newOrderDetailService({
+//           quantity: productVariant.quantity,
+//           unitPrice: productVariantPrice,
+//           order: orderExisted._id,
+//           product: productVariantExited.product,
+//           variant: productVariantExited._id,
+//         });
 
-    const orderDetails = await Promise.all(
-      productVariants.map(async (productVariant) => {
-        const productVariantExited = await getProductVariantByIdService(productVariant.variantId);
-        if (!productVariantExited) {
-          throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product variant not found' });
-        }
-        if (productVariantExited.quantity < productVariant.quantity) {
-          throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Product variant quantity not enough' });
-        }
+//         orderDetail.totalPrice = orderDetail.unitPrice * productVariant.quantity;
+//         productVariantExited.quantity = productVariantExited.quantity - productVariant.quantity;
 
-        let productVariantPrice = productVariantExited.price;
+//         await productVariantExited.save({ session });
+//         await orderDetail.save({ session });
+//         return orderDetail;
+//       }),
+//     );
 
-        const orderDetail = newOrderDetailService({
-          quantity: productVariant.quantity,
-          unitPrice: productVariantPrice,
-          order: orderExisted._id,
-          product: productVariantExited.product,
-          variant: productVariantExited._id,
-        });
+//     const calcResult = orderDetails.reduce(
+//       (acc, item) => {
+//         acc.totalQuantity += item.quantity;
+//         acc.totalPriceSum += item.totalPrice;
+//         return acc;
+//       },
+//       { totalQuantity: 0, totalPriceSum: 0 },
+//     );
 
-        orderDetail.totalPrice = orderDetail.unitPrice * productVariant.quantity;
-        productVariantExited.quantity = productVariantExited.quantity - productVariant.quantity;
+//     order.quantity = calcResult.totalQuantity;
+//     const subTotal = calcResult.totalPriceSum;
+//     order.subTotal = subTotal;
+//     order.total = subTotal + orderExisted.shippingFee;
 
-        await productVariantExited.save({ session });
-        await orderDetail.save({ session });
-        return orderDetail;
-      }),
-    );
+//     await updateOrderByIdService(orderExisted._id, order, session);
 
-    const calcResult = orderDetails.reduce(
-      (acc, item) => {
-        acc.totalQuantity += item.quantity;
-        acc.totalPriceSum += item.totalPrice;
-        return acc;
-      },
-      { totalQuantity: 0, totalPriceSum: 0 },
-    );
+//     const newOrderStatus = ORDERS_STATUS.PENDING;
+//     const newOrderHistory = await createOrderStatusHistoryService(
+//       {
+//         status: newOrderStatus,
+//         order: orderExisted._id,
+//         // assignedTo: id,,
+//       },
+//       session,
+//     );
 
-    order.quantity = calcResult.totalQuantity;
-    const subTotal = calcResult.totalPriceSum;
-    order.subTotal = subTotal;
-    order.total = subTotal + orderExisted.shippingFee;
+//     const updatedOrder = await updateOrderStatusByIdService(
+//       orderExisted._id,
+//       newOrderStatus,
+//       newOrderHistory[0]._id,
+//       session,
+//     );
 
-    await updateOrderByIdService(orderExisted._id, order, session);
-
-    const newOrderStatus = ORDERS_STATUS.PENDING;
-    const newOrderHistory = await createOrderStatusHistoryService(
-      {
-        status: newOrderStatus,
-        order: orderExisted._id,
-        // assignedTo: id,,
-      },
-      session,
-    );
-
-    const updatedOrder = await updateOrderStatusByIdService(
-      orderExisted._id,
-      newOrderStatus,
-      newOrderHistory[0]._id,
-      session,
-    );
-
-    const orderDto = ModelDto.new(OrderDto, updatedOrder);
-    return ApiResponse.success(orderDto);
-  });
-}
+//     const orderDto = ModelDto.new(OrderDto, updatedOrder);
+//     return ApiResponse.success(orderDto);
+//   });
+// }
 
 export async function removeOrderController(req) {
   return TransactionalServiceWrapper.execute(async (session) => {
@@ -652,7 +633,7 @@ export async function removeOrderController(req) {
       throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Invalid order status' });
     }
 
-    await updateCancelOrderQuantityProductUtil(orderExisted._id, session);
+    // await updateCancelOrderQuantityProductUtil(orderExisted._id, session);
     const removedOrder = await removeOrderByIdService(orderExisted._id);
 
     return ApiResponse.success({ id: removedOrder._id });

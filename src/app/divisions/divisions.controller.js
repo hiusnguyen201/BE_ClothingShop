@@ -1,18 +1,14 @@
-import {
-  getAllProvincesService,
-  getAllDistrictsByProvinceCodeService,
-  getAllWardsByDistrictCodeService,
-  getDistrictByCodeService,
-  getProvinceByCodeService,
-  checkValidAddressService,
-} from '#src/app/divisions/divisions.service';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { ProvinceDto } from '#src/app/divisions/dtos/province.dto';
-import { HttpException } from '#src/core/exception/http-exception';
-import { Code } from '#src/core/code/Code';
 import { DistrictDto } from '#src/app/divisions/dtos/district.dto';
 import { WardDto } from '#src/app/divisions/dtos/ward.dto';
+import {
+  getAllProvincesService,
+  getDistrictsByProvinceIdService,
+  getWardsByDistrictIdService,
+} from '#src/modules/GHN/ghn.service';
+import { checkValidAddressService } from '#src/modules/geoapify/geoapify.service';
 
 /**
  * Get all provinces
@@ -20,9 +16,12 @@ import { WardDto } from '#src/app/divisions/dtos/ward.dto';
  * @returns
  */
 export const getAllProvincesController = async (req) => {
-  const provinces = getAllProvincesService();
+  const provinces = await getAllProvincesService();
 
-  const provincesDto = ModelDto.newList(ProvinceDto, provinces);
+  const provincesDto = ModelDto.newList(
+    ProvinceDto,
+    provinces.filter((item) => item.IsEnable === 1),
+  );
 
   return ApiResponse.success({ totalCount: provinces.length, list: provincesDto }, 'Get all provinces successfully');
 };
@@ -34,14 +33,13 @@ export const getAllProvincesController = async (req) => {
  */
 export const getAllDistrictsByProvinceCodeController = async (req) => {
   const { provinceCode } = req.params;
-  const province = getProvinceByCodeService(provinceCode);
-  if (!province) {
-    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Province not found' });
-  }
 
-  const districts = getAllDistrictsByProvinceCodeService(provinceCode);
+  const districts = await getDistrictsByProvinceIdService(provinceCode);
 
-  const districtsDto = ModelDto.newList(DistrictDto, districts);
+  const districtsDto = ModelDto.newList(
+    DistrictDto,
+    districts.filter((item) => item.IsEnable === 1),
+  );
 
   return ApiResponse.success({ totalCount: districts.length, list: districtsDto }, 'Get all districts successfully');
 };
@@ -53,14 +51,12 @@ export const getAllDistrictsByProvinceCodeController = async (req) => {
  */
 export const getAllWardsByDistrictCodeController = async (req) => {
   const { districtCode } = req.params;
-  const district = getDistrictByCodeService(districtCode);
-  if (!district) {
-    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'District not found' });
-  }
+  const wards = await getWardsByDistrictIdService(districtCode);
 
-  const wards = getAllWardsByDistrictCodeService(districtCode);
-
-  const wardsDto = ModelDto.newList(WardDto, wards);
+  const wardsDto = ModelDto.newList(
+    WardDto,
+    wards.filter((item) => item.IsEnable === 1),
+  );
 
   return ApiResponse.success({ totalCount: wards.length, list: wardsDto }, 'Get all wards successfully');
 };
@@ -73,7 +69,7 @@ export const getAllWardsByDistrictCodeController = async (req) => {
 export const checkValidAddressController = async (req) => {
   const { address } = req.body;
 
-  const valid = checkValidAddressService(address);
+  const valid = await checkValidAddressService(address);
 
   return ApiResponse.success(valid);
 };

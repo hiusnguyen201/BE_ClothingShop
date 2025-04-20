@@ -1,4 +1,3 @@
-'use strict';
 import Database from '#src/modules/database/init.database';
 import LogUtils from '#src/utils/log.util';
 

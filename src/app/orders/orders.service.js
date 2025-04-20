@@ -24,7 +24,7 @@ export function newOrderService(data) {
  * @returns
  */
 export async function saveOrderService(order, session) {
-  return await order.save({ session });
+  return await order.save({ session, ordered: true });
 }
 
 /**
@@ -53,7 +53,7 @@ export async function getOrderByIdService(id, selectedFields = ORDER_SELECTED_FI
 
   return OrderModel.findOne(filters)
     .populate({ path: 'payment', select: PAYMENT_SELECTED_FIELDS })
-    .populate({ path: 'orderStatusHistory' })
+    .populate({ path: 'orderStatusHistory', options: { sort: { createdAt: 1 } } })
     .populate({
       path: 'orderDetails',
       populate: [
@@ -133,6 +133,16 @@ export async function getAndCountOrdersService(filters, skip, limit, sortBy, sor
       },
     },
     {
+      $set: {
+        orderStatusHistory: {
+          $sortArray: {
+            input: '$orderStatusHistory',
+            sortBy: { createdAt: 1 },
+          },
+        },
+      },
+    },
+    {
       $lookup: {
         from: ORDER_DETAIL_MODEL,
         localField: 'orderDetails',
@@ -196,26 +206,28 @@ export async function getAndCountOrdersService(filters, skip, limit, sortBy, sor
 }
 
 /**
- * Update order status
+ * Add order status
  * @param {*} order
  * @param {*} newOrderStatus
  * @param {*} orderStatusHistoryId
  * @param {*} session
  * @returns
  */
-export async function updateOrderStatusByIdService(order, newOrderStatus, orderStatusHistoryId, session) {
+export async function addOrderStatusHistoryByIdService(orderId, orderStatusHistory, session) {
   return OrderModel.findByIdAndUpdate(
-    order,
+    orderId,
     {
-      status: newOrderStatus,
-      $push: { orderStatusHistory: orderStatusHistoryId },
+      status: orderStatusHistory.status,
+      $push: { orderStatusHistory: orderStatusHistory._id },
     },
     {
       new: true,
       session,
+      ordered: true,
     },
   )
     .select(ORDER_SELECTED_FIELDS)
+    .populate({ path: 'orderStatusHistory' })
     .lean();
 }
 

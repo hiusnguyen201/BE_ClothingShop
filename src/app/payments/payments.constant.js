@@ -1,11 +1,14 @@
 export const PAYMENT_SELECTED_FIELDS = {
   _id: true,
   paymentUrl: true,
+  qrCodeUrl: true,
   paymentMethod: true,
   amountPaid: true,
   paidDate: true,
   transactionId: true,
   notes: true,
+  order: true,
+  status: true,
   createdAt: true,
   updatedAt: true,
 };
@@ -23,4 +26,11 @@ export const ONLINE_PAYMENT_METHOD = {
 export const OFFLINE_PAYMENT_METHOD = {
   CASH: 'cash',
   BANKING: 'banking',
+};
+
+export const PAYMENT_STATUS = {
+  PENDING: 'pending',
+  PAID: 'paid',
+  REFUND: 'refund',
+  CANCELLED: 'cancelled',
 };

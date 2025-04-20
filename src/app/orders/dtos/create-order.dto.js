@@ -8,8 +8,8 @@ export const createOrderDto = Joi.object({
   customerEmail: Joi.string().email().required(),
   customerPhone: Joi.phoneNumber('VN').required(),
 
-  districtCode: Joi.string().required(),
-  provinceCode: Joi.string().required(),
+  districtCode: Joi.number().required(),
+  provinceCode: Joi.number().required(),
   wardCode: Joi.string().required(),
   address: Joi.string()
     .required()

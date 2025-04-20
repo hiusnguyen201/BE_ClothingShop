@@ -1,4 +1,3 @@
-'use strict';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { HttpException } from '#src/core/exception/http-exception';

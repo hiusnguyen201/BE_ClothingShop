@@ -1,4 +1,3 @@
-'use strict';
 import { HttpException } from '#src/core/exception/http-exception';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import HttpStatus from 'http-status-codes';

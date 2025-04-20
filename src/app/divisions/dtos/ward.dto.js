@@ -1,8 +1,6 @@
 import Joi from 'joi';
 
 export const WardDto = Joi.object({
-  code: Joi.string().required(),
-  name: Joi.string().required(),
-  unit: Joi.string().required(),
-  full_name: Joi.string().required(),
+  WardCode: Joi.string().required(),
+  WardName: Joi.string().required(),
 });

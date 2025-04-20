@@ -1,7 +1,6 @@
 import Joi from 'joi';
 
 export const ProvinceDto = Joi.object({
-  code: Joi.string().required(),
-  name: Joi.string().required(),
-  unit: Joi.string().required(),
+  ProvinceID: Joi.number().required(),
+  ProvinceName: Joi.string().required(),
 });

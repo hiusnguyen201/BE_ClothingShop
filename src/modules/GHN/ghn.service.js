@@ -1,69 +1,74 @@
+import { PAYMENT_STATUS } from '#src/app/payments/payments.constant';
 import axios from 'axios';
-import moment from 'moment-timezone';
 const ghnAPI = axios.create({
-  baseURL: process.env.GHN_API_URL,
+  baseURL: process.env.GHN_BASE_URL,
   headers: {
     Token: process.env.GHN_TOKEN,
-    ShopId: process.env.GHN_SHOP_ID,
+    // ShopId: process.env.GHN_SHOP_ID,
     'Content-Type': 'application/json',
   },
 });
 
-// create order GHN
-export const createGhnOrder = async (order, orderDetails) => {
-  let isPaid = false;
-  if (order?.payment?.paidDate) {
-    isPaid = true;
-  }
+/**
+ * Create Order GHN
+ * https://api.ghn.vn/home/docs/detail?id=123
+ * @param {*} order
+ * @returns
+ */
+export const createGHNOrderService = async (order) => {
+  const isPaid = order.payment.status === PAYMENT_STATUS.PAID;
 
-  const pickupTime = moment().unix();
-  const response = await ghnAPI.post(`/v2/shipping-order/create`, {
-    payment_type_id: 1,
-    note: '',
-    required_note: 'KHONGCHOXEMHANG',
-    return_phone: '0398779258',
-    return_address: 'so 10 ngo 47 mai dich cau giay ha noi',
-    return_district_id: null,
-    return_ward_code: '',
-    client_order_code: order.code,
-    from_name: 'vuong',
-    from_phone: '0398779258',
-    from_address: 'so 10 ngo 47 mai dich cau giay ha noi',
-    from_ward_name: 'mai dich',
-    from_district_name: 'cau giay',
-    from_province_name: 'ha noi',
+  const payload = {
+    from_name: 'VTC Academy',
+    from_phone: '0383460015',
+    from_address: '18 Tam Trinh, Mai Động, Quận Hai Bà Trưng, Hà Nội, Vietnam',
+    from_ward_name: 'Phường Trương Định',
+    from_district_name: 'Quận Hai Bà Trưng',
+    from_province_name: 'Hà Nội',
+
     to_name: order.customerName,
     to_phone: order.customerPhone,
     to_address: order.address,
-    to_ward_name: order.wardName,
     to_district_name: order.districtName,
     to_province_name: order.provinceName,
+    to_ward_name: order.wardName,
+
+    client_order_code: order._id,
+
     cod_amount: isPaid ? 0 : order.total,
-    content: '',
+
+    weight: order.orderDetails.length * 200,
     length: 12,
     width: 12,
     height: 12,
-    weight: orderDetails.length * 200,
-    // cod_failed_amount: 2000,
-    pick_station_id: 1444,
-    deliver_station_id: null,
+
+    pick_station_id: 1444, //
+
     insurance_value: order.total,
-    service_type_id: 2,
     coupon: null,
-    pickup_time: pickupTime,
-    pick_shift: [2],
-    items: orderDetails.map((item) => ({
-      name: item.variant.sku,
-      code: item.productId,
+
+    service_type_id: 2,
+    payment_type_id: 1,
+
+    note: '',
+    required_note: 'KHONGCHOXEMHANG',
+
+    items: order.orderDetails.map((item) => ({
+      name: item.product.name,
+      code: item.variant.sku,
       quantity: item.quantity,
-      price: isPaid ? 0 : item.unitPrice,
-      length: 12,
-      width: 12,
-      height: 12,
-      weight: 200,
+      price: item.unitPrice,
     })),
-  });
-  return response.data;
+  };
+
+  console.log(payload);
+
+  try {
+    const response = await ghnAPI.post(`/v2/shipping-order/create`, payload);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating GHN order:', error.response.data);
+  }
 };
 
 // get details by client_oder_code
@@ -81,19 +86,34 @@ export const removeOrderGhn = async (orderCode) => {
 };
 
 // get provinces
-export const getProvinces = async () => {
+export const getAllProvincesService = async () => {
   const response = await ghnAPI.get('/master-data/province');
   return response.data.data;
 };
 
 // get districts
-export const getDistricts = async (provinceId) => {
+export const getDistrictsByProvinceIdService = async (provinceId) => {
   const response = await ghnAPI.get('/master-data/district', { params: { province_id: provinceId } });
   return response.data.data;
 };
 
 // get wards
-export const getWards = async (districtId) => {
+export const getWardsByDistrictIdService = async (districtId) => {
   const response = await ghnAPI.get('/master-data/ward', { params: { district_id: districtId } });
   return response.data.data;
+};
+
+export const getProvinceService = async (provinceId) => {
+  const response = await ghnAPI.get('/master-data/province');
+  return response.data.data.find((item) => item.ProvinceID === provinceId);
+};
+
+export const getDistrictService = async (districtId, provinceId) => {
+  const response = await ghnAPI.get('/master-data/district', { params: { province_id: provinceId } });
+  return response.data.data.find((item) => item.DistrictID === districtId);
+};
+
+export const getWardService = async (wardId, districtId) => {
+  const response = await ghnAPI.get('/master-data/ward', { params: { district_id: districtId } });
+  return response.data.data.find((item) => item.WardCode === wardId);
 };

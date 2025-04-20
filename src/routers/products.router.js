@@ -26,25 +26,15 @@ router.post('/is-exist-product-name', validateBody(checkExistProductNameDto), is
 router
   .post(
     '/create-product',
-    // isAuthorizedAndHasPermission,
+    isAuthorizedAndHasPermission,
     UploadUtils.single({ field: 'thumbnail' }),
     validateBody(CreateProductDto),
     createProductController,
   )
-  .get('/get-products',
-    isAuthorizedAndHasPermission,
-    validateQuery(GetListProductDto), getAllProductsController)
-  .get('/get-products-by-customer',
-    validateQuery(GetListProductDto),
-    getAllProductsByCustomerController)
+  .get('/get-products', isAuthorizedAndHasPermission, validateQuery(GetListProductDto), getAllProductsController)
   .get(
     '/get-product-by-id/:productId',
     isAuthorizedAndHasPermission,
-    validateParams(GetProductDto),
-    getProductByIdController,
-  )
-  .get(
-    '/get-product-by-customer/:productId',
     validateParams(GetProductDto),
     getProductByIdController,
   )

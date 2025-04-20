@@ -1,4 +1,4 @@
-import { ONLINE_PAYMENT_METHOD } from '#src/app/payments/payments.constant';
+import { ONLINE_PAYMENT_METHOD, PAYMENT_STATUS } from '#src/app/payments/payments.constant';
 import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
@@ -31,9 +31,10 @@ export const paymentSchema = new Schema(
       type: String,
       required: false,
     },
-    notes: {
+    status: {
       type: String,
-      default: null,
+      required: true,
+      enum: Object.values(PAYMENT_STATUS),
     },
     // Foreign Key
     order: {

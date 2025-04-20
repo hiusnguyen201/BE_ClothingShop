@@ -2,6 +2,7 @@ export const ORDERS_STATUS = {
   PENDING: 'pending',
   PENDING_PAYMENT: 'pending payment',
   CONFIRMED: 'confirmed',
+  WAITING_FOR_PICKUP: 'waiting for pickup',
   SHIPPING: 'shipping',
   COMPLETED: 'completed',
   CANCELLED: 'cancelled',
@@ -26,4 +27,6 @@ export const ORDER_SELECTED_FIELDS = {
   payment: true,
   orderStatusHistory: true,
   orderDetails: true,
+  createdAt: true,
+  updatedAt: true,
 };

@@ -1,4 +1,3 @@
-'use strict';
 import { getAndCountPermissionsService } from '#src/app/permissions/permissions.service';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { ModelDto } from '#src/core/dto/ModelDto';

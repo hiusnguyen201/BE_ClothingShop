@@ -5,5 +5,7 @@ export const PRODUCT_VARIANT_SELECT_FIELDS = {
   image: true,
   sold: true,
   variantValues: true,
-  product: true
+  product: true,
+  createdAt: true,
+  updatedAt: true,
 };

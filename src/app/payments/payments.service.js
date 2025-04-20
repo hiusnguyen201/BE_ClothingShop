@@ -11,12 +11,21 @@ export const newPaymentService = (data) => {
 };
 
 /**
+ * Create payment
+ * @param {*} data
+ * @returns
+ */
+export const createPaymentService = async (data, session) => {
+  return await PaymentModel.insertOne(data, { session, ordered: true });
+};
+
+/**
  * Save payment
  * @param {*} data
  * @returns
  */
 export const savePaymentService = async (payment, session) => {
-  return await payment.save({ session });
+  return await payment.save({ session, ordered: true });
 };
 
 /**
@@ -38,6 +47,7 @@ export async function updatePaymentByIdService(paymentId, data, session) {
   return await PaymentModel.findByIdAndUpdate(paymentId, data, {
     new: true,
     session,
+    ordered: true,
   })
     .select(PAYMENT_SELECTED_FIELDS)
     .lean();

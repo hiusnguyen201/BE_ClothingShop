@@ -1,5 +1,5 @@
-import { ApiResponse } from "#src/core/api/ApiResponse";
-import { ModelDto } from "#src/core/dto/ModelDto";
+import { ApiResponse } from '#src/core/api/ApiResponse';
+import { ModelDto } from '#src/core/dto/ModelDto';
 import {
   createShippingAddressService,
   getAllShippingAddressService,
@@ -9,28 +9,48 @@ import {
   setDefaultShippingAddressByIdService,
   unsetDefaultCurrentShippingAddressService,
   countAllShippingAddressService,
-} from "#src/app/shipping-address/shipping-address.service";
-import { ShippingAddressDto } from "#src/app/shipping-address/dtos/shipping-address.dto";
-import { HttpException } from "#src/core/exception/http-exception";
-import { Code } from "#src/core/code/Code";
+} from '#src/app/shipping-address/shipping-address.service';
+import { ShippingAddressDto } from '#src/app/shipping-address/dtos/shipping-address.dto';
+import { HttpException } from '#src/core/exception/http-exception';
+import { Code } from '#src/core/code/Code';
+import { getDistrictService, getProvinceService, getWardService } from '#src/modules/GHN/ghn.service';
 
 export const createShippingAddressController = async (req) => {
   const { id } = req.user;
+  const { isDefault, provinceCode, districtCode, wardCode } = req.body;
 
   const totalCount = await countAllShippingAddressService({
     customer: id,
+    isDefault: true,
   });
 
-  if (totalCount < 1) {
+  if (totalCount > 0 && isDefault) {
+    await unsetDefaultCurrentShippingAddressService(id);
+  } else if (totalCount === 0) {
     req.body.isDefault = true;
   }
 
-  if (totalCount > 0 && req.body.isDefault === true) {
-    await unsetDefaultCurrentShippingAddressService(id);
+  const province = await getProvinceService(provinceCode);
+  if (!province) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Province not found' });
+  }
+
+  const district = await getDistrictService(districtCode, provinceCode);
+  if (!district) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'District not found' });
+  }
+
+  const ward = await getWardService(wardCode, districtCode);
+  if (!ward) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Ward not found' });
   }
 
   const newShippingAddress = await createShippingAddressService({
-    ...req.body,
+    isDefault: req.body.isDefault,
+    address: req.body.address,
+    provinceName: province.ProvinceName,
+    districtName: district.DistrictName,
+    wardName: ward.WardName,
     customer: id,
   });
 
@@ -65,11 +85,11 @@ export const getShippingAddressByIdController = async (req) => {
   const { shippingAddressId } = req.params;
 
   const existShippingAddress = await getShippingAddressByIdService(shippingAddressId, {
-    customer: id
+    customer: id,
   });
 
   if (!existShippingAddress) {
-    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Shipping address not found' })
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Shipping address not found' });
   }
 
   const shippingAddressDto = ModelDto.new(ShippingAddressDto, existShippingAddress);
@@ -79,28 +99,36 @@ export const getShippingAddressByIdController = async (req) => {
 export const updateShippingAddressByIdController = async (req) => {
   const { id } = req.user;
   const { shippingAddressId } = req.params;
-  const { isDefault } = req.body;
-
-  const existShippingAddress = await getShippingAddressByIdService(shippingAddressId, {
-    customer: id
-  });
-
-  if (!existShippingAddress) {
-    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Shipping address not found' })
-  }
+  const { isDefault, provinceCode, districtCode, wardCode } = req.body;
 
   if (isDefault) {
     await unsetDefaultCurrentShippingAddressService(id);
   }
 
-  if (existShippingAddress.isDefault && isDefault === false) {
-    throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Have at least 1 shipping address as default' })
+  const province = await getProvinceService(provinceCode);
+  if (!province) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Province not found' });
   }
 
-  const updatedShippingAddress = await updateShippingAddressByIdService(
-    shippingAddressId,
-    req.body
-  );
+  const district = await getDistrictService(districtCode, provinceCode);
+  if (!district) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'District not found' });
+  }
+
+  const ward = await getWardService(wardCode, districtCode);
+  if (!ward) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Ward not found' });
+  }
+
+  const updatedShippingAddress = await updateShippingAddressByIdService(shippingAddressId, {
+    isDefault,
+    provinceName: province.ProvinceName,
+    districtName: district.DistrictName,
+    wardName: ward.WardName,
+  });
+  if (!updatedShippingAddress) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Shipping address not found' });
+  }
 
   const shippingAddressDto = ModelDto.new(ShippingAddressDto, updatedShippingAddress);
   return ApiResponse.success(shippingAddressDto);
@@ -111,11 +139,11 @@ export const removeShippingAddressByIdController = async (req) => {
   const { shippingAddressId } = req.params;
 
   const existShippingAddress = await getShippingAddressByIdService(shippingAddressId, {
-    customer: id
+    customer: id,
   });
 
   if (!existShippingAddress) {
-    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Shipping address not found' })
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Shipping address not found' });
   }
 
   const shippingAddress = await removeShippingAddressByIdService(existShippingAddress._id);
@@ -128,15 +156,15 @@ export const setDefaultShippingAddressByIdController = async (req) => {
   const { shippingAddressId } = req.params;
 
   const existShippingAddress = await getShippingAddressByIdService(shippingAddressId, {
-    customer: id
+    customer: id,
   });
 
   if (!existShippingAddress) {
-    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Shipping address not found' })
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Shipping address not found' });
   }
 
   if (existShippingAddress.isDefault) {
-    throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Current address is default' })
+    throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Current address is default' });
   }
 
   await unsetDefaultCurrentShippingAddressService(id);

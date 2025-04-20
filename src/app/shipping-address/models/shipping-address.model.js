@@ -10,17 +10,17 @@ const shippingAddressSchema = new Schema(
       length: 255,
       required: true,
     },
-    province: {
+    provinceName: {
       type: String,
       length: 50,
       required: true,
     },
-    district: {
+    districtName: {
       type: String,
       length: 50,
       required: true,
     },
-    ward: {
+    wardName: {
       type: String,
       length: 50,
       required: true,

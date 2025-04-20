@@ -19,12 +19,12 @@ export async function saveOrderStatusHistoryService(history, session) {
 }
 
 /**
- * Create order status history
+ * Create order status history with session
  * @param {*} data
  * @returns
  */
 export async function createOrderStatusHistoryService(data, session) {
-  return await OrderStatusHistoryModel.create([data], { session });
+  return await OrderStatusHistoryModel.insertOne(data, { session, ordered: true });
 }
 
 /**

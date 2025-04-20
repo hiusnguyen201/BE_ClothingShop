@@ -1,4 +1,3 @@
-'use strict';
 import mongoose, { isValidObjectId } from 'mongoose';
 import { HttpException } from '#src/core/exception/http-exception';
 import { Code } from '#src/core/code/Code';

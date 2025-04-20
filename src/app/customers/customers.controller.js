@@ -1,4 +1,3 @@
-'use strict';
 import { HttpException } from '#src/core/exception/http-exception';
 import {
   checkExistEmailService,

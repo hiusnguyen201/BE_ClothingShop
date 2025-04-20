@@ -1,4 +1,3 @@
-'use strict';
 import moment from 'moment-timezone';
 import { connectToMongoDb } from '#src/modules/database/mongodb.database';
 import { HttpException } from '#src/core/exception/http-exception';

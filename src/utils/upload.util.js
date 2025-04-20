@@ -1,4 +1,3 @@
-'use strict';
 import { Code } from '#src/core/code/Code';
 import { ALLOW_IMAGE_MIME_TYPES, MAX_UPLOAD_FILE_SIZE } from '#src/core/constant';
 import { HttpException } from '#src/core/exception/http-exception';

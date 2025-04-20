@@ -13,4 +13,6 @@ export const PRODUCT_SELECT_FIELDS = {
   subCategory: true,
   productOptions: true,
   productVariants: true,
+  createdAt: true,
+  updatedAt: true,
 };

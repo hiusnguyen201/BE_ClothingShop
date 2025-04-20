@@ -104,10 +104,6 @@ export async function getProductVariantByIdService(id, selectFields = SELECTED_F
         },
       ],
     });
-  // .populate({
-  //   path: 'productDiscount',
-  //   model: 'Product_Discount',
-  // });
 }
 
 /**
@@ -120,6 +116,7 @@ export async function updateProductVariantByIdService(id, data, session) {
   return await ProductVariantModel.findByIdAndUpdate(id, data, {
     new: true,
     session,
+    ordered: true,
   }).select(SELECTED_FIELDS);
 }
 
