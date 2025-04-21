@@ -67,10 +67,10 @@ router
     '/products/get-product-by-customer/:productId',
     validateParams(GetProductDto),
     getProductByIdController,
-  ).get('/get-categories-by-customer',
+  ).get('/categories/get-categories-by-customer',
     validateQuery(GetListCategoryDto),
     getAllCategoriesByCustomerController)
-  .get('/get-category-by-customer/:categoryId',
+  .get('/categories/get-category-by-customer/:categoryId',
     validateParams(GetCategoryDto),
     getCategoryByIdController)
 
