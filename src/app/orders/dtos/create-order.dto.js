@@ -2,7 +2,7 @@ import { OFFLINE_PAYMENT_METHOD, ONLINE_PAYMENT_METHOD, PAYMENT_TYPE } from '#sr
 import { replaceMultiSpacesToSingleSpace } from '#src/utils/string.util';
 import Joi from 'joi';
 
-export const createOrderDto = Joi.object({
+export const CreateOrderDto = Joi.object({
   customerId: Joi.string().required(),
   customerName: Joi.string().min(3).max(100).required(),
   customerEmail: Joi.string().email().required(),

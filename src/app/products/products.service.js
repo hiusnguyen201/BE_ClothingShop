@@ -33,9 +33,11 @@ export async function createProductsService(data, session) {
  * @param {*} selectFields
  * @returns
  */
-export async function getAllProductsService({ filters, page, limit, sortBy, sortOrder }) {
-  return ProductModel.find(filters)
-    .skip((page - 1) * limit)
+export async function getAndCountProductsService(filters, skip, limit, sortBy, sortOrder) {
+  const count = await ProductModel.countDocuments(filters);
+
+  const products = await ProductModel.find(filters)
+    .skip(skip)
     .limit(limit)
     .sort({ [sortBy]: sortOrder })
     .populate({
@@ -67,6 +69,8 @@ export async function getAllProductsService({ filters, page, limit, sortBy, sort
       select: '_id price product quantity sku variantValues',
     })
     .lean();
+
+  return [count, products];
 }
 
 /**

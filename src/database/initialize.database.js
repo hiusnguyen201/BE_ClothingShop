@@ -6,7 +6,6 @@ import { OPTIONS_MODEL } from '#src/app/options/models/option.model';
 import { OPTION_VALUES_MODEL } from '#src/app/options/models/option-value.model';
 import { CATEGORY_MODEL } from '#src/app/categories/models/category.model';
 import { ORDER_DETAIL_MODEL } from '#src/app/order-details/models/order-details.model';
-import { ORDER_STATUS_HISTORY_MODEL } from '#src/app/order-status-history/models/order-status-history.model';
 import { ORDER_MODEL } from '#src/app/orders/models/orders.model';
 import { PAYMENT_MODEL } from '#src/app/payments/models/payments.model';
 import { PRODUCT_VARIANT_MODEL } from '#src/app/product-variants/models/product-variants.model';
@@ -22,7 +21,6 @@ const models = [
   OPTION_VALUES_MODEL,
   CATEGORY_MODEL,
   ORDER_DETAIL_MODEL,
-  ORDER_STATUS_HISTORY_MODEL,
   ORDER_MODEL,
   PAYMENT_MODEL,
   PRODUCT_VARIANT_MODEL,

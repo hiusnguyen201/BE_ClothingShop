@@ -33,7 +33,8 @@ const selectedOptionDto = Joi.object({
   selectedValues: Joi.array().items(Joi.string().required()).min(1).required(),
 });
 
-export const updateProductVariantsDto = Joi.object({
+export const UpdateProductVariantsDto = Joi.object({
+  productId: Joi.string().required(),
   options: Joi.array().items(selectedOptionDto).min(1).required(),
   productVariants: Joi.array()
     .items(createProductVariantDto)

@@ -10,27 +10,23 @@ const options = {
   stripUnknown: true, //  when true, ignores unknown keys with a function value. Defaults to false.
 };
 
-const validateSchema = (schema, payloadPath = 'body') => {
-  return (req, res, next) => {
-    const { error, value } = schema.validate(req[payloadPath], options);
-    if (error) {
-      let details = error.details.map((item) => ({
-        path: item.path[0],
-        message: item.message,
-      }));
+export const validateSchema = async (schema, data) => {
+  const { error, value } = await schema.validate(data, options);
 
-      if (error.details[0].type === 'object.min') {
-        details = details[0].message;
-      }
+  if (error) {
+    let details = error.details.map((item) => ({
+      path: item.path[0],
+      message: item.message,
+    }));
 
-      return next(
-        HttpException.new({ code: Code.INVALID_DATA, overrideMessage: 'Request validation error', data: details }),
-      );
+    if (error.details[0].type === 'object.min') {
+      details = details[0].message;
     }
 
-    req[payloadPath] = value;
-    return next();
-  };
+    throw HttpException.new({ code: Code.INVALID_DATA, overrideMessage: 'Request validation error', data: details });
+  }
+
+  return value;
 };
 
 export const validateBody = (schema) => validateSchema(schema, 'body');

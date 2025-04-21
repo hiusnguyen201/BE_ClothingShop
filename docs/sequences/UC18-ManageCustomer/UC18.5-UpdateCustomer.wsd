@@ -147,7 +147,7 @@ break
 
 ' Step 4
 group Validation Flow
-    JwtAuthMiddleware -> RequestValidation: validateParams(GetCustomerDto)
+    JwtAuthMiddleware -> RequestValidation: validateSchema(GetCustomerDto)
     deactivate JwtAuthMiddleware
     activate RequestValidation
     alt validation error
@@ -158,7 +158,7 @@ group Validation Flow
         deactivate ErrorMiddleware
     end
     
-    RequestValidation -> RequestValidation: validateBody(UpdateCustomerDto)
+    RequestValidation -> RequestValidation: validateSchema(UpdateCustomerDto)
     
     alt validation error
         RequestValidation ->> RequestValidation: next(HttpException(400))

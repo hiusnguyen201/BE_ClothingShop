@@ -1,6 +1,6 @@
 import { HttpException } from '#src/core/exception/http-exception';
 import {
-  getAllProductsService,
+  getAndCountProductsService,
   getProductByIdService,
   updateProductInfoByIdService,
   removeProductByIdService,
@@ -24,85 +24,95 @@ import { makeUniqueProductVariants } from '#src/utils/object.util';
 import { TransactionalServiceWrapper } from '#src/core/transaction/TransactionalServiceWrapper';
 import { uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
 import { PRODUCT_STATUS } from '#src/app/products/products.constant';
+import { validateSchema } from '#src/core/validations/request.validation';
+import { CheckExistProductNameDto } from '#src/app/products/dtos/check-exist-product-name.dto';
+import { CreateProductDto } from '#src/app/products/dtos/create-product.dto';
+import { UpdateProductInfoDto } from '#src/app/products/dtos/update-product-info.dto';
+import { GetListProductDto } from '#src/app/products/dtos/get-list-product.dto';
+import { GetProductDto } from '#src/app/products/dtos/get-product.dto';
+import { UpdateProductVariantsDto } from '#src/app/products/dtos/update-product-variants.dto';
+
+export const isExistProductNameController = async (req) => {
+  const adapter = await validateSchema(CheckExistProductNameDto, req.body);
+
+  const isExistName = await checkExistProductNameService(adapter.name, adapter.skipId);
+
+  return ApiResponse.success(isExistName);
+};
 
 export const createProductController = async (req) => {
-  const { name, category, subCategory, thumbnail } = req.body;
+  const adapter = await validateSchema(CreateProductDto, req.body);
 
-  const isExistProductName = await checkExistProductNameService(name);
+  const isExistProductName = await checkExistProductNameService(adapter.name);
   if (isExistProductName) {
     throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Product name already exist' });
   }
 
-  const isExistCategory = await getCategoryByIdService(category);
+  const isExistCategory = await getCategoryByIdService(adapter.category);
   if (!isExistCategory) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Category not found' });
   }
 
-  if (subCategory) {
-    const isExistSubCategory = await getCategoryByIdService(subCategory);
+  if (adapter.subCategory) {
+    const isExistSubCategory = await getCategoryByIdService(adapter.subCategory);
     if (!isExistSubCategory) {
       throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Subcategory not found' });
     }
   }
 
-  if (thumbnail instanceof Buffer) {
-    const result = await uploadImageBufferService({ buffer: thumbnail, folderName: 'product-thumbnails' });
-    req.body.thumbnail = result.url;
+  if (adapter.thumbnail) {
+    const result = await uploadImageBufferService({ buffer: adapter.thumbnail, folderName: 'product-thumbnails' });
+    adapter.thumbnail = result.url;
   }
 
-  const newProduct = await createProductService(req.body);
+  const newProduct = await createProductService(adapter);
 
   const productDto = ModelDto.new(ProductDto, newProduct);
   return ApiResponse.success(productDto);
 };
 
 export const getAllProductsController = async (req) => {
-  const { keyword, category, limit, page, sortBy, sortOrder, status } = req.query;
+  const adapter = await validateSchema(GetListProductDto, req.query);
 
-  const filterOptions = {
-    $or: [{ name: { $regex: keyword, $options: 'i' } }],
-    ...(status ? { status } : {}),
-    ...(category ? { category } : {}),
+  const filters = {
+    $or: [{ name: { $regex: adapter.keyword, $options: 'i' } }],
+    ...(adapter.status ? { status: adapter.status } : {}),
+    ...(adapter.category ? { category: adapter.category } : {}),
   };
 
-  const totalCount = await countAllProductsService(filterOptions);
-  const products = await getAllProductsService({
-    filters: filterOptions,
-    page,
-    limit,
-    sortBy,
-    sortOrder,
-  });
+  const skip = (adapter.page - 1) * adapter.limit;
+  const [totalCount, products] = await getAndCountProductsService(
+    filters,
+    skip,
+    adapter.limit,
+    adapter.sortBy,
+    adapter.sortOrder,
+  );
 
   const productsDto = ModelDto.newList(ProductDto, products);
   return ApiResponse.success({ totalCount, list: productsDto });
 };
 
 export const getAllProductsByCustomerController = async (req) => {
-  const { keyword, category, limit, page, sortBy, sortOrder } = req.query;
+  const adapter = await validateSchema(GetListProductDto, req.query);
 
-  const filterOptions = {
+  const filters = {
     status: PRODUCT_STATUS.ACTIVE,
-    $or: [{ name: { $regex: keyword, $options: 'i' } }],
-    ...(category ? { $or: [{ category }, { subCategory: category }] } : {}),
+    $or: [{ name: { $regex: adapter.keyword, $options: 'i' } }],
+    ...(adapter.category ? { $or: [{ category: adapter.category }, { subCategory: adapter.category }] } : {}),
   };
 
-  const totalCount = await countAllProductsService(filterOptions);
-  const products = await getAllProductsService({
-    filters: filterOptions,
-    page,
-    limit,
-    sortBy,
-    sortOrder,
-  });
+  const skip = (adapter.page - 1) * adapter.limit;
+  const products = await getAndCountProductsService(filters, skip, adapter.limit, adapter.sortBy, adapter.sortOrder);
 
   const productsDto = ModelDto.newList(ProductDto, products);
   return ApiResponse.success({ totalCount, list: productsDto });
 };
 
 export const getProductByIdController = async (req) => {
-  const { productId } = req.params;
-  const existProduct = await getProductByIdService(productId);
+  const adapter = await validateSchema(GetProductDto, req.params);
+
+  const existProduct = await getProductByIdService(adapter.productId);
 
   if (!existProduct) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product not found' });
@@ -113,41 +123,40 @@ export const getProductByIdController = async (req) => {
 };
 
 export const updateProductInfoController = async (req) => {
-  const { productId } = req.params;
-  const existProduct = await getProductByIdService(productId, '_id');
+  const adapter = await validateSchema(UpdateProductInfoDto, { ...req.params, ...req.body });
+
+  const existProduct = await getProductByIdService(adapter.productId);
   if (!existProduct) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product not found' });
   }
 
-  const { name, category, subCategory, thumbnail, status } = req.body;
-
-  if (existProduct.productVariants.length === 0 && status === PRODUCT_STATUS.ACTIVE) {
+  if (existProduct.productVariants.length === 0 && adapter.status === PRODUCT_STATUS.ACTIVE) {
     throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Cannot activate a product without variants' });
   }
 
-  const isExistProductName = await checkExistProductNameService(name, existProduct._id);
+  const isExistProductName = await checkExistProductNameService(adapter.name, existProduct._id);
   if (isExistProductName) {
     throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Product name already exist' });
   }
 
-  const isExistCategory = await getCategoryByIdService(category);
+  const isExistCategory = await getCategoryByIdService(adapter.category);
   if (!isExistCategory) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Category not found' });
   }
 
-  if (subCategory) {
-    const isExistSubCategory = await getCategoryByIdService(subCategory);
+  if (adapter.subCategory) {
+    const isExistSubCategory = await getCategoryByIdService(adapter.subCategory);
     if (!isExistSubCategory) {
       throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Subcategory not found' });
     }
   }
 
-  if (thumbnail instanceof Buffer) {
-    const result = await uploadImageBufferService({ buffer: thumbnail, folderName: 'product-thumbnails' });
-    req.body.thumbnail = result.url;
+  if (adapter.thumbnail instanceof Buffer) {
+    const result = await uploadImageBufferService({ buffer: adapter.thumbnail, folderName: 'product-thumbnails' });
+    adapter.thumbnail = result.url;
   }
 
-  await updateProductInfoByIdService(existProduct._id, req.body);
+  await updateProductInfoByIdService(existProduct._id, adapter);
 
   const updatedProduct = await getProductByIdService(existProduct._id);
 
@@ -156,11 +165,10 @@ export const updateProductInfoController = async (req) => {
 };
 
 export const updateProductVariantsController = async (req) => {
-  const { productVariants, options } = req.body;
-  const { productId } = req.params;
+  const adapter = await validateSchema(UpdateProductVariantsDto, { ...req.params, ...req.body });
 
   // Validation
-  const existProduct = await getProductByIdService(productId, '_id');
+  const existProduct = await getProductByIdService(adapter.productId);
   if (!existProduct) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product not found' });
   }
@@ -171,7 +179,7 @@ export const updateProductVariantsController = async (req) => {
 
     // Create List Product Option
     const productOptionsInstance = await Promise.all(
-      options.map(async (opt) => {
+      adapter.options.map(async (opt) => {
         const { option: optionName, selectedValues } = opt;
 
         const option = await getOptionByIdService(optionName, { valueName: { $in: selectedValues } });
@@ -187,7 +195,7 @@ export const updateProductVariantsController = async (req) => {
     );
 
     // Create List Product Variant
-    const uniqueProductVariants = makeUniqueProductVariants(productVariants);
+    const uniqueProductVariants = makeUniqueProductVariants(adapter.productVariants);
     const productVariantsInstance = await Promise.all(
       uniqueProductVariants.map(async (productVariant) => {
         const { variantValues, quantity, price, sku } = productVariant;
@@ -241,8 +249,9 @@ export const updateProductVariantsController = async (req) => {
 };
 
 export const removeProductByIdController = async (req) => {
-  const { productId } = req.params;
-  const existProduct = await getProductByIdService(productId, '_id status');
+  const adapter = await validateSchema(GetProductDto, req.params);
+
+  const existProduct = await getProductByIdService(adapter.productId, '_id status');
 
   if (!existProduct) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product not found' });
@@ -252,15 +261,7 @@ export const removeProductByIdController = async (req) => {
     throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Cannot remove active product' });
   }
 
-  await removeProductByIdService(productId);
+  await removeProductByIdService(existProduct._id);
 
   return ApiResponse.success({ id: existProduct._id });
-};
-
-export const isExistProductNameController = async (req) => {
-  const { name, skipId } = req.body;
-
-  const isExistName = await checkExistProductNameService(name, skipId);
-
-  return ApiResponse.success(isExistName);
 };

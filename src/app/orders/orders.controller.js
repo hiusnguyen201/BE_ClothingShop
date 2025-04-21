@@ -37,26 +37,90 @@ import { createOrderJob, orderQueueEVent } from '#src/app/orders/orders.worker';
 import { uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
 import { generateQRCodeBuffer } from '#src/utils/qrcode.util';
 import { checkValidAddressService } from '#src/modules/geoapify/geoapify.service';
+import { validateSchema } from '#src/core/validations/request.validation';
+import { CreateOrderDto } from '#src/app/orders/dtos/create-order.dto';
+import { GetListOrderDto } from '#src/app/orders/dtos/get-list-order.dto';
+import { GetOrderDto } from '#src/app/orders/dtos/get-order.dto';
+import { CreateOrderGhnDto } from '#src/app/orders/dtos/create-order-ghn.dto';
+// import { UpdateOrderDto } from '#src/app/orders/dtos/update-order.dto';
+
+export async function createOrderController(req) {
+  const adapter = await validateSchema(CreateOrderDto, req.body);
+
+  // Validation
+  const customer = await getUserByIdService(adapter.customerId, { type: USER_TYPE.CUSTOMER });
+  if (!customer) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Customer not found' });
+  }
+
+  const province = await getProvinceService(adapter.provinceCode);
+  if (!province) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Province not found' });
+  }
+
+  const district = await getDistrictService(adapter.districtCode, adapter.provinceCode);
+  if (!district) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'District not found' });
+  }
+
+  const ward = await getWardService(adapter.wardCode, adapter.districtCode);
+  if (!ward) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Ward not found' });
+  }
+
+  const fullAddress = `${adapter.address}, ${ward.WardName}, ${district.DistrictName}, ${province.ProvinceName}`;
+  const validAddress = await checkValidAddressService(fullAddress);
+  if (!validAddress) {
+    throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Invalid address' });
+  }
+
+  // Logic (CREATE ORDER PENDING)
+  const job = await createOrderJob({
+    customerId: customer._id,
+    customerName: adapter.customerName,
+    customerEmail: adapter.customerEmail,
+    customerPhone: adapter.customerPhone,
+    provinceName: province.ProvinceName,
+    districtName: district.DistrictName,
+    wardName: ward.WardName,
+    address: adapter.address,
+    productVariants: adapter.productVariants,
+    paymentMethod: adapter.paymentMethod,
+    baseUrl: req.protocol + '://' + req.get('host'),
+  });
+  const newOrder = await job.waitUntilFinished(orderQueueEVent);
+
+  // Transform
+  const orderDetail = await getOrderByIdService(newOrder._id);
+  const orderDto = ModelDto.new(OrderDto, orderDetail);
+  return ApiResponse.success(orderDto);
+}
 
 export async function getAllOrdersController(req) {
-  const { customerId, limit, page, sortBy, sortOrder, status } = req.query;
+  const adapter = await validateSchema(GetListOrderDto, req.query);
 
   const filters = {
-    ...(customerId ? { customerId: customerId } : {}),
-    ...(status ? { status: status } : {}),
+    ...(adapter.customerId ? { customerId: adapter.customerId } : {}),
+    ...(adapter.status ? { status: adapter.status } : {}),
   };
 
-  const skip = (page - 1) * limit;
-  const [totalCount, orders] = await getAndCountOrdersService(filters, skip, limit, sortBy, sortOrder);
+  const skip = (adapter.page - 1) * adapter.limit;
+  const [totalCount, orders] = await getAndCountOrdersService(
+    filters,
+    skip,
+    adapter.limit,
+    adapter.sortBy,
+    adapter.sortOrder,
+  );
 
   const ordersDto = ModelDto.newList(OrderDto, orders);
   return ApiResponse.success({ totalCount, list: ordersDto });
 }
 
 export async function getOrderByIdController(req) {
-  const { orderId } = req.params;
+  const adapter = await validateSchema(GetOrderDto, req.query);
 
-  const order = await getOrderByIdService(orderId);
+  const order = await getOrderByIdService(adapter.orderId);
   if (!order) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
   }
@@ -67,69 +131,6 @@ export async function getOrderByIdController(req) {
   }
 
   const orderDto = ModelDto.new(OrderDto, { ...order, trackingLog });
-  return ApiResponse.success(orderDto);
-}
-
-export async function createOrderController(req) {
-  const {
-    customerId,
-    address,
-    provinceCode,
-    districtCode,
-    wardCode,
-    customerName,
-    customerEmail,
-    customerPhone,
-    productVariants,
-    paymentMethod,
-  } = req.body;
-
-  // Validation
-  const customer = await getUserByIdService(customerId, { type: USER_TYPE.CUSTOMER });
-  if (!customer) {
-    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Customer not found' });
-  }
-
-  const province = await getProvinceService(provinceCode);
-  if (!province) {
-    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Province not found' });
-  }
-
-  const district = await getDistrictService(districtCode, provinceCode);
-  if (!district) {
-    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'District not found' });
-  }
-
-  const ward = await getWardService(wardCode, districtCode);
-  if (!ward) {
-    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Ward not found' });
-  }
-
-  const fullAddress = `${address}, ${ward.WardName}, ${district.DistrictName}, ${province.ProvinceName}`;
-  const validAddress = await checkValidAddressService(fullAddress);
-  if (!validAddress) {
-    throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Invalid address' });
-  }
-
-  // Logic (CREATE ORDER PENDING)
-  const job = await createOrderJob({
-    customerId: customer._id,
-    customerName: customerName,
-    customerEmail: customerEmail,
-    customerPhone: customerPhone,
-    provinceName: province.ProvinceName,
-    districtName: district.DistrictName,
-    wardName: ward.WardName,
-    address: address,
-    productVariants: productVariants,
-    paymentMethod: paymentMethod,
-    baseUrl: req.protocol + '://' + req.get('host'),
-  });
-  const newOrder = await job.waitUntilFinished(orderQueueEVent);
-
-  // Transform
-  const orderDetail = await getOrderByIdService(newOrder._id);
-  const orderDto = ModelDto.new(OrderDto, orderDetail);
   return ApiResponse.success(orderDto);
 }
 
@@ -239,8 +240,9 @@ export async function createOrderControllerLogic(data) {
 }
 
 export async function confirmOrderController(req) {
-  const { orderId } = req.body;
-  const orderExisted = await getOrderByIdService(orderId);
+  const adapter = await validateSchema(CreateOrderGhnDto, req.body);
+
+  const orderExisted = await getOrderByIdService(adapter.orderId);
   if (!orderExisted) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
   }
@@ -252,14 +254,15 @@ export async function confirmOrderController(req) {
 
   await addOrderStatusHistoryByIdService(orderExisted._id, ORDER_STATUS.CONFIRMED);
 
-  const orderDetail = await getOrderByIdService(orderId);
+  const orderDetail = await getOrderByIdService(orderExisted._id);
   const orderDto = ModelDto.new(OrderDto, orderDetail);
   return ApiResponse.success(orderDto);
 }
 
 export async function processingOrderController(req) {
-  const { orderId } = req.body;
-  const orderExisted = await getOrderByIdService(orderId);
+  const adapter = await validateSchema(CreateOrderGhnDto, req.body);
+
+  const orderExisted = await getOrderByIdService(adapter.orderId);
   if (!orderExisted) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
   }
@@ -271,15 +274,15 @@ export async function processingOrderController(req) {
 
   await addOrderStatusHistoryByIdService(orderExisted._id, ORDER_STATUS.PROCESSING);
 
-  const orderDetail = await getOrderByIdService(orderId);
+  const orderDetail = await getOrderByIdService(orderExisted._id);
   const orderDto = ModelDto.new(OrderDto, orderDetail);
   return ApiResponse.success(orderDto);
 }
 
 export async function cancelOrderController(req) {
-  const { orderId } = req.body;
+  const adapter = await validateSchema(CreateOrderGhnDto, req.body);
 
-  const orderExisted = await getOrderByIdService(orderId);
+  const orderExisted = await getOrderByIdService(adapter.orderId);
   if (!orderExisted) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
   }
@@ -321,15 +324,15 @@ export async function cancelOrderController(req) {
     await addOrderStatusHistoryByIdService(orderExisted._id, ORDER_STATUS.CANCELLED);
   });
 
-  const orderDetail = await getOrderByIdService(orderId);
+  const orderDetail = await getOrderByIdService(orderExisted._id);
   const orderDto = ModelDto.new(OrderDto, orderDetail);
   return ApiResponse.success(orderDto);
 }
 
 export async function createShippingOrderController(req) {
-  const { orderId } = req.body;
+  const adapter = await validateSchema(CreateOrderGhnDto, req.body);
 
-  const orderExisted = await getOrderByIdService(orderId);
+  const orderExisted = await getOrderByIdService(adapter.orderId);
   if (!orderExisted) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
   }
@@ -348,15 +351,15 @@ export async function createShippingOrderController(req) {
     trackingNumber: newOrderGhn.data.order_code,
   });
 
-  const orderDetail = await getOrderByIdService(orderId);
+  const orderDetail = await getOrderByIdService(orderExisted._id);
   const orderDto = ModelDto.new(OrderDto, orderDetail);
   return ApiResponse.success(orderDto);
 }
 
 export async function removeOrderController(req) {
-  const { orderId } = req.params;
+  const adapter = await validateSchema(GetOrderDto, req.params);
 
-  const orderExisted = await getOrderByIdService(orderId);
+  const orderExisted = await getOrderByIdService(adapter.orderId);
   if (!orderExisted) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
   }

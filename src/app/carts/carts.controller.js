@@ -1,61 +1,58 @@
 import {
-    addToCartService,
-    getCartService,
-    removeFromCartService,
-    clearCartService,
-} from "#src/app/carts/carts.service";
-import { ApiResponse } from "#src/core/api/ApiResponse";
-import { ModelDto } from "#src/core/dto/ModelDto";
-import { HttpException } from "#src/core/exception/http-exception";
-import { getProductVariantByIdService } from "#src/app/product-variants/product-variants.service";
-import { Code } from "#src/core/code/Code";
-import { CartDto } from "#src/app/carts/dtos/cart.dto";
+  addToCartService,
+  getCartService,
+  removeFromCartService,
+  clearCartService,
+} from '#src/app/carts/carts.service';
+import { ApiResponse } from '#src/core/api/ApiResponse';
+import { ModelDto } from '#src/core/dto/ModelDto';
+import { HttpException } from '#src/core/exception/http-exception';
+import { getProductVariantByIdService } from '#src/app/product-variants/product-variants.service';
+import { Code } from '#src/core/code/Code';
+import { CartDto } from '#src/app/carts/dtos/cart.dto';
+import { validateSchema } from '#src/core/validations/request.validation';
+import { AddToCartDto } from '#src/app/carts/dtos/add-to-cart.dto';
+import { RemoveFromCartDto } from '#src/app/carts/dtos/remove-from-cart.dto';
 
 export const addToCartController = async (req) => {
-    const { id } = req.user;
-    const { productVariantId, quantity } = req.body;
+  const adapter = await validateSchema(AddToCartDto, req.body);
 
-    const productVariant = await getProductVariantByIdService(productVariantId);
-    if (!productVariant) {
-        throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product variant not found' });
-    }
+  const productVariant = await getProductVariantByIdService(adapter.productVariantId);
+  if (!productVariant) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product variant not found' });
+  }
 
-    if (productVariant.quantity < quantity) {
-        throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Product variant stock not enough' });
-    }
+  if (productVariant.quantity < adapter.quantity) {
+    throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Product variant stock not enough' });
+  }
 
-    const productData = {
-        productId: productVariant.product._id,
-        productVariantId: productVariant._id,
-        name: productVariant.product.name,
-        quantity,
-    };
-    await addToCartService(id, productData);
+  const productData = {
+    productId: productVariant.product._id,
+    productVariantId: productVariant._id,
+    name: productVariant.product.name,
+    quantity: adapter.quantity,
+  };
+  await addToCartService(req.user.id, productData);
 
-    const cartsDto = ModelDto.new(CartDto, {
-        _id: id,
-        ...productData,
-    });
-    return ApiResponse.success(cartsDto);
+  const cartsDto = ModelDto.new(CartDto, {
+    _id: req.user.id,
+    ...productData,
+  });
+  return ApiResponse.success(cartsDto);
 };
 
 export const getCartController = async (req) => {
-    const { id } = req.user;
-    const carts = await getCartService(id);
-    // const cartsDto = ModelDto.newList(CartDto, carts);
-    return ApiResponse.success(carts);
+  const carts = await getCartService(req.user.id);
+  return ApiResponse.success(carts);
 };
 
 export const removeFromCartController = async (req) => {
-    const { id } = req.user;
-    const { productVariantId } = req.params;
-
-    await removeFromCartService(id, productVariantId);
-    return ApiResponse.success({ customerId: id, productVariantId });
+  const adapter = await validateSchema(RemoveFromCartDto, req.params);
+  await removeFromCartService(req.user.id, adapter.productVariantId);
+  return ApiResponse.success({ customerId: req.user.id, productVariantId: adapter.productVariantId });
 };
 
 export const clearCartController = async (req) => {
-    const { id } = req.user;
-    await clearCartService(id);
-    return ApiResponse.success({ customerId: id });
+  await clearCartService(req.user.id);
+  return ApiResponse.success({ customerId: req.user.id });
 };

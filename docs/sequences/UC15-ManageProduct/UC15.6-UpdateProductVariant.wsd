@@ -157,7 +157,7 @@ break
 
 ' Step 4
 group Validation Flow
-    UploadUtil -> RequestValidation: validateParams(GetProductDto)
+    UploadUtil -> RequestValidation: validateSchema(GetProductDto)
     deactivate UploadUtil
     activate RequestValidation
     alt validation error
@@ -167,7 +167,7 @@ group Validation Flow
         ErrorMiddleware -->> Client: HTTP 400 Bad Request
         deactivate ErrorMiddleware
     end
-    RequestValidation -> RequestValidation: validateBody(updateProductVariantsDto)
+    RequestValidation -> RequestValidation: validateSchema(updateProductVariantsDto)
     alt validation error
         RequestValidation ->> RequestValidation: next(HttpException(400))
         RequestValidation ->> ErrorMiddleware: handleError(Error)

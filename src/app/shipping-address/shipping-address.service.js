@@ -1,10 +1,7 @@
-import { isValidObjectId } from "mongoose";
-import { ShippingAddressModel } from "#src/app/shipping-address/models/shipping-address.model";
-import {
-  extendQueryOptionsWithPagination,
-  extendQueryOptionsWithSort
-} from "#src/utils/query.util";
-import { SHIPPING_ADDRESS_SELECTED_FIELDS } from "#src/app/shipping-address/shipping-address.constant";
+import { isValidObjectId } from 'mongoose';
+import { ShippingAddressModel } from '#src/app/shipping-address/models/shipping-address.model';
+import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
+import { SHIPPING_ADDRESS_SELECTED_FIELDS } from '#src/app/shipping-address/shipping-address.constant';
 
 /**
  * Create shipping address
@@ -16,17 +13,21 @@ export async function createShippingAddressService(data) {
 }
 
 /**
- * Get all shipping address
+ * Get and count shipping address
  * @param {*} query
  * @returns
  */
-export async function getAllShippingAddressService(payload) {
-  const { filters = {}, page, limit, sortBy, sortOrder } = payload;
+export async function getAndCountShippingAddressService(filters, skip, limit, sortBy, sortOrder) {
+  const totalCount = await ShippingAddressModel.countDocuments(filters);
 
-  let queryOptions = {};
-  queryOptions = extendQueryOptionsWithPagination({ page, limit }, queryOptions);
-  queryOptions = extendQueryOptionsWithSort({ sortBy, sortOrder }, queryOptions);
-  return ShippingAddressModel.find(filters, SHIPPING_ADDRESS_SELECTED_FIELDS, queryOptions).lean();
+  const queryOptions = {
+    ...extendQueryOptionsWithPagination(skip, limit),
+    ...extendQueryOptionsWithSort(sortBy, sortOrder),
+  };
+
+  const list = await ShippingAddressModel.find(filters, SHIPPING_ADDRESS_SELECTED_FIELDS, queryOptions).lean();
+
+  return [totalCount, list];
 }
 
 /**
@@ -68,7 +69,8 @@ export async function getShippingAddressByIdService(addressId, extras = {}) {
 export async function updateShippingAddressByIdService(id, data) {
   return ShippingAddressModel.findByIdAndUpdate(id, data, {
     new: true,
-  }).select(SHIPPING_ADDRESS_SELECTED_FIELDS)
+  })
+    .select(SHIPPING_ADDRESS_SELECTED_FIELDS)
     .lean();
 }
 
@@ -78,9 +80,7 @@ export async function updateShippingAddressByIdService(id, data) {
  * @returns
  */
 export async function removeShippingAddressByIdService(id) {
-  return ShippingAddressModel.findByIdAndDelete(id)
-    .select(SHIPPING_ADDRESS_SELECTED_FIELDS)
-    .lean();
+  return ShippingAddressModel.findByIdAndDelete(id).select(SHIPPING_ADDRESS_SELECTED_FIELDS).lean();
 }
 
 /**
@@ -90,14 +90,19 @@ export async function removeShippingAddressByIdService(id) {
  * @returns
  */
 export async function setDefaultShippingAddressByIdService(addressId, customerId) {
-  return ShippingAddressModel.updateOne({
-    _id: addressId,
-    customer: customerId,
-  }, {
-    isDefault: true,
-  }, {
-    new: true
-  }).select(SHIPPING_ADDRESS_SELECTED_FIELDS)
+  return ShippingAddressModel.updateOne(
+    {
+      _id: addressId,
+      customer: customerId,
+    },
+    {
+      isDefault: true,
+    },
+    {
+      new: true,
+    },
+  )
+    .select(SHIPPING_ADDRESS_SELECTED_FIELDS)
     .lean();
 }
 
@@ -107,13 +112,18 @@ export async function setDefaultShippingAddressByIdService(addressId, customerId
  * @returns
  */
 export async function unsetDefaultCurrentShippingAddressService(customerId) {
-  return ShippingAddressModel.updateOne({
-    customer: customerId,
-    isDefault: true,
-  }, {
-    $set: { isDefault: false }
-  }, {
-    new: true
-  }).select(SHIPPING_ADDRESS_SELECTED_FIELDS)
+  return ShippingAddressModel.updateOne(
+    {
+      customer: customerId,
+      isDefault: true,
+    },
+    {
+      $set: { isDefault: false },
+    },
+    {
+      new: true,
+    },
+  )
+    .select(SHIPPING_ADDRESS_SELECTED_FIELDS)
     .lean();
 }

@@ -2,7 +2,8 @@ import Joi from 'joi';
 import { replaceMultiSpacesToSingleSpace } from '#src/utils/string.util';
 import { PRODUCT_STATUS } from '#src/app/products/products.constant';
 
-export const updateProductInfoDto = Joi.object({
+export const UpdateProductInfoDto = Joi.object({
+  productId: Joi.string().required(),
   thumbnail: Joi.alternatives(Joi.binary().strict(), Joi.string().strict()).required(),
   name: Joi.string()
     .min(3)

@@ -1,5 +1,5 @@
 import Joi from 'joi';
 
-export const createOrderGhnDto = Joi.object({
+export const CreateOrderGhnDto = Joi.object({
   orderId: Joi.string().required(),
 });

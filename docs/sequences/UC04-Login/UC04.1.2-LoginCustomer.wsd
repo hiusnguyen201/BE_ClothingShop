@@ -37,7 +37,7 @@ break
 
 ' Step 2
 group Validation Flow
-    AsyncHandler -> RequestValidation: validateBody(RegisterDto)
+    AsyncHandler -> RequestValidation: validateSchema(RegisterDto)
     activate RequestValidation
     alt validation error
         RequestValidation ->> RequestValidation: next(HttpException(400))

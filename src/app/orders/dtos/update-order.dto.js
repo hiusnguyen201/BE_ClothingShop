@@ -7,7 +7,7 @@ import { REGEX_PATTERNS } from '#src/core/constant';
 import { objectIdValidator, replaceMultiSpacesToSingleSpace } from '#src/utils/string.util';
 import Joi from 'joi';
 
-const updateShippingAddressDto = Joi.object({
+const UpdateShippingAddressDto = Joi.object({
   address: Joi.string()
     .required()
     .min(3)

@@ -148,7 +148,7 @@ break
 
 ' Step 4
 group Validation Flow
-    JwtAuthMiddleware -> RequestValidation: validateParams(GetUserDto)
+    JwtAuthMiddleware -> RequestValidation: validateSchema(GetUserDto)
     deactivate JwtAuthMiddleware
     activate RequestValidation
     alt validation error
@@ -238,6 +238,76 @@ AsyncHandler --> Client: HTTP 200 Success
 deactivate AsyncHandler
 deactivate UsersRouter
 
+@enduml
 
+@startuml View User Details
+
+actor Client
+participant UsersController
+participant ModelDto
+participant RequestValidation
+participant UsersService
+participant UserModel
+database MongoDB
+
+activate Client
+Client -> UsersController: GET /api/users/:userId
+activate UsersController
+
+group Validation Flow
+    UsersController -> RequestValidation: validateSchema(GetUserByIdDto)
+    activate RequestValidation
+    
+    alt validation error
+        RequestValidation --x RequestValidation: throw HttpException(400)
+        RequestValidation --x UsersController: throw HttpException(400)
+        UsersController -->> Client: HTTP 400 Bad Request
+    end
+
+    RequestValidation -> UsersController: return valid data
+    deactivate RequestValidation
+end
+
+group Business Logic Flow
+    UsersController -> UsersService: getUserByIdService(userId)
+    activate UsersService
+
+    UsersService -> UserModel: findById(userId)
+    activate UserModel
+    UserModel -> MongoDB: query select
+    activate MongoDB
+
+    alt select fail
+        MongoDB --x UserModel: throw Error
+        UserModel --x UsersService: throw Error
+        UsersService --x UsersController: throw Error
+        UsersController -->> Client: HTTP 500 Server Error
+    else user not found
+        MongoDB -->> UserModel: return null
+        UserModel -->> UsersService: return null
+        UsersService -->> UsersController: return null
+        UsersController --x UsersController: throw HttpException(404)
+        UsersController -->> Client: HTTP 404 Not Found
+    end
+
+    MongoDB -->> UserModel: return user
+    deactivate MongoDB
+    UserModel -->> UsersService: return user
+    deactivate UserModel
+    UsersService -->> UsersController: return user
+    deactivate UsersService
+end
+
+group Transform data
+    UsersController -> ModelDto: new(UserDto)
+    activate ModelDto
+    ModelDto -> UsersController: return userDto
+    deactivate ModelDto
+
+    UsersController --> Client: HTTP 200 Success
+    deactivate UsersController
+end
+
+deactivate Client
 
 @enduml

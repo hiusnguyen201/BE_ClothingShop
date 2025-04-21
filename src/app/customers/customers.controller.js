@@ -14,10 +14,16 @@ import { ApiResponse } from '#src/core/api/ApiResponse';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { CustomerDto } from '#src/app/customers/dtos/customer.dto';
 import { Code } from '#src/core/code/Code';
+import { GetListCustomerDto } from '#src/app/customers/dtos/get-list-customer.dto';
+import { GetCustomerDto } from '#src/app/customers/dtos/get-customer.dto';
+import { CreateCustomerDto } from '#src/app/customers/dtos/create-customer.dto';
+import { UpdateCustomerDto } from '#src/app/customers/dtos/update-customer.dto';
+import { validateSchema } from '#src/core/validations/request.validation';
 
 export const createCustomerController = async (req) => {
-  const { email } = req.body;
-  const isExistEmail = await checkExistEmailService(email);
+  const adapter = await validateSchema(CreateCustomerDto, req.body);
+
+  const isExistEmail = await checkExistEmailService(adapter.email);
   if (isExistEmail) {
     throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Email already exist' });
   }
@@ -29,26 +35,32 @@ export const createCustomerController = async (req) => {
     type: USER_TYPE.CUSTOMER,
   });
 
-  sendPasswordService(email, password);
+  sendPasswordService(adapter.email, password);
 
   const customersDto = ModelDto.new(CustomerDto, customer);
   return ApiResponse.success(customersDto, 'Create customer successful');
 };
 
 export const getAllCustomersController = async (req) => {
-  const { keyword = '', page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', gender } = req.query;
+  const adapter = await validateSchema(GetListCustomerDto, req.query);
 
   const searchFields = ['name', 'email', 'phone'];
   const filters = {
     $or: searchFields.map((field) => ({
-      [field]: { $regex: keyword, $options: 'i' },
+      [field]: { $regex: adapter.keyword, $options: 'i' },
     })),
-    ...(gender ? { gender } : {}),
+    ...(adapter.gender ? { gender: adapter.gender } : {}),
     type: USER_TYPE.CUSTOMER,
   };
 
-  const skip = (page - 1) * limit;
-  const [totalCount, customers] = await getAndCountUsersService(filters, skip, limit, sortBy, sortOrder);
+  const skip = (adapter.page - 1) * adapter.limit;
+  const [totalCount, customers] = await getAndCountUsersService(
+    filters,
+    skip,
+    adapter.limit,
+    adapter.sortBy,
+    adapter.sortOrder,
+  );
 
   const customersDto = ModelDto.newList(CustomerDto, customers);
 
@@ -56,9 +68,9 @@ export const getAllCustomersController = async (req) => {
 };
 
 export const getCustomerByIdController = async (req) => {
-  const { customerId } = req.params;
+  const adapter = await validateSchema(GetCustomerDto, req.params);
 
-  const customer = await getUserByIdService(customerId, { type: USER_TYPE.CUSTOMER });
+  const customer = await getUserByIdService(adapter.customerId, { type: USER_TYPE.CUSTOMER });
   if (!customer) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Customer not found' });
   }
@@ -68,34 +80,33 @@ export const getCustomerByIdController = async (req) => {
 };
 
 export const updateCustomerByIdController = async (req) => {
-  const { customerId } = req.params;
-  const { email } = req.body;
+  const adapter = await validateSchema(UpdateCustomerDto, { ...req.params, ...req.body });
 
-  const existCustomer = await getUserByIdService(customerId, { type: USER_TYPE.CUSTOMER });
+  const existCustomer = await getUserByIdService(adapter.customerId, { type: USER_TYPE.CUSTOMER });
   if (!existCustomer) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Customer not found' });
   }
 
-  const isExistEmail = await checkExistEmailService(email, customerId);
+  const isExistEmail = await checkExistEmailService(adapter.email, existCustomer._id);
   if (isExistEmail) {
     throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Email already exist' });
   }
 
-  const updatedCustomer = await updateUserInfoByIdService(customerId, req.body);
+  const updatedCustomer = await updateUserInfoByIdService(existCustomer._id, req.body);
 
   const customerDto = ModelDto.new(CustomerDto, updatedCustomer);
   return ApiResponse.success(customerDto, 'Update customer successful');
 };
 
 export const removeCustomerByIdController = async (req) => {
-  const { customerId } = req.params;
+  const adapter = await validateSchema(GetCustomerDto, req.params);
 
-  const existCustomer = await getUserByIdService(customerId, { type: USER_TYPE.CUSTOMER });
+  const existCustomer = await getUserByIdService(adapter.customerId, { type: USER_TYPE.CUSTOMER });
   if (!existCustomer) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Customer not found' });
   }
 
-  await removeUserByIdService(customerId);
+  await removeUserByIdService(existCustomer._id);
 
   return ApiResponse.success({ id: existCustomer._id }, 'Remove customer successful');
 };

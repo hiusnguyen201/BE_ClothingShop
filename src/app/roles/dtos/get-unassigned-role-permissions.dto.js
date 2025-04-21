@@ -2,6 +2,7 @@ import Joi from 'joi';
 import { replaceMultiSpacesToSingleSpace } from '#src/utils/string.util';
 
 export const GetUnassignedRolePermissionsDto = Joi.object({
+  roleId: Joi.string().required(),
   keyword: Joi.string()
     .default('')
     .allow('')

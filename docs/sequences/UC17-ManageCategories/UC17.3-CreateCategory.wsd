@@ -200,7 +200,7 @@ break
 
 ' Step 5
 group Validation Flow
-    UploadUtil -> RequestValidation: validateBody(CreateCategoryDto)
+    UploadUtil -> RequestValidation: validateSchema(CreateCategoryDto)
     deactivate UploadUtil
     activate RequestValidation
     alt validation error

@@ -9,6 +9,7 @@ import {
   getWardsByDistrictIdService,
 } from '#src/modules/GHN/ghn.service';
 import { checkValidAddressService } from '#src/modules/geoapify/geoapify.service';
+import { CheckValidAddressDto } from '#src/app/divisions/dtos/check-valid-address.dto';
 
 /**
  * Get all provinces
@@ -67,9 +68,9 @@ export const getAllWardsByDistrictCodeController = async (req) => {
  * @returns
  */
 export const checkValidAddressController = async (req) => {
-  const { address } = req.body;
+  const adapter = await validateSchema(CheckValidAddressDto, req.body);
 
-  const valid = await checkValidAddressService(address);
+  const valid = await checkValidAddressService(adapter.address);
 
   return ApiResponse.success(valid);
 };

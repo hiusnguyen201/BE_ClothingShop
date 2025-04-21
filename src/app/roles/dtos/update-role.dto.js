@@ -2,6 +2,7 @@ import Joi from 'joi';
 import { replaceMultiSpacesToSingleSpace } from '#src/utils/string.util';
 
 export const UpdateRoleDto = Joi.object({
+  roleId: Joi.string().required(),
   name: Joi.string()
     .required()
     .min(3)

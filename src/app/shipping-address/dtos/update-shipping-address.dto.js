@@ -1,7 +1,8 @@
 import Joi from 'joi';
 import { replaceMultiSpacesToSingleSpace } from '#src/utils/string.util';
 
-export const updateShippingAddressDto = Joi.object({
+export const UpdateShippingAddressDto = Joi.object({
+  shippingAddressId: Joi.string().required(),
   address: Joi.string()
     .required()
     .min(3)
