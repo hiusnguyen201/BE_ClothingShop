@@ -25,7 +25,7 @@ const RoleSchema = new Schema(
     },
 
     // Foreign Key
-    permissions: [{ type: Schema.Types.ObjectId, ref: 'Permission' }],
+    permissions: [{ type: Schema.Types.ObjectId, ref: 'Permission', default: [] }],
   },
   {
     versionKey: false,

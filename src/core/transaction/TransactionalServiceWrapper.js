@@ -11,8 +11,8 @@ export class TransactionalServiceWrapper {
     } catch (err) {
       if (session.inTransaction()) {
         await session.abortTransaction();
-        throw err;
       }
+      throw err;
     } finally {
       session.endSession();
     }

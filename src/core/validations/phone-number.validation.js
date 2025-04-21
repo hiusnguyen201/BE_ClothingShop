@@ -1,4 +1,3 @@
-'use strict';
 import Joi from 'joi';
 import { REGEX_PATTERNS } from '#src/core/constant';
 import { HttpException } from '#src/core/exception/http-exception';

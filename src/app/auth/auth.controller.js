@@ -1,4 +1,3 @@
-'use strict';
 import path from 'path';
 import {
   createUserService,
@@ -68,17 +67,13 @@ export const refreshTokenController = async (req, res) => {
   return ApiResponse.success(userDto, 'Refresh token successful');
 };
 
-export const loginAdminController = async (req, res) => {
+export const loginAdminController = async (req) => {
   const { email, password } = req.body;
 
   const user = await authenticateUserService(email, password);
   if (!user) {
     throw HttpException.new({ code: Code.UNAUTHORIZED, overrideMessage: 'Invalid Credentials' });
   }
-
-  const { accessToken, refreshToken } = await generateTokensService(user._id, { id: user._id });
-
-  setSession(res, { accessToken, refreshToken });
 
   const userDto = ModelDto.new(UserDto, user);
 

@@ -1,5 +1,7 @@
 /** @type {import('#src/app/permissions/models/permission.model')} */
 
+import { newPermissionService } from '#src/app/permissions/permissions.service';
+
 const USERS_PERMISSIONS = [
   {
     name: 'read:users',
@@ -150,6 +152,13 @@ const CATEGORIES_PERMISSIONS = [
     endpoint: '/api/categories/remove-category-by-id/:categoryId',
     method: 'DELETE',
   },
+  {
+    name: 'get:sub_categories',
+    description: 'Get list subcategories',
+    module: 'categories',
+    endpoint: '/api/categories/:categoryId/subcategories',
+    method: 'GET',
+  },
 ];
 
 const CUSTOMERS_PERMISSIONS = [
@@ -190,49 +199,127 @@ const CUSTOMERS_PERMISSIONS = [
   },
 ];
 
-// const VOUCHERS_PERMISSIONS = [
-//   {
-//     name: 'view:vouchers',
-//     description: 'View list voucher',
-//     module: 'vouchers',
-//     endpoint: '/api/vouchers/get-vouchers',
-//     method: 'GET',
-//   },
-//   {
-//     name: 'view:details:voucher',
-//     description: 'View details voucher',
-//     module: 'vouchers',
-//     endpoint: '/api/vouchers/get-voucher-by-id/:voucherId',
-//     method: 'GET',
-//   },
-//   {
-//     name: 'create:voucher',
-//     description: 'Create voucher',
-//     module: 'vouchers',
-//     endpoint: '/api/vouchers/create-voucher',
-//     method: 'POST',
-//   },
-//   {
-//     name: 'edit:voucher',
-//     description: 'Edit voucher',
-//     module: 'vouchers',
-//     endpoint: '/api/vouchers/update-voucher-by-id/:voucherId',
-//     method: 'PUT',
-//   },
-//   {
-//     name: 'remove:voucher',
-//     description: 'Remove voucher',
-//     module: 'vouchers',
-//     endpoint: '/api/vouchers/remove-voucher-by-id/:voucherId',
-//     method: 'DELETE',
-//   },
-// ];
+const PRODUCTS_PERMISSIONS = [
+  {
+    name: 'read:products',
+    description: 'View list product',
+    module: 'products',
+    endpoint: '/api/products/get-products',
+    method: 'GET',
+  },
+  {
+    name: 'read:details:product',
+    description: 'View details product',
+    module: 'products',
+    endpoint: '/api/products/get-product-by-id/:productId',
+    method: 'GET',
+  },
+  {
+    name: 'create:product',
+    description: 'Create product',
+    module: 'products',
+    endpoint: '/api/products/create-product',
+    method: 'POST',
+  },
+  {
+    name: 'edit:product_info',
+    description: 'Edit product info',
+    module: 'products',
+    endpoint: '/api/products/update-product-info/:productId',
+    method: 'PUT',
+  },
+  {
+    name: 'edit:product_variants',
+    description: 'Edit product variants',
+    module: 'products',
+    endpoint: '/api/products/update-product-variants/:productId',
+    method: 'PUT',
+  },
+  {
+    name: 'remove:product',
+    description: 'Remove product',
+    module: 'products',
+    endpoint: '/api/products/remove-product-by-id/:productId',
+    method: 'DELETE',
+  },
+];
 
-export const PERMISSIONS_LIST = [
+const ORDER_PERMISSIONS = [
+  {
+    name: 'read:orders',
+    description: 'View list order',
+    module: 'orders',
+    endpoint: '/api/orders/get-orders',
+    method: 'GET',
+  },
+  {
+    name: 'read:details:order',
+    description: 'View details order',
+    module: 'orders',
+    endpoint: '/api/orders/get-order-by-id/:orderId',
+    method: 'GET',
+  },
+  {
+    name: 'create:order',
+    description: 'Create order',
+    module: 'orders',
+    endpoint: '/api/orders/create-order',
+    method: 'POST',
+  },
+  // {
+  //   name: 'edit:order_info',
+  //   description: 'Edit order info',
+  //   module: 'orders',
+  //   endpoint: '/api/orders/update-order-info/:orderId',
+  //   method: 'PUT',
+  // },
+  {
+    name: 'remove:order',
+    description: 'Remove order',
+    module: 'orders',
+    endpoint: '/api/orders/remove-order-by-id/:orderId',
+    method: 'DELETE',
+  },
+  {
+    name: 'confirm:order',
+    description: 'Confirm order',
+    module: 'orders',
+    endpoint: '/api/orders/confirm-order',
+    method: 'POST',
+  },
+  {
+    name: 'cancel:order',
+    description: 'Cancel order',
+    module: 'orders',
+    endpoint: '/api/orders/cancel-order',
+    method: 'POST',
+  },
+  {
+    name: 'processing:order',
+    description: 'Start processing order',
+    module: 'orders',
+    endpoint: '/api/orders/processing-order',
+    method: 'POST',
+  },
+  {
+    name: 'create-ship:order',
+    description: 'Create ship order',
+    module: 'orders',
+    endpoint: '/api/orders/create-ship-order',
+    method: 'POST',
+  },
+];
+
+const PERMISSIONS_LIST = [
   ...USERS_PERMISSIONS,
   ...ROLES_PERMISSIONS,
   ...PERMISSIONS_PERMISSIONS,
   ...CATEGORIES_PERMISSIONS,
   ...CUSTOMERS_PERMISSIONS,
-  // ...VOUCHERS_PERMISSIONS,
+  ...PRODUCTS_PERMISSIONS,
+  ...ORDER_PERMISSIONS,
 ];
+
+const permissions = PERMISSIONS_LIST.map((per) => newPermissionService(per));
+
+export { permissions };

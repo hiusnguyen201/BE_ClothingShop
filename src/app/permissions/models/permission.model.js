@@ -15,7 +15,7 @@ export const PermissionSchema = new Schema(
     },
     description: {
       type: String,
-      required: false,
+      required: true,
       length: 255,
     },
     module: {

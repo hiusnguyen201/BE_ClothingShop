@@ -5,6 +5,8 @@ export const CATEGORY_SELECTED_FIELDS = {
   slug: true,
   level: true,
   parent: true,
+  createdAt: true,
+  updatedAt: true,
 };
 
 export const MAXIMUM_CHILDREN_CATEGORY_LEVEL = 2;

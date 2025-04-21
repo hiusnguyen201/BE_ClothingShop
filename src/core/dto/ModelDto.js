@@ -1,5 +1,4 @@
-'use strict';
-import mongoose from 'mongoose';
+import mongoose, { isValidObjectId } from 'mongoose';
 import { HttpException } from '#src/core/exception/http-exception';
 import { Code } from '#src/core/code/Code';
 
@@ -11,19 +10,30 @@ const options = {
 
 function convertId(obj) {
   if (Array.isArray(obj)) {
-    return obj.map(convertId);
-  } else if (obj && typeof obj === 'object') {
-    const result = {};
-
-    for (const [key, value] of Object.entries(obj)) {
-      if (key === '_id') {
-        result['id'] = value.toString();
-      } else {
-        result[key] = convertId(value);
+    return obj.map((item) => {
+      if (isValidObjectId(item)) {
+        return item;
       }
-    }
 
-    return result;
+      if (typeof item === 'string') {
+        return item;
+      }
+
+      return convertId(item);
+    });
+  }
+
+  if (obj && typeof obj === 'object') {
+    return Object.entries(obj).reduce((acc, [key, value]) => {
+      if (isValidObjectId(value)) {
+        acc[key === '_id' ? 'id' : key] = value;
+      } else if (value instanceof Date) {
+        acc[key] = value;
+      } else {
+        acc[key] = convertId(value);
+      }
+      return acc;
+    }, {});
   }
 
   return obj;
@@ -34,8 +44,11 @@ export class ModelDto {
     if (data && data instanceof mongoose.Document) {
       data = data.toObject();
     }
+
     // Convert ObjectId to string
-    data._id = data._id.toString();
+    if (data._id) {
+      data._id = data._id.toString();
+    }
 
     let { error, value } = schema.validate(data, options);
     if (error) {

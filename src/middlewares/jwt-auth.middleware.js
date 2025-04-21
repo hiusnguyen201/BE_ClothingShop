@@ -1,15 +1,13 @@
-'use strict';
 import { HttpException } from '#src/core/exception/http-exception';
 import { checkUserHasPermissionService, getUserByIdService } from '#src/app/users/users.service';
 import { USER_TYPE } from '#src/app/users/users.constant';
 import { verifyTokenService } from '#src/app/auth/auth.service';
 import { Code } from '#src/core/code/Code';
-import { ACCESS_TOKEN_KEY, clearSession } from '#src/utils/cookie.util';
+import { ACCESS_TOKEN_KEY } from '#src/utils/cookie.util';
 
 async function authorized(req, res, next) {
   const accessToken = req.cookies[ACCESS_TOKEN_KEY];
   if (!accessToken) {
-    clearSession(res);
     return next(HttpException.new({ code: Code.TOKEN_REQUIRED }));
   }
 
@@ -41,7 +39,6 @@ async function checkPermission(req, res, next) {
   Object.entries(req.params).map(([key, value]) => {
     endpoint = endpoint.replace(value, `:${key}`);
   });
-
   if (endpoint.includes('?')) {
     endpoint = endpoint.split('?')[0];
   }
