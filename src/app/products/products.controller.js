@@ -84,7 +84,7 @@ export const getAllProductsByCustomerController = async (req) => {
   const filterOptions = {
     status: PRODUCT_STATUS.ACTIVE,
     $or: [{ name: { $regex: keyword, $options: 'i' } }],
-    ...(category ? { category } : {}),
+    ...(category ? { $or: [{ category }, { subCategory: category }] } : {}),
   };
 
   const totalCount = await countAllProductsService(filterOptions);

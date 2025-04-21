@@ -9,6 +9,7 @@ import {
   removeCategoryByIdController,
   isExistCategoryNameController,
   getAllSubcategoriesController,
+  getAllCategoriesByCustomerController,
 } from '#src/app/categories/categories.controller';
 import { CreateCategoryDto } from '#src/app/categories/dtos/create-category.dto';
 import { UpdateCategoryDto } from '#src/app/categories/dtos/update-category.dto';
@@ -57,13 +58,4 @@ router
     validateQuery(GetListCategoryDto),
     getAllSubcategoriesController,
   )
-
-  .get('/get-categories-by-customer',
-    validateQuery(GetListCategoryDto),
-    getAllCategoriesController)
-
-  .get('/get-category-by-customer/:categoryId',
-    validateQuery(GetCategoryDto),
-    getCategoryByIdController)
-
 export default router;

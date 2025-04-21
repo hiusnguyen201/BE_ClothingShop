@@ -163,3 +163,17 @@ export const getAllSubcategoriesController = async (req) => {
 
   return ApiResponse.success({ totalCount, list: categoriesDto }, 'Get all subcategories successful');
 };
+
+export const getAllCategoriesByCustomerController = async (req) => {
+  const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+
+  const filters = {
+  };
+
+  const skip = (page - 1) * limit;
+  const [totalCount, categories] = await getAndCountCategoriesService(null, filters, skip, limit, sortBy, sortOrder);
+
+  const categoriesDto = ModelDto.newList(CategoryDto, categories);
+
+  return ApiResponse.success({ totalCount, list: categoriesDto }, 'Get all categories successful');
+};
