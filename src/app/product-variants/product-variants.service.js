@@ -120,6 +120,28 @@ export async function updateProductVariantByIdService(id, data, session) {
   }).select(SELECTED_FIELDS);
 }
 
+export async function increaseProductVariantsQuantityByOrderService(orderDetails, session) {
+  const bulkOperations = orderDetails.map((item) => ({
+    updateOne: {
+      filter: { _id: item.variantId },
+      update: { $inc: { quantity: item.quantity } },
+    },
+  }));
+
+  await ProductVariantModel.bulkWrite(bulkOperations, { session });
+}
+
+export async function decreaseProductVariantsQuantityByOrder(orderDetails, session) {
+  const bulkOperations = orderDetails.map((item) => ({
+    updateOne: {
+      filter: { _id: item.variantId },
+      update: { $inc: { quantity: -item.quantity } },
+    },
+  }));
+
+  await ProductVariantModel.bulkWrite(bulkOperations, { session });
+}
+
 /**
  * Remove product variant by id
  * @param {*} id

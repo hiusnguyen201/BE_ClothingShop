@@ -1,8 +1,8 @@
-export const ORDERS_STATUS = {
+export const ORDER_STATUS = {
   PENDING: 'pending',
-  PENDING_PAYMENT: 'pending payment',
   CONFIRMED: 'confirmed',
-  WAITING_FOR_PICKUP: 'waiting for pickup',
+  PROCESSING: 'processing',
+  READY_TO_PICK: 'ready to pick',
   SHIPPING: 'shipping',
   COMPLETED: 'completed',
   CANCELLED: 'cancelled',
@@ -22,6 +22,7 @@ export const ORDER_SELECTED_FIELDS = {
   quantity: true,
   subTotal: true,
   shippingFee: true,
+  trackingNumber: true,
   total: true,
   customer: true,
   payment: true,

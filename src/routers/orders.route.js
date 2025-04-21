@@ -4,11 +4,11 @@ import {
   getOrderByIdController,
   confirmOrderController,
   createShippingOrderController,
-  webHookUpdateOrder,
   cancelOrderController,
   getAllOrdersController,
   // updateOrderController,
   removeOrderController,
+  processingOrderController,
 } from '#src/app/orders/orders.controller';
 import { isAuthorizedAndHasPermission } from '#src/middlewares/jwt-auth.middleware';
 import { createOrderDto } from '#src/app/orders/dtos/create-order.dto';
@@ -32,6 +32,7 @@ router
     createShippingOrderController,
   )
   .post('/cancel-order', isAuthorizedAndHasPermission, validateBody(createOrderGhnDto), cancelOrderController)
+  .post('/processing-order', isAuthorizedAndHasPermission, validateBody(createOrderGhnDto), processingOrderController)
   .post(
     '/create-ship-order',
     isAuthorizedAndHasPermission,
@@ -40,8 +41,8 @@ router
   )
   .delete(
     '/remove-order-by-id/:orderId',
-    // isAuthorized,
-    // validateBody(createOrderGhnDto),
+    isAuthorizedAndHasPermission,
+    validateBody(createOrderGhnDto),
     removeOrderController,
   );
 

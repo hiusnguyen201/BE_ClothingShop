@@ -21,7 +21,6 @@ export function createWorker(name, processor) {
   return new Worker(
     name,
     async (job) => {
-      console.log(job);
       return processor(job.data);
     },
     { connection },

@@ -295,6 +295,13 @@ const ORDER_PERMISSIONS = [
     method: 'POST',
   },
   {
+    name: 'processing:order',
+    description: 'Start processing order',
+    module: 'orders',
+    endpoint: '/api/orders/processing-order',
+    method: 'POST',
+  },
+  {
     name: 'create-ship:order',
     description: 'Create ship order',
     module: 'orders',

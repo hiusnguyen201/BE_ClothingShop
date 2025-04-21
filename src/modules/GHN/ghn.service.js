@@ -61,8 +61,6 @@ export const createGHNOrderService = async (order) => {
     })),
   };
 
-  console.log(payload);
-
   try {
     const response = await ghnAPI.post(`/v2/shipping-order/create`, payload);
     return response.data;
@@ -71,18 +69,32 @@ export const createGHNOrderService = async (order) => {
   }
 };
 
-// get details by client_oder_code
-export const getOrderGhnByClientOrderCode = async (clientOrderCode) => {
-  const response = await ghnAPI.post('/v2/shipping-order/detail-by-client-code', {
-    client_order_code: clientOrderCode,
-  });
-  return response.data.data;
+/**
+ * Cancel Order GHN
+ * https://api.ghn.vn/home/docs/detail?id=102
+ * @param {*} order
+ * @returns
+ */
+export const cancelGHNOrderService = async (trackingNumber) => {
+  const payload = {
+    order_codes: [trackingNumber],
+  };
+
+  try {
+    const response = await ghnAPI.post(`/v2/switch-status/cancel`, payload);
+    console.log(response);
+    return response.data;
+  } catch (error) {
+    console.error('Error Cancel GHN order:', error.response.data);
+  }
 };
 
-// remove order GHN
-export const removeOrderGhn = async (orderCode) => {
-  const response = await ghnAPI.post('/v2/switch-status/cancel', { order_codes: [orderCode] });
-  return response.data.data;
+// get tracking details by trackingNumber
+export const getTrackingDetailsService = async (trackingNumber) => {
+  const response = await ghnAPI.post('/v2/shipping-order/detail', {
+    order_code: trackingNumber,
+  });
+  return response.data.data?.log || [];
 };
 
 // get provinces

@@ -1,4 +1,4 @@
-import { ORDERS_STATUS } from '#src/app/orders/orders.constant';
+import { ORDER_STATUS } from '#src/app/orders/orders.constant';
 import Joi from 'joi';
 
 export const GetListOrderDto = Joi.object({
@@ -7,7 +7,7 @@ export const GetListOrderDto = Joi.object({
   sortBy: Joi.string().valid('createdAt').default('createdAt'),
   sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
   status: Joi.string()
-    .valid(...Object.values(ORDERS_STATUS))
+    .valid(...Object.values(ORDER_STATUS))
     .optional(),
   customerId: Joi.string(),
 });

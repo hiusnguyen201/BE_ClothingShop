@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 export const checkValidAddressService = async (address) => {
   const response = await axios.get(
     `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(address)}&apiKey=${

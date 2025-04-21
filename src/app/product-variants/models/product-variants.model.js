@@ -5,6 +5,9 @@ export const PRODUCT_VARIANT_MODEL = 'product_variants';
 
 const productVariantSchema = new Schema(
   {
+    image: {
+      type: String,
+    },
     quantity: {
       type: Number,
       default: 0,
@@ -16,9 +19,6 @@ const productVariantSchema = new Schema(
     sku: {
       type: String,
       default: null,
-    },
-    image: {
-      type: String,
     },
     sold: {
       type: Number,
@@ -43,10 +43,6 @@ const productVariantSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'Product',
       required: true,
-    },
-    productDiscount: {
-      type: Schema.Types.ObjectId,
-      ref: 'Product_Discount',
     },
   },
   {

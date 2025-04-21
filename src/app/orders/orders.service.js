@@ -2,7 +2,6 @@ import { OrderModel } from '#src/app/orders/models/orders.model';
 import { isValidObjectId } from 'mongoose';
 import { ORDER_SELECTED_FIELDS } from '#src/app/orders/orders.constant';
 import { USER_SELECTED_FIELDS } from '#src/app/users/users.constant';
-import { ORDER_STATUS_HISTORY_MODEL } from '#src/app/order-status-history/models/order-status-history.model';
 import { USER_MODEL } from '#src/app/users/models/user.model';
 import { PAYMENT_MODEL } from '#src/app/payments/models/payments.model';
 import { PAYMENT_SELECTED_FIELDS } from '#src/app/payments/payments.constant';
@@ -51,9 +50,8 @@ export async function getOrderByIdService(id, selectedFields = ORDER_SELECTED_FI
     filters.code = id;
   }
 
-  return OrderModel.findOne(filters)
+  const order = await OrderModel.findOne(filters)
     .populate({ path: 'payment', select: PAYMENT_SELECTED_FIELDS })
-    .populate({ path: 'orderStatusHistory', options: { sort: { createdAt: 1 } } })
     .populate({
       path: 'orderDetails',
       populate: [
@@ -74,6 +72,13 @@ export async function getOrderByIdService(id, selectedFields = ORDER_SELECTED_FI
     .populate({ path: 'customer', select: USER_SELECTED_FIELDS })
     .select(selectedFields)
     .lean();
+
+  if (order) {
+    order.orderStatusHistory.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+    return order;
+  } else {
+    return null;
+  }
 }
 
 /**
@@ -97,14 +102,6 @@ export async function countAllOrdersService(filters) {
 export async function getAndCountOrdersService(filters, skip, limit, sortBy, sortOrder) {
   const totalCountResult = await OrderModel.aggregate([
     {
-      $lookup: {
-        from: ORDER_STATUS_HISTORY_MODEL,
-        localField: 'orderStatusHistory',
-        foreignField: '_id',
-        as: 'orderStatusHistory',
-      },
-    },
-    {
       $addFields: {
         lastStatus: { $arrayElemAt: ['$orderStatusHistory', -1] },
       },
@@ -124,24 +121,6 @@ export async function getAndCountOrdersService(filters, skip, limit, sortBy, sor
   ]);
 
   const orders = await OrderModel.aggregate([
-    {
-      $lookup: {
-        from: ORDER_STATUS_HISTORY_MODEL,
-        localField: 'orderStatusHistory',
-        foreignField: '_id',
-        as: 'orderStatusHistory',
-      },
-    },
-    {
-      $set: {
-        orderStatusHistory: {
-          $sortArray: {
-            input: '$orderStatusHistory',
-            sortBy: { createdAt: 1 },
-          },
-        },
-      },
-    },
     {
       $lookup: {
         from: ORDER_DETAIL_MODEL,
@@ -213,22 +192,18 @@ export async function getAndCountOrdersService(filters, skip, limit, sortBy, sor
  * @param {*} session
  * @returns
  */
-export async function addOrderStatusHistoryByIdService(orderId, orderStatusHistory, session) {
-  return OrderModel.findByIdAndUpdate(
-    orderId,
+export async function addOrderStatusHistoryByIdService(orderId, status, extraUpdateData = {}, session) {
+  return OrderModel.updateOne(
+    { _id: orderId },
     {
-      status: orderStatusHistory.status,
-      $push: { orderStatusHistory: orderStatusHistory._id },
+      ...extraUpdateData,
+      $push: { orderStatusHistory: { status, updatedAt: new Date() } },
     },
     {
-      new: true,
       session,
       ordered: true,
     },
-  )
-    .select(ORDER_SELECTED_FIELDS)
-    .populate({ path: 'orderStatusHistory' })
-    .lean();
+  );
 }
 
 /**
@@ -247,8 +222,8 @@ export async function updateOrderByIdService(id, data, session) {
  * @param {*} id
  * @returns
  */
-export async function removeOrderByIdService(id) {
-  return OrderModel.findByIdAndDelete(id).select(ORDER_SELECTED_FIELDS).lean();
+export async function removeOrderByIdService(id, session) {
+  return await OrderModel.deleteOne({ _id: id }, { session });
 }
 
 /**

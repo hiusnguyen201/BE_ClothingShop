@@ -2,6 +2,7 @@ import SoftDelete from '#src/core/plugins/soft-delete.plugin';
 import mongoose from 'mongoose';
 const { Schema } = mongoose;
 import mongooseSequence from 'mongoose-sequence';
+import { ORDER_STATUS } from '#src/app/orders/orders.constant';
 const AutoIncrement = mongooseSequence(mongoose);
 
 export const ORDER_MODEL = 'orders';
@@ -65,9 +66,19 @@ export const OrderSchema = new Schema(
       required: true,
     },
 
-    notes: {
+    trackingNumber: {
       type: String,
-      require: false,
+      default: null,
+    },
+
+    orderStatusHistory: {
+      type: [
+        {
+          status: { type: String, required: true, enum: Object.values(ORDER_STATUS) },
+          updatedAt: { type: Date, default: Date.now() },
+        },
+      ],
+      default: [],
     },
 
     // Foreign Key
@@ -85,13 +96,6 @@ export const OrderSchema = new Schema(
       {
         type: Schema.Types.ObjectId,
         ref: 'Order_Detail',
-        default: [],
-      },
-    ],
-    orderStatusHistory: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: 'Order_Status_History',
         default: [],
       },
     ],

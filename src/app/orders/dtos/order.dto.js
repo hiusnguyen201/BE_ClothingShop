@@ -19,6 +19,10 @@ export const OrderDto = Joi.object({
   shippingFee: Joi.number().required(),
   total: Joi.number().required(),
 
+  trackingNumber: Joi.string().allow(null),
+
+  trackingLog: Joi.array().items(Joi.any()).allow(null),
+
   orderDate: Joi.any().required(),
 
   payment: Joi.any().allow(null),
