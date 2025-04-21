@@ -1,0 +1,250 @@
+@startuml Add Item to Cart
+
+actor Client
+
+box "Application Layer"
+participant CartsRouter 
+participant ErrorMiddleware 
+participant AsyncHandler 
+end box
+
+box "Authentication"
+participant JwtAuthMiddleware 
+participant CookieUtil
+participant AuthService
+participant jsonwebtoken
+end box
+
+box "Authorization"
+participant UserService 
+participant UserModel
+end box
+
+box "Validation"
+participant RequestValidation
+end box
+
+box "Business Logic"
+participant CartsController
+participant ModelDto
+participant ApiResponse
+participant CartsService
+participant ProductVariantsService
+participant ProductVariantModel
+end box
+
+database MongoDB
+database RedisClient
+
+' Step 1
+group Request Initialization
+    Client -> CartsRouter: POST /api/carts/add-item
+    activate Client
+    activate CartsRouter
+    CartsRouter -> AsyncHandler: asyncHandler(addToCartController)
+    activate AsyncHandler
+end
+
+break
+break
+
+' Step 2
+group Authentication Flow
+    AsyncHandler -> JwtAuthMiddleware: isAuthorizedAndHasPermission
+    activate JwtAuthMiddleware
+
+    JwtAuthMiddleware -> JwtAuthMiddleware: extract token
+    alt token not provided
+        JwtAuthMiddleware -> CookieUtil: clearSession(res)
+        activate CookieUtil
+        CookieUtil -->> JwtAuthMiddleware: return void
+        deactivate CookieUtil
+        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
+        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
+        deactivate ErrorMiddleware
+    end 
+
+    JwtAuthMiddleware -> AuthService: verifyTokenService(token)
+    activate AuthService
+    AuthService -> jsonwebtoken: verify(token, SECRET)
+    activate jsonwebtoken
+    alt token invalid
+        jsonwebtoken --x AuthService: throw Error
+        AuthService -->> JwtAuthMiddleware: catch Error and return null
+        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
+        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
+        deactivate ErrorMiddleware
+    end
+
+    jsonwebtoken -->> AuthService: return data decoded
+    deactivate jsonwebtoken
+    AuthService -->> JwtAuthMiddleware: return data decoded
+    deactivate AuthService
+    JwtAuthMiddleware -> UserService: getUserByIdService(decoded.id)
+    activate UserService
+    UserService -> UserModel: findOne(filters)
+    activate UserModel
+    UserModel -> MongoDB: query select
+    activate MongoDB
+
+    alt user not found
+        MongoDB -->> UserModel: return null
+        UserModel -->> UserService: return null
+        UserService -->> JwtAuthMiddleware: return null
+        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
+        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> UserModel: return user
+    deactivate MongoDB
+    UserModel -->> UserService: return user
+    deactivate UserModel
+    UserService -->> JwtAuthMiddleware: return user
+    deactivate UserService
+
+    alt unverified account
+        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(403))
+        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 403 Forbidden
+        deactivate ErrorMiddleware
+    end
+end
+
+break
+break
+
+' Step 3
+group Authorization Flow
+    JwtAuthMiddleware -> UserService: checkUserHasPermissionService(userId, method, endpoint)
+    activate UserService
+    UserService -> UserModel: findById(id).populate(role).populate(permissions)
+    activate UserModel
+    UserModel -> MongoDB: query select
+    activate MongoDB
+
+    alt User doesn't have permissions 
+        MongoDB -->> UserModel: return empty permissions
+        UserModel -->> UserService: return empty permissions
+        UserService -->> JwtAuthMiddleware: return false
+        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 403 Forbidden
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> UserModel: return permissions
+    deactivate MongoDB
+    UserModel -->> UserService: return permissions
+    deactivate UserModel
+    UserService -->> JwtAuthMiddleware: return true
+    deactivate UserService
+end
+
+break
+break
+
+' Step 4
+group Validation Flow
+    JwtAuthMiddleware -> RequestValidation: validateBody(AddToCartDto)
+    deactivate JwtAuthMiddleware
+    activate RequestValidation
+        alt validation error
+        RequestValidation ->> RequestValidation: next(HttpException(400))
+        RequestValidation ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 400 Bad Request
+        deactivate ErrorMiddleware
+    end
+end
+
+break
+break
+
+
+' Step 5
+group Business Logic Flow
+    RequestValidation -> CartsController: addToCartController
+    deactivate RequestValidation
+    activate CartsController
+    CartsController -> ProductVariantsService: getProductVariantByIdService(productVariantId)
+    activate ProductVariantsService
+    
+    alt productVariantId not provided
+        ProductVariantsService -->> CartsController: return null
+        CartsController ->> CartsController: next(HttpException(400))
+        CartsController ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 400 Bad Request
+        deactivate ErrorMiddleware
+    end
+
+    ProductVariantsService -> ProductVariantModel: findOne(filter)
+    activate ProductVariantModel
+    ProductVariantModel -> MongoDB: query select
+    activate MongoDB
+
+    alt select fail
+        MongoDB --x ProductVariantModel: throw Error
+        ProductVariantModel --x ProductVariantsService: throw Error
+        ProductVariantsService --x CartsController: throw Error
+        CartsController --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Server Error
+        deactivate ErrorMiddleware
+    else product variant not found
+        MongoDB -->> ProductVariantModel: return null
+        ProductVariantModel -->> ProductVariantsService: return null
+        ProductVariantsService -->> CartsController: return null
+        CartsController --x CartsController: next(HttpException(404))
+        CartsController --x AsyncHandler: catch HttpException and next(HttpException(404))
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 404 Not Found
+        deactivate ErrorMiddleware
+    end
+    
+    MongoDB -->> ProductVariantModel: return productVariant
+    deactivate MongoDB
+    ProductVariantModel -->> ProductVariantsService: return productVariant
+    deactivate ProductVariantModel
+    ProductVariantsService -->> CartsController: return productVariant
+    deactivate ProductVariantsService
+    CartsController -> CartsService: addToCartService()
+    activate CartsService
+    CartsService -> RedisClient: hSet()
+    activate RedisClient
+    RedisClient -->> CartsService: return success
+    deactivate RedisClient
+    CartsService -->> CartsController: return success
+    deactivate CartsService
+    
+
+end
+
+group Transform data response
+    CartsController -> ModelDto: new(CartDto, carts)
+    activate ModelDto
+    ModelDto -->> CartsController: return cartsDto
+    deactivate ModelDto
+    CartsController -> ApiResponse: success(cartsDto)
+    activate ApiResponse
+    ApiResponse -->> CartsController: return ApiResponse instance
+    deactivate ApiResponse
+end
+
+CartsController -->> AsyncHandler: return ApiResponse instance
+deactivate CartsController
+AsyncHandler --> Client: HTTP 200 Success
+deactivate AsyncHandler
+deactivate CartsRouter
+
+@enduml

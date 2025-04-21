@@ -1,0 +1,74 @@
+@startuml View list Disctricts
+
+actor Client
+
+box "Application Layer"
+participant OptionsRouter 
+participant ErrorMiddleware 
+participant AsyncHandler 
+end box
+
+
+box "Business Logic"
+participant OptionsController
+participant ApiResponse
+participant OptionsService 
+participant OptionModel
+participant ModelDto
+end box
+
+database MongoDB
+
+' Step 1
+group Request Initialization
+    Client -> OptionsRouter: GET /api/options/
+    activate Client
+    activate OptionsRouter
+    OptionsRouter -> AsyncHandler: asyncHandler(getListOptionsController)
+    activate AsyncHandler
+end
+
+break
+break
+
+' step 2
+group Business Logic Flow
+    AsyncHandler -> OptionsController: getListOptionsController
+    activate OptionsController
+    OptionsController -> OptionsService: getListOptionService()
+    activate OptionsService
+    OptionsService -> OptionModel: find()
+    activate OptionModel
+    OptionModel -> MongoDB: query select 
+    activate MongoDB
+    MongoDB --> OptionModel: return options
+    deactivate MongoDB
+    OptionModel --> OptionsService: return options
+    deactivate OptionModel
+    OptionsService --> OptionsController: return options
+    deactivate OptionsService
+
+end
+break
+break
+
+group Transform data response
+    OptionsController -> ModelDto: newList(OptionDto, options)
+    activate ModelDto
+    ModelDto -->> OptionsController: return OptionDto instance
+    deactivate ModelDto
+
+    OptionsController -> ApiResponse: success(OptionDto, success message)
+    activate ApiResponse
+    ApiResponse -->> OptionsController: return ApiResponse instance
+    deactivate ApiResponse 
+end
+OptionsController -->> AsyncHandler: return ApiResponse instance
+deactivate OptionsController
+AsyncHandler --> Client: HTTP 200 Success
+deactivate AsyncHandler
+deactivate OptionsRouter
+
+
+
+@enduml

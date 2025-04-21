@@ -1,0 +1,282 @@
+@startuml Create Customer
+
+actor Client
+
+box "Application Layer"
+participant CustomersRouter 
+participant ErrorMiddleware 
+participant AsyncHandler 
+end box
+
+box "Authentication"
+participant JwtAuthMiddleware 
+participant CookieUtil
+participant AuthService
+participant jsonwebtoken
+end box
+
+
+box "Validation"
+participant RequestValidation
+end box
+
+box "Business Logic"
+participant CustomersController
+participant ApiResponse
+participant UserService 
+participant UserModel
+participant StringUtil
+participant MailerService
+participant ModelDto
+end box
+
+database MongoDB
+
+' Step 1
+group Request Initialization
+    Client -> CustomersRouter: POST /api/customers/create-customers
+    activate Client
+    activate CustomersRouter
+    CustomersRouter -> AsyncHandler: asyncHandler(createCustomerController)
+    activate AsyncHandler
+end
+
+break
+break
+
+' Step 2
+group Authentication Flow
+    AsyncHandler -> JwtAuthMiddleware: isAuthorizedAndHasPermission
+    activate JwtAuthMiddleware
+
+    JwtAuthMiddleware -> JwtAuthMiddleware: extract token
+    alt token not provided
+        JwtAuthMiddleware -> CookieUtil: clearSession(res)
+        activate CookieUtil
+        CookieUtil -->> JwtAuthMiddleware: return void
+        deactivate CookieUtil
+        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
+        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
+        deactivate ErrorMiddleware
+    end 
+
+    JwtAuthMiddleware -> AuthService: verifyTokenService(token)
+    activate AuthService
+    AuthService -> jsonwebtoken: verify(token, SECRET)
+    activate jsonwebtoken
+    alt token invalid
+        jsonwebtoken --x AuthService: throw Error
+        AuthService -->> JwtAuthMiddleware: catch Error and return null
+        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
+        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
+        deactivate ErrorMiddleware
+    end
+
+    jsonwebtoken -->> AuthService: return data decoded
+    deactivate jsonwebtoken
+    AuthService -->> JwtAuthMiddleware: return data decoded
+    deactivate AuthService
+    JwtAuthMiddleware -> UserService: getUserByIdService(decoded.id)
+    activate UserService
+    UserService -> UserModel: findOne(filters)
+    activate UserModel
+    UserModel -> MongoDB: query select
+    activate MongoDB
+
+    alt user not found
+        MongoDB -->> UserModel: return null
+        UserModel -->> UserService: return null
+        UserService -->> JwtAuthMiddleware: return null
+        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
+        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> UserModel: return user
+    deactivate MongoDB
+    UserModel -->> UserService: return user
+    deactivate UserModel
+    UserService -->> JwtAuthMiddleware: return user
+    deactivate UserService
+
+    alt unverified account
+        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(403))
+        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 403 Forbidden
+        deactivate ErrorMiddleware
+    end
+end
+
+break
+break
+
+' Step 3
+group Authorization Flow
+    JwtAuthMiddleware -> UserService: checkUserHasPermissionService(userId, method, endpoint)
+    activate UserService
+    UserService -> UserModel: findById(id).populate(role).populate(permissions)
+    activate UserModel
+    UserModel -> MongoDB: query select
+    activate MongoDB
+
+    alt User doesn't have permissions 
+        MongoDB -->> UserModel: return empty permissions
+        UserModel -->> UserService: return empty permissions
+        UserService -->> JwtAuthMiddleware: return false
+        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 403 Forbidden
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> UserModel: return permissions
+    deactivate MongoDB
+    UserModel -->> UserService: return permissions
+    deactivate UserModel
+    UserService -->> JwtAuthMiddleware: return true
+    deactivate UserService
+end
+
+break
+break
+
+' Step 4
+group Validation Flow
+    JwtAuthMiddleware -> RequestValidation: validateBody(CreateCustomerDto)
+    deactivate JwtAuthMiddleware
+    activate RequestValidation
+    alt validation error
+        RequestValidation ->> RequestValidation: next(HttpException(400))
+        RequestValidation ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 400 Bad Request
+        deactivate ErrorMiddleware
+    end
+    
+end
+
+break
+break
+
+
+' step 5
+group Business Logic Flow
+    RequestValidation -> CustomersController: createCustomerController
+    deactivate RequestValidation
+    activate CustomersController
+    CustomersController -> UserService: checkExistEmailService(email)
+    activate UserService
+    UserService -> UserModel: findOne(filters)
+    activate UserModel
+    UserModel -> MongoDB: query select
+    activate MongoDB
+
+    alt email already exists
+        MongoDB -->> UserModel: return user
+        UserModel -->> UserService: return user
+        UserService -->> CustomersController: return user
+        CustomersController --x CustomersController: throw(HttpException(400))
+        CustomersController --x AsyncHandler: catch HttpException and next(HttpException(400))
+        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 400 Bad Request
+        deactivate ErrorMiddleware
+
+        else select fail
+        MongoDB --x UserModel: throw error
+        UserModel --x UserService: throw error
+        UserService --x CustomersController: throw error
+        CustomersController --x AsyncHandler: catch error and next(error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> UserModel: return null
+    deactivate MongoDB
+    UserModel -->> UserService: return null
+    deactivate UserModel
+    UserService -->> CustomersController: return null
+    deactivate UserService
+    CustomersController -> StringUtil: randomStr(32)
+    activate StringUtil
+    StringUtil -->> CustomersController: return random string
+    deactivate StringUtil
+    CustomersController -> UserService: createUserService(data)
+    activate UserService
+    UserService -> UserService: genSaltSync()
+    UserService -> UserService: hashSync(data.password, salt) 
+    UserService -> UserModel: create(data)
+    activate UserModel
+    UserModel -> MongoDB: query create
+    activate MongoDB
+
+    alt Create fail
+        MongoDB --x UserModel: throw Error
+        UserModel --x UserService: throw Error
+        UserService --x CustomersController: throw Error
+        CustomersController ->> AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> UserModel: return user
+    deactivate MongoDB
+    UserModel -->> UserService: return user
+    deactivate UserModel
+    UserService -> UserService: toJSON(user)
+    UserService -->> CustomersController: return user
+    deactivate UserService
+    CustomersController -> MailerService: sendPasswordService(email, password)
+    activate MailerService
+    MailerService -> MailerService: getEmailTemplateToString()
+    MailerService -> MailerService: sendEmail(email, subject, body)
+
+    alt send email fail
+        MailerService --x MailerService: throw Error
+        MailerService --x CustomersController: throw Error
+        CustomersController --x CustomersController: throw Error
+        CustomersController ->> AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        deactivate ErrorMiddleware
+    end
+
+    MailerService -->> CustomersController: return void
+    deactivate MailerService
+
+end
+break
+break
+
+group Transform data response
+    CustomersController -> ModelDto: new(CustomerDto, customers)
+    activate ModelDto
+    ModelDto -->> CustomersController: return CustomerDto instance
+    deactivate ModelDto
+
+    CustomersController -> ApiResponse: success(CustomerDto, success message)
+    activate ApiResponse
+    ApiResponse -->> CustomersController: return ApiResponse instance
+    deactivate ApiResponse 
+end
+CustomersController -->> AsyncHandler: return ApiResponse instance
+deactivate CustomersController
+AsyncHandler --> Client: HTTP 200 Success
+deactivate AsyncHandler
+deactivate CustomersRouter
+
+
+
+@enduml

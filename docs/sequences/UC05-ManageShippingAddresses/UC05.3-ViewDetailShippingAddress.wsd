@@ -1,0 +1,222 @@
+@startuml View Detail Shipping Address
+
+actor Client
+
+box "Application Layer"
+participant ShippingAddressRouter 
+participant ErrorMiddleware 
+participant AsyncHandler 
+end box
+
+box "Authentication"
+participant JwtAuthMiddleware 
+participant CookieUtil
+participant AuthService
+participant jsonwebtoken
+end box
+
+box "Authorization"
+participant UserService 
+participant UserModel
+end box
+
+box "Business Logic"
+participant ShippingAddressController
+participant ModelDto
+participant ApiResponse
+participant ShippingAddressService
+participant QueryUtil
+participant ShippingAddressModel
+end box
+
+database MongoDB
+
+' Step 1
+group Request Initialization
+    Client -> ShippingAddressRouter: GET /api/shipping-address/get-shipping-address-by-id/:shippingAddressId
+    activate Client
+    activate ShippingAddressRouter
+    ShippingAddressRouter -> AsyncHandler: asyncHandler(getShippingAddressByIdController)
+    activate AsyncHandler
+end
+
+break
+break
+
+' Step 2
+group Authentication Flow
+    AsyncHandler -> JwtAuthMiddleware: isAuthorizedAndHasPermission
+    activate JwtAuthMiddleware
+
+    JwtAuthMiddleware -> JwtAuthMiddleware: extract token
+    alt token not provided
+        JwtAuthMiddleware -> CookieUtil: clearSession(res)
+        activate CookieUtil
+        CookieUtil -->> JwtAuthMiddleware: return void
+        deactivate CookieUtil
+        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
+        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
+        deactivate ErrorMiddleware
+    end 
+
+    JwtAuthMiddleware -> AuthService: verifyTokenService(token)
+    activate AuthService
+    AuthService -> jsonwebtoken: verify(token, SECRET)
+    activate jsonwebtoken
+    alt token invalid
+        jsonwebtoken --x AuthService: throw Error
+        AuthService -->> JwtAuthMiddleware: catch Error and return null
+        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
+        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
+        deactivate ErrorMiddleware
+    end
+
+    jsonwebtoken -->> AuthService: return data decoded
+    deactivate jsonwebtoken
+    AuthService -->> JwtAuthMiddleware: return data decoded
+    deactivate AuthService
+    JwtAuthMiddleware -> UserService: getUserByIdService(decoded.id)
+    activate UserService
+    UserService -> UserModel: findOne(filters)
+    activate UserModel
+    UserModel -> MongoDB: query select
+    activate MongoDB
+
+    alt user not found
+        MongoDB -->> UserModel: return null
+        UserModel -->> UserService: return null
+        UserService -->> JwtAuthMiddleware: return null
+        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
+        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> UserModel: return user
+    deactivate MongoDB
+    UserModel -->> UserService: return user
+    deactivate UserModel
+    UserService -->> JwtAuthMiddleware: return user
+    deactivate UserService
+
+    alt unverified account
+        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(403))
+        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 403 Forbidden
+        deactivate ErrorMiddleware
+    end
+end
+
+break
+break
+
+' Step 3
+group Authorization Flow
+    JwtAuthMiddleware -> UserService: checkUserHasPermissionService(userId, method, endpoint)
+    activate UserService
+    UserService -> UserModel: findById(id).populate(role).populate(permissions)
+    activate UserModel
+    UserModel -> MongoDB: query select
+    activate MongoDB
+
+    alt User doesn't have permissions 
+        MongoDB -->> UserModel: return empty permissions
+        UserModel -->> UserService: return empty permissions
+        UserService -->> JwtAuthMiddleware: return false
+        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 403 Forbidden
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> UserModel: return permissions
+    deactivate MongoDB
+    UserModel -->> UserService: return permissions
+    deactivate UserModel
+    UserService -->> JwtAuthMiddleware: return true
+    deactivate UserService
+end
+
+break
+break
+
+
+' Step 4
+group Business Logic Flow
+    JwtAuthMiddleware -> ShippingAddressController: getShippingAddressByIdController
+    deactivate JwtAuthMiddleware
+    activate ShippingAddressController
+    ShippingAddressController -> ShippingAddressService: getShippingAddressByIdService(shippingAddressId)
+    activate ShippingAddressService
+    
+    alt shippingAddressId not provided
+        ShippingAddressService -->> ShippingAddressController: return null
+        ShippingAddressController --x ShippingAddressService: next(HttpException(400))
+        ShippingAddressController --x AsyncHandler: catch HttpException and next(HttpException(400))
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 400 Bad Request
+        deactivate ErrorMiddleware
+    end
+    
+    ShippingAddressService -> ShippingAddressModel: findOne(filters)
+    activate ShippingAddressModel
+    ShippingAddressModel -> MongoDB: query select
+    activate MongoDB
+
+    alt select fail
+        MongoDB --x ShippingAddressModel: throw Error
+        ShippingAddressModel --x ShippingAddressService: throw Error
+        ShippingAddressService --x ShippingAddressController: throw Error
+        ShippingAddressController --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        deactivate ErrorMiddleware
+    else shippingAddress not found
+        MongoDB -->> ShippingAddressModel: return null
+        ShippingAddressModel -->> ShippingAddressService: return null
+        ShippingAddressService -->> ShippingAddressController: return null
+        ShippingAddressController --x ShippingAddressController: next(HttpException(404))
+        ShippingAddressController --x AsyncHandler: catch HttpException and next(HttpException(404))
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 404 Not Found
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> ShippingAddressModel: return shippingAddress
+    deactivate MongoDB
+    ShippingAddressModel -->> ShippingAddressService: return shippingAddress
+    deactivate ShippingAddressModel
+    ShippingAddressService -->> ShippingAddressController: return shippingAddress
+    deactivate ShippingAddressService
+
+
+end
+
+group Transform data response
+    ShippingAddressController -> ModelDto: newList(ShippingAddressDto, existShippingAddress)
+    activate ModelDto
+    ModelDto -->> ShippingAddressController: return ShippingAddressDto instance
+    deactivate ModelDto
+
+    ShippingAddressController -> ApiResponse: success(ShippingAddressDto)
+    activate ApiResponse
+    ApiResponse -->> ShippingAddressController: return ApiResponse instance
+    deactivate ApiResponse 
+end
+
+ShippingAddressController -->> AsyncHandler: return ApiResponse instance
+deactivate ShippingAddressController
+AsyncHandler --> Client: HTTP 200 Success
+deactivate AsyncHandler
+deactivate ShippingAddressRouter
+
+@enduml

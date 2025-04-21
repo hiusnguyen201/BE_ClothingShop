@@ -1,0 +1,128 @@
+@startuml Login Customer
+
+actor Client
+
+box "Application Layer"
+participant AuthRouter 
+participant ErrorMiddleware 
+participant AsyncHandler 
+end box
+
+box "Validation"
+participant RequestValidation
+end box
+
+box "Business Logic"
+participant AuthController
+participant ApiResponse
+participant AuthService
+participant UserModel
+participant ModelDto
+end box
+
+database MongoDB
+
+' Step 1
+group Request Initialization
+    Client -> AuthRouter: POST /api/auth/login
+    activate Client
+    activate AuthRouter
+    AuthRouter -> AsyncHandler: asyncHandler(loginCustomerController)
+    activate AsyncHandler
+end
+
+break
+break
+
+
+' Step 2
+group Validation Flow
+    AsyncHandler -> RequestValidation: validateBody(RegisterDto)
+    activate RequestValidation
+    alt validation error
+        RequestValidation ->> RequestValidation: next(HttpException(400))
+        RequestValidation ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 400 Bad Request
+        deactivate ErrorMiddleware
+    end
+    
+end
+
+break
+break
+
+
+' step 3
+group Business Logic Flow
+    RequestValidation -> AuthController: loginCustomerController
+    deactivate RequestValidation
+    activate AuthController
+    AuthController -> AuthService: authenticateCustomerService(email, password)
+    activate AuthService
+    AuthService -> UserModel: findOne()
+    activate UserModel
+    UserModel -> MongoDB: query select
+    activate MongoDB
+
+    alt query fail 
+        MongoDB --x UserModel: throw error
+        UserModel --x AuthService: throw error
+        AuthService --x AuthController: throw error
+        AuthController --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        deactivate ErrorMiddleware
+    else email not found
+        MongoDB -->> UserModel: return null
+        UserModel -->> AuthService: return null
+        AuthService -->> AuthController: return null
+        AuthController --x AuthController: throw(HttpException(400))
+        AuthController --x AsyncHandler: catch HttpException and next(HttpException(400))
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 400 Bad Request
+        deactivate ErrorMiddleware
+    else password not match
+        MongoDB -->> UserModel: return customer
+        UserModel -->> AuthService: return customer
+        AuthService -->> AuthController: return customer
+        AuthController --x AuthController: throw(HttpException(400))
+        AuthController --x AsyncHandler: catch HttpException and next(HttpException(400))
+        AsyncHandler ->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 400 Bad Request
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> UserModel: return customer
+    deactivate MongoDB
+    UserModel -->> AuthService: return customer
+    deactivate UserModel
+    AuthService -->> AuthController: return customer
+    deactivate AuthService
+    
+end   
+break 
+break
+
+group Transform data response
+    AuthController -> ModelDto: new(CustomerDto, customer)
+    activate ModelDto
+    ModelDto -->> AuthController: return CustomerDto instance
+    deactivate ModelDto
+
+    AuthController -> ApiResponse: success(CustomerDto, success message)
+    activate ApiResponse
+    ApiResponse -->> AuthController: return ApiResponse instance
+    deactivate ApiResponse 
+end
+AuthController -->> AsyncHandler: return ApiResponse instance
+deactivate AuthController
+AsyncHandler --> Client: HTTP 200 Success
+deactivate AsyncHandler
+deactivate AuthRouter
+
+
+@enduml

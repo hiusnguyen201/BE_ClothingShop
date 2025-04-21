@@ -1,0 +1,78 @@
+@startuml View list Disctricts
+
+actor Client
+
+box "Application Layer"
+participant DivisionsRouter 
+participant ErrorMiddleware 
+participant AsyncHandler 
+end box
+
+
+box "Business Logic"
+participant DivisionsController
+participant ApiResponse
+participant DivisionsService 
+participant ModelDto
+end box
+
+database MongoDB
+
+' Step 1
+group Request Initialization
+    Client -> DivisionsRouter: GET /api/divisions/get-districts-by-province-code/:provinceCode
+    activate Client
+    activate DivisionsRouter
+    DivisionsRouter -> AsyncHandler: asyncHandler(getAllDistrictsByProvinceCodeController)
+    activate AsyncHandler
+end
+
+break
+break
+
+' step 2
+group Business Logic Flow
+    AsyncHandler -> DivisionsController: getAllDistrictsByProvinceCodeController
+    activate DivisionsController
+    DivisionsController -> DivisionsService: getProvinceByCodeService(provinceCode)
+    activate DivisionsService
+    alt provinceCode is not found
+        DivisionsService --> DivisionsController: return null
+        DivisionsController --x DivisionsController: throw(HttpException(404))
+        DivisionsController --x AsyncHandler: catch HttpException and next(HttpException(404))
+        AsyncHandler -->> ErrorMiddleware: handleError(error) 
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 404 Not Found
+        deactivate ErrorMiddleware
+    end
+    DivisionsService --> DivisionsController: return provinces
+    deactivate DivisionsService
+    DivisionsController -> DivisionsService: getAllDistrictsByProvinceCodeService(provinceCode)
+    activate DivisionsService
+    DivisionsService --> DivisionsController: return districts
+    deactivate DivisionsService 
+
+end
+break
+break
+
+group Transform data response
+    DivisionsController -> ModelDto: newList(DistrictDto, districts)
+    activate ModelDto
+    ModelDto -->> DivisionsController: return DistrictDto instance
+    deactivate ModelDto
+
+    DivisionsController -> ApiResponse: success(DistrictDto, success message)
+    activate ApiResponse
+    ApiResponse -->> DivisionsController: return ApiResponse instance
+    deactivate ApiResponse 
+end
+DivisionsController -->> AsyncHandler: return ApiResponse instance
+deactivate DivisionsController
+AsyncHandler --> Client: HTTP 200 Success
+deactivate AsyncHandler
+deactivate DivisionsRouter
+
+
+
+@enduml
