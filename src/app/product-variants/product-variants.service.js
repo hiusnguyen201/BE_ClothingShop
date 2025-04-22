@@ -92,23 +92,20 @@ export async function getProductVariantByIdService(id, selectFields = PRODUCT_VA
 
   return await ProductVariantModel.findOne(filter)
     .select(selectFields)
-    // .populate({
-    //   path: 'product',
-    //   model: 'Product',
-    //   select: '-productVariants',
-    // })
+    .populate({
+      path: 'product',
+      select: 'name thumbnail',
+    })
     .populate({
       path: 'variantValues',
-      model: 'productVariants',
       populate: [
         {
           path: 'option',
-          model: 'Option',
-          select: '-optionValues',
+          select: 'name',
         },
         {
           path: 'optionValue',
-          model: 'Option_Value',
+          select: 'valueName',
         },
       ],
     });

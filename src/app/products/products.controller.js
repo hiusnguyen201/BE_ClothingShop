@@ -103,7 +103,13 @@ export const getAllProductsByCustomerController = async (req) => {
   };
 
   const skip = (adapter.page - 1) * adapter.limit;
-  const products = await getAndCountProductsService(filters, skip, adapter.limit, adapter.sortBy, adapter.sortOrder);
+  const [totalCount, products] = await getAndCountProductsService(
+    filters,
+    skip,
+    adapter.limit,
+    adapter.sortBy,
+    adapter.sortOrder,
+  );
 
   const productsDto = ModelDto.newList(ProductDto, products);
   return ApiResponse.success({ totalCount, list: productsDto });

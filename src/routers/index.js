@@ -59,7 +59,7 @@ router.use('/report', reportRouter);
 router
   .get('/products/get-products-by-customer', getAllProductsByCustomerController)
   .get('/products/get-product-by-customer/:productId', getProductByIdController)
-  .get('/get-categories-by-customer', getAllCategoriesByCustomerController)
-  .get('/get-category-by-customer/:categoryId', getCategoryByIdController);
+  .get('/categories/get-categories-by-customer', getAllCategoriesByCustomerController)
+  .get('/categories/get-category-by-customer/:categoryId', getCategoryByIdController);
 
 export default router;
