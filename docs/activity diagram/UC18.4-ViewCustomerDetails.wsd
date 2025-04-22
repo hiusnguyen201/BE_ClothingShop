@@ -4,14 +4,14 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC18.4: View customer details
+title UC17.4: View customer details
 
 |User|
 start
 note left
     User is logged in  
     User must have permission
-    In UC18.1
+    In UC17.1
 end note
 
 |User|

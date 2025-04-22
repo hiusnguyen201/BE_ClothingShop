@@ -12,7 +12,8 @@ end box
 box "Business Logic"
 participant DivisionsController
 participant ApiResponse
-participant DivisionsService 
+participant GhnService
+participant GhnAPI 
 participant ModelDto
 end box
 
@@ -34,10 +35,28 @@ break
 group Business Logic Flow
     AsyncHandler -> DivisionsController: getAllProvincesController
     activate DivisionsController
-    DivisionsController -> DivisionsService: getAllProvincesService()
-    activate DivisionsService
-    DivisionsService --> DivisionsController: return provinces
-    deactivate DivisionsService
+    DivisionsController -> GhnService: getAllProvincesService()
+    activate GhnService
+    GhnService -> GhnAPI: GET /master-data/province
+
+    alt get fail
+        GhnAPI -->> GhnService: return null
+        GhnService -->> DivisionsController: return null
+        DivisionsController --x DivisionsController: throw(HttpException(404))
+        DivisionsController ->> AsyncHandler: catch HttpException and next(HttpException(404))
+        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 404 Not Found
+        deactivate ErrorMiddleware
+    end
+
+    GhnAPI -->> GhnService: return province
+    deactivate GhnAPI
+    GhnService -->> DivisionsController: return province   
+    deactivate GhnService
+
+
+    
 
 end
 break

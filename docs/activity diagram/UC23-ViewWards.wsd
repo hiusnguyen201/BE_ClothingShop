@@ -1,0 +1,24 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC22: View wards
+
+|User|
+start
+:Select a district;
+:Click "Ward" dropdown;
+
+|System|
+repeat
+  :Retrieve wards for selected district;
+  backward :Display "No wards available";
+repeat while (No wards found) is (yes) not (no)
+
+:Display wards alphabetically;
+
+stop
+
+@enduml

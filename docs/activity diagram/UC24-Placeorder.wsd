@@ -1,0 +1,55 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC23: Place Order
+
+|Customer|
+start
+:Click "Checkout" from cart;
+
+|System|
+:Display checkout form;
+
+|Customer|
+:Enter shipping details & payment method;
+:Review order summary;
+:Optionally enter discount code;
+
+|System|
+
+  repeat:Discount code entered?;
+  backward :Display "Invalid discount code";
+repeat while (Invalid?) is (yes) not (no)
+
+
+:Click "Place Order";
+
+repeat
+  |System|
+  :Validate payment & check inventory;
+
+  if (Inventory insufficient?) then
+    :Remove item & display "Out of stock";
+  endif
+
+  if (Payment fails?) then
+    :Display "Payment failed";
+    |Customer|
+    :Update payment details;
+  endif
+repeat while (Validation fails?) is (yes) not (no)
+
+|System|
+:Deduct inventory;
+:Process payment;
+:Generate order ID and save order;
+:Send confirmation email/SMS;
+
+:Display confirmation page with order ID;
+
+stop
+
+@enduml

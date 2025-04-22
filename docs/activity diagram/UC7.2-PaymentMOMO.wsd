@@ -1,0 +1,45 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC07.2: Payment via MoMo
+
+|Customer|
+start
+:Navigate to the cart page;
+repeat:Provide or confirm shipping address;
+:Select MoMo as payment method;
+:Click "Payment" button;
+
+|System|
+:Validate cart and shipping address;
+backward:Display an error message;
+repeat while (Shipping address valid?) is (yes) not (no)
+    :Redirect user to MoMo payment gateway;
+    
+    |MoMo Gateway|
+    :User authenticates and completes payment;
+    if (Payment successful?) then (yes)
+        :Notify system of payment success;
+    else (cancelled)
+        :Notify system of cancellation;
+    endif
+    
+    |System|
+    if (Payment successful?) then (yes)
+        :Create order with status “Processing”/“Paid”;
+        :Display the order success page
+        (Order ID, order summary, delivery information);
+        stop
+    else (cancelled)
+        :Update order status to “Cancelled”;
+        :Display order cancellation page or
+        redirect back to cart with message;
+        stop
+    endif
+    
+
+
+@enduml

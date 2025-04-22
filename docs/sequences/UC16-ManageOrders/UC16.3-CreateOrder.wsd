@@ -28,7 +28,13 @@ box "Business Logic"
 participant OrdersController
 participant ModelDto
 participant ApiResponse
+participant OrdersWorker
+participant UsersService
+participant GhnService
 participant OrdersService
+participant GeoapifyService
+participant GhnAPI
+participant OrderModel
 participant RoleModel
 end box
 
@@ -172,15 +178,142 @@ group Business Logic Flow
     RequestValidation -> OrdersController: createOrderController
     deactivate RequestValidation
     activate OrdersController
-    OrdersController -> TransactionalServiceWrapper: execute()
-    activate TransactionalServiceWrapper
-    TransactionalServiceWrapper -> OrdersService: newOrderService()
-    OrdersService -> OrdersModel: new OrderModel()
-    activate OrdersModel
-    OrdersModel -->> OrdersService: return OrderModel instance
-    deactivate OrdersModel
-    OrdersService -->> TransactionalServiceWrapper: return newOrder
+    OrdersController -> UsersService: getUserByIdService(customerId)
+    activate UsersService
 
+    alt customerId not provided
+        UsersService -->> OrdersController: return null
+        OrdersController --x OrdersController: throw(HttpException(400))
+        OrdersController --x AsyncHandler: catch HttpException and next(HttpException(400))
+        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 400 Bad Request
+        deactivate ErrorMiddleware
+    end
+
+    UsersService -> UserModel: findOne(filters)
+    activate UserModel
+    UserModel -> MongoDB: query select
+    activate MongoDB
+
+    alt select fail 
+        MongoDB --x UserModel: throw Error
+        UserModel --x UsersService: throw Error
+        UsersService --x OrdersController: throw Error
+        OrdersController --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        deactivate ErrorMiddleware
+
+    else user not found
+        MongoDB -->> UserModel: return null
+        UserModel -->> UsersService: return null
+        UsersService -->> OrdersController: return null
+        OrdersController --x OrdersController: throw(HttpException(404))
+        OrdersController --x AsyncHandler: catch HttpException and next(HttpException(404))
+        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 404 Not Found
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> UserModel: return customer
+    deactivate MongoDB
+    UserModel -->> UsersService: return customer
+    deactivate UserModel
+    UsersService -->> OrdersController: return customer
+    deactivate UsersService
+    OrdersController -> GhnService: getProvinceService(provinceCode)
+    activate GhnService
+    GhnService -> GhnAPI: GET /master-data/province
+    activate GhnAPI
+
+    alt get fail
+        GhnAPI -->> GhnService: return null
+        GhnService -->> OrdersController: return null
+        OrdersController --x OrdersController: throw(HttpException(404))
+        OrdersController ->> AsyncHandler: catch HttpException and next(HttpException(404))
+        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 404 Not Found
+        deactivate ErrorMiddleware
+    end
+
+    GhnAPI -->> GhnService: return province
+    deactivate GhnAPI
+    GhnService -->> OrdersController: return province   
+    deactivate GhnService
+    OrdersController -> GhnService: getDistrictService(districtCode, provinceCode)
+    activate GhnService
+    GhnService -> GhnAPI: GET /master-data/district
+    activate GhnAPI
+
+    alt get fail
+        GhnAPI -->> GhnService: return null
+        GhnService -->> OrdersController: return null
+        OrdersController --x OrdersController: throw(HttpException(404))
+        OrdersController ->> AsyncHandler: catch HttpException and next(HttpException(404))
+        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 404 Not Found
+        deactivate ErrorMiddleware
+    end
+
+    GhnAPI -->> GhnService: return district
+    deactivate GhnAPI
+    GhnService -->> OrdersController: return district
+    deactivate GhnService
+    OrdersController -> GhnService: getWardService(wardCode, districtCode)
+    activate GhnService
+    GhnService -> GhnAPI: GET /master-data/ward
+    activate GhnAPI
+
+    alt get fail
+        GhnAPI -->> GhnService: return null
+        GhnService -->> OrdersController: return null
+        OrdersController --x OrdersController: throw(HttpException(404))
+        OrdersController ->> AsyncHandler: catch HttpException and next(HttpException(404))
+        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 404 Not Found
+        deactivate ErrorMiddleware
+    end
+
+    GhnAPI -->> GhnService: return ward
+    deactivate GhnAPI
+    GhnService -->> OrdersController: return ward
+    deactivate GhnService
+    OrdersController -> GeoapifyService: checkValidAddressService(fullAddress)
+    activate GeoapifyService
+    
+    alt Invalid fullAddress
+        GeoapifyService -->> OrdersController: return false
+        OrdersController --x OrdersController: throw(HttpException(404))
+        OrdersController ->> AsyncHandler: catch HttpException and next(HttpException(404))
+        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 404 Not Found
+        deactivate ErrorMiddleware
+    end
+
+    GeoapifyService -->> OrdersController: return true
+    deactivate GeoapifyService
+    OrdersController -> OrdersWorker: createOrderJob()
+    activate OrdersWorker
+
+    alt create fail
+        OrdersWorker --x OrdersController: throw Error
+        OrdersController --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        deactivate ErrorMiddleware
+    end
+
+    OrdersWorker -->> OrdersController: return job
+    deactivate OrdersWorker
+    
 
 end
 
@@ -188,12 +321,48 @@ break
 break 
 
 group Transform data response
-    OrdersController -> ModelDto: new(RoleDto, role)
+    OrdersController -> OrdersService: getOrderByIdService(id)
+    activate OrdersService
+    
+    alt id not provided
+        OrdersService -->> OrdersController: return null
+        OrdersController --x OrdersController: throw(HttpException(400))
+        OrdersController ->> AsyncHandler: catch HttpException and next(HttpException(400))
+        AsyncHandler -->> ErrorMiddleware: handleError(Error)
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 400 Bad Request
+        deactivate ErrorMiddleware
+    end
+
+    OrdersService -> OrderModel: findOne(filters)
+    activate OrderModel
+    OrderModel -> MongoDB: query select
+    activate MongoDB
+
+    alt select fail 
+        MongoDB --x OrderModel: throw Error
+        OrderModel --x OrdersService: throw Error
+        OrdersService --x OrdersController: throw Error
+        OrdersController --x AsyncHandler: catch Error and next(Error)
+        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
+        deactivate ErrorMiddleware
+    end
+
+    MongoDB -->> OrderModel: return orderDetail
+    deactivate MongoDB
+    OrderModel -->> OrdersService: return orderDetail
+    deactivate OrderModel
+    OrdersService -->> OrdersController: return orderDetail
+    deactivate OrdersService
+    
+    OrdersController -> ModelDto: new(OrderDto, orderDetail)
     activate ModelDto
-    ModelDto -->> OrdersController: return RoleDto instance
+    ModelDto -->> OrdersController: return OrderDto instance
     deactivate ModelDto
 
-    OrdersController -> ApiResponse: success(RoleDto, success message)
+    OrdersController -> ApiResponse: success(OrderDto)
     activate ApiResponse
     ApiResponse -->> OrdersController: return ApiResponse instance
     deactivate ApiResponse 

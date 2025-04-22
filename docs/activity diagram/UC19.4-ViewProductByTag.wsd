@@ -1,0 +1,23 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC18.4: View product by tag
+
+|User|
+start
+:Click a tag (e.g., "Casual");
+
+|System|
+repeat
+  :Retrieve products linked to the tag;
+  backward :Display "No products found for this tag";
+repeat while (No tagged products found) is (yes) not (no)
+
+:Display filtered view of tagged products;
+
+stop
+
+@enduml

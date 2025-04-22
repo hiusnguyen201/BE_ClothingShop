@@ -1,0 +1,28 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC15.7: Confirm order
+
+|User|
+start
+:Access "Order Management" page;
+repeat:Select an order and click "Confirm Order";
+
+|System|
+
+    :Retrieve order details;
+    :Check if payment is verified and order is unconfirmed;
+    backward:Display error message;
+repeat while (Validation fails?) is (yes) not (no)
+
+|System|
+:Update order status to “Confirmed”;
+:Trigger shipping preparation;
+:Display success message
+(“Order confirmed successfully”);
+stop
+
+@enduml

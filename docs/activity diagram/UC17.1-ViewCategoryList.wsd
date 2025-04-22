@@ -4,7 +4,7 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC18.1: View customer list
+title UC16.1: View category list
 
 |User|
 start
@@ -14,14 +14,14 @@ note left
 end note
 
 |User|
-:Navigate to the "Customers management" section;
+:Navigate to the "Categories management" section;
 
 |System|
-:Retrieve the list of customers from the database;
+:Retrieve the list of Categories from the database;
 :Check the results;
 
 if(Results available?) then(yes)
-    :Display the list of customers;
+    :Display the list of Categories;
 else(no)
     :Display a message "No results found";
 endif

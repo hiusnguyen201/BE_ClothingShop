@@ -1,0 +1,25 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC07.1: Payment via COD
+
+|Customer|
+start
+:Navigate to the cart page;
+repeat:Provide or confirm shipping address;
+:Select Cash on Delivery (COD) as payment method;
+:Click "Payment" button;
+
+|System|
+:Validate the cart, shipping address, and payment method;
+    backward:Display an error message;
+repeat while (Shipping address valid?) is (no) not (yes)
+    :Create an order with status “Pending”;
+    :Display the order success page;
+    stop
+
+
+@enduml

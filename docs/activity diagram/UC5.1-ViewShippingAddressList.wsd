@@ -24,8 +24,5 @@ else(no)
 endif
 
 stop
-note right
-    Go to UC5.1
-end note
 
 @enduml

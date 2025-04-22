@@ -1,0 +1,24 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC21: View districts
+
+|User|
+start
+:Select a province;
+:Click "District" dropdown;
+
+|System|
+repeat
+  :Retrieve districts for selected province;
+  backward :Display "No districts available";
+repeat while (No districts found) is (yes) not (no)
+
+:Display districts alphabetically;
+
+stop
+
+@enduml

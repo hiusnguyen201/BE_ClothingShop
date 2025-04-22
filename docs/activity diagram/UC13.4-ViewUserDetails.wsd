@@ -4,14 +4,14 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC13.4: View user details
+title UC12.4: View user details
 
 |User|
 start
 note left
     User is logged in  
     User must have permission
-    In UC13.1
+    In UC12.1
 end note
 
 |User|

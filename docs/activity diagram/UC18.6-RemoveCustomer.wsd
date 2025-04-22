@@ -4,14 +4,14 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC18.6: Remove customer
+title UC17.6: Remove customer
 
 |User|
 start
 note left
     User is logged in  
     User must have permission
-    In UC18.4
+    In UC17.4
 end note
 
 
@@ -40,7 +40,7 @@ if(Exist customer?) then(yes)
         :Display success message;
         stop
         note right
-            Go to UC18.1
+            Go to UC17.1
         end note
     endif
 else(no)

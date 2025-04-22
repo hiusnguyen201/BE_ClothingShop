@@ -4,13 +4,13 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC10.4: View order details
+title UC9.4: View order details
 
 |User|
 start
 note left
     User is logged in
-    In UC10.3
+    In UC9.3
 end note
 
 |User|

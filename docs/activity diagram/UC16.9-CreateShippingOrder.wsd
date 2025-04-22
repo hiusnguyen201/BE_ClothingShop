@@ -1,0 +1,28 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC15.9: Create shipping order
+
+|User|
+start
+:Access "Order Management" page;
+:Select a confirmed order and click "Create Shipping Order";
+
+|System|
+repeat
+    :Validate shipping address and carrier details;
+    backward :Display error message  
+    and return to select order;
+repeat while (Validation fails?) is (yes) not (no)
+
+|System|
+:Generate shipping order with tracking number;
+:Update order status to “Shipped”;
+:Notify customer with tracking details;
+:Display success message "Shipping order created successfully.";
+stop
+
+@enduml

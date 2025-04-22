@@ -4,14 +4,14 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC12.6: Remove role
+title UC11.6: Remove role
 
 |User|
 start
 note left
     User is logged in  
     User must have permission
-    In UC12.4
+    In UC11.4
 end note
 
 
@@ -39,7 +39,7 @@ if(Exist role?) then(yes)
     endif
     stop
             note right
-            Go to UC12.1
+            Go to UC11.1
         end note
 else(no)
     :Display error message;

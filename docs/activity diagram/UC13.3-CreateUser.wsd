@@ -4,14 +4,14 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC13.3: Create user
+title UC12.3: Create user
 
 |User|
 start
 note left
     User is logged in  
     User must have permission
-    In UC13.1
+    In UC12.1
 end note
 
 |User|
@@ -45,7 +45,7 @@ repeat while(Is exist email?) is(yes) not(no)
 
 stop
 note right
-    Go to UC13.1
+    Go to UC12.1
 end note
 
 @enduml

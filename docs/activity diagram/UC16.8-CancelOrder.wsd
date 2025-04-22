@@ -1,0 +1,28 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC15.8: Cancel order
+
+|User|
+start
+:Access "Order Management" page;
+
+repeat :Select an order and click "Cancel Order";
+
+|System|
+    :Display cancellation confirmation prompt;
+    :Check if order is cancellable;
+    backward :Display "Cannot cancel: Order has
+     already been shipped";
+repeat while (Validation fails?) is (yes) not (no)
+
+|System|
+:Update order status to “Cancelled”;
+:Initiate refund process (if applicable);
+:Display success message "Order cancelled successfully.";
+stop
+
+@enduml

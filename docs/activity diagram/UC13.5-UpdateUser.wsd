@@ -4,14 +4,14 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC13.5: Update user
+title UC12.5: Update user
 
 |User|
 start
 note left
     User is logged in  
     User must have permission
-    In UC13.4
+    In UC12.4
 end note
 
 
@@ -42,7 +42,7 @@ repeat while(Email exists?) is(yes) not(no)
 :Display a success message;
 stop
 note right
-    Go to UC13.4
+    Go to UC12.4
 end note
 
 @enduml

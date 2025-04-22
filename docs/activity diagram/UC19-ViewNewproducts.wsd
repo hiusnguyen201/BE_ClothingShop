@@ -1,0 +1,31 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC18.1: View new products
+
+|User|
+start
+:Navigate to "New Arrivals" or homepage;
+
+|System|
+:Retrieve new products (last 30 days);
+repeat
+  :Check for new products;
+  backward :Display "No new products available";
+repeat while (No new products found) is (yes) not (no)
+
+:Display product list with name, price, image;
+:Allow user to browse or apply filters;
+
+repeat
+  :Check if filters are valid;
+  backward :Ignore invalid filters, show default results;
+repeat while (Invalid filters) is (yes) not (no)
+
+
+stop
+
+@enduml

@@ -4,14 +4,14 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC12.3: Create role
+title UC11.3: Create role
 
 |User|
 start
 note left
     User is logged in  
     User must have permission
-    In UC12.1
+    In UC11.1
 end note
 
 |User|
@@ -43,7 +43,7 @@ repeat while(Is exist role name?) is(yes) not(no)
 
 stop
 note right
-    Go to UC12.1
+    Go to UC11.1
 end note
 
 @enduml

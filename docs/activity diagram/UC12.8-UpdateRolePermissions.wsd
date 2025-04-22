@@ -1,0 +1,33 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC11.8: Update role permissions
+
+|Admin|
+start
+:Navigate to the "Role Permissions Management" section;
+:Select the role to update;
+:Click "Edit Permissions" button;
+
+|System|
+:Display current permissions;
+
+|Admin|
+repeat
+    :Modify permissions using checkboxes or dropdowns;
+    :Click "Save Changes";
+    |System|
+    :Validate updated permissions;
+    backward :Display error message and return to modify;
+repeat while (Validation fails?) is (yes) not (no)
+
+|System|
+:Update role’s permissions in the database;
+:Log changes for auditing purposes;
+:Display success message "Role permissions updated successfully.";
+stop
+
+@enduml

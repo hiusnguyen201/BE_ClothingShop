@@ -1,0 +1,25 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC18.2: View best selling products
+
+|User|
+start
+:Navigate to "Best Sellers" section;
+
+|System|
+:Retrieve products sorted by sales volume;
+
+repeat
+  :Check if sales data is available;
+  backward :Display "No best sellers yet";
+repeat while (No sales data found) is (yes) not (no)
+
+:Display products with sales badges (e.g., "Top Seller");
+
+stop
+
+@enduml

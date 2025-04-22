@@ -1,0 +1,24 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC19: View categories
+
+|User|
+start
+:Navigate to "Categories" section;
+
+|System|
+repeat
+  :Retrieve list of categories and subcategories;
+  backward :Display "No categories available";
+repeat while (No categories found) is (yes) not (no)
+
+:Display categories with name, image, and product count;
+:User can click to view category or subcategory;
+
+stop
+
+@enduml

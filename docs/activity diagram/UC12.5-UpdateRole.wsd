@@ -4,14 +4,14 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC12.5: Update role
+title UC11.5: Update role
 
 |User|
 start
 note left
     User is logged in  
     User must have permission
-    In UC12.4
+    In UC11.4
 end note
 
 
@@ -42,7 +42,7 @@ repeat while(Role name exists?) is(yes) not(no)
 :Display a success message;
 stop
 note right
-    Go to UC12.4
+    Go to UC11.4
 end note
 
 

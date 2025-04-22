@@ -1,0 +1,23 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC20: View provinces
+
+|User|
+start
+:Click "Province" dropdown in shipping form;
+
+|System|
+repeat
+  :Retrieve list of provinces from database;
+  backward :Display "No provinces available";
+repeat while (No provinces found) is (yes) not (no)
+
+:Display provinces alphabetically;
+
+stop
+
+@enduml

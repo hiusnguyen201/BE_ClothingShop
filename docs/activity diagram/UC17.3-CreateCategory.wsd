@@ -4,14 +4,14 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC17.3: Create category
+title UC16.3: Create category
 
 |User|
 start
 note left
     User is logged in  
     User must have permission
-    In UC17.1
+    In UC16.1
 end note
 
 |User|
@@ -43,7 +43,7 @@ repeat while(Exist category name?) is(yes) not(no)
 
 stop
 note right
-    Go to UC17.1
+    Go to UC16.1
 end note
 
 @enduml

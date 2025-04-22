@@ -1,0 +1,26 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC11.7: View list role permissions
+
+|Admin|
+start
+:Navigate to the "Role Permissions Management" section;
+
+|System|
+:Retrieve list of role permissions from the database;
+:Check if results are available;
+if (Results available?) then (yes)
+    :Display list of role permissions
+    (Role name, associated permissions,
+    date of last modification);
+    stop
+else (no)
+    :Display message "No results found.";
+    stop
+endif
+
+@enduml

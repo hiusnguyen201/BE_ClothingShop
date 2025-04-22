@@ -4,14 +4,14 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC16.5: Update order
+title UC15.5: Update order
 
 |User|
 start
 note left
     User is logged in  
     User must have permission
-    In UC16.4
+    In UC15.4
 end note
 
     repeat 
@@ -31,7 +31,7 @@ end note
         :Display a success message;
         stop
         note right
-            Go to UC16.4
+            Go to UC15.4
         end note
     else(no)
         :Display error message;

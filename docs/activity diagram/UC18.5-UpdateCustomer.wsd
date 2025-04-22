@@ -4,14 +4,14 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC18.5: Update customer
+title UC17.5: Update customer
 
 |User|
 start
 note left
     User is logged in  
     User must have permission
-    In UC18.4
+    In UC17.4
 end note
 
 repeat 
@@ -41,7 +41,7 @@ repeat while(Exist email?) is(yes) not(no)
 :Display a success message;
 stop
 note right
-    Go to UC18.4
+    Go to UC17.4
 end note
 
 @enduml

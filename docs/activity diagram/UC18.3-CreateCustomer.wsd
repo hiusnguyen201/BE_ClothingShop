@@ -4,14 +4,14 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC18.3: Create customer
+title UC17.3: Create customer
 
 |User|
 start
 note left
     User is logged in  
     User must have permission
-    In UC18.1
+    In UC17.1
 end note
 
 |User|
@@ -43,7 +43,7 @@ repeat while(Exist email?) is(yes) not(no)
 
 stop
 note right
-    Go to UC18.1
+    Go to UC17.1
 end note
 
 @enduml

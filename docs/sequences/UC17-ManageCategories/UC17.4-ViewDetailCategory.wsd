@@ -179,7 +179,7 @@ group Business Logic Flow
     alt categoryId not provided
         CategoriesService -->> CategoriesController: return null
         CategoriesController --x CategoriesController: throw(HttpException(400))
-        CategoriesController --x AsyncHandler: catch HttpException and next(HttpException(400))
+        CategoriesController ->> AsyncHandler: catch HttpException and next(HttpException(400))
         AsyncHandler -->> ErrorMiddleware: handleError(Error)
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 400 Bad Request
@@ -205,7 +205,7 @@ group Business Logic Flow
         CategoryModel -->> CategoriesService: return null
         CategoriesService -->> CategoriesController: return null
         CategoriesController --x CategoriesController: throw(HttpException(404))
-        CategoriesController --x AsyncHandler: catch HttpException and next(HttpException(404))
+        CategoriesController ->> AsyncHandler: catch HttpException and next(HttpException(404))
         AsyncHandler -->> ErrorMiddleware: handleError(Error) 
         activate ErrorMiddleware
         ErrorMiddleware -->> Client: HTTP 404 Not Found

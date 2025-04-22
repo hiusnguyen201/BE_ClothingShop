@@ -4,14 +4,14 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC15.3: Create product
+title UC14.3: Create product
 
 |User|
 start
 note left
     User is logged in  
     User must have permission
-    In UC15.1
+    In UC14.1
 end note
 
 |User|
@@ -43,7 +43,7 @@ repeat while(Product name exists?) is(yes) not(no)
 
 stop
 note right
-    Go to UC15.1
+    Go to UC14.1
 end note
 
 @enduml

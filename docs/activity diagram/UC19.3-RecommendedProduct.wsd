@@ -1,0 +1,23 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC18.3: View recommended products
+
+|User|
+start
+:Access homepage or "Recommended for You" section;
+
+|System|
+repeat
+  :Retrieve recommendations;
+  backward :Display generic popular products;
+repeat while (No personalized data available) is (yes) not (no)
+
+:Display products with labels (e.g., "Recommended for You");
+
+stop
+
+@enduml

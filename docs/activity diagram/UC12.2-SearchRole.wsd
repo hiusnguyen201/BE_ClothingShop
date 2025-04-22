@@ -4,14 +4,14 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC12.2: Search role
+title UC11.2: Search role
 
 |User|
 start
 note left
     User is logged in  
     User must have permission
-    In UC12.1
+    In UC11.1
 end note
 
 |User|

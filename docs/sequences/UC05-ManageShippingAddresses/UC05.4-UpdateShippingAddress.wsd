@@ -29,7 +29,9 @@ participant ShippingAddressController
 participant ModelDto
 participant ApiResponse
 participant ShippingAddressService
+participant GhnService
 participant QueryUtil
+participant GhnAPI
 participant ShippingAddressModel
 end box
 
@@ -173,6 +175,70 @@ group Business Logic Flow
     RequestValidation -> ShippingAddressController: updateShippingAddressByIdController
     deactivate RequestValidation
     activate ShippingAddressController
+    ShippingAddressController -> GhnService: getProvinceService(provinceCode)
+    activate GhnService
+    GhnService -> GhnAPI: GET /master-data/province
+    activate GhnAPI
+
+    alt get fail
+        GhnAPI -->> GhnService: return null
+        GhnService -->> ShippingAddressController: return null
+        ShippingAddressController --x ShippingAddressController: throw(HttpException(404))
+        ShippingAddressController ->> AsyncHandler: catch HttpException and next(HttpException(404))
+        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 404 Not Found
+        deactivate ErrorMiddleware
+    end
+
+    GhnAPI -->> GhnService: return province
+    deactivate GhnAPI
+    GhnService -->> ShippingAddressController: return province   
+    deactivate GhnService
+    ShippingAddressController -> GhnService: getDistrictService(districtCode, provinceCode)
+    activate GhnService
+    GhnService -> GhnAPI: GET /master-data/district
+    activate GhnAPI
+
+    alt get fail
+        GhnAPI -->> GhnService: return null
+        GhnService -->> ShippingAddressController: return null
+        ShippingAddressController --x ShippingAddressController: throw(HttpException(404))
+        ShippingAddressController ->> AsyncHandler: catch HttpException and next(HttpException(404))
+        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 404 Not Found
+        deactivate ErrorMiddleware
+    end
+
+    GhnAPI -->> GhnService: return district
+    deactivate GhnAPI
+    GhnService -->> ShippingAddressController: return district
+    deactivate GhnService
+    ShippingAddressController -> GhnService: getWardService(wardCode, districtCode)
+    activate GhnService
+    GhnService -> GhnAPI: GET /master-data/ward
+    activate GhnAPI
+
+    alt get fail
+        GhnAPI -->> GhnService: return null
+        GhnService -->> ShippingAddressController: return null
+        ShippingAddressController --x ShippingAddressController: throw(HttpException(404))
+        ShippingAddressController ->> AsyncHandler: catch HttpException and next(HttpException(404))
+        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
+        activate ErrorMiddleware
+        ErrorMiddleware -->> Client: HTTP 404 Not Found
+        deactivate ErrorMiddleware
+    end
+
+    GhnAPI -->> GhnService: return ward
+    deactivate GhnAPI
+    GhnService -->> ShippingAddressController: return ward
+    deactivate GhnService
+
+
+
+
     ShippingAddressController -> ShippingAddressService: getShippingAddressByIdService(shippingAddressId)
     activate ShippingAddressService
     

@@ -1,0 +1,32 @@
+@startuml
+
+skinparam ActivityBackgroundColor LightYellow
+skinparam ActivityBorderColor DarkOrange
+skinparam ArrowColor Maroon
+
+title UC14.6: Update product variant
+
+|User|
+start
+:Access "Product Management" page;
+:Navigate to "Variants" section;
+:Select variant and click "Edit Variant" button;
+
+|System|
+:Display form pre-filled with variant details;
+
+|User|
+repeat
+    :Modify variant details (size, color, SKU, price, stock);
+    :Click "Save Changes";
+    |System|
+    :Validate input;
+    backward :Display "Invalid variant details." and return to modify;
+repeat while (Validation fails?) is (yes) not (no)
+
+|System|
+:Update product variant in database;
+:Display success message "Product variant updated successfully.";
+stop
+
+@enduml
