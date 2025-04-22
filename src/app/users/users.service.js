@@ -282,3 +282,16 @@ export async function removeUserPermissionByIdService(userId, permissionId) {
     .select('permissions')
     .lean();
 }
+
+/**
+ * Update user password
+ * @param {*} data
+ * @returns
+ */
+export function updateUserPasswordService(userId, password) {
+  const salt = genSaltSync();
+  const hashed = hashSync(password, salt);
+  return UserModel.findByIdAndUpdate(userId, {
+    password: hashed,
+  });
+}

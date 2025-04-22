@@ -11,6 +11,9 @@ import { options, optionValues } from '#src/database/data/options-data';
 import { categories } from '#src/database/data/categories-data';
 import { roles } from '#src/database/data/roles-data';
 import { users } from '#src/database/data/users-data';
+import { products, variants } from '#src/database/data/products-data';
+import { insertProductsService } from '#src/app/products/products.service';
+import { insertProductVariantsService } from '#src/app/product-variants/product-variants.service';
 
 /**
  * Need fix MongoServerError: Transaction numbers are only allowed on a replica set member or mongos
@@ -61,6 +64,16 @@ async function runSeed() {
     LogUtils.info('CATEGORY', 'Start insert categories');
     await insertCategoriesService(categories, session);
     LogUtils.success('CATEGORY', 'Insert categories done');
+
+    // Products
+    LogUtils.info('PRODUCT', 'Start insert products');
+    await insertProductsService(products, session);
+    LogUtils.success('PRODUCT', 'Insert products done');
+
+    // Product Variants
+    LogUtils.info('PRODUCT_VARIANT', 'Start insert product variants');
+    await insertProductVariantsService(variants, session);
+    LogUtils.success('PRODUCT_VARIANT', 'Insert product variants done');
   });
 
   LogUtils.info('SEED_DATABASE', 'Seed database successful');

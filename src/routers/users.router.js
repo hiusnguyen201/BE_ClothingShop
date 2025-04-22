@@ -8,6 +8,7 @@ import {
   updateUserByIdController,
   removeUserByIdController,
   checkExistEmailController,
+  resetPasswordUserController,
 } from '#src/app/users/users.controller';
 import { isAuthorizedAndHasPermission } from '#src/middlewares/jwt-auth.middleware';
 
@@ -18,6 +19,7 @@ router
   .get('/get-users', isAuthorizedAndHasPermission, getAllUsersController)
   .get('/get-user-by-id/:userId', isAuthorizedAndHasPermission, getUserByIdController)
   .put('/update-user-by-id/:userId', isAuthorizedAndHasPermission, updateUserByIdController)
-  .delete('/remove-user-by-id/:userId', isAuthorizedAndHasPermission, removeUserByIdController);
+  .delete('/remove-user-by-id/:userId', isAuthorizedAndHasPermission, removeUserByIdController)
+  .put('/:userId/reset-password', isAuthorizedAndHasPermission, resetPasswordUserController);
 
 export default router;

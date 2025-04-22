@@ -35,7 +35,7 @@ const USER_DATA = [
   })),
 ];
 
-const CUSTOMER_DATA = Array.from({ length: 100 }).map(() => ({
+const CUSTOMER_DATA = Array.from({ length: 200 }).map((_, index) => ({
   name: faker.person.fullName(),
   email: faker.internet.email(),
   password: faker.internet.password(),
@@ -43,6 +43,8 @@ const CUSTOMER_DATA = Array.from({ length: 100 }).map(() => ({
   verifiedAt: Math.random() > 0.5 ? faker.date.past() : null,
   gender: faker.helpers.arrayElement(Object.values(GENDER)),
   type: USER_TYPE.CUSTOMER,
+  createdAt:
+    index < 50 ? (Math.random() > 0.5 ? new Date() : new Date().setDate(new Date().getDate() - 1)) : faker.date.past(),
 }));
 
 const users = [];

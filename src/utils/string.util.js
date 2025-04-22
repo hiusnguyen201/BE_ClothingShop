@@ -1,5 +1,6 @@
 import { REGEX_PATTERNS } from '#src/core/constant';
 import mongoose from 'mongoose';
+import moment from 'moment-timezone';
 import slugifyLib from 'slugify';
 
 export const generateNumericOTP = (length = 6) => {
@@ -42,4 +43,8 @@ export const objectIdValidator = (value, helpers) => {
     return helpers.error('any.invalid');
   }
   return value;
+};
+
+export const newDate = (date) => {
+  return moment(date).tz('Asia/Ho_Chi_Minh');
 };

@@ -5,6 +5,7 @@ import {
   checkExistEmailService,
   updateUserInfoByIdService,
   getAndCountUsersService,
+  updateUserPasswordService,
 } from '#src/app/users/users.service';
 import { getRoleByIdService } from '#src/app/roles/roles.service';
 import { sendPasswordService } from '#src/modules/mailer/mailer.service';
@@ -21,6 +22,14 @@ import { CheckExistEmailDto } from '#src/app/users/dtos/check-exist-email.dto';
 import { GetListUserDto } from '#src/app/users/dtos/get-list-user.dto';
 import { GetUserDto } from '#src/app/users/dtos/get-user.dto';
 import { validateSchema } from '#src/core/validations/request.validation';
+
+export const checkExistEmailController = async (req) => {
+  const adapter = await validateSchema(CheckExistEmailDto, req.params);
+
+  const isExistEmail = await checkExistEmailService(adapter.email);
+
+  return ApiResponse.success(isExistEmail);
+};
 
 export const createUserController = async (req) => {
   const adapter = await validateSchema(CreateUserDto, req.body);
@@ -128,12 +137,20 @@ export const removeUserByIdController = async (req) => {
   return ApiResponse.success({ id: existUser._id }, 'Remove user successful');
 };
 
-export const checkExistEmailController = async (req) => {
-  const adapter = await validateSchema(CheckExistEmailDto, req.params);
+export const resetPasswordUserController = async (req) => {
+  const adapter = await validateSchema(GetUserDto, req.params);
 
-  const isExistEmail = await checkExistEmailService(adapter.email);
+  const existUser = await getUserByIdService(adapter.userId, { type: USER_TYPE.USER });
+  if (!existUser) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'User not found' });
+  }
 
-  return ApiResponse.success(isExistEmail);
+  const newPassword = randomStr(32);
+  await updateUserPasswordService(existUser._id, newPassword);
+
+  await sendPasswordService(existUser.email, newPassword);
+
+  return ApiResponse.success({ id: existUser._id }, 'Reset user password successful');
 };
 
 // export const getListUserPermissionsController = async (req) => {

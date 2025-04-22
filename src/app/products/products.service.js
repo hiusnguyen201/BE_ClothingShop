@@ -16,6 +16,16 @@ export function createProductService(data) {
 }
 
 /**
+ * New product
+ * @param {*} data
+ * @returns
+ */
+export function newProductService(data) {
+  data.slug = makeSlug(data.name);
+  return new ProductModel(data);
+}
+
+/**
  * Create products
  * @param {*} data
  * @returns
@@ -25,6 +35,15 @@ export async function createProductsService(data, session) {
   return ProductModel.create(data, {
     session,
   });
+}
+
+/**
+ * Insert list product
+ * @param {object} data
+ * @returns
+ */
+export async function insertProductsService(data, session) {
+  return await ProductModel.insertMany(data, { session, ordered: true });
 }
 
 /**

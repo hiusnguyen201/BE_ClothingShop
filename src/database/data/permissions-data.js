@@ -38,6 +38,13 @@ const USERS_PERMISSIONS = [
     endpoint: '/api/users/remove-user-by-id/:userId',
     method: 'DELETE',
   },
+  {
+    name: 'reset-password:user',
+    description: 'Reset password user',
+    module: 'users',
+    endpoint: '/api/users/:userId/reset-password',
+    method: 'PUT',
+  },
 ];
 
 const ROLES_PERMISSIONS = [

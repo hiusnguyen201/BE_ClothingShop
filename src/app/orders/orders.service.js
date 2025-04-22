@@ -1,12 +1,14 @@
 import { OrderModel } from '#src/app/orders/models/orders.model';
 import { isValidObjectId } from 'mongoose';
-import { ORDER_SELECTED_FIELDS } from '#src/app/orders/orders.constant';
+import { ORDER_SELECTED_FIELDS, ORDER_STATUS } from '#src/app/orders/orders.constant';
 import { USER_SELECTED_FIELDS } from '#src/app/users/users.constant';
 import { USER_MODEL } from '#src/app/users/models/user.model';
 import { PAYMENT_MODEL } from '#src/app/payments/models/payments.model';
 import { PAYMENT_SELECTED_FIELDS } from '#src/app/payments/payments.constant';
 import { ORDER_DETAIL_MODEL } from '#src/app/order-details/models/order-details.model';
 import { PRODUCT_SELECT_FIELDS } from '#src/app/products/products.constant';
+import moment from 'moment-timezone';
+import { newDate } from '#src/utils/string.util';
 
 /**
  * New order
@@ -245,3 +247,229 @@ export const calculateOrderService = (orderItems) => {
 
   return result;
 };
+
+/**
+ * Get Today Order Report Service
+ * @param {*} data
+ * @returns
+ */
+export async function getTodayOrderReportService() {
+  const startOfToday = moment().startOf('day').toDate();
+  const endOfToday = moment().endOf('day').toDate();
+
+  const startOfYesterday = moment().subtract(1, 'day').startOf('day').toDate();
+  const endOfYesterday = moment().subtract(1, 'day').endOf('day').toDate();
+
+  const todayStats = await OrderModel.aggregate([
+    {
+      $match: {
+        createdAt: {
+          $gte: startOfToday,
+          $lt: endOfToday,
+        },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalNew: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const yesterdayStats = await OrderModel.aggregate([
+    {
+      $match: {
+        createdAt: {
+          $gte: startOfYesterday,
+          $lt: endOfYesterday,
+        },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalNew: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const totalOrderOverall = await OrderModel.countDocuments();
+
+  const totalNewPercentage =
+    todayStats[0]?.totalNew && yesterdayStats[0]?.totalNew
+      ? ((todayStats[0].totalNew - yesterdayStats[0].totalNew) / yesterdayStats[0].totalNew) * 100
+      : 0;
+
+  return {
+    totalOrderOverall,
+    todayTotalNewOrders: todayStats[0]?.totalNew || 0,
+    yesterdayTotalNewOrders: yesterdayStats[0]?.totalNew || 0,
+    percentage: totalNewPercentage.toFixed(1),
+  };
+}
+
+/**
+ * Get Revenue Report Service
+ * @param {*} data
+ * @returns
+ */
+export async function getTodayRevenueReportService() {
+  const startOfToday = moment().startOf('day').toDate();
+  const endOfToday = moment().endOf('day').toDate();
+
+  const startOfYesterday = moment().subtract(1, 'day').startOf('day').toDate();
+  const endOfYesterday = moment().subtract(1, 'day').endOf('day').toDate();
+
+  const todayStats = await OrderModel.aggregate([
+    {
+      $match: {
+        createdAt: {
+          $gte: startOfToday,
+          $lt: endOfToday,
+        },
+      },
+    },
+    {
+      $project: {
+        total: 1,
+        lastStatus: {
+          $arrayElemAt: ['$orderStatusHistory.status', -1],
+        },
+      },
+    },
+    { $match: { lastStatus: ORDER_STATUS.COMPLETED } },
+    {
+      $group: {
+        _id: null,
+        totalRevenue: { $sum: '$total' },
+      },
+    },
+  ]);
+
+  const yesterdayStats = await OrderModel.aggregate([
+    {
+      $match: {
+        createdAt: {
+          $gte: startOfYesterday,
+          $lt: endOfYesterday,
+        },
+      },
+    },
+    {
+      $project: {
+        total: 1,
+        lastStatus: {
+          $arrayElemAt: ['$orderStatusHistory.status', -1],
+        },
+      },
+    },
+    { $match: { lastStatus: ORDER_STATUS.COMPLETED } },
+    {
+      $group: {
+        _id: null,
+        totalRevenue: { $sum: '$total' },
+      },
+    },
+  ]);
+
+  const revenue = await OrderModel.aggregate([
+    {
+      $project: {
+        total: 1,
+        lastStatus: {
+          $arrayElemAt: ['$orderStatusHistory.status', -1],
+        },
+      },
+    },
+    { $match: { lastStatus: ORDER_STATUS.COMPLETED } },
+    {
+      $group: {
+        _id: null,
+        totalRevenue: { $sum: '$total' },
+      },
+    },
+  ]);
+
+  const totalRevenuePercentage =
+    todayStats[0]?.totalNew && yesterdayStats[0]?.totalNew
+      ? ((todayStats[0].totalNew - yesterdayStats[0].totalNew) / yesterdayStats[0].totalNew) * 100
+      : 0;
+
+  return {
+    totalRevenueOverall: revenue[0]?.totalRevenue[0] || 0,
+    todayTotalRevenue: todayStats[0]?.totalRevenue || 0,
+    yesterdayTotalRevenue: yesterdayStats[0]?.totalRevenue || 0,
+    percentage: totalRevenuePercentage.toFixed(1),
+  };
+}
+
+/**
+ * Get Today Sales Service
+ * @param {*} data
+ * @returns
+ */
+export async function getTodaySalesService() {
+  const startOfToday = newDate().startOf('day').add(1, 'hour');
+  const endOfToday = newDate().endOf('day').add(1, 'hour');
+
+  const salesData = await OrderModel.aggregate([
+    {
+      $match: {
+        createdAt: {
+          $gte: startOfToday.toDate(),
+          $lt: endOfToday.toDate(),
+        },
+      },
+    },
+    {
+      $project: {
+        total: 1,
+        lastStatus: {
+          $arrayElemAt: ['$orderStatusHistory.status', -1],
+        },
+      },
+    },
+    { $match: { lastStatus: ORDER_STATUS.COMPLETED } },
+    {
+      $group: {
+        _id: {
+          $dateTrunc: {
+            date: '$createdAt',
+            unit: 'hour',
+          },
+        },
+        sales: { $sum: '$total' },
+      },
+    },
+    {
+      $sort: { _id: 1 },
+    },
+    {
+      $project: {
+        timestamp: '$_id',
+        sales: 1,
+        _id: 0,
+      },
+    },
+  ]);
+
+  const result = [];
+  let currentTime = newDate(startOfToday);
+  currentTime.startOf('hour');
+
+  while (currentTime <= endOfToday) {
+    const found = salesData.find((item) => {
+      return newDate(item.timestamp).isSame(currentTime, 'hour');
+    });
+
+    result.push({
+      timestamp: currentTime.toISOString(),
+      sales: found ? found.sales : 0,
+    });
+
+    currentTime = newDate(currentTime).add(1, 'hour');
+  }
+
+  return result;
+}
