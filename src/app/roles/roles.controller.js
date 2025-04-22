@@ -1,4 +1,3 @@
-'use strict';
 import { HttpException } from '#src/core/exception/http-exception';
 import {
   createRoleService,
@@ -22,33 +21,49 @@ import {
   getPermissionByIdService,
   getPermissionsService,
 } from '#src/app/permissions/permissions.service';
+import { validateSchema } from '#src/core/validations/request.validation';
+import { CreateRoleDto } from '#src/app/roles/dtos/create-role.dto';
+import { GetListRoleDto } from '#src/app/roles/dtos/get-list-role.dto';
+import { GetRoleDto } from '#src/app/roles/dtos/get-role.dto';
+import { CheckExistRoleNameDto } from '#src/app/roles/dtos/check-exist-role-name.dto';
+import { GetAssignedRolePermissionsDto } from '#src/app/roles/dtos/get-assigned-role-permissions.dto';
+import { RemoveRolePermissionDto } from '#src/app/roles/dtos/remove-role-permission.dto';
+import { AddRolePermissionsDto } from '#src/app/roles/dtos/add-role-permissions.dto';
+import { GetUnassignedRolePermissionsDto } from '#src/app/roles/dtos/get-unassigned-role-permissions.dto';
+import { UpdateRoleDto } from '#src/app/roles/dtos/update-role.dto';
 
 export const createRoleController = async (req) => {
-  const { name } = req.body;
+  const adapter = await validateSchema(CreateRoleDto, req.body);
 
-  const isExistName = await checkExistRoleNameService(name);
+  const isExistName = await checkExistRoleNameService(adapter.name);
   if (isExistName) {
     throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Role name already exists' });
   }
 
-  const newRole = await createRoleService(req.body);
+  const newRole = await createRoleService(adapter);
 
   const roleDto = ModelDto.new(RoleDto, newRole);
   return ApiResponse.success(roleDto, 'Create role successful');
 };
 
 export const getAllRolesController = async (req) => {
-  const { keyword = '', page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+  const adapter = await validateSchema(GetListRoleDto, req.query);
 
   const searchFields = ['name', 'description'];
   const filters = {
     $or: searchFields.map((field) => ({
-      [field]: { $regex: keyword, $options: 'i' },
+      [field]: { $regex: adapter.keyword, $options: 'i' },
     })),
   };
 
-  const skip = (page - 1) * limit;
-  const [totalCount, roles] = await getAndCountRolesService(filters, skip, limit, sortBy, sortOrder);
+  const skip = (adapter.page - 1) * adapter.limit;
+  const [totalCount, roles] = await getAndCountRolesService(
+    filters,
+    skip,
+    adapter.limit,
+    adapter.sortBy,
+    adapter.sortOrder,
+  );
 
   const rolesDto = ModelDto.newList(RoleDto, roles);
 
@@ -56,9 +71,9 @@ export const getAllRolesController = async (req) => {
 };
 
 export const getRoleByIdController = async (req) => {
-  const { roleId } = req.params;
+  const adapter = await validateSchema(GetRoleDto, req.params);
 
-  const role = await getRoleByIdService(roleId);
+  const role = await getRoleByIdService(adapter.roleId);
   if (!role) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' });
   }
@@ -68,15 +83,14 @@ export const getRoleByIdController = async (req) => {
 };
 
 export const updateRoleByIdController = async (req) => {
-  const { roleId } = req.params;
-  const { name } = req.body;
+  const adapter = await validateSchema(UpdateRoleDto, { ...req.body, ...req.params });
 
-  const existRole = await getRoleByIdService(roleId);
+  const existRole = await getRoleByIdService(adapter.roleId);
   if (!existRole) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' });
   }
 
-  const isExistName = await checkExistRoleNameService(name, existRole._id);
+  const isExistName = await checkExistRoleNameService(adapter.name, existRole._id);
   if (isExistName) {
     throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Role name already exist' });
   }
@@ -88,86 +102,106 @@ export const updateRoleByIdController = async (req) => {
 };
 
 export const removeRoleByIdController = async (req) => {
-  const { roleId } = req.params;
-  const existRole = await getRoleByIdService(roleId);
+  const adapter = await validateSchema(GetRoleDto, req.params);
+
+  const existRole = await getRoleByIdService(adapter.roleId);
   if (!existRole) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' });
   }
 
-  await removeRoleByIdService(roleId);
+  await removeRoleByIdService(existRole._id);
 
   return ApiResponse.success({ id: existRole._id }, 'Remove role successful');
 };
 
 export const isExistRoleNameController = async (req) => {
-  const { name } = req.body;
+  const adapter = await validateSchema(CheckExistRoleNameDto, req.body);
 
-  const existRoleName = await checkExistRoleNameService(name);
+  const existRoleName = await checkExistRoleNameService(adapter.name);
 
   return ApiResponse.success(existRoleName, existRoleName ? 'Role name exists' : 'Role name does not exist');
 };
 
-export const getRolePermissionsController = async (req) => {
-  const { roleId } = req.params;
-  const existRole = await getRoleByIdService(roleId);
+export const getAssignedRolePermissionsController = async (req) => {
+  const adapter = await validateSchema(GetAssignedRolePermissionsDto, { ...req.params, ...req.query });
+
+  const existRole = await getRoleByIdService(adapter.roleId);
   if (!existRole) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' });
   }
 
-  const { keyword = '', page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
-
   const searchFields = ['name', 'description', 'module'];
-  const assignedFilters = {
+  const filters = {
     $or: searchFields.map((field) => ({
-      [field]: { $regex: keyword, $options: 'i' },
+      [field]: { $regex: adapter.keyword, $options: 'i' },
     })),
   };
 
-  const skip = (page - 1) * limit;
-  const [assignedTotalCount, assignedPermissions] = await getAndCountRolePermissionsService(
-    roleId,
-    assignedFilters,
+  const skip = (adapter.page - 1) * adapter.limit;
+  const [totalCount, permissions] = await getAndCountRolePermissionsService(
+    existRole._id,
+    filters,
     skip,
-    limit,
-    sortBy,
-    sortOrder,
+    adapter.limit,
+    adapter.sortBy,
+    adapter.sortOrder,
   );
 
-  const unassignedFilters = {
-    _id: { $nin: existRole.permissions.map((item) => item._id) },
-  };
-  const [unassignedTotalCount, unassignedPermissions] = await getAndCountPermissionsService(
-    unassignedFilters,
-    skip,
-    limit,
-    sortBy,
-    sortOrder,
-  );
-
-  const assignedPermissionsDto = ModelDto.newList(PermissionDto, assignedPermissions);
-  const unassignedPermissionsDto = ModelDto.newList(PermissionDto, unassignedPermissions);
+  const permissionsDto = ModelDto.newList(PermissionDto, permissions);
   return ApiResponse.success(
     {
-      assignedTotalCount,
-      assignedList: assignedPermissionsDto,
-      unassignedTotalCount,
-      unassignedList: unassignedPermissionsDto,
+      totalCount,
+      list: permissionsDto,
     },
-    'Get all role permissions successful',
+    'Get all assigned role permissions successful',
+  );
+};
+
+export const getUnassignedRolePermissionsController = async (req) => {
+  const adapter = await validateSchema(GetUnassignedRolePermissionsDto, { ...req.params, ...req.query });
+
+  const existRole = await getRoleByIdService(adapter.roleId);
+  if (!existRole) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' });
+  }
+
+  const searchFields = ['name', 'description', 'module'];
+  const filters = {
+    $or: searchFields.map((field) => ({
+      [field]: { $regex: adapter.keyword, $options: 'i' },
+    })),
+    _id: { $nin: existRole.permissions.map((item) => item._id) },
+  };
+
+  const skip = (adapter.page - 1) * adapter.limit;
+  const [totalCount, permissions] = await getAndCountPermissionsService(
+    filters,
+    skip,
+    adapter.limit,
+    adapter.sortBy,
+    adapter.sortOrder,
+  );
+
+  const permissionsDto = ModelDto.newList(PermissionDto, permissions);
+  return ApiResponse.success(
+    {
+      totalCount,
+      list: permissionsDto,
+    },
+    'Get all unassigned role permissions successful',
   );
 };
 
 export const addRolePermissionsController = async (req) => {
-  const { roleId } = req.params;
-  const { permissionIds } = req.body;
+  const adapter = await validateSchema(AddRolePermissionsDto, { ...req.body, ...req.params });
 
-  const role = await getRoleByIdService(roleId);
+  const role = await getRoleByIdService(adapter.roleId);
   if (!role) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' });
   }
 
   const filters = {
-    _id: { $in: permissionIds },
+    _id: { $in: adapter.permissionIds },
   };
 
   const permissions = await getPermissionsService(filters);
@@ -182,14 +216,14 @@ export const addRolePermissionsController = async (req) => {
 };
 
 export const removeRolePermissionController = async (req) => {
-  const { roleId, permissionId } = req.params;
+  const adapter = await validateSchema(RemoveRolePermissionDto, req.params);
 
-  const rolePermission = await getRolePermissionService(roleId, permissionId);
+  const rolePermission = await getRolePermissionService(adapter.roleId, adapter.permissionId);
   if (!rolePermission) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' });
   }
 
-  const permission = await getPermissionByIdService(permissionId);
+  const permission = await getPermissionByIdService(adapter.permissionId);
   if (!permission) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Permission not found' });
   }

@@ -5,6 +5,27 @@ import { REGEX_PATTERNS } from '#src/core/constant';
 import { USER_SELECTED_FIELDS } from '#src/app/users/users.constant';
 import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
 import { PERMISSION_SELECTED_FIELDS } from '#src/app/permissions/permissions.constant';
+import { ROLE_SELECTED_FIELDS } from '#src/app/roles/roles.constant';
+
+/**
+ * New user service
+ * @param {*} data
+ * @returns
+ */
+export function newUserService(data) {
+  const salt = genSaltSync();
+  data.password = hashSync(data.password, salt);
+  return new UserModel(data);
+}
+
+/**
+ * Insert users service
+ * @param {*} data
+ * @returns
+ */
+export async function insertUsersService(data = [], session) {
+  return await UserModel.insertMany(data, { session, ordered: true });
+}
 
 /**
  * Create user
@@ -16,31 +37,6 @@ export async function createUserService(data) {
   data.password = hashSync(data.password, salt);
   const user = await UserModel.create(data);
   return user.toJSON();
-}
-
-/**
- * Create users within transaction
- * @param {*} data
- * @returns
- */
-export async function getOrCreateUsersWithTransaction(data, session) {
-  const existingUsers = await UserModel.find({
-    email: data.map((item) => item.email),
-  }).lean();
-
-  const existingSet = new Set(existingUsers.map((p) => p.email));
-
-  const newUsers = data.filter((p) => !existingSet.has(p.email));
-
-  if (newUsers.length > 0) {
-    const created = await UserModel.insertMany(
-      newUsers.map((item) => ({ ...item, password: hashSync(item.password, genSaltSync()) })),
-      { session },
-    );
-    return [...existingUsers, ...created];
-  }
-
-  return existingUsers;
 }
 
 /**
@@ -60,7 +56,9 @@ export async function getAndCountUsersService(filters, skip, limit, sortBy, sort
     ...extendQueryOptionsWithSort(sortBy, sortOrder),
   };
 
-  const list = await UserModel.find(filters, USER_SELECTED_FIELDS, queryOptions).lean();
+  const list = await UserModel.find(filters, USER_SELECTED_FIELDS, queryOptions)
+    .populate({ path: 'role', select: ROLE_SELECTED_FIELDS })
+    .lean();
 
   return [totalCount, list];
 }
@@ -143,10 +141,9 @@ export async function updateUserInfoByIdService(id, data) {
     .lean();
 }
 
-export async function checkUserHasPermissionByMethodAndEndpointService(id, { method, endpoint }) {
+export async function checkUserHasPermissionService(id, method, endpoint) {
   const user = await UserModel.findById(id)
-    .lean()
-    .select('role')
+    .select('role permissions')
     .populate({
       path: 'role',
       select: 'permissions',
@@ -164,7 +161,8 @@ export async function checkUserHasPermissionByMethodAndEndpointService(id, { met
         method,
         endpoint,
       },
-    });
+    })
+    .lean();
 
   return Boolean(user?.role?.permissions?.length > 0 || user?.permissions.length > 0);
 }

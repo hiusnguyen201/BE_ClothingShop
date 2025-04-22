@@ -20,4 +20,6 @@ export const USER_SELECTED_FIELDS = {
   role: true,
   verifiedAt: true,
   lastLoginAt: true,
+  createdAt: true,
+  updatedAt: true,
 };

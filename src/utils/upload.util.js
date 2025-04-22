@@ -1,4 +1,3 @@
-'use strict';
 import { Code } from '#src/core/code/Code';
 import { ALLOW_IMAGE_MIME_TYPES, MAX_UPLOAD_FILE_SIZE } from '#src/core/constant';
 import { HttpException } from '#src/core/exception/http-exception';
@@ -34,7 +33,7 @@ export class UploadUtils {
                 overrideMessage: `File too large! Maximum size is ${MAX_UPLOAD_FILE_SIZE / (1024 * 1024)}MB`,
               }),
             );
-          case 'LIMIT_FILE_SIZE':
+          case 'LIMIT_FILE_COUNT':
             return next(
               HttpException.new({
                 code: Code.TOO_MANY_FILES,

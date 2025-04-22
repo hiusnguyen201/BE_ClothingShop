@@ -1,23 +1,29 @@
-'use strict';
 import { getAndCountPermissionsService } from '#src/app/permissions/permissions.service';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { PermissionDto } from '#src/app/permissions/dtos/permission.dto';
+import { GetListPermissionDto } from '#src/app/permissions/dtos/get-list-permission.dto';
+import { validateSchema } from '#src/core/validations/request.validation';
 
 export const getAllPermissionsController = async (req) => {
-  const { keyword = '', page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+  const adapter = await validateSchema(GetListPermissionDto, req.query);
 
   const searchFields = ['name', 'description', 'module'];
   const filters = {
     $or: searchFields.map((field) => ({
-      [field]: { $regex: keyword, $options: 'i' },
+      [field]: { $regex: adapter.keyword, $options: 'i' },
     })),
   };
 
-  const skip = (page - 1) * limit;
-  const [totalCount, permissions] = await getAndCountPermissionsService(filters, skip, limit, sortBy, sortOrder);
+  const skip = (adapter.page - 1) * adapter.limit;
+  const [totalCount, permissions] = await getAndCountPermissionsService(
+    filters,
+    skip,
+    adapter.limit,
+    adapter.sortBy,
+    adapter.sortOrder,
+  );
 
   const permissionDto = ModelDto.newList(PermissionDto, permissions);
-
   return ApiResponse.success({ totalCount, list: permissionDto }, 'Get all permissions successful');
 };

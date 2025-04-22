@@ -157,7 +157,7 @@ break
 
 ' Step 4
 group Validation Flow
-    JwtAuthMiddleware -> RequestValidation: validateBody(createOrderDto)
+    JwtAuthMiddleware -> RequestValidation: validateSchema(createOrderDto)
     deactivate JwtAuthMiddleware
     activate RequestValidation
     

@@ -1,4 +1,3 @@
-'use strict';
 import { rateLimit } from 'express-rate-limit';
 import { HttpException } from '#src/core/exception/http-exception';
 import { Code } from '#src/core/code/Code';

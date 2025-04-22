@@ -4,26 +4,21 @@ import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#s
 import { PERMISSION_SELECTED_FIELDS } from '#src/app/permissions/permissions.constant';
 
 /**
- * Get or create list permission
+ * New permission instance
  * @param {*} data
  * @returns
  */
-export async function getOrCreateListPermissionServiceWithTransaction(data = [], session) {
-  const existingPermissions = await PermissionModel.find({
-    endpoint: { $in: data.map((p) => p.endpoint) },
-    method: { $in: data.map((p) => p.method) },
-  }).lean();
+export function newPermissionService(data) {
+  return new PermissionModel(data);
+}
 
-  const existingSet = new Set(existingPermissions.map((p) => `${p.method} ${p.endpoint}`));
-
-  const newPermissions = data.filter((p) => !existingSet.has(`${p.method} ${p.endpoint}`));
-
-  if (newPermissions.length > 0) {
-    const created = await PermissionModel.insertMany(newPermissions, { session });
-    return [...existingPermissions, ...created];
-  }
-
-  return existingPermissions;
+/**
+ * Save list permission
+ * @param {*} data
+ * @returns
+ */
+export async function saveListPermissionsService(data = [], session) {
+  return await PermissionModel.bulkSave(data, { session, ordered: true });
 }
 
 /**

@@ -152,7 +152,7 @@ break
 
 ' Step 4
 group Validation Flow
-    JwtAuthMiddleware -> RequestValidation: validateQuery(GetListOrderDto)
+    JwtAuthMiddleware -> RequestValidation: validateSchema(GetListOrderDto)
     deactivate JwtAuthMiddleware
     activate RequestValidation
         alt validation error

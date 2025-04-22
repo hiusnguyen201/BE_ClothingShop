@@ -1,193 +1,63 @@
 @startuml View User Profile
 
 actor Client
-
-box "Application Layer"
-participant AccountRouter 
-participant ErrorMiddleware 
-participant AsyncHandler 
-end box
-
-box "Authentication"
-participant JwtAuthMiddleware 
-participant CookieUtil
-participant AuthService
-participant jsonwebtoken
-end box
-
-
-box "Business Logic"
 participant AccountController
 participant ModelDto
-participant ApiResponse
-participant UsersService
+participant RequestValidation
+participant AuthService
 participant UserModel
-end box
-
 database MongoDB
 
-' Step 1
-group Request Initialization
-    Client -> AccountRouter: GET /api/account/view-profile
-    activate Client
-    activate AccountRouter
-    AccountRouter -> AsyncHandler: asyncHandler(getProfileController)
-    activate AsyncHandler
-end
+activate Client
+Client -> AccountController: GET /api/account/view-profile
+activate AccountController
 
-break
-break
-
-' Step 2
 group Authentication Flow
-    AsyncHandler -> JwtAuthMiddleware: isAuthorized
-    activate JwtAuthMiddleware
-
-    JwtAuthMiddleware -> JwtAuthMiddleware: extract token
-    alt token not provided
-        JwtAuthMiddleware -> CookieUtil: clearSession(res)
-        activate CookieUtil
-        CookieUtil -->> JwtAuthMiddleware: return void
-        deactivate CookieUtil
-        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
-        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
-        deactivate ErrorMiddleware
-    end 
-
-    JwtAuthMiddleware -> AuthService: verifyTokenService(token)
+    AccountController -> AuthService: validateAuthToken(token)
     activate AuthService
-    AuthService -> jsonwebtoken: verify(token, SECRET)
-    activate jsonwebtoken
-    alt token invalid
-        jsonwebtoken --x AuthService: throw Error
-        AuthService -->> JwtAuthMiddleware: catch Error and return null
-        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
-        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
-        deactivate ErrorMiddleware
+    
+    alt invalid token
+        AuthService --x AuthService: throw HttpException(401)
+        AuthService --x AccountController: throw HttpException(401)
+        AccountController -->> Client: HTTP 401 Unauthorized
     end
 
-    jsonwebtoken -->> AuthService: return data decoded
-    deactivate jsonwebtoken
-    AuthService -->> JwtAuthMiddleware: return data decoded
+    AuthService -> AccountController: return userData
     deactivate AuthService
-    JwtAuthMiddleware -> UsersService: getUserByIdService(decoded.id)
-    activate UsersService
-    UsersService -> UserModel: findOne(filters)
-    activate UserModel
-    UserModel -> MongoDB: query select
-    activate MongoDB
-
-    alt user not found
-        MongoDB -->> UserModel: return null
-        UserModel -->> UsersService: return null
-        UsersService -->> JwtAuthMiddleware: return null
-        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
-        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
-        deactivate ErrorMiddleware
-    end
-
-    MongoDB -->> UserModel: return user
-    deactivate MongoDB
-    UserModel -->> UsersService: return user
-    deactivate UserModel
-    UsersService -->> JwtAuthMiddleware: return user
-    deactivate UsersService
-
-    alt unverified account
-        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(403))
-        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 403 Forbidden
-        deactivate ErrorMiddleware
-    end
 end
 
-break
-break
-
-
-' Step 3
 group Business Logic Flow
-    JwtAuthMiddleware -> AccountController: getProfileController
-    deactivate JwtAuthMiddleware
-    activate AccountController
-    AccountController -> UsersService: getUserByIdService(userId)
-    activate UsersService
-
-    alt userId not provided
-        UsersService -->> AccountController: return null
-        AccountController --x AccountController: throw(HttpException(400))
-        AccountController --x AsyncHandler: catch HttpException and next(HttpException(400))
-        AsyncHandler ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
-    end
-
-    UsersService -> UserModel: findOne(filters)
+    AccountController -> UserModel: findById(userId)
     activate UserModel
     UserModel -> MongoDB: query select
     activate MongoDB
 
-    alt select fail 
+    alt query fail
         MongoDB --x UserModel: throw Error
-        UserModel --x UsersService: throw Error
-        UsersService --x AccountController: throw Error
-        AccountController --x AsyncHandler: catch Error and next(Error)
-        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
-
+        UserModel --x AccountController: throw Error
+        AccountController -->> Client: HTTP 500 Server Error
     else user not found
         MongoDB -->> UserModel: return null
-        UserModel -->> UsersService: return null
-        UsersService -->> AccountController: return null
-        AccountController --x AccountController: throw(HttpException(404))
-        AccountController --x AsyncHandler: catch HttpException and next(HttpException(404))
-        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 404 Not Found
-        deactivate ErrorMiddleware
+        UserModel -->> AccountController: return null
+        AccountController -->> Client: HTTP 404 Not Found
     end
 
     MongoDB -->> UserModel: return user
     deactivate MongoDB
-    UserModel -->> UsersService: return user
+    UserModel -->> AccountController: return user
     deactivate UserModel
-    UsersService -->> AccountController: return user
-    deactivate UsersService
-
-    
 end
-break 
-break 
 
-group Transform data response
-    AccountController -> ModelDto: new(UserDto, user)
+group Transform data
+    AccountController -> ModelDto: new(UserDto)
     activate ModelDto
-    ModelDto -->> AccountController: return UserDto instance
+    ModelDto -> AccountController: return userDto
     deactivate ModelDto
 
-    AccountController -> ApiResponse: success(UserDto, success message)
-    activate ApiResponse
-    ApiResponse -->> AccountController: return ApiResponse instance
-    deactivate ApiResponse 
+    AccountController --> Client: HTTP 200 Success
+    deactivate AccountController
 end
-    
-AccountController -->> AsyncHandler: return ApiResponse instance
-deactivate AccountController
-AsyncHandler --> Client: HTTP 200 Success
-deactivate AsyncHandler
-deactivate AccountRouter
 
-
-
+deactivate Client
 
 @enduml

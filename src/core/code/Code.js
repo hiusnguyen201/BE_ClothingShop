@@ -149,6 +149,12 @@ export class Code {
     message: 'Send mail error',
   };
 
+  static SERVICE_UNAVAILABLE = {
+    status: 503,
+    codeMessage: 'SERVICE_UNAVAILABLE',
+    message: 'Service unavailable',
+  };
+
   static FILE_STORAGE_ERROR = {
     status: 503,
     codeMessage: 'FILE_STORAGE_ERROR',

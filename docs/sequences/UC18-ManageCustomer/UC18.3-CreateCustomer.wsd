@@ -149,7 +149,7 @@ break
 
 ' Step 4
 group Validation Flow
-    JwtAuthMiddleware -> RequestValidation: validateBody(CreateCustomerDto)
+    JwtAuthMiddleware -> RequestValidation: validateSchema(CreateCustomerDto)
     deactivate JwtAuthMiddleware
     activate RequestValidation
     alt validation error

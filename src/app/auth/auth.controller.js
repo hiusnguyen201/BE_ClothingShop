@@ -1,4 +1,3 @@
-'use strict';
 import path from 'path';
 import {
   createUserService,
@@ -34,6 +33,11 @@ import { UserDto } from '#src/app/users/dtos/user.dto';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { clearSession, REFRESH_TOKEN_KEY, setSession } from '#src/utils/cookie.util';
 import { CustomerDto } from '#src/app/customers/dtos/customer.dto';
+import { validateSchema } from '#src/core/validations/request.validation';
+import { RegisterDto } from '#src/app/auth/dtos/register.dto';
+import { LoginDto } from '#src/app/auth/dtos/login.dto';
+import { VerifyOtpDto, SendOtpViaEmailDto } from '#src/app/auth/dtos/two-factor.dto';
+import { ForgotPasswordDto, ResetPasswordDto } from '#src/app/auth/dtos/forgot-password.dto';
 
 export const logoutController = async (req, res) => {
   const userId = req.user.id;
@@ -68,17 +72,13 @@ export const refreshTokenController = async (req, res) => {
   return ApiResponse.success(userDto, 'Refresh token successful');
 };
 
-export const loginAdminController = async (req, res) => {
-  const { email, password } = req.body;
+export const loginAdminController = async (req) => {
+  const adapter = await validateSchema(LoginDto, req.body);
 
-  const user = await authenticateUserService(email, password);
+  const user = await authenticateUserService(adapter.email, adapter.password);
   if (!user) {
     throw HttpException.new({ code: Code.UNAUTHORIZED, overrideMessage: 'Invalid Credentials' });
   }
-
-  const { accessToken, refreshToken } = await generateTokensService(user._id, { id: user._id });
-
-  setSession(res, { accessToken, refreshToken });
 
   const userDto = ModelDto.new(UserDto, user);
 
@@ -93,9 +93,9 @@ export const loginAdminController = async (req, res) => {
 };
 
 export const loginCustomerController = async (req, res) => {
-  const { email, password } = req.body;
+  const adapter = await validateSchema(LoginDto, req.body);
 
-  const customer = await authenticateCustomerService(email, password);
+  const customer = await authenticateCustomerService(adapter.email, adapter.password);
   if (!customer) {
     throw HttpException.new({ code: Code.UNAUTHORIZED, overrideMessage: 'Invalid Credentials' });
   }
@@ -125,15 +125,15 @@ export const loginCustomerController = async (req, res) => {
 };
 
 export const registerController = async (req) => {
-  const { email } = req.body;
+  const adapter = await validateSchema(RegisterDto, req.body);
 
-  const isExistEmail = await checkExistEmailService(email);
+  const isExistEmail = await checkExistEmailService(adapter.email);
   if (isExistEmail) {
     throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Email already exist' });
   }
 
   const customer = await createUserService({
-    ...req.body,
+    ...adapter,
     type: USER_TYPE.CUSTOMER,
   });
 
@@ -146,16 +146,17 @@ export const registerController = async (req) => {
 };
 
 export const forgotPasswordController = async (req) => {
-  const { email, callbackUrl } = req.body;
-  const user = await getUserByIdService(email, { type: USER_TYPE.CUSTOMER });
+  const adapter = await validateSchema(ForgotPasswordDto, req.body);
+
+  const user = await getUserByIdService(adapter.email, { type: USER_TYPE.CUSTOMER });
   if (!user) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'User not found' });
   }
 
   const token = createResetPasswordTokenService({ id: user._id });
 
-  const resetURL = path.join(callbackUrl, token);
-  const result = await sendResetPasswordRequestService(email, resetURL);
+  const resetURL = path.join(adapter.callbackUrl, token);
+  const result = await sendResetPasswordRequestService(user.email, resetURL);
   if (!result) {
     throw HttpException.new({ code: Code.SEND_MAIL_ERROR, overrideMessage: 'Send link reset password failed' });
   }
@@ -164,9 +165,9 @@ export const forgotPasswordController = async (req) => {
 };
 
 export const resetPasswordController = async (req) => {
-  const { token } = req.params;
+  const adapter = await validateSchema(ResetPasswordDto, req.params);
 
-  const decoded = await verifyTokenService(token);
+  const decoded = await verifyTokenService(adapter.token);
   if (!decoded) {
     throw HttpException.new({ code: Code.UNAUTHORIZED, overrideMessage: 'Invalid or expired token' });
   }
@@ -179,8 +180,9 @@ export const resetPasswordController = async (req) => {
 };
 
 export const sendOtpViaEmailController = async (req) => {
-  const { email } = req.body;
-  const user = await getUserByIdService(email);
+  const adapter = await validateSchema(SendOtpViaEmailDto, req.body);
+
+  const user = await getUserByIdService(adapter.email);
   if (!user) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'User not found' });
   }
@@ -206,13 +208,14 @@ export const sendOtpViaEmailController = async (req) => {
 };
 
 export const verifyOtpController = async (req, res) => {
-  const { userId, otp } = req.body;
-  const user = await getUserByIdService(userId);
+  const adapter = await validateSchema(VerifyOtpDto, req.body);
+
+  const user = await getUserByIdService(adapter.userId);
   if (!user) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'User not found' });
   }
 
-  const userOtp = await getValidUserOtpInUserService(user._id, otp);
+  const userOtp = await getValidUserOtpInUserService(user._id, adapter.otp);
   if (!userOtp) {
     throw HttpException.new({ code: Code.UNAUTHORIZED, overrideMessage: 'Invalid or expired otp' });
   }
@@ -223,7 +226,7 @@ export const verifyOtpController = async (req, res) => {
   }
 
   // Otp valid then remove it
-  await removeUserOtpsInUserService(userId);
+  await removeUserOtpsInUserService(user._id);
 
   const { accessToken, refreshToken } = await generateTokensService(user._id, {
     id: user._id,

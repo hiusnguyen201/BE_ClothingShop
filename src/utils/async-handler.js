@@ -1,4 +1,3 @@
-'use strict';
 import express from 'express';
 import HttpStatus from 'http-status-codes';
 

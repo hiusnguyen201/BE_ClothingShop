@@ -2,7 +2,7 @@ import SoftDelete from '#src/core/plugins/soft-delete.plugin';
 import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
-const CATEGORY_MODEL = 'categories';
+export const CATEGORY_MODEL = 'categories';
 
 const CategorySchema = new Schema(
   {
@@ -31,7 +31,7 @@ const CategorySchema = new Schema(
     },
 
     // Foreign key
-    parent: { type: Schema.Types.ObjectId, ref: 'Category' },
+    parent: { type: Schema.Types.ObjectId, ref: 'Category', default: null },
   },
   {
     versionKey: false,

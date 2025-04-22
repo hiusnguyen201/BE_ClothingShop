@@ -3,6 +3,7 @@ import { replaceMultiSpacesToSingleSpace } from '#src/utils/string.util';
 import { GENDER } from '#src/app/users/users.constant';
 
 export const UpdateCustomerDto = Joi.object({
+  customerId: Joi.string().required(),
   name: Joi.string()
     .required()
     .min(3)

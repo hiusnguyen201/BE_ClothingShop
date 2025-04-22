@@ -1,4 +1,3 @@
-'use strict';
 import express from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
@@ -18,11 +17,12 @@ import { handleTimeout } from '#src/middlewares/timeout.middleware';
 // Connect to Database
 Database.getInstance({
   type: 'mongodb',
-  logging: process.env.NODE_ENV === 'development',
+  logging: false,
   timezone: 'Asia/Ho_Chi_Minh',
 });
 
 const app = express();
+
 app.use(helmet());
 app.use(compression());
 app.use(

@@ -200,7 +200,7 @@ break
 
 ' Step 5
 group Validation Flow
-    UploadUtil -> RequestValidation: validateParams(GetCategoryDto)
+    UploadUtil -> RequestValidation: validateSchema(GetCategoryDto)
     deactivate UploadUtil
     activate RequestValidation
     alt validation error
@@ -210,7 +210,7 @@ group Validation Flow
         ErrorMiddleware -->> Client: HTTP 400 Bad Request
         deactivate ErrorMiddleware
     end
-    RequestValidation -> RequestValidation: validateBody(UpdateCategoryDto)
+    RequestValidation -> RequestValidation: validateSchema(UpdateCategoryDto)
     alt validation error
         RequestValidation ->> RequestValidation: next(HttpException(400))
         RequestValidation ->> ErrorMiddleware: handleError(Error)

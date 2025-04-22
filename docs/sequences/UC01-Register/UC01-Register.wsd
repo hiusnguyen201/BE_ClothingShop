@@ -1,102 +1,62 @@
 @startuml Register
 
 actor Client
-
-box "Application Layer"
-participant AuthRouter 
-participant ErrorMiddleware 
-participant AsyncHandler 
-end box
-
-box "Validation"
-participant RequestValidation
-end box
-
-box "Business Logic"
 participant AuthController
-participant ApiResponse
+participant ModelDto
+participant RequestValidation
 participant UsersService
 participant UserModel
-participant ModelDto
-end box
-
 database MongoDB
 
-' Step 1
-group Request Initialization
-    Client -> AuthRouter: POST /api/auth/register
-    activate Client
-    activate AuthRouter
-    AuthRouter -> AsyncHandler: asyncHandler(registerController)
-    activate AsyncHandler
-end
+activate Client
+Client -> AuthController: POST /api/auth/register
+activate AuthController
 
-break
-break
-
-
-' Step 2
 group Validation Flow
-    AsyncHandler -> RequestValidation: validateBody(RegisterDto)
+    AuthController -> RequestValidation: validateSchema(RegisterUserDto)
     activate RequestValidation
-    alt validation error
-        RequestValidation ->> RequestValidation: next(HttpException(400))
-        RequestValidation ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
-    end
     
+    alt validation error
+        RequestValidation --x RequestValidation: throw HttpException(400)
+        RequestValidation --x AuthController: throw HttpException(400)
+        AuthController -->> Client: HTTP 400 Bad Request
+    end
+
+    RequestValidation -> AuthController: return valid data
+    deactivate RequestValidation
 end
 
-break
-break
-
-
-' step 3
 group Business Logic Flow
-    RequestValidation -> AuthController: registerController
-    deactivate RequestValidation
-    activate AuthController
     AuthController -> UsersService: checkExistEmailService(email)
     activate UsersService
-    UsersService -> UserModel: findOne()
+    UsersService -> UserModel: findOne({ email })
     activate UserModel
-    UserModel -> MongoDB: query select 
+    UserModel -> MongoDB: query select
     activate MongoDB
-    
-    alt query fail
-        MongoDB --x UserModel: throw Error
-        UserModel --x UsersService: throw Error
-        UsersService --x AuthController: throw Error
-        AuthController --x AsyncHandler: catch Error and next(Error)
-        AsyncHandler ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
-    else email already exists
+
+    alt email exists
         MongoDB -->> UserModel: return user
         UserModel -->> UsersService: return user
         UsersService -->> AuthController: return user
-        AuthController --x AuthController: throw(HttpException(400))
-        AuthController --x AsyncHandler: catch HttpException and next(HttpException(400))
-        AsyncHandler ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
+        AuthController -->> Client: HTTP 400 Bad Request
+    else query fail
+        MongoDB --x UserModel: throw Error
+        UserModel --x UsersService: throw Error
+        UsersService --x AuthController: throw Error
+        AuthController -->> Client: HTTP 500 Server Error
     end
-        
+
     MongoDB -->> UserModel: return null
     deactivate MongoDB
     UserModel -->> UsersService: return null
     deactivate UserModel
     UsersService -->> AuthController: return null
     deactivate UsersService
-    AuthController -> UsersService: createUserService()
+
+    AuthController -> UsersService: createUserService(registerDto)
     activate UsersService
-    UsersService -> UsersService: genSaltSync()
-    UsersService -> UsersService: hashSync(password, salt)
-    UsersService -> UserModel: create()
+    UsersService -> UsersService: hashPassword(password)
+    UsersService -> UserModel: create(userData)
     activate UserModel
     UserModel -> MongoDB: query create
     activate MongoDB
@@ -105,41 +65,27 @@ group Business Logic Flow
         MongoDB --x UserModel: throw Error
         UserModel --x UsersService: throw Error
         UsersService --x AuthController: throw Error
-        AuthController --x AsyncHandler: catch Error and next(Error)
-        AsyncHandler ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
+        AuthController -->> Client: HTTP 500 Server Error
     end
 
-    MongoDB -->> UserModel: return user
+    MongoDB -->> UserModel: return newUser
     deactivate MongoDB
-    UserModel -->> UsersService: return user
+    UserModel -->> UsersService: return newUser
     deactivate UserModel
-    UsersService -> UsersService: toJSON()
-    UsersService -->> AuthController: return user
+    UsersService -->> AuthController: return newUser
     deactivate UsersService
-   
-end   
-break 
-break
+end
 
-group Transform data response
-    AuthController -> ModelDto: new(UserDto, customer)
+group Transform data
+    AuthController -> ModelDto: new(UserDto)
     activate ModelDto
-    ModelDto -->> AuthController: return UserDto instance
+    ModelDto -> AuthController: return userDto
     deactivate ModelDto
 
-    AuthController -> ApiResponse: success(UserDto, success message)
-    activate ApiResponse
-    ApiResponse -->> AuthController: return ApiResponse instance
-    deactivate ApiResponse 
+    AuthController --> Client: HTTP 200 Success
+    deactivate AuthController
 end
-AuthController -->> AsyncHandler: return ApiResponse instance
-deactivate AuthController
-AsyncHandler --> Client: HTTP 200 Success
-deactivate AsyncHandler
-deactivate AuthRouter
 
+deactivate Client
 
 @enduml

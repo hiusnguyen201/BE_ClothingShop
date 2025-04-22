@@ -6,12 +6,30 @@ import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#s
 import { CATEGORY_SELECTED_FIELDS } from '#src/app/categories/categories.constant';
 
 /**
- * Create category instance
+ * New category instance
  * @param {object} data
  * @returns
  */
-export async function createCategoryService(data) {
-  return CategoryModel.create({ ...data, slug: makeSlug(data.name) });
+export function newCategoryService(data) {
+  return new CategoryModel({ ...data, slug: makeSlug(data.name) });
+}
+
+/**
+ * Save category
+ * @param {CategoryModel} categoryDoc
+ * @returns
+ */
+export async function saveCategoryService(categoryDoc) {
+  return categoryDoc.save();
+}
+
+/**
+ * Insert list category
+ * @param {object} data
+ * @returns
+ */
+export async function insertCategoriesService(data, session) {
+  return await CategoryModel.insertMany(data, { session, ordered: true });
 }
 
 /**
@@ -23,17 +41,57 @@ export async function createCategoryService(data) {
  * @param {string} sortOrder
  * @returns
  */
-export async function getAndCountCategoriesService(filters, skip, limit, sortBy, sortOrder) {
-  const totalCount = await CategoryModel.countDocuments(filters);
-
+export async function getAndCountCategoriesService(parentId = null, filters, skip, limit, sortBy, sortOrder) {
   const queryOptions = {
     ...extendQueryOptionsWithPagination(skip, limit),
     ...extendQueryOptionsWithSort(sortBy, sortOrder),
   };
 
-  const list = await CategoryModel.find(filters, CATEGORY_SELECTED_FIELDS, queryOptions).lean();
+  // Get List
+  const list = await CategoryModel.aggregate([
+    { $match: { parent: parentId } },
+    {
+      $lookup: {
+        from: 'categories',
+        localField: '_id',
+        foreignField: 'parent',
+        as: 'children',
+        pipeline: [{ $match: filters }],
+      },
+    },
+    { $match: { $or: [filters, { 'children.0': { $exists: true } }] } },
+    { $project: { ...CATEGORY_SELECTED_FIELDS, children: CATEGORY_SELECTED_FIELDS } },
+  ])
+    .skip(queryOptions.skip)
+    .limit(queryOptions.limit)
+    .sort(queryOptions.sort);
 
-  return [totalCount, list];
+  // Count
+  const category = await CategoryModel.aggregate([
+    { $match: { parent: parentId } },
+    {
+      $lookup: {
+        from: 'categories',
+        localField: '_id',
+        foreignField: 'parent',
+        as: 'children',
+        pipeline: [{ $match: filters }],
+      },
+    },
+    { $match: { $or: [filters, { 'children.0': { $exists: true } }] } },
+    { $count: 'totalCount' },
+  ]);
+
+  return [category.length > 0 ? category[0]?.totalCount : 0, list];
+}
+
+/**
+ * Count subcategories in parent
+ * @param {*} parentId
+ * @returns
+ */
+export async function countSubcategoriesService(parentId) {
+  return CategoryModel.countDocuments({ parent: parentId });
 }
 
 /**
@@ -84,7 +142,7 @@ export async function removeCategoryByIdService(id) {
 }
 
 /**
- * Check is exist permission name
+ * Check is exist category name
  * @param {*} name
  * @param {*} skipId
  * @returns

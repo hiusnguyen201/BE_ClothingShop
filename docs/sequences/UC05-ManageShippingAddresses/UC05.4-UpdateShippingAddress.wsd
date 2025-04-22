@@ -154,7 +154,7 @@ break
 
 ' Step 4
 group Validation Flow
-    JwtAuthMiddleware -> RequestValidation: validateBody(updateShippingAddressDto)
+    JwtAuthMiddleware -> RequestValidation: validateSchema(updateShippingAddressDto)
     deactivate JwtAuthMiddleware
     activate RequestValidation
         alt validation error

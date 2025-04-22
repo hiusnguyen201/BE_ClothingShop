@@ -3,6 +3,7 @@ export const ALLOW_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD'];
 export const ALLOW_IMAGE_MIME_TYPES = [
   'image/jpeg', // .jpeg .jpg - JPEG images
   'image/png', // ..png      - Portable Network Graphics
+  'image/webp', // ..webp
 ];
 
 export const MAX_UPLOAD_FILE_SIZE = 1024 * 1024 * 1;
@@ -17,4 +18,5 @@ export const REGEX_PATTERNS = {
   BEARER_TOKEN: /^Bearer ((?:\.?(?:[A-Za-z0-9-_]+)){3})$/,
   COMMA_SEPARATED_LIST: /^[a-zA-Z0-9,]+$/,
   IMAGE_URL: /\.(jpg|jpeg|png)$/i,
+  STRING_NUMBER: /^\d+$/,
 };
