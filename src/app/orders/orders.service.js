@@ -250,7 +250,7 @@ export async function updateOrderByIdService(id, data, session) {
  * @returns
  */
 export async function removeOrderByIdService(id, session) {
-  return await OrderModel.deleteOne({ _id: id }, { session });
+  return await OrderModel.findByIdAndSoftDelete(id, { session }).select('_id');
 }
 
 /**
