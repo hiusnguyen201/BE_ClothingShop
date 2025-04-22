@@ -110,7 +110,7 @@ export const loginCustomerController = async (req, res) => {
     });
   }
 
-  const { accessToken, refreshToken } = await generateTokensService(customer._id, { id: customer._id });
+  const { accessToken, refreshToken } = await generateTokensService(customer._id, { id: customer._id, type: customer.type });
 
   setSession(res, { accessToken, refreshToken });
 

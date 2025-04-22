@@ -11,7 +11,6 @@ export async function addToCartService(customerId, product) {
     const productData = {
         productId: product.productId,
         productVariantId: product.productVariantId,
-        name: product.name,
         quantity: product.quantity,
     };
 

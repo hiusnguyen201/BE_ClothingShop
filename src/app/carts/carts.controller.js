@@ -29,7 +29,6 @@ export const addToCartController = async (req) => {
   const productData = {
     productId: productVariant.product._id,
     productVariantId: productVariant._id,
-    name: productVariant.product.name,
     quantity: adapter.quantity,
   };
   await addToCartService(req.user.id, productData);
@@ -43,7 +42,17 @@ export const addToCartController = async (req) => {
 
 export const getCartController = async (req) => {
   const carts = await getCartService(req.user.id);
-  return ApiResponse.success(carts);
+  const cartPopulate = await Promise.all(
+    carts.map(async (cart) => {
+      const productVariant = await getProductVariantByIdService(cart.productVariantId, "price product quantity sku sold variantValues");
+      return {
+        productVariant: productVariant,
+        quantity: cart.quantity,
+      };
+    }),
+  );
+
+  return ApiResponse.success(cartPopulate);
 };
 
 export const removeFromCartController = async (req) => {
