@@ -117,15 +117,15 @@ export const getWardsByDistrictIdService = async (districtId) => {
 
 export const getProvinceService = async (provinceId) => {
   const response = await ghnAPI.get('/master-data/province');
-  return response.data.data.find((item) => item.ProvinceID === provinceId);
+  return response.data.data.find((item) => item.ProvinceID == provinceId);
 };
 
 export const getDistrictService = async (districtId, provinceId) => {
   const response = await ghnAPI.get('/master-data/district', { params: { province_id: provinceId } });
-  return response.data.data.find((item) => item.DistrictID === districtId);
+  return response.data.data.find((item) => item.DistrictID == districtId);
 };
 
 export const getWardService = async (wardId, districtId) => {
   const response = await ghnAPI.get('/master-data/ward', { params: { district_id: districtId } });
-  return response.data.data.find((item) => item.WardCode === wardId);
+  return response.data.data.find((item) => item.WardCode == wardId);
 };
