@@ -30,7 +30,7 @@ export const createCustomerController = async (req) => {
 
   const password = randomStr(32);
   const customer = await createUserService({
-    ...req.body,
+    ...adapter,
     password,
     type: USER_TYPE.CUSTOMER,
   });
@@ -92,7 +92,7 @@ export const updateCustomerByIdController = async (req) => {
     throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Email already exist' });
   }
 
-  const updatedCustomer = await updateUserInfoByIdService(existCustomer._id, req.body);
+  const updatedCustomer = await updateUserInfoByIdService(existCustomer._id, adapter);
 
   const customerDto = ModelDto.new(CustomerDto, updatedCustomer);
   return ApiResponse.success(customerDto, 'Update customer successful');

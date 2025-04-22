@@ -10,4 +10,5 @@ export const UserDto = Joi.object({
   role: Joi.any(),
   verifiedAt: Joi.date().allow(null),
   lastLoginAt: Joi.date().allow(null),
+  permissions: Joi.any().optional(),
 });

@@ -43,7 +43,7 @@ export async function createProductsService(data, session) {
  * @returns
  */
 export async function insertProductsService(data, session) {
-  return await ProductModel.insertMany(data, { session, ordered: true });
+  return await ProductModel.bulkSave(data, { session, ordered: true });
 }
 
 /**

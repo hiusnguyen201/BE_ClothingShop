@@ -95,7 +95,7 @@ export const updateRoleByIdController = async (req) => {
     throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Role name already exist' });
   }
 
-  const updatedRole = await updateRoleInfoByIdService(existRole._id, req.body);
+  const updatedRole = await updateRoleInfoByIdService(existRole._id, adapter);
 
   const roleDto = ModelDto.new(RoleDto, updatedRole);
   return ApiResponse.success(roleDto, 'Edit role successful');

@@ -1,6 +1,7 @@
 import Joi from 'joi';
 import { replaceMultiSpacesToSingleSpace } from '#src/utils/string.util';
 import { PRODUCT_STATUS } from '#src/app/products/products.constant';
+import sanitizeHtml from 'sanitize-html';
 
 export const UpdateProductInfoDto = Joi.object({
   productId: Joi.string().required(),
@@ -10,7 +11,9 @@ export const UpdateProductInfoDto = Joi.object({
     .max(100)
     .required()
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
-  description: Joi.string().required(),
+  description: Joi.string()
+    .required()
+    .custom((value) => sanitizeHtml(value)),
   category: Joi.string().required(),
   subCategory: Joi.string().allow(null),
   status: Joi.string()

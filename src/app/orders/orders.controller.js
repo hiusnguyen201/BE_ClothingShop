@@ -102,6 +102,7 @@ export async function getAllOrdersController(req) {
   const filters = {
     ...(adapter.customerId ? { customerId: adapter.customerId } : {}),
     ...(adapter.status ? { status: adapter.status } : {}),
+    keyword: adapter.keyword,
   };
 
   const skip = (adapter.page - 1) * adapter.limit;
@@ -118,7 +119,7 @@ export async function getAllOrdersController(req) {
 }
 
 export async function getOrderByIdController(req) {
-  const adapter = await validateSchema(GetOrderDto, req.query);
+  const adapter = await validateSchema(GetOrderDto, req.params);
 
   const order = await getOrderByIdService(adapter.orderId);
   if (!order) {

@@ -17,7 +17,7 @@ export function newOptionValueService(data) {
  * @returns
  */
 export async function insertOptionValuesService(data, session) {
-  return await OptionValueModel.insertMany(data, { session, ordered: true });
+  return await OptionValueModel.bulkSave(data, { session, ordered: true });
 }
 
 /**
@@ -34,8 +34,8 @@ export function newOptionService(data) {
  * @param {*} data
  * @returns
  */
-export async function insertOptionsService(data, session) {
-  return await OptionModel.insertMany(data, { session, ordered: true });
+export async function insertOptionsService(data = [], session) {
+  return await OptionModel.bulkSave(data, { session, ordered: true });
 }
 
 /**

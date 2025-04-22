@@ -11,6 +11,15 @@ export const newPaymentService = (data) => {
 };
 
 /**
+ * Insert list payment
+ * @param {object} data
+ * @returns
+ */
+export async function insertPaymentService(data, session) {
+  return await PaymentModel.bulkSave(data, { session, ordered: true });
+}
+
+/**
  * Create payment
  * @param {*} data
  * @returns

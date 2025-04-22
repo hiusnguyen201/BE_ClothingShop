@@ -14,6 +14,12 @@ import { users } from '#src/database/data/users-data';
 import { products, variants } from '#src/database/data/products-data';
 import { insertProductsService } from '#src/app/products/products.service';
 import { insertProductVariantsService } from '#src/app/product-variants/product-variants.service';
+import { insertOrdersService } from '#src/app/orders/orders.service';
+import { orderDetails, orders, payments } from '#src/database/data/orders-data';
+import { insertOrderDetailsService } from '#src/app/order-details/order-details.service';
+import { insertPaymentService } from '#src/app/payments/payments.service';
+import { retryBulkWrite } from '#src/utils/bulk.util';
+import { delay } from 'bullmq';
 
 /**
  * Need fix MongoServerError: Transaction numbers are only allowed on a replica set member or mongos
@@ -34,53 +40,90 @@ Database.getInstance({ type: 'mongodb', logging: false });
 async function runSeed() {
   LogUtils.info('SEED_DATABASE', 'Start seed database');
 
-  await TransactionalServiceWrapper.execute(async (session) => {
-    // Permissions
-    LogUtils.info('PERMISSION', 'Start insert permissions');
-    await saveListPermissionsService(permissions, session);
-    LogUtils.success('PERMISSION', 'Insert permissions done');
+  try {
+    await TransactionalServiceWrapper.execute(async (session) => {
+      // Permissions
+      LogUtils.info('PERMISSION', 'Start insert permissions');
+      await saveListPermissionsService(permissions, session);
+      LogUtils.success('PERMISSION', 'Insert permissions done');
 
-    // Roles
-    LogUtils.info('ROLE', 'Start insert roles');
-    await insertRolesService(roles, session);
-    LogUtils.success('ROLE', 'Insert roles done');
+      await delay(1000);
 
-    // Users
-    LogUtils.info('USER', 'Start insert users');
-    await insertUsersService(users, session);
-    LogUtils.success('USER', 'Insert users done');
+      // Roles
+      LogUtils.info('ROLE', 'Start insert roles');
+      await insertRolesService(roles, session);
+      LogUtils.success('ROLE', 'Insert roles done');
 
-    // Option Values
-    LogUtils.info('OPTION_VALUE', 'Start insert option values');
-    await insertOptionValuesService(optionValues, session);
-    LogUtils.success('OPTION_VALUE', 'Insert option values done');
+      await delay(1000);
 
-    // Options
-    LogUtils.info('OPTION', 'Start insert options');
-    await insertOptionsService(options, session);
-    LogUtils.success('OPTION', 'Insert options done');
+      // Users
+      LogUtils.info('USER', 'Start insert users');
+      await insertUsersService(users, session);
+      LogUtils.success('USER', 'Insert users done');
 
-    // Categories
-    LogUtils.info('CATEGORY', 'Start insert categories');
-    await insertCategoriesService(categories, session);
-    LogUtils.success('CATEGORY', 'Insert categories done');
+      await delay(1000);
 
-    // Products
-    LogUtils.info('PRODUCT', 'Start insert products');
-    await insertProductsService(products, session);
-    LogUtils.success('PRODUCT', 'Insert products done');
+      // Option Values
+      LogUtils.info('OPTION_VALUE', 'Start insert option values');
+      await insertOptionValuesService(optionValues, session);
+      LogUtils.success('OPTION_VALUE', 'Insert option values done');
 
-    // Product Variants
-    LogUtils.info('PRODUCT_VARIANT', 'Start insert product variants');
-    await insertProductVariantsService(variants, session);
-    LogUtils.success('PRODUCT_VARIANT', 'Insert product variants done');
-  });
+      await delay(1000);
+
+      // Options
+      LogUtils.info('OPTION', 'Start insert options');
+      await insertOptionsService(options, session);
+      LogUtils.success('OPTION', 'Insert options done');
+
+      await delay(1000);
+
+      // Categories
+      LogUtils.info('CATEGORY', 'Start insert categories');
+      await insertCategoriesService(categories, session);
+      LogUtils.success('CATEGORY', 'Insert categories done');
+
+      await delay(1000);
+
+      // Products
+      LogUtils.info('PRODUCT', 'Start insert products');
+      await insertProductsService(products, session);
+      LogUtils.success('PRODUCT', 'Insert products done');
+
+      await delay(1000);
+
+      // Product Variants
+      LogUtils.info('PRODUCT_VARIANT', 'Start insert product variants');
+      await insertProductVariantsService(variants, session);
+      LogUtils.success('PRODUCT_VARIANT', 'Insert product variants done');
+
+      await delay(1000);
+
+      // // Order
+      LogUtils.info('ORDER', 'Start insert order');
+      await insertOrdersService(orders, session);
+      LogUtils.success('ORDER', 'Insert order done');
+
+      await delay(1000);
+
+      // Order Detail
+      LogUtils.info('ORDER_DETAILS', 'Start insert order detail');
+      await insertOrderDetailsService(orderDetails, session);
+      LogUtils.success('ORDER_DETAILS', 'Insert order detail done');
+
+      await delay(1000);
+
+      // Payment
+      LogUtils.info('PAYMENT', 'Start insert payment');
+      await insertPaymentService(payments, session);
+      LogUtils.success('PAYMENT', 'Insert payment done');
+    });
+  } catch (err) {
+    console.log(JSON.stringify(err, null, 2));
+  }
 
   LogUtils.info('SEED_DATABASE', 'Seed database successful');
 
   await Database.clear();
-
-  process.exit(0);
 }
 
 runSeed();

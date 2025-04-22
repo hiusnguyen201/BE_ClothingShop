@@ -118,7 +118,7 @@ export const updateUserByIdController = async (req) => {
     }
   }
 
-  const updatedUser = await updateUserInfoByIdService(existUser._id, { ...req.body, role: adapter.roleId });
+  const updatedUser = await updateUserInfoByIdService(existUser._id, { ...adapter, role: adapter.roleId });
 
   const userDto = ModelDto.new(UserDto, updatedUser);
   return ApiResponse.success(userDto);

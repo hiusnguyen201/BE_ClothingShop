@@ -52,6 +52,11 @@ async function checkCustomer(req, res, next) {
   return req.user?.type === USER_TYPE.CUSTOMER ? next() : next(HttpException.new({ code: Code.ACCESS_DENIED }));
 }
 
+async function checkUser(req, res, next) {
+  return req.user?.type === USER_TYPE.USER ? next() : next(HttpException.new({ code: Code.ACCESS_DENIED }));
+}
+
 export const isAuthorized = [authorized];
 export const isAuthorizedAndIsCustomer = [authorized, checkCustomer];
+export const isAuthorizedAndIsUser = [authorized, checkUser];
 export const isAuthorizedAndHasPermission = [authorized, checkPermission];

@@ -20,6 +20,15 @@ export function newOrderService(data) {
 }
 
 /**
+ * Insert list order
+ * @param {object} data
+ * @returns
+ */
+export async function insertOrdersService(data, session) {
+  return await OrderModel.bulkSave(data, { session, ordered: true });
+}
+
+/**
  * Save order
  * @param {*} data
  * @returns
@@ -49,7 +58,7 @@ export async function getOrderByIdService(id, selectedFields = ORDER_SELECTED_FI
   if (isValidObjectId(id)) {
     filters._id = id;
   } else {
-    filters.code = id;
+    filters.code = +id;
   }
 
   const order = await OrderModel.findOne(filters)
@@ -102,6 +111,19 @@ export async function countAllOrdersService(filters) {
  * @returns
  */
 export async function getAndCountOrdersService(filters, skip, limit, sortBy, sortOrder) {
+  const matchStage =
+    filters.keyword === ''
+      ? { code: { $ne: null } }
+      : {
+          $expr: {
+            $regexMatch: {
+              input: { $toString: '$code' },
+              regex: filters.keyword,
+              options: 'i',
+            },
+          },
+        };
+
   const totalCountResult = await OrderModel.aggregate([
     {
       $addFields: {
@@ -123,6 +145,9 @@ export async function getAndCountOrdersService(filters, skip, limit, sortBy, sor
   ]);
 
   const orders = await OrderModel.aggregate([
+    {
+      $match: matchStage,
+    },
     {
       $lookup: {
         from: ORDER_DETAIL_MODEL,
@@ -315,11 +340,11 @@ export async function getTodayOrderReportService() {
  * @returns
  */
 export async function getTodayRevenueReportService() {
-  const startOfToday = moment().startOf('day').toDate();
-  const endOfToday = moment().endOf('day').toDate();
+  const startOfToday = newDate().startOf('day').toDate();
+  const endOfToday = newDate().endOf('day').toDate();
 
-  const startOfYesterday = moment().subtract(1, 'day').startOf('day').toDate();
-  const endOfYesterday = moment().subtract(1, 'day').endOf('day').toDate();
+  const startOfYesterday = newDate().subtract(1, 'day').startOf('day').toDate();
+  const endOfYesterday = newDate().subtract(1, 'day').endOf('day').toDate();
 
   const todayStats = await OrderModel.aggregate([
     {
@@ -397,7 +422,7 @@ export async function getTodayRevenueReportService() {
       : 0;
 
   return {
-    totalRevenueOverall: revenue[0]?.totalRevenue[0] || 0,
+    totalRevenueOverall: revenue[0]?.totalRevenue || 0,
     todayTotalRevenue: todayStats[0]?.totalRevenue || 0,
     yesterdayTotalRevenue: yesterdayStats[0]?.totalRevenue || 0,
     percentage: totalRevenuePercentage.toFixed(1),

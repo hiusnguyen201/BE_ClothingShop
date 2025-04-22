@@ -47,7 +47,7 @@ export async function createProductVariantsService(data, session) {
  * @returns
  */
 export async function insertProductVariantsService(data, session) {
-  return await ProductVariantModel.insertMany(data, { session, ordered: true });
+  return await ProductVariantModel.bulkSave(data, { session, ordered: true });
 }
 
 /**

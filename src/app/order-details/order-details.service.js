@@ -10,6 +10,15 @@ export function newOrderDetailService(data) {
 }
 
 /**
+ * Insert list order details
+ * @param {object} data
+ * @returns
+ */
+export async function insertOrderDetailsService(data, session) {
+  return await OrderDetailModel.bulkSave(data, { session, ordered: true });
+}
+
+/**
  * Create order detail
  * @param {*} data
  * @returns

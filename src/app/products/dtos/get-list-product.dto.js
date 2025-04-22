@@ -1,12 +1,13 @@
 import Joi from 'joi';
 import { replaceMultiSpacesToSingleSpace } from '#src/utils/string.util';
 import { PRODUCT_STATUS } from '#src/app/products/products.constant';
+import escapeStringRegexp from 'escape-string-regexp';
 
 export const GetListProductDto = Joi.object({
   keyword: Joi.string()
     .default('')
     .allow('')
-    .custom((val) => replaceMultiSpacesToSingleSpace(val)),
+    .custom((val) => escapeStringRegexp(replaceMultiSpacesToSingleSpace(val))),
   page: Joi.number().min(1).default(1),
   limit: Joi.number().min(10).max(100).default(10),
   sortBy: Joi.string().valid('name', 'createdAt').default('createdAt'),

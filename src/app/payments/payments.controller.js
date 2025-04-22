@@ -8,10 +8,7 @@ import { ModelDto } from '#src/core/dto/ModelDto';
 import { PaymentDto } from '#src/app/payments/dtos/payment.dto';
 import { TransactionalServiceWrapper } from '#src/core/transaction/TransactionalServiceWrapper';
 import { PAYMENT_STATUS } from '#src/app/payments/payments.constant';
-import {
-  increaseProductVariantsQuantityByOrderService,
-  updateProductVariantByIdService,
-} from '#src/app/product-variants/product-variants.service';
+import { increaseProductVariantsQuantityByOrderService } from '#src/app/product-variants/product-variants.service';
 
 export const returnPaymentMoMoController = async (req) => {
   return TransactionalServiceWrapper.execute(async (session) => {

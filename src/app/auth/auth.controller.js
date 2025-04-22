@@ -4,6 +4,7 @@ import {
   getUserByIdService,
   checkExistEmailService,
   updateUserVerifiedByIdService,
+  getUserPermissionService,
 } from '#src/app/users/users.service';
 import {
   authenticateUserService,
@@ -110,7 +111,10 @@ export const loginCustomerController = async (req, res) => {
     });
   }
 
-  const { accessToken, refreshToken } = await generateTokensService(customer._id, { id: customer._id, type: customer.type });
+  const { accessToken, refreshToken } = await generateTokensService(customer._id, {
+    id: customer._id,
+    type: customer.type,
+  });
 
   setSession(res, { accessToken, refreshToken });
 
@@ -172,7 +176,7 @@ export const resetPasswordController = async (req) => {
     throw HttpException.new({ code: Code.UNAUTHORIZED, overrideMessage: 'Invalid or expired token' });
   }
 
-  const updatedUser = await changePasswordByIdService(decoded.id, req.body.password);
+  const updatedUser = await changePasswordByIdService(decoded.id, adapter.password);
 
   sendResetPasswordSuccessService(updatedUser.email);
 

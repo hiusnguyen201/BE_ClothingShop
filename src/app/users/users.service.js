@@ -24,7 +24,7 @@ export function newUserService(data) {
  * @returns
  */
 export async function insertUsersService(data = [], session) {
-  return await UserModel.insertMany(data, { session, ordered: true });
+  return await UserModel.bulkSave(data, { session, ordered: true });
 }
 
 /**
@@ -228,6 +228,37 @@ export async function getAndCountUserPermissionsService(userId, filters, skip, l
 }
 
 /**
+ * Get user permissions
+ * @param {string} userId
+ * @param {string} permissionId
+ * @returns
+ */
+export async function getListPermissionNameInUserService(userId) {
+  const user = await UserModel.findById(userId)
+    .populate({
+      path: 'role',
+      select: '_id permissions',
+      populate: {
+        path: 'permissions',
+        select: 'name',
+        options: {
+          lean: true,
+        },
+      },
+      options: {
+        lean: true,
+      },
+    })
+    .populate({
+      path: 'permissions',
+      select: 'name',
+    })
+    .lean();
+
+  return [...user.permissions.map((item) => item.name), ...(user?.role?.permissions?.map((item) => item.name) || [])];
+}
+
+/**
  * Get user permission
  * @param {string} userId
  * @param {string} permissionId
@@ -237,7 +268,7 @@ export async function getUserPermissionService(userId, permissionId) {
   return UserModel.findById(userId)
     .populate({
       path: 'permissions',
-      select: '_id',
+      select: 'method, endpoint',
       match: { _id: permissionId },
     })
     .select('permissions')

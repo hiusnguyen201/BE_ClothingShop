@@ -27,6 +27,7 @@ export async function uploadImageBufferService({ buffer, folderName }) {
       },
       (err, result) => {
         if (err) {
+          console.log(err);
           return reject(HttpException.new({ code: Code.FILE_STORAGE_ERROR, overrideMessage: 'Upload image failed' }));
         }
         resolve(result);

@@ -41,6 +41,10 @@ function convertId(obj) {
 
 export class ModelDto {
   static new(schema, data) {
+    if (Array.isArray(data)) {
+      throw HttpException.new({ code: Code.ENTITY_VALIDATION_FAILED, overrideMessage: 'Invalid parameter' });
+    }
+
     if (data && data instanceof mongoose.Document) {
       data = data.toObject();
     }
@@ -63,6 +67,9 @@ export class ModelDto {
   }
 
   static newList(schema, data = []) {
+    if (!Array.isArray(data)) {
+      throw HttpException.new({ code: Code.ENTITY_VALIDATION_FAILED, overrideMessage: 'Invalid parameter' });
+    }
     return data.map((item) => this.new(schema, item));
   }
 }

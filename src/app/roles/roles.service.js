@@ -22,7 +22,7 @@ export function newRoleService(data) {
  * @returns
  */
 export async function insertRolesService(data = [], session) {
-  return await RoleModel.insertMany(data, { session, ordered: true });
+  return await RoleModel.bulkSave(data, { session, ordered: true });
 }
 
 /**

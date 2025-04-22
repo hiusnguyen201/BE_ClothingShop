@@ -32,7 +32,7 @@ export const createShippingAddressController = async (req) => {
   if (totalCount > 0 && adapter.isDefault) {
     await unsetDefaultCurrentShippingAddressService(id);
   } else if (totalCount === 0) {
-    req.body.isDefault = true;
+    adapter.isDefault = true;
   }
 
   const province = await getProvinceService(adapter.provinceCode);
@@ -51,8 +51,8 @@ export const createShippingAddressController = async (req) => {
   }
 
   const newShippingAddress = await createShippingAddressService({
-    isDefault: req.body.isDefault,
-    address: req.body.address,
+    isDefault: adapter.isDefault,
+    address: adapter.address,
     provinceName: province.ProvinceName,
     districtName: district.DistrictName,
     wardName: ward.WardName,

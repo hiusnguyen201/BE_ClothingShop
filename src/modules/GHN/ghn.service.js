@@ -91,10 +91,14 @@ export const cancelGHNOrderService = async (trackingNumber) => {
 
 // get tracking details by trackingNumber
 export const getTrackingDetailsService = async (trackingNumber) => {
-  const response = await ghnAPI.post('/v2/shipping-order/detail', {
-    order_code: trackingNumber,
-  });
-  return response.data.data?.log || [];
+  try {
+    const response = await ghnAPI.post('/v2/shipping-order/detail', {
+      order_code: trackingNumber,
+    });
+    return response.data.data?.log || [];
+  } catch (err) {
+    return [];
+  }
 };
 
 // get provinces

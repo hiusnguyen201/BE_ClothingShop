@@ -15,7 +15,8 @@ export const OrderSchema = new Schema(
     },
     orderDate: {
       type: Date,
-      require: true,
+      require: false,
+      default: new Date(),
     },
 
     provinceName: {

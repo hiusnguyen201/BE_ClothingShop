@@ -28,8 +28,8 @@ export async function saveCategoryService(categoryDoc) {
  * @param {object} data
  * @returns
  */
-export async function insertCategoriesService(data, session) {
-  return await CategoryModel.insertMany(data, { session, ordered: true });
+export async function insertCategoriesService(data = [], session) {
+  return await CategoryModel.bulkSave(data, { session, ordered: true });
 }
 
 /**
