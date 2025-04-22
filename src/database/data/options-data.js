@@ -22,12 +22,12 @@ const sizes = ['S', 'M', 'L', 'XL', 'XXL'];
 
 export const colorValuesInstance = colors.map((item) => {
   const newValue = newOptionValueService({ valueName: item });
-  return newValue.toObject();
+  return newValue;
 });
 
 export const sizeValuesInstance = sizes.map((item) => {
   const newValue = newOptionValueService({ valueName: item });
-  return newValue.toObject();
+  return newValue;
 });
 
 const OPTIONS_DATA = [
@@ -44,7 +44,7 @@ const OPTIONS_DATA = [
 const optionValues = [...colorValuesInstance, ...sizeValuesInstance];
 const options = OPTIONS_DATA.map((opt) => {
   const newOption = newOptionService(opt);
-  return newOption.toObject();
+  return newOption;
 });
 
 export { optionValues, options };

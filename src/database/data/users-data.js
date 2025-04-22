@@ -2,12 +2,12 @@
 
 import { GENDER, USER_TYPE } from '#src/app/users/users.constant';
 import { newUserService } from '#src/app/users/users.service';
-import { accessControlManagerRoleInstance } from '#src/database/data/roles-data';
 import { faker } from '@faker-js/faker';
+import { rolePermissions } from '#src/database/data/permissions-data';
 
 const VN_PHONE_PREFIXES = ['03', '05', '07', '08', '09'];
 
-const generateVietnamPhoneNumber = () => {
+export const generateVietnamPhoneNumber = () => {
   const prefix = faker.helpers.arrayElement(VN_PHONE_PREFIXES);
   const suffix = faker.string.numeric(8); // 8-digit number
   return `${prefix}${suffix}`;
@@ -20,9 +20,9 @@ const USER_DATA = [
     password: '1234',
     phone: '0383460015',
     verifiedAt: new Date(),
-    role: accessControlManagerRoleInstance._id,
     gender: GENDER.MALE,
     type: USER_TYPE.USER,
+    permissions: rolePermissions,
   },
   ...Array.from({ length: 50 }).map(() => ({
     name: faker.person.fullName(),
@@ -35,7 +35,7 @@ const USER_DATA = [
   })),
 ];
 
-const CUSTOMER_DATA = Array.from({ length: 200 }).map((_, index) => ({
+const CUSTOMER_DATA = Array.from({ length: 500 }).map((_, index) => ({
   name: faker.person.fullName(),
   email: faker.internet.email(),
   password: faker.internet.password(),
@@ -48,10 +48,14 @@ const CUSTOMER_DATA = Array.from({ length: 200 }).map((_, index) => ({
 }));
 
 const users = [];
+const customers = [];
 
 [...USER_DATA, ...CUSTOMER_DATA].map((item) => {
   const newUser = newUserService(item);
-  users.push(newUser.toObject());
+  if (newUser.type === USER_TYPE.CUSTOMER) {
+    customers.push(newUser);
+  }
+  users.push(newUser);
 });
 
-export { users };
+export { users, customers };

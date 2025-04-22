@@ -47,6 +47,8 @@ const USERS_PERMISSIONS = [
   },
 ];
 
+export const userPermissions = USERS_PERMISSIONS.map((per) => newPermissionService(per));
+
 const ROLES_PERMISSIONS = [
   {
     name: 'read:roles',
@@ -113,6 +115,8 @@ const ROLES_PERMISSIONS = [
   },
 ];
 
+export const rolePermissions = ROLES_PERMISSIONS.map((per) => newPermissionService(per));
+
 const PERMISSIONS_PERMISSIONS = [
   {
     name: 'read:permissions',
@@ -122,6 +126,8 @@ const PERMISSIONS_PERMISSIONS = [
     method: 'GET',
   },
 ];
+
+export const permissionPermissions = PERMISSIONS_PERMISSIONS.map((per) => newPermissionService(per));
 
 const CATEGORIES_PERMISSIONS = [
   {
@@ -168,6 +174,8 @@ const CATEGORIES_PERMISSIONS = [
   },
 ];
 
+export const categoryPermissions = CATEGORIES_PERMISSIONS.map((per) => newPermissionService(per));
+
 const CUSTOMERS_PERMISSIONS = [
   {
     name: 'read:customers',
@@ -205,6 +213,8 @@ const CUSTOMERS_PERMISSIONS = [
     method: 'DELETE',
   },
 ];
+
+export const customerPermissions = CUSTOMERS_PERMISSIONS.map((per) => newPermissionService(per));
 
 const PRODUCTS_PERMISSIONS = [
   {
@@ -250,6 +260,8 @@ const PRODUCTS_PERMISSIONS = [
     method: 'DELETE',
   },
 ];
+
+export const productPermissions = PRODUCTS_PERMISSIONS.map((per) => newPermissionService(per));
 
 const ORDER_PERMISSIONS = [
   {
@@ -317,16 +329,14 @@ const ORDER_PERMISSIONS = [
   },
 ];
 
-const PERMISSIONS_LIST = [
-  ...USERS_PERMISSIONS,
-  ...ROLES_PERMISSIONS,
-  ...PERMISSIONS_PERMISSIONS,
-  ...CATEGORIES_PERMISSIONS,
-  ...CUSTOMERS_PERMISSIONS,
-  ...PRODUCTS_PERMISSIONS,
-  ...ORDER_PERMISSIONS,
+export const orderPermissions = ORDER_PERMISSIONS.map((per) => newPermissionService(per));
+
+export const permissions = [
+  ...userPermissions,
+  ...rolePermissions,
+  ...permissionPermissions,
+  ...categoryPermissions,
+  ...customerPermissions,
+  ...productPermissions,
+  ...orderPermissions,
 ];
-
-const permissions = PERMISSIONS_LIST.map((per) => newPermissionService(per));
-
-export { permissions };

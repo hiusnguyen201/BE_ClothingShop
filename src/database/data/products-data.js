@@ -75,14 +75,14 @@ Array.from({ length: 50 }).map(() => {
       product: newProduct._id,
     });
 
-    variants.push(newVariant.toObject());
+    variants.push(newVariant);
 
     return newVariant;
   });
 
   newProduct.productVariants = newListVariants.map((variant) => variant._id);
 
-  products.push(newProduct.toObject());
+  products.push(newProduct);
 });
 
 function generateHtmlDescription() {
