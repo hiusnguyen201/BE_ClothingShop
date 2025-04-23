@@ -36,12 +36,6 @@ export const paymentSchema = new Schema(
       required: true,
       enum: Object.values(PAYMENT_STATUS),
     },
-    // Foreign Key
-    order: {
-      type: Schema.Types.ObjectId,
-      ref: 'Order',
-      required: true,
-    },
   },
   {
     versionKey: false,
