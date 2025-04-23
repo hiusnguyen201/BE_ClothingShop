@@ -14,7 +14,7 @@ export function setSession(res, tokens) {
     secure: process.env.NODE_ENV === 'production',
     maxAge: accessTokenTTL,
     path: '/',
-    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    sameSite: 'lax',
   });
 
   res.cookie(REFRESH_TOKEN_KEY, refreshToken, {
@@ -22,7 +22,7 @@ export function setSession(res, tokens) {
     secure: process.env.NODE_ENV === 'production',
     maxAge: refreshTokenTTL,
     path: '/',
-    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    sameSite: 'lax',
   });
 }
 
@@ -31,13 +31,13 @@ export function clearSession(res) {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     path: '/',
-    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    sameSite: 'lax',
   });
 
   res.clearCookie(REFRESH_TOKEN_KEY, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     path: '/',
-    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    sameSite: 'lax',
   });
 }
