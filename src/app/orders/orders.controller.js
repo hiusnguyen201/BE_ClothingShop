@@ -43,15 +43,69 @@ import { CreateOrderDto } from '#src/app/orders/dtos/create-order.dto';
 import { GetListOrderDto } from '#src/app/orders/dtos/get-list-order.dto';
 import { GetOrderDto } from '#src/app/orders/dtos/get-order.dto';
 import { CreateOrderGhnDto } from '#src/app/orders/dtos/create-order-ghn.dto';
+import { CreateOrderCustomerDto } from '#src/app/orders/dtos/create-order-customer.';
 // import { UpdateOrderDto } from '#src/app/orders/dtos/update-order.dto';
 
 export async function createOrderController(req) {
-  console.log(req.body);
-
   const adapter = await validateSchema(CreateOrderDto, req.body);
 
   // Validation
   const customer = await getUserByIdService(adapter.customerId, { type: USER_TYPE.CUSTOMER });
+  if (!customer) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Customer not found' });
+  }
+
+  const province = await getProvinceService(adapter.provinceCode);
+  if (!province) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Province not found' });
+  }
+
+  const district = await getDistrictService(adapter.districtCode, adapter.provinceCode);
+  if (!district) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'District not found' });
+  }
+
+  const ward = await getWardService(adapter.wardCode, adapter.districtCode);
+  if (!ward) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Ward not found' });
+  }
+
+  const fullAddress = `${adapter.address}, ${ward.WardName}, ${district.DistrictName}, ${province.ProvinceName}`;
+
+  const validAddress = await checkValidAddressService(fullAddress);
+  if (!validAddress) {
+    throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Invalid address' });
+  }
+
+  // Logic (CREATE ORDER PENDING)
+  const job = await createOrderJob({
+    customerId: customer._id,
+    customerName: adapter.customerName,
+    customerEmail: adapter.customerEmail,
+    customerPhone: adapter.customerPhone,
+    provinceName: province.ProvinceName,
+    districtName: district.DistrictName,
+    wardName: ward.WardName,
+    address: adapter.address,
+    productVariants: adapter.productVariants,
+    paymentMethod: adapter.paymentMethod,
+    baseUrl: req.protocol + '://' + req.get('host'),
+  });
+  const newOrder = await job.waitUntilFinished(orderQueueEVent);
+
+  // Transform
+  const orderDetail = await getOrderByIdService(newOrder._id);
+  const orderDto = ModelDto.new(OrderDto, orderDetail);
+  return ApiResponse.success(orderDto);
+}
+
+export async function createOrderByCustomerController(req) {
+  const { id } = req.user;
+
+  const adapter = await validateSchema(CreateOrderCustomerDto, req.body);
+
+  // Validation
+  const customer = await getUserByIdService(id, { type: USER_TYPE.CUSTOMER });
   if (!customer) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Customer not found' });
   }
