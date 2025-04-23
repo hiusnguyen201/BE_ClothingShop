@@ -8,19 +8,18 @@ const CategorySchema = new Schema(
   {
     image: {
       type: String,
-      required: false,
+      required: true,
       length: 300,
-      default: null,
     },
     name: {
       type: String,
       required: true,
-      length: 120,
+      length: 100,
       unique: true,
     },
     slug: {
       type: String,
-      length: 150,
+      length: 200,
       required: true,
       unique: true,
     },

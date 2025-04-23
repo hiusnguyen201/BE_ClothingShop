@@ -39,7 +39,7 @@ const UserSchema = new Schema(
     },
     password: {
       type: String,
-      required: false,
+      required: true,
       length: 100,
     },
     gender: {
@@ -63,11 +63,11 @@ const UserSchema = new Schema(
       required: false,
       default: null,
     },
-    untilLockedAt: {
-      type: Date,
-      required: false,
-      default: null,
-    },
+    // untilLockedAt: {
+    //   type: Date,
+    //   required: false,
+    //   default: null,
+    // },
     lastLoginAt: {
       type: Date,
       required: false,

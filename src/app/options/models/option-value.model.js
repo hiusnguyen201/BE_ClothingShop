@@ -8,6 +8,7 @@ const optionValueSchema = new Schema(
     valueName: {
       type: String,
       required: true,
+      unique: true,
     },
   },
   {
