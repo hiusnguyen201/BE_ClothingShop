@@ -9,6 +9,7 @@ import { ORDER_DETAIL_MODEL } from '#src/app/order-details/models/order-details.
 import { PRODUCT_SELECT_FIELDS } from '#src/app/products/products.constant';
 import moment from 'moment-timezone';
 import { newDate } from '#src/utils/string.util';
+import { PRODUCT_MODEL } from '#src/app/products/models/product.model';
 
 /**
  * New order
@@ -115,14 +116,14 @@ export async function getAndCountOrdersService(filters, skip, limit, sortBy, sor
     filters.keyword === ''
       ? { code: { $ne: null } }
       : {
-          $expr: {
-            $regexMatch: {
-              input: { $toString: '$code' },
-              regex: filters.keyword,
-              options: 'i',
-            },
+        $expr: {
+          $regexMatch: {
+            input: { $toString: '$code' },
+            regex: filters.keyword,
+            options: 'i',
           },
-        };
+        },
+      };
 
   const totalCountResult = await OrderModel.aggregate([
     {
@@ -132,12 +133,12 @@ export async function getAndCountOrdersService(filters, skip, limit, sortBy, sor
     },
     ...(filters.status
       ? [
-          {
-            $match: {
-              'lastStatus.status': filters.status,
-            },
+        {
+          $match: {
+            'lastStatus.status': filters.status,
           },
-        ]
+        },
+      ]
       : []),
     {
       $count: 'totalCount',
@@ -181,12 +182,141 @@ export async function getAndCountOrdersService(filters, skip, limit, sortBy, sor
     },
     ...(filters.status
       ? [
-          {
-            $match: {
-              'lastStatus.status': filters.status,
-            },
+        {
+          $match: {
+            'lastStatus.status': filters.status,
           },
-        ]
+        },
+      ]
+      : []),
+    {
+      $unwind: {
+        path: '$customer',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $unwind: {
+        path: '$payment',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $project: ORDER_SELECTED_FIELDS,
+    },
+  ])
+    .sort({ [sortBy]: sortOrder })
+    .skip(skip)
+    .limit(limit);
+
+  return [totalCountResult[0]?.totalCount || 0, orders];
+}
+
+/**
+ * Get and count orders
+ * @param {object} filters
+ * @param {number} skip
+ * @param {number} limit
+ * @param {string} sortBy
+ * @param {string} sortOrder
+ * @returns
+ */
+export async function getAndCountOrdersByCustomerService(filters, skip, limit, sortBy, sortOrder) {
+  const matchStage =
+    filters.keyword === ''
+      ? { code: { $ne: null } }
+      : {
+        $expr: {
+          $regexMatch: {
+            input: { $toString: '$code' },
+            regex: filters.keyword,
+            options: 'i',
+          },
+        },
+      };
+
+  const totalCountResult = await OrderModel.aggregate([
+    {
+      $addFields: {
+        lastStatus: { $arrayElemAt: ['$orderStatusHistory', -1] },
+      },
+    },
+    ...(filters.status
+      ? [
+        {
+          $match: {
+            'lastStatus.status': filters.status,
+          },
+        },
+      ]
+      : []),
+    {
+      $count: 'totalCount',
+    },
+  ]);
+
+  const orders = await OrderModel.aggregate([
+    {
+      $match: matchStage,
+    },
+    {
+      $lookup: {
+        from: ORDER_DETAIL_MODEL,
+        localField: 'orderDetails',
+        foreignField: '_id',
+        as: 'orderDetails',
+        // pipeline: [
+        //   {
+        //     $lookup: {
+        //       from: PRODUCT_MODEL,
+        //       localField: 'product',
+        //       foreignField: '_id',
+        //       as: 'product',
+        //     },
+        //   },
+        //   {
+        //     $unwind: {
+        //       path: '$product',
+        //       preserveNullAndEmptyArrays: true,
+        //     },
+        //   },
+        // {
+        //   $project: PRODUCT_SELECT_FIELDS,
+        // },
+        // ],
+      },
+    },
+    {
+      $lookup: {
+        from: USER_MODEL,
+        localField: 'customer',
+        foreignField: '_id',
+        as: 'customer',
+        pipeline: [{ $project: USER_SELECTED_FIELDS }],
+      },
+    },
+    {
+      $lookup: {
+        from: PAYMENT_MODEL,
+        localField: 'payment',
+        foreignField: '_id',
+        as: 'payment',
+        pipeline: [{ $project: PAYMENT_SELECTED_FIELDS }],
+      },
+    },
+    {
+      $addFields: {
+        lastStatus: { $arrayElemAt: ['$orderStatusHistory', -1] },
+      },
+    },
+    ...(filters.status
+      ? [
+        {
+          $match: {
+            'lastStatus.status': filters.status,
+          },
+        },
+      ]
       : []),
     {
       $unwind: {

@@ -21,6 +21,8 @@ import {
   getAllCategoriesByCustomerController,
   getCategoryByIdController,
 } from '#src/app/categories/categories.controller';
+import { isAuthorizedAndIsCustomer } from '#src/middlewares/jwt-auth.middleware';
+import { createOrderController, getAllOrdersByCustomerController, getOrderByIdController } from '#src/app/orders/orders.controller';
 
 router.get('/ping', () => {
   return 'Hello world! PING 1';
@@ -60,6 +62,15 @@ router
   .get('/products/get-products-by-customer', getAllProductsByCustomerController)
   .get('/products/get-product-by-customer/:productId', getProductByIdController)
   .get('/categories/get-categories-by-customer', getAllCategoriesByCustomerController)
-  .get('/categories/get-category-by-customer/:categoryId', getCategoryByIdController);
+  .get('/categories/get-category-by-customer/:categoryId', getCategoryByIdController)
+  .post('/orders/create-order-by-customer',
+    // isAuthorizedAndIsCustomer, 
+    createOrderController)
+  .get('/orders/get-orders-by-customer',
+    isAuthorizedAndIsCustomer,
+    getAllOrdersByCustomerController)
+  .get('/orders/get-order-by-id-by-customer/:orderId',
+    isAuthorizedAndIsCustomer,
+    getOrderByIdController)
 
 export default router;
