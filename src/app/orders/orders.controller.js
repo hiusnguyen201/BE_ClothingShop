@@ -380,75 +380,78 @@ export async function removeOrderController(req) {
   return ApiResponse.success({ id: orderExisted._id });
 }
 
-// export async function webHookUpdateOrder(req) {
-//   return TransactionalServiceWrapper.execute(async (session) => {
-//     const { CODAmount, Time, OrderCode, Status } = req.body;
+export async function webHookUpdateOrder(req) {
+  const { Status, OrderCode } = req.body;
+  const validOrder = [
+    'picking',
+    'money_collect_picking',
+    'picked',
+    'storing',
+    'transporting',
+    'lost',
+    'damage',
+    'delivering',
+    'money_collect_delivering',
+    'delivered',
+    'cancel',
+    'delivery_fail',
+    'return',
+    'return_fail',
+    'returned',
+    'exception',
+  ];
+  if (!validOrder.includes(Status)) {
+    throw HttpException.new({
+      code: Code.BAD_REQUEST,
+      overrideMessage: 'Invalid order status, order must in ' + JSON.stringify(validOrder),
+    });
+  }
 
-//     const orderStatusHistory = await getOrderStatusHistoryByTrackingIdService(OrderCode);
+  const orderExisted = await getOrderByIdService(OrderCode);
+  if (!orderExisted) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
+  }
 
-//     const orderExisted = await getOrderByIdService(orderStatusHistory.order, '_id');
-//     if (!orderExisted) {
-//       throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
-//     }
+  if (
+    orderExisted.orderStatusHistory[0].status === ORDER_STATUS.CANCELLED ||
+    orderExisted.orderStatusHistory[0].status === ORDER_STATUS.COMPLETED
+  ) {
+    throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Can not update status any more' });
+  }
 
-//     const validStatuses = [ORDER_STATUS.WAITING_FOR_PICKUP, ORDER_STATUS.SHIPPING];
+  switch (Status) {
+    case 'picking':
+    case 'money_collect_picking':
+    case 'picked':
+    case 'storing':
+    case 'transporting':
+    case 'sorting':
+    case 'delivering':
+    case 'money_collect_delivering':
+      await addOrderStatusHistoryByIdService(orderExisted._id, ORDER_STATUS.SHIPPING);
+      break;
 
-//     if (!validStatuses.includes(orderExisted.orderStatusHistory[0].status)) {
-//       throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Invalid order status' });
-//     }
+    case 'delivered':
+      await addOrderStatusHistoryByIdService(orderExisted._id, ORDER_STATUS.COMPLETED);
+      await updatePaymentByIdService(orderExisted.payment._id, { status: PAYMENT_STATUS.PENDING });
+      break;
 
-//     const statusMap = {
-//       picked: ORDER_STATUS.SHIPPING,
-//       delivered: ORDER_STATUS.COMPLETED,
-//       return: ORDER_STATUS.CANCELLED,
-//     };
+    case 'cancel':
+    case 'delivery_fail':
+    case 'return':
+    case 'returning':
+    case 'return_fail':
+    case 'returned':
+    case 'exception':
+    case 'damage':
+    case 'lost':
+      await addOrderStatusHistoryByIdService(orderExisted._id, ORDER_STATUS.CANCELLED);
+      await updatePaymentByIdService(orderExisted.payment._id, { status: PAYMENT_STATUS.CANCELLED });
+      break;
+  }
 
-//     const newOrderStatus = statusMap[Status];
-//     if (!newOrderStatus) {
-//       return ApiResponse.success();
-//     }
-
-//     const newOrderHistory = await createOrderStatusHistoryService(
-//       {
-//         status: newOrderStatus,
-//         trackingNumber: orderStatusHistory.trackingNumber,
-//         order: orderExisted._id,
-//       },
-//       session,
-//     );
-
-//     if (newOrderStatus === ORDER_STATUS.COMPLETED) {
-//       const payment = await getPaymentByIdService(orderExisted.payment);
-//       if (!payment) {
-//         throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Payment not found' });
-//       }
-//       if ((payment.paymentMethod === PAYMENT_METHOD.COD && CODAmount) || Time) {
-//         await updatePaymentByIdService(
-//           payment._id,
-//           {
-//             ...(CODAmount ? { amountPaid: CODAmount } : {}),
-//             ...(Time ? { paidDate: Time } : {}),
-//           },
-//           session,
-//         );
-//       }
-//     }
-
-//     if (newOrderStatus === ORDER_STATUS.CANCELLED) {
-//       // await updateCancelOrderQuantityProductUtil(orderExisted._id, session);
-//     }
-
-//     const updatedOrder = await updateOrderStatusByIdService(
-//       orderExisted._id,
-//       newOrderStatus,
-//       newOrderHistory[0]._id,
-//       session,
-//     );
-
-//     const orderDto = ModelDto.new(OrderDto, updatedOrder);
-//     return ApiResponse.success(orderDto);
-//   });
-// }
+  return ApiResponse.success(null);
+}
 
 // export async function cancelOrderByCustomerController  (req)  {
 //   return TransactionalServiceWrapper.execute(async (session) => {

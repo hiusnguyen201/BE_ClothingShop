@@ -19,7 +19,6 @@ import { orderDetails, orders, payments } from '#src/database/data/orders-data';
 import { insertOrderDetailsService } from '#src/app/order-details/order-details.service';
 import { insertPaymentService } from '#src/app/payments/payments.service';
 import { retryBulkWrite } from '#src/utils/bulk.util';
-import { delay } from 'bullmq';
 
 /**
  * Need fix MongoServerError: Transaction numbers are only allowed on a replica set member or mongos

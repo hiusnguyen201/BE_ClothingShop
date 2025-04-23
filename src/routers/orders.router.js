@@ -9,6 +9,7 @@ import {
   // updateOrderController,
   removeOrderController,
   processingOrderController,
+  webHookUpdateOrder,
 } from '#src/app/orders/orders.controller';
 import { isAuthorizedAndHasPermission } from '#src/middlewares/jwt-auth.middleware';
 
@@ -24,5 +25,7 @@ router
   .post('/processing-order', isAuthorizedAndHasPermission, processingOrderController)
   .post('/create-ship-order', isAuthorizedAndHasPermission, createShippingOrderController)
   .delete('/remove-order-by-id/:orderId', isAuthorizedAndHasPermission, removeOrderController);
+
+router.post('/webhook/ship-order', webHookUpdateOrder);
 
 export default router;

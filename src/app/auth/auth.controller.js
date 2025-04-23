@@ -5,6 +5,7 @@ import {
   checkExistEmailService,
   updateUserVerifiedByIdService,
   getUserPermissionService,
+  getListPermissionNameInUserService,
 } from '#src/app/users/users.service';
 import {
   authenticateUserService,
@@ -39,6 +40,7 @@ import { RegisterDto } from '#src/app/auth/dtos/register.dto';
 import { LoginDto } from '#src/app/auth/dtos/login.dto';
 import { VerifyOtpDto, SendOtpViaEmailDto } from '#src/app/auth/dtos/two-factor.dto';
 import { ForgotPasswordDto, ResetPasswordDto } from '#src/app/auth/dtos/forgot-password.dto';
+import { AccountPermissionDto } from '#src/app/account/dtos/account-permission.dto';
 
 export const logoutController = async (req, res) => {
   const userId = req.user.id;
@@ -239,12 +241,17 @@ export const verifyOtpController = async (req, res) => {
 
   setSession(res, { accessToken, refreshToken });
 
+  const permissions = await getListPermissionNameInUserService(user._id);
+
+  const permissionsDto = ModelDto.newList(AccountPermissionDto, permissions);
+
   const userDto = ModelDto.new(UserDto, user);
   return ApiResponse.success(
     {
       isAuthenticated: true,
       is2FactorRequired: false,
       user: userDto,
+      permissions: permissionsDto,
     },
     'Verify otp successful',
   );
