@@ -27,7 +27,7 @@ app.use(helmet());
 app.use(compression());
 app.use(
   cors({
-    origin: true,
+    origin: ['https://fe-admin-clothingshop.onrender.com', 'https://fe-client-clothingshop-5fpx.onrender.com'],
     methods: 'GET,POST,PUT,PATCH,DELETE',
     allowedHeaders: 'Content-Type,Authorization',
     credentials: true,
