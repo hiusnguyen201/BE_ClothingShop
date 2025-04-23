@@ -15,12 +15,12 @@ const CategorySchema = new Schema(
     name: {
       type: String,
       required: true,
-      length: 120,
+      length: 100,
       unique: true,
     },
     slug: {
       type: String,
-      length: 150,
+      length: 300,
       required: true,
       unique: true,
     },

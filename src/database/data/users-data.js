@@ -3,7 +3,7 @@
 import { GENDER, USER_TYPE } from '#src/app/users/users.constant';
 import { newUserService } from '#src/app/users/users.service';
 import { faker } from '@faker-js/faker';
-import { rolePermissions } from '#src/database/data/permissions-data';
+import { rolePermissions, permissions } from '#src/database/data/permissions-data';
 
 const VN_PHONE_PREFIXES = ['03', '05', '07', '08', '09'];
 
@@ -15,14 +15,24 @@ export const generateVietnamPhoneNumber = () => {
 
 const USER_DATA = [
   {
-    name: 'Admin Verified',
-    email: 'admin123@gmail.com',
+    name: 'Access Control Manager',
+    email: 'accessControl@gmail.com',
     password: '1234',
     phone: '0383460015',
     verifiedAt: new Date(),
     gender: GENDER.MALE,
     type: USER_TYPE.USER,
     permissions: rolePermissions,
+  },
+  {
+    name: 'Admin',
+    email: 'admin@gmail.com',
+    password: '1234',
+    phone: '0383460015',
+    verifiedAt: new Date(),
+    gender: GENDER.MALE,
+    type: USER_TYPE.USER,
+    permissions: permissions.filter((p) => p.method !== 'DELETE').map((p) => p._id),
   },
   ...Array.from({ length: 50 }).map(() => ({
     name: faker.person.fullName(),
