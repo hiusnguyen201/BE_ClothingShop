@@ -41,80 +41,102 @@ async function runSeed() {
   LogUtils.info('SEED_DATABASE', 'Start seed database');
 
   try {
+    // Permissions
     await TransactionalServiceWrapper.execute(async (session) => {
-      // Permissions
       LogUtils.info('PERMISSION', 'Start insert permissions');
-      await saveListPermissionsService(permissions, session);
+      await retryBulkWrite(async () => {
+        await saveListPermissionsService(permissions, session);
+      });
       LogUtils.success('PERMISSION', 'Insert permissions done');
+    });
 
-      await delay(1000);
-
-      // Roles
+    // Roles
+    await TransactionalServiceWrapper.execute(async (session) => {
       LogUtils.info('ROLE', 'Start insert roles');
-      await insertRolesService(roles, session);
+      await retryBulkWrite(async () => {
+        await insertRolesService(roles, session);
+      });
       LogUtils.success('ROLE', 'Insert roles done');
+    });
 
-      await delay(1000);
-
-      // Users
+    // Users
+    await TransactionalServiceWrapper.execute(async (session) => {
       LogUtils.info('USER', 'Start insert users');
-      await insertUsersService(users, session);
+      await retryBulkWrite(async () => {
+        await insertUsersService(users, session);
+      });
       LogUtils.success('USER', 'Insert users done');
+    });
 
-      await delay(1000);
-
-      // Option Values
+    // Option Values
+    await TransactionalServiceWrapper.execute(async (session) => {
       LogUtils.info('OPTION_VALUE', 'Start insert option values');
-      await insertOptionValuesService(optionValues, session);
+      await retryBulkWrite(async () => {
+        await insertOptionValuesService(optionValues, session);
+      });
       LogUtils.success('OPTION_VALUE', 'Insert option values done');
+    });
 
-      await delay(1000);
-
-      // Options
+    // Options
+    await TransactionalServiceWrapper.execute(async (session) => {
       LogUtils.info('OPTION', 'Start insert options');
-      await insertOptionsService(options, session);
+      await retryBulkWrite(async () => {
+        await insertOptionsService(options, session);
+      });
       LogUtils.success('OPTION', 'Insert options done');
+    });
 
-      await delay(1000);
-
-      // Categories
+    // Categories
+    await TransactionalServiceWrapper.execute(async (session) => {
       LogUtils.info('CATEGORY', 'Start insert categories');
-      await insertCategoriesService(categories, session);
+      await retryBulkWrite(async () => {
+        await insertCategoriesService(categories, session);
+      });
       LogUtils.success('CATEGORY', 'Insert categories done');
+    });
 
-      await delay(1000);
-
-      // Products
+    // Products
+    await TransactionalServiceWrapper.execute(async (session) => {
       LogUtils.info('PRODUCT', 'Start insert products');
-      await insertProductsService(products, session);
+      await retryBulkWrite(async () => {
+        await insertProductsService(products, session);
+      });
       LogUtils.success('PRODUCT', 'Insert products done');
+    });
 
-      await delay(1000);
-
-      // Product Variants
+    // Product Variants
+    await TransactionalServiceWrapper.execute(async (session) => {
       LogUtils.info('PRODUCT_VARIANT', 'Start insert product variants');
-      await insertProductVariantsService(variants, session);
+      await retryBulkWrite(async () => {
+        await insertProductVariantsService(variants, session);
+      });
       LogUtils.success('PRODUCT_VARIANT', 'Insert product variants done');
+    });
 
-      await delay(1000);
-
-      // // Order
+    // Order
+    await TransactionalServiceWrapper.execute(async (session) => {
       LogUtils.info('ORDER', 'Start insert order');
-      await insertOrdersService(orders, session);
+      await retryBulkWrite(async () => {
+        await insertOrdersService(orders, session);
+      });
       LogUtils.success('ORDER', 'Insert order done');
+    });
 
-      await delay(1000);
-
-      // Order Detail
+    // Order Detail
+    await TransactionalServiceWrapper.execute(async (session) => {
       LogUtils.info('ORDER_DETAILS', 'Start insert order detail');
-      await insertOrderDetailsService(orderDetails, session);
+      await retryBulkWrite(async () => {
+        await insertOrderDetailsService(orderDetails, session);
+      });
       LogUtils.success('ORDER_DETAILS', 'Insert order detail done');
+    });
 
-      await delay(1000);
-
-      // Payment
+    // Payment
+    await TransactionalServiceWrapper.execute(async (session) => {
       LogUtils.info('PAYMENT', 'Start insert payment');
-      await insertPaymentService(payments, session);
+      await retryBulkWrite(async () => {
+        await insertPaymentService(payments, session);
+      });
       LogUtils.success('PAYMENT', 'Insert payment done');
     });
   } catch (err) {

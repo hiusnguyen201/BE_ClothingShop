@@ -4,6 +4,7 @@ import { GENDER, USER_TYPE } from '#src/app/users/users.constant';
 import { newUserService } from '#src/app/users/users.service';
 import { faker } from '@faker-js/faker';
 import { rolePermissions, permissions } from '#src/database/data/permissions-data';
+import { roles } from '#src/database/data/roles-data';
 
 const VN_PHONE_PREFIXES = ['03', '05', '07', '08', '09'];
 
@@ -22,7 +23,7 @@ const USER_DATA = [
     verifiedAt: new Date(),
     gender: GENDER.MALE,
     type: USER_TYPE.USER,
-    permissions: rolePermissions,
+    permissions: rolePermissions.map((p) => p._id),
   },
   {
     name: 'Admin',
@@ -32,7 +33,7 @@ const USER_DATA = [
     verifiedAt: new Date(),
     gender: GENDER.MALE,
     type: USER_TYPE.USER,
-    permissions: permissions.filter((p) => p.method !== 'DELETE').map((p) => p._id),
+    role: roles[0]._id,
   },
   ...Array.from({ length: 50 }).map(() => ({
     name: faker.person.fullName(),

@@ -15,13 +15,13 @@ const productSchema = new Schema(
       type: String,
       required: true,
       length: 150,
-      unique: true,
+      // unique: true,
     },
     slug: {
       type: String,
       required: true,
       length: 300,
-      unique: true,
+      // unique: true,
     },
     description: {
       type: String,
