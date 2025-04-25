@@ -42,6 +42,7 @@ import { CreateOrderDto } from '#src/app/orders/dtos/create-order.dto';
 import { GetListOrderDto } from '#src/app/orders/dtos/get-list-order.dto';
 import { GetOrderDto } from '#src/app/orders/dtos/get-order.dto';
 import { CreateOrderGhnDto } from '#src/app/orders/dtos/create-order-ghn.dto';
+import { orderCodeGenerator } from '#src/utils/generator';
 // import { UpdateOrderDto } from '#src/app/orders/dtos/update-order.dto';
 
 export async function createOrderController(req) {
@@ -154,6 +155,7 @@ export async function createOrderControllerLogic(data) {
 
     // Create order instance (PENDING)
     const newOrder = newOrderService({
+      code: orderCodeGenerator.next().value,
       customerName,
       customerEmail,
       customerPhone,
@@ -316,7 +318,6 @@ export async function cancelOrderController(req) {
     // Remove shipping order
     if (orderExisted.trackingNumber) {
       const result = await cancelGHNOrderService(orderExisted.trackingNumber);
-      console.log(result);
       if (!result) {
         throw HttpException.new({ code: Code.SERVICE_UNAVAILABLE, overrideMessage: 'Cancel shipping order failed' });
       }

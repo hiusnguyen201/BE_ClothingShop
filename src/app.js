@@ -43,6 +43,16 @@ app.use(cookieParser());
 
 app.use(handleTimeout);
 
+app.use((req, res, next) => {
+  const startTime = process.hrtime();
+  res.on('finish', () => {
+    const [seconds, nanoseconds] = process.hrtime(startTime);
+    const responseTime = seconds * 1000 + nanoseconds / 1000000;
+    req.responseTime = responseTime;
+  });
+  next();
+});
+
 // Add ipv4 to req
 app.use((req, res, next) => {
   req.ipv4 = req.headers['x-forwarded-for'] || req.connection.remoteAddress;

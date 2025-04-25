@@ -82,7 +82,6 @@ export const cancelGHNOrderService = async (trackingNumber) => {
 
   try {
     const response = await ghnAPI.post(`/v2/switch-status/cancel`, payload);
-    console.log(response);
     return response.data;
   } catch (error) {
     console.error('Error Cancel GHN order:', error.response.data);

@@ -122,8 +122,6 @@ export const refundMomoPaymentService = async (orderId, payment) => {
       },
     });
 
-    console.log(response);
-
     return response.data;
   } catch (error) {
     console.error('Error refund Momo payment:', error.message);
