@@ -69,7 +69,7 @@ router
   .get('/orders/get-orders-by-customer',
     isAuthorizedAndIsCustomer,
     getAllOrdersByCustomerController)
-  .get('/orders/get-order-by-id-by-customer/:orderId',
+  .get('/orders/get-order-by-customer/:orderId',
     isAuthorizedAndIsCustomer,
     getOrderByIdController)
 
