@@ -9,7 +9,7 @@ import { ORDER_DETAIL_MODEL } from '#src/app/order-details/models/order-details.
 import { PRODUCT_SELECT_FIELDS } from '#src/app/products/products.constant';
 import moment from 'moment-timezone';
 import { newDate } from '#src/utils/string.util';
-import { PRODUCT_MODEL } from '#src/app/products/models/product.model';
+import { ORDER_DETAILS_SELECTED_FIELDS } from '#src/app/order-details/order-details.constant';
 
 /**
  * New order
@@ -222,123 +222,44 @@ export async function getAndCountOrdersService(filters, skip, limit, sortBy, sor
  * @returns
  */
 export async function getAndCountOrdersByCustomerService(filters, skip, limit, sortBy, sortOrder) {
-  const matchStage =
-    filters.keyword === ''
-      ? { code: { $ne: null } }
-      : {
-        $expr: {
-          $regexMatch: {
-            input: { $toString: '$code' },
-            regex: filters.keyword,
-            options: 'i',
-          },
-        },
-      };
+  const count = await OrderModel.countDocuments(filters);
 
-  const totalCountResult = await OrderModel.aggregate([
-    {
-      $addFields: {
-        lastStatus: { $arrayElemAt: ['$orderStatusHistory', -1] },
-      },
-    },
-    ...(filters.status
-      ? [
-        {
-          $match: {
-            'lastStatus.status': filters.status,
-          },
-        },
-      ]
-      : []),
-    {
-      $count: 'totalCount',
-    },
-  ]);
-
-  const orders = await OrderModel.aggregate([
-    {
-      $match: matchStage,
-    },
-    {
-      $lookup: {
-        from: ORDER_DETAIL_MODEL,
-        localField: 'orderDetails',
-        foreignField: '_id',
-        as: 'orderDetails',
-        // pipeline: [
-        //   {
-        //     $lookup: {
-        //       from: PRODUCT_MODEL,
-        //       localField: 'product',
-        //       foreignField: '_id',
-        //       as: 'product',
-        //     },
-        //   },
-        //   {
-        //     $unwind: {
-        //       path: '$product',
-        //       preserveNullAndEmptyArrays: true,
-        //     },
-        //   },
-        // {
-        //   $project: PRODUCT_SELECT_FIELDS,
-        // },
-        // ],
-      },
-    },
-    {
-      $lookup: {
-        from: USER_MODEL,
-        localField: 'customer',
-        foreignField: '_id',
-        as: 'customer',
-        pipeline: [{ $project: USER_SELECTED_FIELDS }],
-      },
-    },
-    {
-      $lookup: {
-        from: PAYMENT_MODEL,
-        localField: 'payment',
-        foreignField: '_id',
-        as: 'payment',
-        pipeline: [{ $project: PAYMENT_SELECTED_FIELDS }],
-      },
-    },
-    {
-      $addFields: {
-        lastStatus: { $arrayElemAt: ['$orderStatusHistory', -1] },
-      },
-    },
-    ...(filters.status
-      ? [
-        {
-          $match: {
-            'lastStatus.status': filters.status,
-          },
-        },
-      ]
-      : []),
-    {
-      $unwind: {
-        path: '$customer',
-        preserveNullAndEmptyArrays: true,
-      },
-    },
-    {
-      $unwind: {
-        path: '$payment',
-        preserveNullAndEmptyArrays: true,
-      },
-    },
-    {
-      $project: ORDER_SELECTED_FIELDS,
-    },
-  ])
-    .sort({ [sortBy]: sortOrder })
+  const orders = await OrderModel.find(filters)
     .skip(skip)
-    .limit(limit);
+    .limit(limit)
+    .sort({ [sortBy]: sortOrder })
+    .populate({
+      path: 'orderDetails',
+      select: ORDER_DETAILS_SELECTED_FIELDS,
+      populate: [
+        {
+          path: "product",
+          select: PRODUCT_SELECT_FIELDS,
+        },
+        {
+          path: "variant",
+          select: "variantValues",
+          populate: {
+            path: 'variantValues',
+            populate: [
+              {
+                path: 'option',
+                select: 'name',
+                options: { lean: true },
+              },
+              {
+                path: 'optionValue',
+                select: 'valueName',
+                options: { lean: true },
+              },
+            ],
+          },
+        }
+      ]
+    })
+    .lean();
 
-  return [totalCountResult[0]?.totalCount || 0, orders];
+  return [count, orders];
 }
 
 /**

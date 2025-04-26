@@ -181,9 +181,9 @@ export async function getAllOrdersByCustomerController(req) {
   const adapter = await validateSchema(GetListOrderDto, req.query);
 
   const filters = {
-    customerId: id.customerId,
+    customer: id,
     ...(adapter.status ? { status: adapter.status } : {}),
-    keyword: adapter.keyword,
+    // keyword: adapter.keyword,
   };
 
   const skip = (adapter.page - 1) * adapter.limit;
@@ -194,6 +194,7 @@ export async function getAllOrdersByCustomerController(req) {
     adapter.sortBy,
     adapter.sortOrder,
   );
+
 
   const ordersDto = ModelDto.newList(OrderDto, orders);
   return ApiResponse.success({ totalCount, list: ordersDto });
