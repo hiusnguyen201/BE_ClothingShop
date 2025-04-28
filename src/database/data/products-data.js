@@ -38,7 +38,7 @@ Array.from({ length: 50 }).map(() => {
     subCategory: subCategory?._id ?? null,
   });
 
-  const numOptions = faker.number.int({ min: 1, max: 2 });
+  const numOptions = faker.number.int({ min: 2, max: 2 });
   const selectedOptions = faker.helpers.shuffle(options).slice(0, numOptions);
 
   const productOptions = selectedOptions.map((opt) => {

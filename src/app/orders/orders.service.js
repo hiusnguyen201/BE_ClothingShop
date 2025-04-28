@@ -9,6 +9,7 @@ import { ORDER_DETAIL_MODEL } from '#src/app/order-details/models/order-details.
 import { PRODUCT_SELECT_FIELDS } from '#src/app/products/products.constant';
 import moment from 'moment-timezone';
 import { newDate } from '#src/utils/string.util';
+import { ORDER_DETAILS_SELECTED_FIELDS } from '#src/app/order-details/order-details.constant';
 
 /**
  * New order
@@ -115,14 +116,14 @@ export async function getAndCountOrdersService(filters, skip, limit, sortBy, sor
     filters.keyword === ''
       ? { code: { $ne: null } }
       : {
-          $expr: {
-            $regexMatch: {
-              input: { $toString: '$code' },
-              regex: filters.keyword,
-              options: 'i',
-            },
+        $expr: {
+          $regexMatch: {
+            input: { $toString: '$code' },
+            regex: filters.keyword,
+            options: 'i',
           },
-        };
+        },
+      };
 
   const totalCountResult = await OrderModel.aggregate([
     {
@@ -132,12 +133,12 @@ export async function getAndCountOrdersService(filters, skip, limit, sortBy, sor
     },
     ...(filters.status
       ? [
-          {
-            $match: {
-              'lastStatus.status': filters.status,
-            },
+        {
+          $match: {
+            'lastStatus.status': filters.status,
           },
-        ]
+        },
+      ]
       : []),
     {
       $count: 'totalCount',
@@ -181,12 +182,12 @@ export async function getAndCountOrdersService(filters, skip, limit, sortBy, sor
     },
     ...(filters.status
       ? [
-          {
-            $match: {
-              'lastStatus.status': filters.status,
-            },
+        {
+          $match: {
+            'lastStatus.status': filters.status,
           },
-        ]
+        },
+      ]
       : []),
     {
       $unwind: {
@@ -209,6 +210,56 @@ export async function getAndCountOrdersService(filters, skip, limit, sortBy, sor
     .limit(limit);
 
   return [totalCountResult[0]?.totalCount || 0, orders];
+}
+
+/**
+ * Get and count orders
+ * @param {object} filters
+ * @param {number} skip
+ * @param {number} limit
+ * @param {string} sortBy
+ * @param {string} sortOrder
+ * @returns
+ */
+export async function getAndCountOrdersByCustomerService(filters, skip, limit, sortBy, sortOrder) {
+  const count = await OrderModel.countDocuments(filters);
+
+  const orders = await OrderModel.find(filters)
+    .skip(skip)
+    .limit(limit)
+    .sort({ [sortBy]: sortOrder })
+    .populate({
+      path: 'orderDetails',
+      select: ORDER_DETAILS_SELECTED_FIELDS,
+      populate: [
+        {
+          path: "product",
+          select: PRODUCT_SELECT_FIELDS,
+        },
+        {
+          path: "variant",
+          select: "variantValues",
+          populate: {
+            path: 'variantValues',
+            populate: [
+              {
+                path: 'option',
+                select: 'name',
+                options: { lean: true },
+              },
+              {
+                path: 'optionValue',
+                select: 'valueName',
+                options: { lean: true },
+              },
+            ],
+          },
+        }
+      ]
+    })
+    .lean();
+
+  return [count, orders];
 }
 
 /**

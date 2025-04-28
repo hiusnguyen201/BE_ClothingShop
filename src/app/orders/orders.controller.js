@@ -6,6 +6,7 @@ import {
   removeOrderByIdService,
   calculateOrderService,
   saveOrderService,
+  getAndCountOrdersByCustomerService,
 } from '#src/app/orders/orders.service';
 import { HttpException } from '#src/core/exception/http-exception';
 import { TransactionalServiceWrapper } from '#src/core/transaction/TransactionalServiceWrapper';
@@ -43,6 +44,7 @@ import { GetListOrderDto } from '#src/app/orders/dtos/get-list-order.dto';
 import { GetOrderDto } from '#src/app/orders/dtos/get-order.dto';
 import { CreateOrderGhnDto } from '#src/app/orders/dtos/create-order-ghn.dto';
 import { orderCodeGenerator } from '#src/utils/generator';
+import { CreateOrderCustomerDto } from '#src/app/orders/dtos/create-order-customer.';
 // import { UpdateOrderDto } from '#src/app/orders/dtos/update-order.dto';
 
 export async function createOrderController(req) {
@@ -70,10 +72,66 @@ export async function createOrderController(req) {
   }
 
   const fullAddress = `${adapter.address}, ${ward.WardName}, ${district.DistrictName}, ${province.ProvinceName}`;
+
   const validAddress = await checkValidAddressService(fullAddress);
   if (!validAddress) {
     throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Invalid address' });
   }
+
+  // Logic (CREATE ORDER PENDING)
+  const job = await createOrderJob({
+    customerId: customer._id,
+    customerName: adapter.customerName,
+    customerEmail: adapter.customerEmail,
+    customerPhone: adapter.customerPhone,
+    provinceName: province.ProvinceName,
+    districtName: district.DistrictName,
+    wardName: ward.WardName,
+    address: adapter.address,
+    productVariants: adapter.productVariants,
+    paymentMethod: adapter.paymentMethod,
+    baseUrl: req.protocol + '://' + req.get('host'),
+  });
+  const newOrder = await job.waitUntilFinished(orderQueueEVent);
+
+  // Transform
+  const orderDetail = await getOrderByIdService(newOrder._id);
+  const orderDto = ModelDto.new(OrderDto, orderDetail);
+  return ApiResponse.success(orderDto);
+}
+
+export async function createOrderByCustomerController(req) {
+  const { id } = req.user;
+
+  const adapter = await validateSchema(CreateOrderCustomerDto, req.body);
+
+  // Validation
+  const customer = await getUserByIdService(id, { type: USER_TYPE.CUSTOMER });
+  if (!customer) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Customer not found' });
+  }
+
+  const province = await getProvinceService(adapter.provinceCode);
+  if (!province) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Province not found' });
+  }
+
+  const district = await getDistrictService(adapter.districtCode, adapter.provinceCode);
+  if (!district) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'District not found' });
+  }
+
+  const ward = await getWardService(adapter.wardCode, adapter.districtCode);
+  if (!ward) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Ward not found' });
+  }
+
+  const fullAddress = `${adapter.address}, ${ward.WardName}, ${district.DistrictName}, ${province.ProvinceName}`;
+
+  // const validAddress = await checkValidAddressService(fullAddress);
+  // if (!validAddress) {
+  //   throw HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Invalid address' });
+  // }
 
   // Logic (CREATE ORDER PENDING)
   const job = await createOrderJob({
@@ -108,6 +166,29 @@ export async function getAllOrdersController(req) {
 
   const skip = (adapter.page - 1) * adapter.limit;
   const [totalCount, orders] = await getAndCountOrdersService(
+    filters,
+    skip,
+    adapter.limit,
+    adapter.sortBy,
+    adapter.sortOrder,
+  );
+
+  const ordersDto = ModelDto.newList(OrderDto, orders);
+  return ApiResponse.success({ totalCount, list: ordersDto });
+}
+
+export async function getAllOrdersByCustomerController(req) {
+  const { id } = req.user;
+  const adapter = await validateSchema(GetListOrderDto, req.query);
+
+  const filters = {
+    customer: id,
+    ...(adapter.status ? { status: adapter.status } : {}),
+    // keyword: adapter.keyword,
+  };
+
+  const skip = (adapter.page - 1) * adapter.limit;
+  const [totalCount, orders] = await getAndCountOrdersByCustomerService(
     filters,
     skip,
     adapter.limit,

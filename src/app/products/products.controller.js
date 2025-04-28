@@ -96,6 +96,11 @@ export const getAllProductsController = async (req) => {
 export const getAllProductsByCustomerController = async (req) => {
   const adapter = await validateSchema(GetListProductDto, req.query);
 
+  if (adapter.category) {
+    const category = await getCategoryByIdService(adapter.category);
+    adapter.category = category ? category._id : null;
+  }
+
   const filters = {
     status: PRODUCT_STATUS.ACTIVE,
     $or: [{ name: { $regex: adapter.keyword, $options: 'i' } }],
