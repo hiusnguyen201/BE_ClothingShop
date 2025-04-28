@@ -1,6 +1,6 @@
 import SoftDelete from '#src/core/plugins/soft-delete.plugin';
 import mongoose from 'mongoose';
-
+import mongooseSequence from 'mongoose-sequence';
 const { Schema } = mongoose;
 import { ORDER_STATUS } from '#src/app/orders/orders.constant';
 
@@ -9,7 +9,7 @@ export const ORDER_MODEL = 'orders';
 export const OrderSchema = new Schema(
   {
     code: {
-      type: String,
+      type: Number,
       unique: true,
     },
     orderDate: {
@@ -109,6 +109,8 @@ export const OrderSchema = new Schema(
   },
 );
 
+const AutoIncrement = mongooseSequence(mongoose);
+OrderSchema.plugin(AutoIncrement, { inc_field: 'code' });
 OrderSchema.plugin(SoftDelete);
 
 const OrderModel = mongoose.model('Order', OrderSchema);

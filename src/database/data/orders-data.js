@@ -11,7 +11,6 @@ import { variants } from '#src/database/data/products-data';
 import { newOrderDetailService } from '#src/app/order-details/order-details.service';
 import { newPaymentService } from '#src/app/payments/payments.service';
 import { ONLINE_PAYMENT_METHOD, PAYMENT_STATUS } from '#src/app/payments/payments.constant';
-import { orderCodeGenerator } from '#src/utils/generator';
 const { provinces, getDistricts, getWards } = pkg;
 
 const ORDER_FLOWS = [
@@ -112,7 +111,6 @@ Array.from({ length: totalOrders }).map((_, index) => {
   const orderDate = faker.date.recent({ days: 10 });
 
   const order = newOrderService({
-    code: orderCodeGenerator.next().value,
     provinceName: province.name,
     districtName: district.name,
     wardName: ward.name,
