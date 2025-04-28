@@ -19,6 +19,7 @@ import { GetCustomerDto } from '#src/app/customers/dtos/get-customer.dto';
 import { CreateCustomerDto } from '#src/app/customers/dtos/create-customer.dto';
 import { UpdateCustomerDto } from '#src/app/customers/dtos/update-customer.dto';
 import { validateSchema } from '#src/core/validations/request.validation';
+import { UpdateCustomerByCustomerDto } from '#src/app/customers/dtos/update-customer-by-customer.dto';
 
 export const createCustomerController = async (req) => {
   const adapter = await validateSchema(CreateCustomerDto, req.body);
@@ -90,6 +91,21 @@ export const updateCustomerByIdController = async (req) => {
   const isExistEmail = await checkExistEmailService(adapter.email, existCustomer._id);
   if (isExistEmail) {
     throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Email already exist' });
+  }
+
+  const updatedCustomer = await updateUserInfoByIdService(existCustomer._id, adapter);
+
+  const customerDto = ModelDto.new(CustomerDto, updatedCustomer);
+  return ApiResponse.success(customerDto, 'Update customer successful');
+};
+
+export const updateProfileByCustomerController = async (req) => {
+  const { id } = req.user;
+  const adapter = await validateSchema(UpdateCustomerByCustomerDto, req.body);
+
+  const existCustomer = await getUserByIdService(id, { type: USER_TYPE.CUSTOMER });
+  if (!existCustomer) {
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Customer not found' });
   }
 
   const updatedCustomer = await updateUserInfoByIdService(existCustomer._id, adapter);
