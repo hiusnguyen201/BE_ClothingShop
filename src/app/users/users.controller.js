@@ -24,7 +24,7 @@ import { GetUserDto } from '#src/app/users/dtos/get-user.dto';
 import { validateSchema } from '#src/core/validations/request.validation';
 
 export const checkExistEmailController = async (req) => {
-  const adapter = await validateSchema(CheckExistEmailDto, req.params);
+  const adapter = await validateSchema(CheckExistEmailDto, req.body);
 
   const isExistEmail = await checkExistEmailService(adapter.email);
 

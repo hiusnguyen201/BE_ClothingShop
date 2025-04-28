@@ -35,6 +35,23 @@ const USER_DATA = [
     type: USER_TYPE.USER,
     role: roles[0]._id,
   },
+  {
+    name: 'Customer',
+    email: 'customer1@gmail.com',
+    password: '1234',
+    phone: '0383460015',
+    verifiedAt: new Date(),
+    gender: GENDER.MALE,
+    type: USER_TYPE.CUSTOMER,
+  },
+  {
+    name: 'Customer',
+    email: 'customer2@gmail.com',
+    password: '1234',
+    phone: '0383460015',
+    gender: GENDER.MALE,
+    type: USER_TYPE.CUSTOMER,
+  },
   ...Array.from({ length: 50 }).map(() => ({
     name: faker.person.fullName(),
     email: faker.internet.email(),

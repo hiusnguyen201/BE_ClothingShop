@@ -1,12 +1,18 @@
-import { createClient } from 'redis';
+import { Redis } from 'ioredis';
+import { DiscordService } from '#src/modules/discord/discord.service';
 
-const redisClient = createClient({
-  url: process.env.REDIS_URL,
+const redis = new Redis({
+  host: process.env.REDIS_HOST,
+  port: process.env.REDIS_PORT,
+  username: process.env.REDIS_USERNAME,
+  password: process.env.REDIS_PASSWORD,
+  keepAlive: 10000,
 });
 
-redisClient.on('error', (err) => console.error('Redis Client Error:', err));
-redisClient.on('connect', () => console.log('Connected to Redis'));
+redis.on('connect', () => console.log('Connected to Redis'));
 
-// await redisClient.connect();
+redis.on('error', (err) => {
+  console.log(err);
+});
 
-export default redisClient;
+export default redis;

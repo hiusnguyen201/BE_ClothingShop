@@ -7,14 +7,14 @@ import redisClient from '#src/modules/redis/redis.service';
  * @returns
  */
 export async function addToCartService(customerId, product) {
-    const cartKey = `cart:${customerId}`;
-    const productData = {
-        productId: product.productId,
-        productVariantId: product.productVariantId,
-        quantity: product.quantity,
-    };
+  const cartKey = `cart:${customerId}`;
+  const productData = {
+    productId: product.productId,
+    productVariantId: product.productVariantId,
+    quantity: product.quantity,
+  };
 
-    return await redisClient.hSet(cartKey, String(product.productVariantId), JSON.stringify(productData));
+  return await redisClient.hset(cartKey, String(product.productVariantId), JSON.stringify(productData));
 }
 
 /**
@@ -23,13 +23,13 @@ export async function addToCartService(customerId, product) {
  * @returns
  */
 export async function getCartService(customerId) {
-    const cartKey = `cart:${customerId}`;
-    const cartData = await redisClient.hGetAll(cartKey);
+  const cartKey = `cart:${customerId}`;
+  const cartData = await redisClient.hgetall(cartKey);
 
-    return Object.entries(cartData).map(([productVariantId, data]) => ({
-        productVariantId,
-        ...JSON.parse(data),
-    }));
+  return Object.entries(cartData).map(([productVariantId, data]) => ({
+    productVariantId,
+    ...JSON.parse(data),
+  }));
 }
 
 /**
@@ -39,8 +39,8 @@ export async function getCartService(customerId) {
  * @returns
  */
 export async function removeFromCartService(userId, productVariantId) {
-    const cartKey = `cart:${userId}`;
-    await redisClient.hDel(cartKey, productVariantId);
+  const cartKey = `cart:${userId}`;
+  await redisClient.hdel(cartKey, productVariantId);
 }
 
 /**
@@ -49,6 +49,6 @@ export async function removeFromCartService(userId, productVariantId) {
  * @returns
  */
 export async function clearCartService(customerId) {
-    const cartKey = `cart:${customerId}`;
-    await redisClient.del(cartKey);
-};
+  const cartKey = `cart:${customerId}`;
+  await redisClient.del(cartKey);
+}

@@ -1,4 +1,3 @@
-import path from 'path';
 import {
   createUserService,
   getUserByIdService,
@@ -109,7 +108,7 @@ export const loginCustomerController = async (req, res) => {
     return ApiResponse.success({
       isAuthenticated: false,
       is2FactorRequired: true,
-      customer: customerDto,
+      user: customerDto,
     });
   }
 
@@ -124,7 +123,7 @@ export const loginCustomerController = async (req, res) => {
     {
       isAuthenticated: true,
       is2FactorRequired: false,
-      customer: customerDto,
+      user: customerDto,
     },
     'Login successful',
   );
@@ -156,12 +155,12 @@ export const forgotPasswordController = async (req) => {
 
   const user = await getUserByIdService(adapter.email, { type: USER_TYPE.CUSTOMER });
   if (!user) {
-    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'User not found' });
+    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Email is not exist' });
   }
 
   const token = createResetPasswordTokenService({ id: user._id });
 
-  const resetURL = path.join(adapter.callbackUrl, token);
+  const resetURL = adapter.callbackUrl + '/' + token;
   const result = await sendResetPasswordRequestService(user.email, resetURL);
   if (!result) {
     throw HttpException.new({ code: Code.SEND_MAIL_ERROR, overrideMessage: 'Send link reset password failed' });
