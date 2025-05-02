@@ -1,4 +1,4 @@
-import { OFFLINE_PAYMENT_METHOD, ONLINE_PAYMENT_METHOD, PAYMENT_TYPE } from '#src/app/payments/payments.constant';
+import { ONLINE_PAYMENT_METHOD } from '#src/app/payments/payments.constant';
 import { replaceMultiSpacesToSingleSpace } from '#src/utils/string.util';
 import Joi from 'joi';
 

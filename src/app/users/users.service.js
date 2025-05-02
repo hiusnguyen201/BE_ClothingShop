@@ -2,10 +2,11 @@ import { isValidObjectId, Types } from 'mongoose';
 import { genSaltSync, hashSync } from 'bcrypt';
 import { UserModel } from '#src/app/users/models/user.model';
 import { REGEX_PATTERNS } from '#src/core/constant';
-import { USER_SELECTED_FIELDS } from '#src/app/users/users.constant';
+import { USER_SELECTED_FIELDS, USER_TYPE } from '#src/app/users/users.constant';
 import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
 import { PERMISSION_SELECTED_FIELDS } from '#src/app/permissions/permissions.constant';
 import { ROLE_SELECTED_FIELDS } from '#src/app/roles/roles.constant';
+import { UserNotificationModel } from '#src/app/notifications/models/user-notification.model';
 
 /**
  * New user service
@@ -16,15 +17,6 @@ export function newUserService(data) {
   const salt = genSaltSync();
   data.password = hashSync(data.password, salt);
   return new UserModel(data);
-}
-
-/**
- * Insert users service
- * @param {*} data
- * @returns
- */
-export async function insertUsersService(data = [], session) {
-  return await UserModel.bulkSave(data, { session, ordered: true });
 }
 
 /**
@@ -40,6 +32,15 @@ export async function createUserService(data) {
 }
 
 /**
+ * Insert users service
+ * @param {*} data
+ * @returns
+ */
+export async function insertUsersService(data = [], session) {
+  return await UserModel.bulkSave(data, { session, ordered: true });
+}
+
+/**
  * Get and count users
  * @param {object} filters
  * @param {number} skip
@@ -49,14 +50,19 @@ export async function createUserService(data) {
  * @returns
  */
 export async function getAndCountUsersService(filters, skip, limit, sortBy, sortOrder) {
-  const totalCount = await UserModel.countDocuments(filters);
+  const extraFilters = {
+    ...filters,
+    type: USER_TYPE.USER,
+  };
+
+  const totalCount = await UserModel.countDocuments(extraFilters);
 
   const queryOptions = {
     ...extendQueryOptionsWithPagination(skip, limit),
     ...extendQueryOptionsWithSort(sortBy, sortOrder),
   };
 
-  const list = await UserModel.find(filters, USER_SELECTED_FIELDS, queryOptions)
+  const list = await UserModel.find(extraFilters, USER_SELECTED_FIELDS, queryOptions)
     .populate({ path: 'role', select: ROLE_SELECTED_FIELDS })
     .lean();
 
@@ -64,25 +70,134 @@ export async function getAndCountUsersService(filters, skip, limit, sortBy, sort
 }
 
 /**
- * Get one user by id
+ * Get list user have permission
+ * @returns
+ */
+export async function getListUserHavePermissionService(permissionName) {
+  const users = await UserModel.find()
+    .select('_id role permissions')
+    .populate({
+      path: 'role',
+      select: 'permissions',
+      populate: {
+        path: 'permissions',
+        match: {
+          name: permissionName,
+        },
+      },
+    })
+    .populate({
+      path: 'permissions',
+      match: {
+        name: permissionName,
+      },
+    })
+    .lean();
+
+  return users;
+}
+
+/**
+ * Get user by id
  * @param {*} id
  * @returns
  */
-export async function getUserByIdService(id, extras = {}) {
-  if (!id) return null;
+export async function getUserByIdService(id) {
   const filters = {
-    ...extras,
+    type: USER_TYPE.USER,
   };
 
   if (isValidObjectId(id)) {
     filters._id = id;
-  } else if (id.match(REGEX_PATTERNS.EMAIL)) {
-    filters.email = id;
   } else {
     return null;
   }
 
   return UserModel.findOne(filters).select(USER_SELECTED_FIELDS).lean();
+}
+
+/**
+ * Get profile by id
+ * @param {*} id
+ * @returns
+ */
+export async function getProfileByIdService(id) {
+  const filters = {};
+
+  if (isValidObjectId(id)) {
+    filters._id = id;
+  } else {
+    return null;
+  }
+
+  return UserModel.findOne(filters).select(USER_SELECTED_FIELDS).lean();
+}
+
+/**
+ * Get user by email
+ * @param {string} email
+ * @param {*} extras
+ * @returns
+ */
+export async function getUserByEmailService(email, extras = {}) {
+  if (!email) return null;
+
+  const filters = {
+    ...extras,
+  };
+
+  if (email.match(REGEX_PATTERNS.EMAIL)) {
+    filters.email = email;
+  } else {
+    return null;
+  }
+
+  return UserModel.findOne(filters).select(USER_SELECTED_FIELDS).lean();
+}
+
+/**
+ * Update info by id
+ * @param {*} id
+ * @param {*} data
+ */
+export async function updateUserInfoByIdService(id, data) {
+  return UserModel.findByIdAndUpdate(id, data, {
+    new: true,
+  })
+    .select(USER_SELECTED_FIELDS)
+    .lean();
+}
+
+/**
+ * Update verified by id
+ * @param {*} id
+ * @returns
+ */
+export async function updateUserVerifiedByIdService(id) {
+  return UserModel.findByIdAndUpdate(
+    id,
+    {
+      verifiedAt: new Date(),
+    },
+    { new: true },
+  )
+    .select(USER_SELECTED_FIELDS)
+    .lean();
+}
+
+/**
+ * Update user password
+ * @param {*} data
+ * @returns
+ */
+export function updateUserPasswordService(userId, password) {
+  const salt = genSaltSync();
+  const hashed = hashSync(password, salt);
+  return UserModel.findByIdAndUpdate(userId, {
+    password: hashed,
+  })
+    .select(USER_SELECTED_FIELDS)
+    .lean();
 }
 
 /**
@@ -112,35 +227,12 @@ export async function checkExistEmailService(email, skipId) {
 }
 
 /**
- * Update verified by id
- * @param {*} id
+ * Check user has permissions
+ * @param {string} id
+ * @param {string} method
+ * @param {string} endpoint
  * @returns
  */
-export async function updateUserVerifiedByIdService(id) {
-  return UserModel.findByIdAndUpdate(
-    id,
-    {
-      verifiedAt: new Date(),
-    },
-    { new: true },
-  )
-    .select(USER_SELECTED_FIELDS)
-    .lean();
-}
-
-/**
- * Update info by id
- * @param {*} id
- * @param {*} data
- */
-export async function updateUserInfoByIdService(id, data) {
-  return UserModel.findByIdAndUpdate(id, data, {
-    new: true,
-  })
-    .select(USER_SELECTED_FIELDS)
-    .lean();
-}
-
 export async function checkUserHasPermissionService(id, method, endpoint) {
   const user = await UserModel.findById(id)
     .select('role permissions')
@@ -228,53 +320,6 @@ export async function getAndCountUserPermissionsService(userId, filters, skip, l
 }
 
 /**
- * Get user permissions
- * @param {string} userId
- * @param {string} permissionId
- * @returns
- */
-export async function getListPermissionNameInUserService(userId) {
-  const user = await UserModel.findById(userId)
-    .populate({
-      path: 'role',
-      select: '_id permissions',
-      populate: {
-        path: 'permissions',
-        select: 'name',
-        options: {
-          lean: true,
-        },
-      },
-      options: {
-        lean: true,
-      },
-    })
-    .populate({
-      path: 'permissions',
-      select: 'name',
-    })
-    .lean();
-
-  return [...user.permissions.map((item) => item.name), ...(user?.role?.permissions?.map((item) => item.name) || [])];
-}
-
-/**
- * Get user permission
- * @param {string} userId
- * @param {string} permissionId
- * @returns
- */
-export async function getUserPermissionService(userId, permissionId) {
-  return UserModel.findById(userId)
-    .populate({
-      path: 'permissions',
-      select: 'method, endpoint',
-      match: { _id: permissionId },
-    })
-    .select('permissions')
-    .lean();
-}
-/**
  * Add user permission
  * @param {*} id
  * @param {*} permissions
@@ -312,17 +357,4 @@ export async function removeUserPermissionByIdService(userId, permissionId) {
   )
     .select('permissions')
     .lean();
-}
-
-/**
- * Update user password
- * @param {*} data
- * @returns
- */
-export function updateUserPasswordService(userId, password) {
-  const salt = genSaltSync();
-  const hashed = hashSync(password, salt);
-  return UserModel.findByIdAndUpdate(userId, {
-    password: hashed,
-  });
 }

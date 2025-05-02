@@ -4,6 +4,7 @@ import { newRoleService } from '#src/app/roles/roles.service';
 import {
   categoryPermissions,
   customerPermissions,
+  notificationPermissions,
   orderPermissions,
   productPermissions,
   userPermissions,
@@ -12,10 +13,10 @@ import {
 const ROLE_DATA = [
   {
     name: 'Admin',
-    description: 'Full system access. Can manage users, orders, products, categories, and all system configurations.',
+    description: 'Full system access. Can orders, products, categories, and all system configurations.',
     permissions: [
       ...orderPermissions.filter((p) => ['GET', 'PUT', 'PATCH', 'DELETE'].includes(p.method)).map((p) => p._id),
-      ...userPermissions.filter((p) => ['GET', 'PUT', 'PATCH', 'POST', 'DELETE'].includes(p.method)).map((p) => p._id),
+      ...userPermissions.filter((p) => ['GET'].includes(p.method)).map((p) => p._id),
       ...customerPermissions
         .filter((p) => ['GET', 'PUT', 'PATCH', 'POST', 'DELETE'].includes(p.method))
         .map((p) => p._id),
@@ -25,6 +26,7 @@ const ROLE_DATA = [
       ...categoryPermissions
         .filter((p) => ['GET', 'PUT', 'PATCH', 'POST', 'DELETE'].includes(p.method))
         .map((p) => p._id),
+      ...notificationPermissions.map((p) => p._id),
     ],
   },
   {
@@ -37,6 +39,7 @@ const ROLE_DATA = [
       ...customerPermissions.filter((p) => ['GET', 'PUT', 'PATCH', 'POST'].includes(p.method)).map((p) => p._id),
       ...productPermissions.filter((p) => ['GET', 'PUT', 'PATCH', 'POST'].includes(p.method)).map((p) => p._id),
       ...categoryPermissions.filter((p) => ['GET', 'PUT', 'PATCH', 'POST'].includes(p.method)).map((p) => p._id),
+      ...notificationPermissions.map((p) => p._id),
     ],
   },
   {
@@ -48,6 +51,7 @@ const ROLE_DATA = [
       ...customerPermissions.filter((p) => ['GET'].includes(p.method)).map((p) => p._id),
       ...productPermissions.filter((p) => ['GET', 'PUT', 'PATCH'].includes(p.method)).map((p) => p._id),
       ...categoryPermissions.filter((p) => ['GET'].includes(p.method)).map((p) => p._id),
+      ...notificationPermissions.map((p) => p._id),
     ],
   },
 ];

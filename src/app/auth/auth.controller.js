@@ -3,8 +3,7 @@ import {
   getUserByIdService,
   checkExistEmailService,
   updateUserVerifiedByIdService,
-  getUserPermissionService,
-  getListPermissionNameInUserService,
+  getUserByEmailService,
 } from '#src/app/users/users.service';
 import {
   authenticateUserService,
@@ -12,7 +11,6 @@ import {
   verifyTokenService,
   changePasswordByIdService,
   createUserOtpService,
-  checkTimeLeftToResendOTPService,
   getValidUserOtpInUserService,
   removeUserOtpsInUserService,
   revokeTokenByUserIdService,
@@ -39,7 +37,8 @@ import { RegisterDto } from '#src/app/auth/dtos/register.dto';
 import { LoginDto } from '#src/app/auth/dtos/login.dto';
 import { VerifyOtpDto, SendOtpViaEmailDto } from '#src/app/auth/dtos/two-factor.dto';
 import { ForgotPasswordDto, ResetPasswordDto } from '#src/app/auth/dtos/forgot-password.dto';
-import { AccountPermissionDto } from '#src/app/account/dtos/account-permission.dto';
+import { deleteUserFromCache } from '#src/app/users/users-cache.service';
+import { notifyClientsOfNewCustomer } from '#src/app/notifications/notifications.service';
 
 export const logoutController = async (req, res) => {
   const userId = req.user.id;
@@ -74,7 +73,7 @@ export const refreshTokenController = async (req, res) => {
   return ApiResponse.success(userDto, 'Refresh token successful');
 };
 
-export const loginAdminController = async (req) => {
+export const loginAdminController = async (req, res) => {
   const adapter = await validateSchema(LoginDto, req.body);
 
   const user = await authenticateUserService(adapter.email, adapter.password);
@@ -83,6 +82,26 @@ export const loginAdminController = async (req) => {
   }
 
   const userDto = ModelDto.new(UserDto, user);
+
+  // Skip verify if account is test
+  if (user.email === 'test@gmail.com') {
+    const { accessToken, refreshToken } = await generateTokensService(user._id, {
+      id: user._id,
+      type: user.type,
+    });
+
+    setSession(res, { accessToken, refreshToken });
+
+    const userDto = ModelDto.new(UserDto, user);
+    return ApiResponse.success(
+      {
+        isAuthenticated: true,
+        is2FactorRequired: false,
+        user: userDto,
+      },
+      'Login successful',
+    );
+  }
 
   return ApiResponse.success(
     {
@@ -142,18 +161,26 @@ export const registerController = async (req) => {
     type: USER_TYPE.CUSTOMER,
   });
 
-  const userDto = ModelDto.new(UserDto, customer);
+  const customerDto = ModelDto.new(CustomerDto, customer);
+
+  // Notify to client
+  await notifyClientsOfNewCustomer({
+    customerId: customerDto.id,
+    name: customerDto.name,
+    email: customerDto.email,
+  });
+
   return ApiResponse.success({
     isAuthenticated: false,
     is2FactorRequired: true,
-    user: userDto,
+    user: customerDto,
   });
 };
 
 export const forgotPasswordController = async (req) => {
   const adapter = await validateSchema(ForgotPasswordDto, req.body);
 
-  const user = await getUserByIdService(adapter.email, { type: USER_TYPE.CUSTOMER });
+  const user = await getUserByEmailService(adapter.email, { type: USER_TYPE.CUSTOMER });
   if (!user) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Email is not exist' });
   }
@@ -187,17 +214,9 @@ export const resetPasswordController = async (req) => {
 export const sendOtpViaEmailController = async (req) => {
   const adapter = await validateSchema(SendOtpViaEmailDto, req.body);
 
-  const user = await getUserByIdService(adapter.email);
+  const user = await getUserByEmailService(adapter.email);
   if (!user) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'User not found' });
-  }
-
-  const timeLeft = await checkTimeLeftToResendOTPService(user._id);
-  if (timeLeft > 0) {
-    throw HttpException.new({
-      code: Code.TOO_MANY_SEND_MAIL,
-      overrideMessage: `Please wait ${timeLeft} seconds before requesting another OTP`,
-    });
   }
 
   // Remove all otp in user
@@ -227,6 +246,10 @@ export const verifyOtpController = async (req, res) => {
 
   if (!user.verifiedAt) {
     await updateUserVerifiedByIdService(user._id);
+
+    // Clear cache
+    await deleteUserFromCache(user._id);
+
     sendWelcomeEmailService(user.email, user.name);
   }
 
@@ -240,17 +263,12 @@ export const verifyOtpController = async (req, res) => {
 
   setSession(res, { accessToken, refreshToken });
 
-  const permissions = await getListPermissionNameInUserService(user._id);
-
-  const permissionsDto = ModelDto.newList(AccountPermissionDto, permissions);
-
   const userDto = ModelDto.new(UserDto, user);
   return ApiResponse.success(
     {
       isAuthenticated: true,
       is2FactorRequired: false,
       user: userDto,
-      permissions: permissionsDto,
     },
     'Verify otp successful',
   );

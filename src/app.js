@@ -13,6 +13,7 @@ import { limiter } from '#src/middlewares/rate-limit.middleware';
 import { enhanceRouter } from '#src/utils/async-handler';
 import Database from '#src/modules/database/init.database';
 import { handleTimeout } from '#src/middlewares/timeout.middleware';
+import { corsConfig } from '#src/config/cors.config';
 
 // Connect to Database
 Database.getInstance({
@@ -25,19 +26,7 @@ const app = express();
 
 app.use(helmet());
 app.use(compression());
-app.use(
-  cors({
-    origin: [
-      'https://fe-admin-clothingshop.onrender.com',
-      'https://fe-client-clothingshop-5fpx.onrender.com',
-      'http://localhost:5173',
-      'https://fe-client-clothingshop-ilvk.onrender.com',
-    ],
-    methods: 'GET,POST,PUT,PATCH,DELETE',
-    allowedHeaders: 'Content-Type,Authorization',
-    credentials: true,
-  }),
-);
+app.use(cors(corsConfig));
 app.use(limiter);
 
 app.set('trust proxy', true);
@@ -49,12 +38,22 @@ app.use(cookieParser());
 app.use(handleTimeout);
 
 app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'production') {
+    return next();
+  }
+
   const startTime = process.hrtime();
-  res.on('finish', () => {
+  const originalJson = res.json;
+  res.json = function (body) {
     const [seconds, nanoseconds] = process.hrtime(startTime);
-    const responseTime = seconds * 1000 + nanoseconds / 1000000;
-    req.responseTime = responseTime;
-  });
+    const time = seconds * 1000 + nanoseconds / 1000000;
+
+    if (body && typeof body === 'object') {
+      body.responseTime = time;
+    }
+
+    return originalJson.call(this, body);
+  };
   next();
 });
 

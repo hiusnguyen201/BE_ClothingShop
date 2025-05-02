@@ -25,13 +25,13 @@ export const PermissionSchema = new Schema(
     },
     endpoint: {
       type: String,
-      required: true,
+      required: false,
       length: 255,
     },
     method: {
       type: String,
       length: 10,
-      required: true,
+      required: false,
       enum: ALLOW_METHODS,
     },
   },

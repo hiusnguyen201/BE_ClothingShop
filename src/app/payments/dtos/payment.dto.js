@@ -9,6 +9,5 @@ export const PaymentDto = Joi.object({
   paidDate: Joi.date().iso().allow(null),
   transactionId: Joi.string(),
   notes: Joi.string().allow(null),
-  order: Joi.any().required(),
   status: Joi.string().required(),
 });

@@ -68,6 +68,12 @@ export const OrderSchema = new Schema(
 
     trackingNumber: {
       type: String,
+      required: false,
+      default: null,
+    },
+    estimatedDeliveryAt: {
+      type: Date,
+      required: false,
       default: null,
     },
 

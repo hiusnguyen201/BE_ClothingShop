@@ -43,99 +43,77 @@ async function runSeed() {
     // Permissions
     await TransactionalServiceWrapper.execute(async (session) => {
       LogUtils.info('PERMISSION', 'Start insert permissions');
-      await retryBulkWrite(async () => {
-        await saveListPermissionsService(permissions, session);
-      });
+      await saveListPermissionsService(permissions, session);
       LogUtils.success('PERMISSION', 'Insert permissions done');
     });
 
     // Roles
     await TransactionalServiceWrapper.execute(async (session) => {
       LogUtils.info('ROLE', 'Start insert roles');
-      await retryBulkWrite(async () => {
-        await insertRolesService(roles, session);
-      });
+      await insertRolesService(roles, session);
       LogUtils.success('ROLE', 'Insert roles done');
     });
 
     // Users
     await TransactionalServiceWrapper.execute(async (session) => {
       LogUtils.info('USER', 'Start insert users');
-      await retryBulkWrite(async () => {
-        await insertUsersService(users, session);
-      });
+      await insertUsersService(users, session);
       LogUtils.success('USER', 'Insert users done');
     });
 
     // Option Values
     await TransactionalServiceWrapper.execute(async (session) => {
       LogUtils.info('OPTION_VALUE', 'Start insert option values');
-      await retryBulkWrite(async () => {
-        await insertOptionValuesService(optionValues, session);
-      });
+      await insertOptionValuesService(optionValues, session);
       LogUtils.success('OPTION_VALUE', 'Insert option values done');
     });
 
     // Options
     await TransactionalServiceWrapper.execute(async (session) => {
       LogUtils.info('OPTION', 'Start insert options');
-      await retryBulkWrite(async () => {
-        await insertOptionsService(options, session);
-      });
+      await insertOptionsService(options, session);
       LogUtils.success('OPTION', 'Insert options done');
     });
 
     // Categories
     await TransactionalServiceWrapper.execute(async (session) => {
       LogUtils.info('CATEGORY', 'Start insert categories');
-      await retryBulkWrite(async () => {
-        await insertCategoriesService(categories, session);
-      });
+      await insertCategoriesService(categories, session);
       LogUtils.success('CATEGORY', 'Insert categories done');
     });
 
     // Products
     await TransactionalServiceWrapper.execute(async (session) => {
       LogUtils.info('PRODUCT', 'Start insert products');
-      await retryBulkWrite(async () => {
-        await insertProductsService(products, session);
-      });
+      await insertProductsService(products, session);
       LogUtils.success('PRODUCT', 'Insert products done');
     });
 
     // Product Variants
     await TransactionalServiceWrapper.execute(async (session) => {
       LogUtils.info('PRODUCT_VARIANT', 'Start insert product variants');
-      await retryBulkWrite(async () => {
-        await insertProductVariantsService(variants, session);
-      });
+      await insertProductVariantsService(variants, session);
       LogUtils.success('PRODUCT_VARIANT', 'Insert product variants done');
     });
 
     // Order
     await TransactionalServiceWrapper.execute(async (session) => {
       LogUtils.info('ORDER', 'Start insert order');
-      await retryBulkWrite(async () => {
-        await insertOrdersService(orders, session);
-      });
+      await insertOrdersService(orders, session);
       LogUtils.success('ORDER', 'Insert order done');
     });
 
     // Order Detail
     await TransactionalServiceWrapper.execute(async (session) => {
       LogUtils.info('ORDER_DETAILS', 'Start insert order detail');
-      await retryBulkWrite(async () => {
-        await insertOrderDetailsService(orderDetails, session);
-      });
+      await insertOrderDetailsService(orderDetails, session);
       LogUtils.success('ORDER_DETAILS', 'Insert order detail done');
     });
 
     // Payment
     await TransactionalServiceWrapper.execute(async (session) => {
       LogUtils.info('PAYMENT', 'Start insert payment');
-      await retryBulkWrite(async () => {
-        await insertPaymentService(payments, session);
-      });
+      await insertPaymentService(payments, session);
       LogUtils.success('PAYMENT', 'Insert payment done');
     });
   } catch (err) {
@@ -145,6 +123,8 @@ async function runSeed() {
   LogUtils.info('SEED_DATABASE', 'Seed database successful');
 
   await Database.clear();
+
+  process.exit(0);
 }
 
 runSeed();

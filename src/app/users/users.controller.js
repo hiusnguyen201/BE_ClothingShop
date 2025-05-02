@@ -11,7 +11,7 @@ import { getRoleByIdService } from '#src/app/roles/roles.service';
 import { sendPasswordService } from '#src/modules/mailer/mailer.service';
 import { HttpException } from '#src/core/exception/http-exception';
 import { randomStr } from '#src/utils/string.util';
-import { USER_TYPE } from '#src/app/users/users.constant';
+import { USER_SEARCH_FIELDS, USER_TYPE } from '#src/app/users/users.constant';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { UserDto } from '#src/app/users/dtos/user.dto';
@@ -22,6 +22,13 @@ import { CheckExistEmailDto } from '#src/app/users/dtos/check-exist-email.dto';
 import { GetListUserDto } from '#src/app/users/dtos/get-list-user.dto';
 import { GetUserDto } from '#src/app/users/dtos/get-user.dto';
 import { validateSchema } from '#src/core/validations/request.validation';
+import {
+  deleteUserFromCache,
+  getUserFromCache,
+  setUserToCache,
+  getTotalCountAndListUserFromCache,
+  setTotalCountAndListUserToCache,
+} from '#src/app/users/users-cache.service';
 
 export const checkExistEmailController = async (req) => {
   const adapter = await validateSchema(CheckExistEmailDto, req.body);
@@ -54,6 +61,9 @@ export const createUserController = async (req) => {
     type: USER_TYPE.USER,
   });
 
+  // Clear cache
+  await deleteUserFromCache(user._id);
+
   sendPasswordService(adapter.email, password);
 
   const userDto = ModelDto.new(UserDto, user);
@@ -63,33 +73,45 @@ export const createUserController = async (req) => {
 export const getAllUsersController = async (req) => {
   const adapter = await validateSchema(GetListUserDto, req.query);
 
-  const searchFields = ['name', 'email', 'phone'];
   const filters = {
-    $or: searchFields.map((field) => ({
+    $or: USER_SEARCH_FIELDS.map((field) => ({
       [field]: { $regex: adapter.keyword, $options: 'i' },
     })),
     ...(adapter.gender ? { gender: adapter.gender } : {}),
     ...(adapter.roleId ? { role: adapter.roleId } : {}),
-    type: USER_TYPE.USER,
   };
 
-  const skip = (adapter.page - 1) * adapter.limit;
-  const [totalCount, users] = await getAndCountUsersService(
-    filters,
-    skip,
-    adapter.limit,
-    adapter.sortBy,
-    adapter.sortOrder,
-  );
+  let [totalCountCached, usersCached] = await getTotalCountAndListUserFromCache(adapter);
 
-  const usersDto = ModelDto.newList(UserDto, users);
-  return ApiResponse.success({ totalCount, list: usersDto });
+  if (usersCached.length === 0) {
+    const skip = (adapter.page - 1) * adapter.limit;
+    const [totalCount, users] = await getAndCountUsersService(
+      filters,
+      skip,
+      adapter.limit,
+      adapter.sortBy,
+      adapter.sortOrder,
+    );
+
+    await setTotalCountAndListUserToCache(adapter, totalCount, users);
+
+    totalCountCached = totalCount;
+    usersCached = users;
+  }
+
+  const usersDto = ModelDto.newList(UserDto, usersCached);
+  return ApiResponse.success({ totalCount: totalCountCached, list: usersDto });
 };
 
 export const getUserByIdController = async (req) => {
   const adapter = await validateSchema(GetUserDto, req.params);
 
-  const user = await getUserByIdService(adapter.userId, { type: USER_TYPE.USER });
+  let user = await getUserFromCache(adapter.userId);
+  if (!user) {
+    user = await getUserByIdService(adapter.userId);
+    await setUserToCache(adapter.userId, user);
+  }
+
   if (!user) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'User not found' });
   }
@@ -101,12 +123,12 @@ export const getUserByIdController = async (req) => {
 export const updateUserByIdController = async (req) => {
   const adapter = await validateSchema(UpdateUserDto, { ...req.params, ...req.body });
 
-  const existUser = await getUserByIdService(adapter.userId, { type: USER_TYPE.USER });
-  if (!existUser) {
+  const user = await getUserByIdService(adapter.userId);
+  if (!user) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'User not found' });
   }
 
-  const isExistEmail = await checkExistEmailService(adapter.email, existUser._id);
+  const isExistEmail = await checkExistEmailService(adapter.email, user._id);
   if (isExistEmail) {
     throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Email already exist' });
   }
@@ -118,7 +140,10 @@ export const updateUserByIdController = async (req) => {
     }
   }
 
-  const updatedUser = await updateUserInfoByIdService(existUser._id, { ...adapter, role: adapter.roleId });
+  const updatedUser = await updateUserInfoByIdService(user._id, { ...adapter, role: adapter.roleId });
+
+  // Clear cache
+  await deleteUserFromCache(user._id);
 
   const userDto = ModelDto.new(UserDto, updatedUser);
   return ApiResponse.success(userDto);
@@ -127,12 +152,15 @@ export const updateUserByIdController = async (req) => {
 export const removeUserByIdController = async (req) => {
   const adapter = await validateSchema(GetUserDto, req.params);
 
-  const existUser = await getUserByIdService(adapter.userId, { type: USER_TYPE.USER });
+  const existUser = await getUserByIdService(adapter.userId);
   if (!existUser) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'User not found' });
   }
 
   await removeUserByIdService(existUser._id);
+
+  // Clear cache
+  await deleteUserFromCache(existUser._id);
 
   return ApiResponse.success({ id: existUser._id }, 'Remove user successful');
 };
@@ -140,7 +168,7 @@ export const removeUserByIdController = async (req) => {
 export const resetPasswordUserController = async (req) => {
   const adapter = await validateSchema(GetUserDto, req.params);
 
-  const existUser = await getUserByIdService(adapter.userId, { type: USER_TYPE.USER });
+  const existUser = await getUserByIdService(adapter.userId);
   if (!existUser) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'User not found' });
   }
@@ -152,83 +180,3 @@ export const resetPasswordUserController = async (req) => {
 
   return ApiResponse.success({ id: existUser._id }, 'Reset user password successful');
 };
-
-// export const getListUserPermissionsController = async (req) => {
-//   const { userId } = req.params;
-
-//   const existUser = await getUserByIdService(userId, { type: USER_TYPE.USER });
-//   if (!existUser) {
-//     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'User not found' });
-//   }
-
-//   const { keyword = '', page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
-
-//   const searchFields = ['name', 'description', 'module'];
-//   const filters = {
-//     $or: searchFields.map((field) => ({
-//       [field]: { $regex: keyword, $options: 'i' },
-//     })),
-//   };
-
-//   const skip = (page - 1) * limit;
-//   const [totalCount, permissions] = await getAndCountUserPermissionsService(
-//     userId,
-//     filters,
-//     skip,
-//     limit,
-//     sortBy,
-//     sortOrder,
-//   );
-
-//   const permissionsDto = ModelDto.newList(PermissionDto, permissions);
-//   return ApiResponse.success({ totalCount, list: permissionsDto }, 'Get all user permissions successful');
-// };
-
-// export const addUserPermissionsController = async (req) => {
-//   const { userId } = req.params;
-//   const { permissionIds } = req.body;
-
-//   const user = await getUserByIdService(userId, { type: USER_TYPE.USER });
-//   if (!user) {
-//     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'User not found' });
-//   }
-
-//   const filters = {
-//     _id: { $in: permissionIds },
-//   };
-
-//   const permissions = await getPermissionsService(filters);
-
-//   await addUserPermissionsService(
-//     user._id,
-//     permissions.filter(Boolean).map((item) => item._id),
-//   );
-
-//   const permissionsDto = ModelDto.newList(PermissionDto, permissions);
-//   return ApiResponse.success(permissionsDto, 'Add user permissions successful');
-// };
-
-// export const removeUserPermissionController = async (req) => {
-//   const { userId, permissionId } = req.params;
-
-//   const userPermission = await getUserPermissionService(userId, permissionId);
-//   if (!userPermission) {
-//     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'User not found' });
-//   }
-
-//   const permission = await getPermissionByIdService(permissionId);
-//   if (!permission) {
-//     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Permission not found' });
-//   }
-
-//   if (userPermission.permissions.length === 0) {
-//     throw HttpException.new({
-//       code: Code.RESOURCE_NOT_FOUND,
-//       overrideMessage: 'Permission does not exist in the user',
-//     });
-//   }
-
-//   await removeUserPermissionByIdService(userPermission._id, permission._id);
-
-//   return ApiResponse.success({ id: permission._id }, 'Remove user permission successful');
-// };

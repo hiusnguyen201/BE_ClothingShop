@@ -1,6 +1,8 @@
 import moment from 'moment-timezone';
 import { UserModel } from '#src/app/users/models/user.model';
-import { USER_TYPE } from '#src/app/users/users.constant';
+import { USER_SELECTED_FIELDS, USER_TYPE } from '#src/app/users/users.constant';
+import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
+import { isValidObjectId } from 'mongoose';
 
 export async function getTodayCustomerReportService() {
   const startOfToday = moment().startOf('day').toDate();
@@ -60,4 +62,50 @@ export async function getTodayCustomerReportService() {
     yesterdayTotalNewCustomers: yesterdayStats[0]?.totalNew || 0,
     percentage: totalNewPercentage.toFixed(1),
   };
+}
+
+/**
+ * Get customer by id
+ * @param {string} id
+ * @returns
+ */
+export async function getCustomerByIdService(id) {
+  const filters = {
+    type: USER_TYPE.CUSTOMER,
+  };
+
+  if (isValidObjectId(id)) {
+    filters._id = id;
+  } else {
+    return null;
+  }
+
+  return UserModel.findOne(filters).select(USER_SELECTED_FIELDS).lean();
+}
+
+/**
+ * Get and count customers
+ * @param {object} filters
+ * @param {number} skip
+ * @param {number} limit
+ * @param {string} sortBy
+ * @param {string} sortOrder
+ * @returns
+ */
+export async function getAndCountCustomersService(filters, skip, limit, sortBy, sortOrder) {
+  const extraFilters = {
+    ...filters,
+    type: USER_TYPE.CUSTOMER,
+  };
+
+  const totalCount = await UserModel.countDocuments(extraFilters);
+
+  const queryOptions = {
+    ...extendQueryOptionsWithPagination(skip, limit),
+    ...extendQueryOptionsWithSort(sortBy, sortOrder),
+  };
+
+  const list = await UserModel.find(extraFilters, USER_SELECTED_FIELDS, queryOptions).lean();
+
+  return [totalCount, list];
 }

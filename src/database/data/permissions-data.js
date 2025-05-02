@@ -331,6 +331,56 @@ const ORDER_PERMISSIONS = [
 
 export const orderPermissions = ORDER_PERMISSIONS.map((per) => newPermissionService(per));
 
+export const NOTIFICATION_PERMISSIONS = {
+  NEW_CUSTOMER: {
+    name: 'notify:new_customer',
+    description: 'New customer notification',
+    module: 'customers',
+  },
+  NEW_ORDER: {
+    name: 'notify:new_order',
+    description: 'New order notification',
+    module: 'orders',
+  },
+  LOW_STOCK: {
+    name: 'notify:low_stock',
+    description: 'Low stock notification',
+    module: 'products',
+  },
+  CONFIRM_ORDER: {
+    name: 'notify:confirm_order',
+    description: 'Confirm order notification',
+    module: 'orders',
+  },
+  PROCESSING_ORDER: {
+    name: 'notify:processing_order',
+    description: 'Processing order notification',
+    module: 'orders',
+  },
+  READY_FOR_PICKUP_ORDER: {
+    name: 'notify:ready_for_pickup_order',
+    description: 'Ready for pickup order notification',
+    module: 'orders',
+  },
+  SHIPPING_ORDER: {
+    name: 'notify:shipping_order',
+    description: 'Shipping order notification',
+    module: 'orders',
+  },
+  CANCEL_ORDER: {
+    name: 'notify:cancel_order',
+    description: 'Cancel order notification',
+    module: 'orders',
+  },
+  COMPLETE_ORDER: {
+    name: 'notify:complete_order',
+    description: 'Complete order notification',
+    module: 'orders',
+  },
+};
+
+export const notificationPermissions = Object.values(NOTIFICATION_PERMISSIONS).map((per) => newPermissionService(per));
+
 export const permissions = [
   ...userPermissions,
   ...rolePermissions,
@@ -339,4 +389,5 @@ export const permissions = [
   ...customerPermissions,
   ...productPermissions,
   ...orderPermissions,
+  ...notificationPermissions,
 ];

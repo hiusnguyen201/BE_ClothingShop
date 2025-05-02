@@ -16,31 +16,18 @@ export const handleError = (err, req, res, _) => {
     console.log({ ...apiResponse, stack: err.stack });
   }
 
-  // if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
-  //   DiscordService.sendError({
-  //     ...apiResponse,
-  //     details: {
-  //       errorId: errorIdGenerator.next().value,
-  //       method: req.method,
-  //       url: req.originalUrl,
-  //       query: req.query,
-  //       params: req.params,
-  //       body: req.body,
-  //       responseTime: req.responseTime,
-  //     },
-  //     client: {
-  //       ip: req.ipv4,
-  //       userAgent: req.headers['user-agent'],
-  //       userId: req?.user?.id || null,
-  //     },
-  //     server: {
-  //       hostname: req.hostname,
-  //       env: process.env.NODE_ENV,
-  //       version: '1.0.0',
-  //     },
-  //     stack: err.stack,
-  //   });
-  // }
+  if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+    DiscordService.sendError({
+      ...apiResponse,
+      errorId: errorIdGenerator.next().value,
+      method: req.method,
+      url: req.originalUrl,
+      userId: req?.user?.id ?? null,
+      ip: req.ipv4,
+      env: process.env.NODE_ENV,
+      stack: err.stack,
+    });
+  }
 
   res.set('Content-Type', 'application/json');
   res.status(status).json(apiResponse);

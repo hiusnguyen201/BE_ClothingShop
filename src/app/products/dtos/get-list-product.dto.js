@@ -9,7 +9,7 @@ export const GetListProductDto = Joi.object({
     .allow('')
     .custom((val) => escapeStringRegexp(replaceMultiSpacesToSingleSpace(val))),
   page: Joi.number().min(1).default(1),
-  limit: Joi.number().min(10).max(100).default(10),
+  limit: Joi.number().min(5).max(100).default(5),
   sortBy: Joi.string().valid('name', 'createdAt').default('createdAt'),
   sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
   status: Joi.string().valid(...Object.values(PRODUCT_STATUS)),

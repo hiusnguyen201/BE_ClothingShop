@@ -14,10 +14,6 @@ const userOtpSchema = new Schema(
       type: Date,
       required: true,
     },
-    resendDate: {
-      type: Date,
-      required: true,
-    },
 
     // Foreign Key
     user: { type: Schema.Types.ObjectId, ref: 'User' },

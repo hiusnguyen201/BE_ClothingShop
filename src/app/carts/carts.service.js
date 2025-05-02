@@ -1,4 +1,4 @@
-import redisClient from '#src/modules/redis/redis.service';
+import { redisClient } from '#src/modules/redis/redis.service';
 
 /**
  * Add to cart

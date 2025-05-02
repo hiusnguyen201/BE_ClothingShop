@@ -22,13 +22,14 @@ import {
   getCategoryByIdController,
 } from '#src/app/categories/categories.controller';
 import { isAuthorizedAndIsCustomer } from '#src/middlewares/jwt-auth.middleware';
-import { createOrderByCustomerController, getAllOrdersByCustomerController, getOrderByIdController } from '#src/app/orders/orders.controller';
-import { updateProfileByCustomerController } from '#src/app/customers/customers.controller';
-import { changePasswordController } from '#src/app/account/account.controller';
+import { getAllOrdersByCustomerController, getOrderByIdController } from '#src/app/orders/orders.controller';
+import {
+  changePasswordController,
+  createOrderByCustomerController,
+  editProfileController,
+} from '#src/app/account/account.controller';
 
-router.get('/ping', () => {
-  return 'Hello world! PING 1';
-});
+router.get('/ping', () => 'Hello world! PING 1');
 
 router.use('/auth', authRouter);
 
@@ -65,20 +66,10 @@ router
   .get('/products/get-product-by-customer/:productId', getProductByIdController)
   .get('/categories/get-categories-by-customer', getAllCategoriesByCustomerController)
   .get('/categories/get-category-by-customer/:categoryId', getCategoryByIdController)
-  .post('/orders/create-order-by-customer',
-    isAuthorizedAndIsCustomer,
-    createOrderByCustomerController)
-  .get('/orders/get-orders-by-customer',
-    isAuthorizedAndIsCustomer,
-    getAllOrdersByCustomerController)
-  .get('/orders/get-order-by-customer/:orderId',
-    isAuthorizedAndIsCustomer,
-    getOrderByIdController)
-  .put('/account/update-profile-by-customer',
-    isAuthorizedAndIsCustomer,
-    updateProfileByCustomerController)
-  .put('/account/change-password',
-    isAuthorizedAndIsCustomer,
-    changePasswordController)
+  .get('/orders/get-orders-by-customer', isAuthorizedAndIsCustomer, getAllOrdersByCustomerController)
+  .get('/orders/get-order-by-customer/:orderId', isAuthorizedAndIsCustomer, getOrderByIdController)
+  .post('/orders/create-order-by-customer', isAuthorizedAndIsCustomer, createOrderByCustomerController)
+  .put('/account/update-profile-by-customer', isAuthorizedAndIsCustomer, editProfileController)
+  .put('/account/change-password', isAuthorizedAndIsCustomer, changePasswordController);
 
 export default router;

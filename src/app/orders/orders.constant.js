@@ -23,6 +23,7 @@ export const ORDER_SELECTED_FIELDS = {
   subTotal: true,
   shippingFee: true,
   trackingNumber: true,
+  estimatedDeliveryAt: true,
   total: true,
   customer: true,
   payment: true,
@@ -31,3 +32,9 @@ export const ORDER_SELECTED_FIELDS = {
   createdAt: true,
   updatedAt: true,
 };
+
+export const ORDER_NOTIFICATION_KEY = {
+  NEW_ORDER: 'new_order',
+};
+
+export const LOW_STOCK_WARNING_LEVEL = 5;

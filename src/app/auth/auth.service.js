@@ -141,7 +141,6 @@ export async function createUserOtpService(userId) {
     otp: otpCode,
     user: userId,
     expireDate: moment().valueOf() + 60 * 1000 * +process.env.OTP_TTL_IN_MINUTES,
-    resendDate: moment().valueOf() + 60 * 1000 * +process.env.RESEND_OTP_AFTER_MINUTES,
   });
 }
 
@@ -157,20 +156,6 @@ export async function getValidUserOtpInUserService(userId, otp) {
     otp,
     expireDate: { $gt: moment().valueOf() },
   }).lean();
-}
-
-/**
- * Check time left to resend OTP
- * @param {*} otp
- * @param {*} userId
- * @returns
- */
-export async function checkTimeLeftToResendOTPService(userId) {
-  const userOtp = await UserOtpModel.findOne({
-    user: userId,
-    resendDate: { $gt: moment().valueOf() },
-  }).lean();
-  return !userOtp ? 0 : moment(userOtp.resendDate).diff(moment(), 'seconds');
 }
 
 export async function removeUserOtpsInUserService(userId) {

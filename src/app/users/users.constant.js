@@ -23,3 +23,10 @@ export const USER_SELECTED_FIELDS = {
   createdAt: true,
   updatedAt: true,
 };
+
+export const USER_CACHE_KEY_PREFIX = {
+  PROFILE: 'user:profile',
+  LIST_USER: 'user:list',
+};
+
+export const USER_SEARCH_FIELDS = ['name', 'email', 'phone'];

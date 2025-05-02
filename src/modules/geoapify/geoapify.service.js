@@ -15,12 +15,7 @@ export const checkValidAddressService = async (address) => {
 
   const feature = result.features[0];
 
-  const requiredFields = [
-    feature.properties.city,
-    feature.properties.street,
-    feature.properties.postcode,
-    feature.properties.housenumber,
-  ];
+  const requiredFields = [feature.properties.city, feature.properties.street, feature.properties.postcode];
 
   const missingData = requiredFields.filter((f) => !f);
 

@@ -1,3 +1,5 @@
+import Md5 from 'crypto-js/md5.js';
+
 export const makeUniqueProductVariants = (arr) => {
   let newArr = [];
   let uniqueVariantValues = new Set();
@@ -17,11 +19,16 @@ export const makeUniqueProductVariants = (arr) => {
   return Array.from(newArr);
 };
 
-function sortObject(obj) {
+export function sortObject(obj) {
   return Object.keys(obj)
     .sort()
     .reduce((result, key) => {
       result[key] = obj[key];
       return result;
     }, {});
+}
+
+export function hashObject(obj) {
+  const json = JSON.stringify(obj);
+  return Md5(json);
 }

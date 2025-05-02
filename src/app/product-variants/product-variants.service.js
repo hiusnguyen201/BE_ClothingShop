@@ -65,15 +65,6 @@ export async function getAllProductVariantsService({
   return ProductVariantModel.find(filters).skip(offset).limit(limit).select(selectFields).sort({ createdAt: -1 });
 }
 
-// /**
-//  * Count all products variants
-//  * @param {*} filters
-//  * @returns
-//  */
-// export async function countAllProductVariantsService(filters) {
-//   return ProductVariantModel.countDocuments(filters);
-// }
-
 /**
  * Find one product variant by id
  * @param {*} id
