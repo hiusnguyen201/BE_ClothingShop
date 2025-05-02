@@ -9,3 +9,8 @@ export const SHIPPING_ADDRESS_SELECTED_FIELDS = {
   createdAt: true,
   updatedAt: true,
 };
+
+export const SHIPPING_ADDRESS_CACHE_KEY_PREFIX = {
+  DETAILS: 'shipping_address:details',
+  LIST_SHIPPING_ADDRESS: 'shipping_address:list',
+};

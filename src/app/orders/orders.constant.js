@@ -33,8 +33,11 @@ export const ORDER_SELECTED_FIELDS = {
   updatedAt: true,
 };
 
-export const ORDER_NOTIFICATION_KEY = {
-  NEW_ORDER: 'new_order',
+export const LOW_STOCK_WARNING_LEVEL = 5;
+
+export const ORDER_CACHE_KEY_PREFIX = {
+  DETAILS: 'order:details',
+  LIST_ORDER: 'order:list',
 };
 
-export const LOW_STOCK_WARNING_LEVEL = 5;
+export const ORDER_SEARCH_FIELDS = ['code'];

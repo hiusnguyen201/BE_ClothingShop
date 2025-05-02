@@ -16,3 +16,10 @@ export const PRODUCT_SELECT_FIELDS = {
   createdAt: true,
   updatedAt: true,
 };
+
+export const PRODUCT_CACHE_KEY_PREFIX = {
+  DETAILS: 'product:details',
+  LIST_PRODUCT: 'product:list',
+};
+
+export const PRODUCT_SEARCH_FIELDS = ['name', 'email', 'phone'];

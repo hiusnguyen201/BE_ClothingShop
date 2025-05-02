@@ -5,7 +5,6 @@ import {
   updateProductInfoByIdService,
   removeProductByIdService,
   checkExistProductNameService,
-  countAllProductsService,
   createProductService,
   updateProductVariantsByIdService,
 } from '#src/app/products/products.service';
@@ -31,6 +30,13 @@ import { UpdateProductInfoDto } from '#src/app/products/dtos/update-product-info
 import { GetListProductDto } from '#src/app/products/dtos/get-list-product.dto';
 import { GetProductDto } from '#src/app/products/dtos/get-product.dto';
 import { UpdateProductVariantsDto } from '#src/app/products/dtos/update-product-variants.dto';
+import {
+  deleteProductFromCache,
+  getProductFromCache,
+  getTotalCountAndListProductFromCache,
+  setProductToCache,
+  setTotalCountAndListProductToCache,
+} from '#src/app/products/products-cache.service';
 
 export const isExistProductNameController = async (req) => {
   const adapter = await validateSchema(CheckExistProductNameDto, req.body);
@@ -67,6 +73,9 @@ export const createProductController = async (req) => {
 
   const newProduct = await createProductService(adapter);
 
+  // Clear cache
+  await deleteProductFromCache(newProduct._id);
+
   const productDto = ModelDto.new(ProductDto, newProduct);
   return ApiResponse.success(productDto);
 };
@@ -80,19 +89,29 @@ export const getAllProductsController = async (req) => {
     ...(adapter.category ? { category: adapter.category } : {}),
   };
 
-  const skip = (adapter.page - 1) * adapter.limit;
-  const [totalCount, products] = await getAndCountProductsService(
-    filters,
-    skip,
-    adapter.limit,
-    adapter.sortBy,
-    adapter.sortOrder,
-  );
+  let [totalCountCached, productsCached] = await getTotalCountAndListProductFromCache(adapter);
 
-  const productsDto = ModelDto.newList(ProductDto, products);
-  return ApiResponse.success({ totalCount, list: productsDto });
+  if (productsCached.length === 0) {
+    const skip = (adapter.page - 1) * adapter.limit;
+    const [totalCount, products] = await getAndCountProductsService(
+      filters,
+      skip,
+      adapter.limit,
+      adapter.sortBy,
+      adapter.sortOrder,
+    );
+
+    await setTotalCountAndListProductToCache(adapter, totalCount, products);
+
+    totalCountCached = totalCount;
+    productsCached = products;
+  }
+
+  const productsDto = ModelDto.newList(ProductDto, productsCached);
+  return ApiResponse.success({ totalCount: totalCountCached, list: productsDto });
 };
 
+// ??
 export const getAllProductsByCustomerController = async (req) => {
   const adapter = await validateSchema(GetListProductDto, req.query);
 
@@ -123,13 +142,17 @@ export const getAllProductsByCustomerController = async (req) => {
 export const getProductByIdController = async (req) => {
   const adapter = await validateSchema(GetProductDto, req.params);
 
-  const existProduct = await getProductByIdService(adapter.productId);
+  let product = await getProductFromCache(adapter.productId);
+  if (!product) {
+    product = await getProductByIdService(adapter.productId);
+    await setProductToCache(adapter.productId, product);
+  }
 
-  if (!existProduct) {
+  if (!product) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product not found' });
   }
 
-  const productDto = ModelDto.new(ProductDto, existProduct);
+  const productDto = ModelDto.new(ProductDto, product);
   return ApiResponse.success(productDto);
 };
 
@@ -170,6 +193,9 @@ export const updateProductInfoController = async (req) => {
   await updateProductInfoByIdService(existProduct._id, adapter);
 
   const updatedProduct = await getProductByIdService(existProduct._id);
+
+  // Clear cache
+  await deleteProductFromCache(existProduct._id);
 
   const productDto = ModelDto.new(ProductDto, updatedProduct);
   return ApiResponse.success(productDto);
@@ -253,6 +279,9 @@ export const updateProductVariantsController = async (req) => {
     );
   });
 
+  // Clear cache
+  await deleteProductFromCache(existProduct._id);
+
   // Transform data
   const product = await getProductByIdService(existProduct._id);
   const productDto = ModelDto.new(ProductDto, product);
@@ -273,6 +302,9 @@ export const removeProductByIdController = async (req) => {
   }
 
   await removeProductByIdService(existProduct._id);
+
+  // Clear cache
+  await deleteProductFromCache(existProduct._id);
 
   return ApiResponse.success({ id: existProduct._id });
 };

@@ -6,3 +6,10 @@ export const ROLE_SELECTED_FIELDS = {
   createdAt: true,
   updatedAt: true,
 };
+
+export const ROLE_CACHE_KEY_PREFIX = {
+  DETAILS: 'role:details',
+  LIST_ROLE: 'role:list',
+};
+
+export const ROLE_SEARCH_FIELDS = ['name', 'description'];

@@ -10,3 +10,10 @@ export const CATEGORY_SELECTED_FIELDS = {
 };
 
 export const MAXIMUM_CHILDREN_CATEGORY_LEVEL = 2;
+
+export const CATEGORY_CACHE_KEY_PREFIX = {
+  DETAILS: 'category:details',
+  LIST_CATEGORY: 'category:list',
+};
+
+export const CATEGORY_SEARCH_FIELDS = ['name'];

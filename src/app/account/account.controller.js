@@ -1,7 +1,7 @@
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { HttpException } from '#src/core/exception/http-exception';
-import { checkExistEmailService, getUserByIdService, updateUserInfoByIdService } from '#src/app/users/users.service';
+import { checkExistEmailService, getProfileByIdService, updateUserInfoByIdService } from '#src/app/users/users.service';
 import { UserDto } from '#src/app/users/dtos/user.dto';
 import {
   comparePasswordService,
@@ -28,18 +28,34 @@ import { createOrderJob } from '#src/app/orders/orders.worker';
 import { getOrderByIdService } from '#src/app/orders/orders.service';
 import { OrderDto } from '#src/app/orders/dtos/order.dto';
 import { notifyClientsOfNewOrder } from '#src/app/notifications/notifications.service';
+import { USER_TYPE } from '#src/app/users/users.constant';
+import { deleteUserFromCache, getUserFromCache, setUserToCache } from '#src/app/users/users-cache.service';
+import {
+  deleteCustomerFromCache,
+  getCustomerFromCache,
+  setCustomerToCache,
+} from '#src/app/customers/customers-cache.service';
+import { deleteOrderFromCache } from '#src/app/orders/orders-cache.service';
 
 export const getProfileController = async (req) => {
-  const user = await getUserByIdService(req.user.id);
+  const { id, type } = req.user;
+
+  let user = type === USER_TYPE.USER ? await getUserFromCache(id) : await getCustomerFromCache(id);
+  if (!user) {
+    user = await getProfileByIdService(id);
+    const setToCache = type === USER_TYPE.USER ? setUserToCache : setCustomerToCache;
+    await setToCache(id, user);
+  }
+
   const userDto = ModelDto.new(UserDto, user);
   return ApiResponse.success(userDto);
 };
 
 export const editProfileController = async (req) => {
-  const userId = req.user.id;
+  const { id, type } = req.user;
   const adapter = await validateSchema(EditProfileDto, req.body);
 
-  const isExistEmail = await checkExistEmailService(adapter.email, userId);
+  const isExistEmail = await checkExistEmailService(adapter.email, id);
   if (isExistEmail) {
     throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Email already exist' });
   }
@@ -49,7 +65,10 @@ export const editProfileController = async (req) => {
     adapter.avatar = result.url;
   }
 
-  const updatedUser = await updateUserInfoByIdService(userId, adapter);
+  const updatedUser = await updateUserInfoByIdService(id, adapter);
+
+  const deleteFromCache = type === USER_TYPE.USER ? deleteUserFromCache : deleteCustomerFromCache;
+  await deleteFromCache(id);
 
   const userDto = ModelDto.new(UserDto, updatedUser);
   return ApiResponse.success(userDto);
@@ -118,6 +137,9 @@ export async function createOrderByCustomerController(req) {
   });
   const newOrder = await job.waitUntilFinished(orderQueueEVent);
 
+  // Clear cache
+  await deleteOrderFromCache(newOrder._id);
+
   // Transform
   const orderDetail = await getOrderByIdService(newOrder._id);
   const orderDto = ModelDto.new(OrderDto, orderDetail);
@@ -132,6 +154,7 @@ export async function createOrderByCustomerController(req) {
   return ApiResponse.success(orderDto);
 }
 
+// Uncache
 export const getListPermissionsInUserController = async (req) => {
   const userId = req.user.id;
 

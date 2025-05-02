@@ -7,9 +7,9 @@ import { ROLE_SELECTED_FIELDS } from '#src/app/roles/roles.constant';
 import { PERMISSION_SELECTED_FIELDS } from '#src/app/permissions/permissions.constant';
 
 /**
- * New role instance
- * @param {*} data
- * @returns
+ * Create a new role instance with a generated slug.
+ * @param {RoleModel} data - The data to initialize the role with. Must include a `name` property for slug generation.
+ * @returns {RoleModel} - A new, unsaved RoleModel instance.
  */
 export function newRoleService(data) {
   data.slug = makeSlug(data.name);
@@ -17,18 +17,19 @@ export function newRoleService(data) {
 }
 
 /**
- * Insert list role
- * @param {*} data
- * @returns
+ * Insert a list of role instances into the database.
+ * @param {RoleModel[]} data - An array of RoleModel instances to insert. Each should be a valid document.
+ * @param {import('mongoose').ClientSession} [session] - Optional Mongoose session for transactional support.
+ * @returns {Promise<RoleModel[]>} - The inserted role documents.
  */
 export async function insertRolesService(data = [], session) {
   return await RoleModel.bulkSave(data, { session, ordered: true });
 }
 
 /**
- * Create role
- * @param {*} data
- * @returns
+ * Create and insert a new role into the database.
+ * @param {{name:string, description}} data - Role data. Must include a `name` field for slug generation.
+ * @returns {Promise<RoleModel>} - The created role document.
  */
 export async function createRoleService(data) {
   return RoleModel.create({ ...data, slug: makeSlug(data.name) });
@@ -36,8 +37,12 @@ export async function createRoleService(data) {
 
 /**
  * Get and count roles
- * @param {*} query
- * @returns
+ * @param {Record<keyof RoleModel, any>} filters - Filters to apply when querying roles.
+ * @param {number} skip - Number of documents to skip.
+ * @param {number} limit - Maximum number of documents to return.
+ * @param {keyof RoleModel} sortBy - Field to sort by.
+ * @param {"asc" | "desc"} sortOrder - Sorting order (ascending or descending).
+ * @returns {Promise<[total: number, data: RoleModel[]]>} - Total count and array of roles.
  */
 export async function getAndCountRolesService(filters, skip, limit, sortBy, sortOrder) {
   const totalCount = await RoleModel.countDocuments(filters);
@@ -53,9 +58,9 @@ export async function getAndCountRolesService(filters, skip, limit, sortBy, sort
 }
 
 /**
- * Get role by id
- * @param {*} id
- * @returns
+ * Retrieve a role by its ID, slug, or name.
+ * @param {string} id - Can be a MongoDB ObjectId, slug, or role name.
+ * @returns {Promise<RoleModel | null>} - The matching role document, or null if not found.
  */
 export async function getRoleByIdService(id) {
   if (!id) return null;
@@ -73,19 +78,19 @@ export async function getRoleByIdService(id) {
 }
 
 /**
- * Remove role by id
- * @param {*} id
- * @returns
+ * Soft delete a role by its ID.
+ * @param {string} id - The MongoDB ObjectId of the role to delete.
+ * @returns {Promise<Pick<RoleModel, '_id'> | null>} - The deleted role's ID or null if not found.
  */
 export async function removeRoleByIdService(id) {
   return RoleModel.findByIdAndSoftDelete(id).select('_id').lean();
 }
 
 /**
- * Check exist role name
- * @param {*} name
- * @param {*} skipId
- * @returns
+ * Check if a role with the given name or slug already exists, optionally skipping a specific ID.
+ * @param {string} name - The name to check for uniqueness.
+ * @param {string} [skipId] - An optional ID or slug to exclude from the check.
+ * @returns {Promise<boolean>} - `true` if the name or slug exists, otherwise `false`.
  */
 export async function checkExistRoleNameService(name, skipId) {
   const filters = { $or: [{ name }, { slug: makeSlug(name) }] };
@@ -100,10 +105,11 @@ export async function checkExistRoleNameService(name, skipId) {
 }
 
 /**
- * Update info by id
- * @param {*} id
- * @param {*} data
- * @returns
+ * Update a role's information by ID.
+ *
+ * @param {string} id - The MongoDB ObjectId of the role to update.
+ * @param {Partial<RoleModel>} data - Partial role data to update. If `name` is provided, `slug` will be regenerated.
+ * @returns {Promise<RoleModel | null>} - The updated role document, or null if not found.
  */
 export async function updateRoleInfoByIdService(id, data) {
   if (data.name) {
@@ -118,7 +124,7 @@ export async function updateRoleInfoByIdService(id, data) {
 /**
  * Get list role permissions
  * @param {string} roleId
- * @param {object} filters
+ * @param {Record<keyof RoleModel, any>} filters
  * @param {number} skip
  * @param {number} limit
  * @param {string} sortBy
@@ -178,10 +184,10 @@ export async function getAndCountRolePermissionsService(roleId, filters, skip, l
 }
 
 /**
- * Get role permission
- * @param {string} roleId
- * @param {string} permissionId
- * @returns
+ * Get a specific permission assigned to a role.
+ * @param {string} roleId - The ID of the role.
+ * @param {string} permissionId - The ID of the permission to retrieve.
+ * @returns {Promise<{ _id:string, permissions: PermissionModel[] } | null>} - Role with the matching permission, or null if not found.
  */
 export async function getRolePermissionService(roleId, permissionId) {
   return RoleModel.findById(roleId)
@@ -195,10 +201,10 @@ export async function getRolePermissionService(roleId, permissionId) {
 }
 
 /**
- * Add role permission
- * @param {*} id
- * @param {*} permissions
- * @returns
+ * Add one or more permissions to a role.
+ * @param {string} roleId - The ID of the role to update.
+ * @param {string[]} permissionIds - Array of permission IDs to add.
+ * @returns {Promise<{ _id:string, permissions: PermissionModel[] } | null>} - Updated role with permissions, or null if not found.
  */
 export async function addRolePermissionsService(roleId, permissionIds) {
   return RoleModel.findByIdAndUpdate(
@@ -215,10 +221,10 @@ export async function addRolePermissionsService(roleId, permissionIds) {
 }
 
 /**
- * Remove role permission
- * @param {*} id
- * @param {*} permissions
- * @returns
+ * Remove a specific permission from a role.
+ * @param {string} roleId - The ID of the role to update.
+ * @param {string} permissionId - The ID of the permission to remove.
+ * @returns {Promise<{ _id:string, permissions: PermissionModel[] } | null>} - Updated role with permissions, or null if not found.
  */
 export async function removeRolePermissionService(roleId, permissionId) {
   return RoleModel.findByIdAndUpdate(

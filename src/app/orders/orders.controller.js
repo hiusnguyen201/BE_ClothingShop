@@ -20,7 +20,7 @@ import {
 } from '#src/modules/GHN/ghn.service';
 import { Code } from '#src/core/code/Code';
 import { ONLINE_PAYMENT_METHOD, PAYMENT_STATUS } from '#src/app/payments/payments.constant';
-import { LOW_STOCK_WARNING_LEVEL, ORDER_STATUS } from '#src/app/orders/orders.constant';
+import { LOW_STOCK_WARNING_LEVEL, ORDER_SEARCH_FIELDS, ORDER_STATUS } from '#src/app/orders/orders.constant';
 import { newOrderDetailService, saveOrderItemsService } from '#src/app/order-details/order-details.service';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { ApiResponse } from '#src/core/api/ApiResponse';
@@ -53,6 +53,13 @@ import {
   notifyClientsOfReadyForPickupOrder,
   notifyClientsOfShippingOrder,
 } from '#src/app/notifications/notifications.service';
+import {
+  deleteOrderFromCache,
+  getOrderFromCache,
+  getTotalCountAndListOrderFromCache,
+  setOrderToCache,
+  setTotalCountAndListOrderToCache,
+} from '#src/app/orders/orders-cache.service';
 
 export async function createOrderController(req) {
   const adapter = await validateSchema(CreateOrderDto, req.body);
@@ -102,6 +109,9 @@ export async function createOrderController(req) {
 
   const newOrder = await job.waitUntilFinished(orderQueueEVent);
 
+  // Clear cache
+  await deleteOrderFromCache(newOrder._id);
+
   // Transform
   const orderDetail = await getOrderByIdService(newOrder._id);
   const orderDto = ModelDto.new(OrderDto, orderDetail);
@@ -125,19 +135,29 @@ export async function getAllOrdersController(req) {
     keyword: adapter.keyword,
   };
 
-  const skip = (adapter.page - 1) * adapter.limit;
-  const [totalCount, orders] = await getAndCountOrdersService(
-    filters,
-    skip,
-    adapter.limit,
-    adapter.sortBy,
-    adapter.sortOrder,
-  );
+  let [totalCountCached, ordersCached] = await getTotalCountAndListOrderFromCache(adapter);
 
-  const ordersDto = ModelDto.newList(OrderDto, orders);
-  return ApiResponse.success({ totalCount, list: ordersDto });
+  if (ordersCached.length === 0) {
+    const skip = (adapter.page - 1) * adapter.limit;
+    const [totalCount, orders] = await getAndCountOrdersService(
+      filters,
+      skip,
+      adapter.limit,
+      adapter.sortBy,
+      adapter.sortOrder,
+    );
+
+    await setTotalCountAndListOrderToCache(adapter, totalCount, orders);
+
+    totalCountCached = totalCount;
+    ordersCached = orders;
+  }
+
+  const ordersDto = ModelDto.newList(OrderDto, ordersCached);
+  return ApiResponse.success({ totalCount: totalCountCached, list: ordersDto });
 }
 
+// ??
 export async function getAllOrdersByCustomerController(req) {
   const { id } = req.user;
   const adapter = await validateSchema(GetListOrderDto, req.query);
@@ -164,7 +184,12 @@ export async function getAllOrdersByCustomerController(req) {
 export async function getOrderByIdController(req) {
   const adapter = await validateSchema(GetOrderDto, req.params);
 
-  const order = await getOrderByIdService(adapter.orderId);
+  let order = await getOrderFromCache(adapter.orderId);
+  if (!order) {
+    order = await getOrderByIdService(adapter.orderId);
+    await setOrderToCache(adapter.orderId, order);
+  }
+
   if (!order) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
   }
@@ -318,6 +343,9 @@ export async function confirmOrderController(req) {
 
   await addOrderStatusHistoryByIdService(orderExisted._id, ORDER_STATUS.CONFIRMED);
 
+  // Clear cache
+  await deleteOrderFromCache(orderExisted._id);
+
   // Transform
   const orderDetail = await getOrderByIdService(orderExisted._id);
   const orderDto = ModelDto.new(OrderDto, orderDetail);
@@ -346,6 +374,9 @@ export async function processingOrderController(req) {
   }
 
   await addOrderStatusHistoryByIdService(orderExisted._id, ORDER_STATUS.PROCESSING);
+
+  // Clear cache
+  await deleteOrderFromCache(orderExisted._id);
 
   // Transform
   const orderDetail = await getOrderByIdService(orderExisted._id);
@@ -405,6 +436,9 @@ export async function cancelOrderController(req) {
     await addOrderStatusHistoryByIdService(orderExisted._id, ORDER_STATUS.CANCELLED);
   });
 
+  // Clear cache
+  await deleteOrderFromCache(orderExisted._id);
+
   // Transform
   const orderDetail = await getOrderByIdService(orderExisted._id);
   const orderDto = ModelDto.new(OrderDto, orderDetail);
@@ -442,6 +476,9 @@ export async function createShippingOrderController(req) {
     estimatedDeliveryAt: newOrderGhn.data.expected_delivery_time,
   });
 
+  // Clear cache
+  await deleteOrderFromCache(orderExisted._id);
+
   // Transform
   const orderDetail = await getOrderByIdService(orderExisted._id);
   const orderDto = ModelDto.new(OrderDto, orderDetail);
@@ -475,6 +512,9 @@ export async function removeOrderController(req) {
     );
     await removeOrderByIdService(orderExisted._id, session);
   });
+
+  // Clear cache
+  await deleteOrderFromCache(orderExisted._id);
 
   return ApiResponse.success({ id: orderExisted._id });
 }
@@ -588,6 +628,9 @@ export async function webHookUpdateOrder(req) {
       });
       break;
   }
+
+  // Clear cache
+  await deleteOrderFromCache(orderExisted._id);
 
   return ApiResponse.success(null);
 }

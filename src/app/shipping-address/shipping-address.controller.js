@@ -19,6 +19,13 @@ import { GetShippingAddressDto } from '#src/app/shipping-address/dtos/get-shippi
 import { CreateShippingAddressDto } from '#src/app/shipping-address/dtos/create-shipping-address.dto';
 import { GetListShippingAddressDto } from '#src/app/shipping-address/dtos/get-list-shipping-address.dto';
 import { UpdateShippingAddressDto } from '#src/app/shipping-address/dtos/update-shipping-address.dto';
+import {
+  deleteShippingAddressFromCache,
+  getShippingAddressFromCache,
+  getTotalCountAndListShippingAddressFromCache,
+  setShippingAddressToCache,
+  setTotalCountAndListShippingAddressToCache,
+} from '#src/app/shipping-address/shipping-address-cache.service';
 
 export const createShippingAddressController = async (req) => {
   const { id } = req.user;
@@ -50,7 +57,7 @@ export const createShippingAddressController = async (req) => {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Ward not found' });
   }
 
-  const newShippingAddress = await createShippingAddressService({
+  const shippingAddress = await createShippingAddressService({
     isDefault: adapter.isDefault,
     address: adapter.address,
     provinceName: province.ProvinceName,
@@ -59,7 +66,10 @@ export const createShippingAddressController = async (req) => {
     customer: id,
   });
 
-  const shippingAddressDto = ModelDto.new(ShippingAddressDto, newShippingAddress);
+  // Clear cache
+  await deleteShippingAddressFromCache(shippingAddress._id);
+
+  const shippingAddressDto = ModelDto.new(ShippingAddressDto, shippingAddress);
   return ApiResponse.success(shippingAddressDto);
 };
 
@@ -70,31 +80,47 @@ export const getAllShippingAddressController = async (req) => {
     customer: req.user.id,
   };
 
-  const skip = (adapter.page - 1) * adapter.limit;
-  const [totalCount, shippingAddress] = await getAndCountShippingAddressService(
-    filters,
-    skip,
-    adapter.limit,
-    adapter.sortBy,
-    adapter.sortOrder,
-  );
+  let [totalCountCached, listShippingAddressCached] = await getTotalCountAndListShippingAddressFromCache(adapter);
 
-  const shippingAddressDto = ModelDto.newList(ShippingAddressDto, shippingAddress);
-  return ApiResponse.success({ totalCount, list: shippingAddressDto });
+  if (listShippingAddressCached.length === 0) {
+    const skip = (adapter.page - 1) * adapter.limit;
+    const [totalCount, listShippingAddress] = await getAndCountShippingAddressService(
+      filters,
+      skip,
+      adapter.limit,
+      adapter.sortBy,
+      adapter.sortOrder,
+    );
+
+    await setTotalCountAndListShippingAddressToCache(adapter, totalCount, listShippingAddress);
+
+    totalCountCached = totalCount;
+    listShippingAddressCached = listShippingAddress;
+  }
+
+  const shippingAddressDto = ModelDto.newList(ShippingAddressDto, listShippingAddressCached);
+  return ApiResponse.success(
+    { totalCount: totalCountCached, list: shippingAddressDto },
+    'Get list shipping address successful',
+  );
 };
 
 export const getShippingAddressByIdController = async (req) => {
   const adapter = await validateSchema(GetShippingAddressDto, req.params);
 
-  const existShippingAddress = await getShippingAddressByIdService(adapter.shippingAddressId, {
-    customer: req.user.id,
-  });
+  let shippingAddress = await getShippingAddressFromCache(adapter.shippingAddressId);
+  if (!shippingAddress) {
+    shippingAddress = await getShippingAddressByIdService(adapter.shippingAddressId, {
+      customer: req.user.id,
+    });
+    await setShippingAddressToCache(adapter.shippingAddressId, shippingAddress);
+  }
 
-  if (!existShippingAddress) {
+  if (!shippingAddress) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Shipping address not found' });
   }
 
-  const shippingAddressDto = ModelDto.new(ShippingAddressDto, existShippingAddress);
+  const shippingAddressDto = ModelDto.new(ShippingAddressDto, shippingAddress);
   return ApiResponse.success(shippingAddressDto);
 };
 
@@ -130,6 +156,9 @@ export const updateShippingAddressByIdController = async (req) => {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Shipping address not found' });
   }
 
+  // Clear cache
+  await deleteShippingAddressFromCache(updatedShippingAddress._id);
+
   const shippingAddressDto = ModelDto.new(ShippingAddressDto, updatedShippingAddress);
   return ApiResponse.success(shippingAddressDto);
 };
@@ -145,9 +174,12 @@ export const removeShippingAddressByIdController = async (req) => {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Shipping address not found' });
   }
 
-  const shippingAddress = await removeShippingAddressByIdService(existShippingAddress._id);
+  await removeShippingAddressByIdService(existShippingAddress._id);
 
-  return ApiResponse.success({ id: shippingAddress._id });
+  // Clear cache
+  await deleteShippingAddressFromCache(existShippingAddress._id);
+
+  return ApiResponse.success({ id: existShippingAddress._id });
 };
 
 export const setDefaultShippingAddressByIdController = async (req) => {
@@ -167,6 +199,9 @@ export const setDefaultShippingAddressByIdController = async (req) => {
 
   await unsetDefaultCurrentShippingAddressService(req.user.id);
   await setDefaultShippingAddressByIdService(existShippingAddress._id, req.user.id);
+
+  // Clear cache
+  await deleteShippingAddressFromCache(existShippingAddress._id);
 
   return ApiResponse.success({ id: existShippingAddress._id });
 };

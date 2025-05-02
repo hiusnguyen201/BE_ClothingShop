@@ -14,7 +14,7 @@ import { ApiResponse } from '#src/core/api/ApiResponse';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
 import { Code } from '#src/core/code/Code';
-import { MAXIMUM_CHILDREN_CATEGORY_LEVEL } from '#src/app/categories/categories.constant';
+import { CATEGORY_SEARCH_FIELDS, MAXIMUM_CHILDREN_CATEGORY_LEVEL } from '#src/app/categories/categories.constant';
 import { validateSchema } from '#src/core/validations/request.validation';
 import { CreateCategoryDto } from '#src/app/categories/dtos/create-category.dto';
 import { UpdateCategoryDto } from '#src/app/categories/dtos/update-category.dto';
@@ -22,6 +22,13 @@ import { CheckExistCategoryNameDto } from '#src/app/categories/dtos/check-exist-
 import { GetListCategoryDto } from '#src/app/categories/dtos/get-list-category.dto';
 import { GetCategoryDto } from '#src/app/categories/dtos/get-category.dto';
 import { GetListSubcategoryDto } from '#src/app/categories/dtos/get-list-subcategory.dto';
+import {
+  deleteCategoryFromCache,
+  getCategoryFromCache,
+  getTotalCountAndListCategoryFromCache,
+  setCategoryToCache,
+  setTotalCountAndListCategoryToCache,
+} from '#src/app/categories/categories-cache.service';
 
 export const isExistCategoryNameController = async (req) => {
   const adapter = await validateSchema(CheckExistCategoryNameDto, req.body);
@@ -65,6 +72,9 @@ export const createCategoryController = async (req) => {
 
   await saveCategoryService(category);
 
+  // Clear cache
+  await deleteCategoryFromCache(category._id);
+
   const categoryDto = ModelDto.new(CategoryDto, category);
   return ApiResponse.success(categoryDto, 'Create category successful');
 };
@@ -72,31 +82,43 @@ export const createCategoryController = async (req) => {
 export const getAllCategoriesController = async (req) => {
   const adapter = await validateSchema(GetListCategoryDto, req.query);
 
-  const searchFields = ['name'];
   const filters = {
-    $or: searchFields.map((field) => ({
+    $or: CATEGORY_SEARCH_FIELDS.map((field) => ({
       [field]: { $regex: adapter.keyword, $options: 'i' },
     })),
   };
 
-  const skip = (adapter.page - 1) * adapter.limit;
-  const [totalCount, categories] = await getAndCountCategoriesService(
-    null,
-    filters,
-    skip,
-    adapter.limit,
-    adapter.sortBy,
-    adapter.sortOrder,
-  );
+  let [totalCountCached, categoriesCached] = await getTotalCountAndListCategoryFromCache(adapter);
+  if (categoriesCached.length === 0) {
+    const skip = (adapter.page - 1) * adapter.limit;
+    const [totalCount, categories] = await getAndCountCategoriesService(
+      null,
+      filters,
+      skip,
+      adapter.limit,
+      adapter.sortBy,
+      adapter.sortOrder,
+    );
 
-  const categoriesDto = ModelDto.newList(CategoryDto, categories);
-  return ApiResponse.success({ totalCount, list: categoriesDto }, 'Get all categories successful');
+    await setTotalCountAndListCategoryToCache(adapter, totalCount, categories);
+
+    totalCountCached = totalCount;
+    categoriesCached = categories;
+  }
+
+  const categoriesDto = ModelDto.newList(CategoryDto, categoriesCached);
+  return ApiResponse.success({ totalCount: totalCountCached, list: categoriesDto }, 'Get all categories successful');
 };
 
 export const getCategoryByIdController = async (req) => {
   const adapter = await validateSchema(GetCategoryDto, req.params);
 
-  const category = await getCategoryByIdService(adapter.categoryId);
+  let category = await getCategoryFromCache(adapter.categoryId);
+  if (!category) {
+    category = await getCategoryByIdService(adapter.categoryId);
+    await setCategoryToCache(adapter.categoryId, category);
+  }
+
   if (!category) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Category not found' });
   }
@@ -125,6 +147,9 @@ export const updateCategoryByIdController = async (req) => {
 
   const updatedCategory = await updateCategoryInfoByIdService(existCategory._id, adapter);
 
+  // Clear cache
+  await deleteCategoryFromCache(existCategory._id);
+
   const categoryDto = ModelDto.new(CategoryDto, updatedCategory);
   return ApiResponse.success(categoryDto, 'Update category successful');
 };
@@ -144,9 +169,13 @@ export const removeCategoryByIdController = async (req) => {
 
   await removeCategoryByIdService(existCategory._id);
 
+  // Clear cache
+  await deleteCategoryFromCache(existCategory._id);
+
   return ApiResponse.success({ id: existCategory._id }, 'Remove category successful');
 };
 
+// Uncache
 export const getAllSubcategoriesController = async (req) => {
   const adapter = await validateSchema(GetListSubcategoryDto, { ...req.params, ...req.query });
 
@@ -155,9 +184,8 @@ export const getAllSubcategoriesController = async (req) => {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Category not found' });
   }
 
-  const searchFields = ['name'];
   const filters = {
-    $or: searchFields.map((field) => ({
+    $or: CATEGORY_SEARCH_FIELDS.map((field) => ({
       [field]: { $regex: adapter.keyword, $options: 'i' },
     })),
   };
@@ -176,6 +204,7 @@ export const getAllSubcategoriesController = async (req) => {
   return ApiResponse.success({ totalCount, list: categoriesDto }, 'Get all subcategories successful');
 };
 
+// ??
 export const getAllCategoriesByCustomerController = async (req) => {
   const adapter = await validateSchema(GetListCategoryDto, req.query);
 

@@ -100,7 +100,7 @@ export const getAllUsersController = async (req) => {
   }
 
   const usersDto = ModelDto.newList(UserDto, usersCached);
-  return ApiResponse.success({ totalCount: totalCountCached, list: usersDto });
+  return ApiResponse.success({ totalCount: totalCountCached, list: usersDto }, 'Get list role successful');
 };
 
 export const getUserByIdController = async (req) => {
@@ -117,7 +117,7 @@ export const getUserByIdController = async (req) => {
   }
 
   const userDto = ModelDto.new(UserDto, user);
-  return ApiResponse.success(userDto);
+  return ApiResponse.success(userDto, 'Get one user successful');
 };
 
 export const updateUserByIdController = async (req) => {
@@ -152,17 +152,17 @@ export const updateUserByIdController = async (req) => {
 export const removeUserByIdController = async (req) => {
   const adapter = await validateSchema(GetUserDto, req.params);
 
-  const existUser = await getUserByIdService(adapter.userId);
-  if (!existUser) {
+  const user = await getUserByIdService(adapter.userId);
+  if (!user) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'User not found' });
   }
 
-  await removeUserByIdService(existUser._id);
+  await removeUserByIdService(user._id);
 
   // Clear cache
-  await deleteUserFromCache(existUser._id);
+  await deleteUserFromCache(user._id);
 
-  return ApiResponse.success({ id: existUser._id }, 'Remove user successful');
+  return ApiResponse.success({ id: user._id }, 'Remove user successful');
 };
 
 export const resetPasswordUserController = async (req) => {
