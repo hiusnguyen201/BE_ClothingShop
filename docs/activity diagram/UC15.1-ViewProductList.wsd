@@ -4,7 +4,7 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC14.1: View product list
+title UC13.1: View product list
 
 |User|
 start

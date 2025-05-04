@@ -2,32 +2,9 @@
 
 actor Client
 
-box "Application Layer"
-participant OrdersRouter 
-participant ErrorMiddleware 
-participant AsyncHandler 
-end box
-
-box "Authentication"
-participant JwtAuthMiddleware 
-participant CookieUtil
-participant AuthService
-participant jsonwebtoken
-end box
-
-box "Authorization"
-participant UserService 
-participant UserModel
-end box
-
-box "Validation"
-participant RequestValidation
-end box
-
-box "Business Logic"
 participant OrdersController
 participant ModelDto
-participant ApiResponse
+participant RequestValidation
 participant OrdersWorker
 participant UsersService
 participant GhnService
@@ -35,139 +12,28 @@ participant OrdersService
 participant GeoapifyService
 participant GhnAPI
 participant OrderModel
-participant RoleModel
-end box
+participant UserModel
 
 database MongoDB
 
 ' Step 1
-group Request Initialization
-    Client -> OrdersRouter: POST /api/orders/create-orders
     activate Client
-    activate OrdersRouter
-    OrdersRouter -> AsyncHandler: asyncHandler(createOrderController)
-    activate AsyncHandler
-end
-
-break
-break
-
-' Step 2
-group Authentication Flow
-    AsyncHandler -> JwtAuthMiddleware: isAuthorizedAndHasPermission
-    activate JwtAuthMiddleware
-
-    JwtAuthMiddleware -> JwtAuthMiddleware: extract token
-    alt token not provided
-        JwtAuthMiddleware -> CookieUtil: clearSession(res)
-        activate CookieUtil
-        CookieUtil -->> JwtAuthMiddleware: return void
-        deactivate CookieUtil
-        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
-        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
-        deactivate ErrorMiddleware
-    end 
-
-    JwtAuthMiddleware -> AuthService: verifyTokenService(token)
-    activate AuthService
-    AuthService -> jsonwebtoken: verify(token, SECRET)
-    activate jsonwebtoken
-    alt token invalid
-        jsonwebtoken --x AuthService: throw Error
-        AuthService -->> JwtAuthMiddleware: catch Error and return null
-        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
-        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
-        deactivate ErrorMiddleware
-    end
-
-    jsonwebtoken -->> AuthService: return data decoded
-    deactivate jsonwebtoken
-    AuthService -->> JwtAuthMiddleware: return data decoded
-    deactivate AuthService
-    JwtAuthMiddleware -> UserService: getUserByIdService(decoded.id)
-    activate UserService
-    UserService -> UserModel: findOne(filters)
-    activate UserModel
-    UserModel -> MongoDB: query select
-    activate MongoDB
-
-    alt user not found
-        MongoDB -->> UserModel: return null
-        UserModel -->> UserService: return null
-        UserService -->> JwtAuthMiddleware: return null
-        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
-        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
-        deactivate ErrorMiddleware
-    end
-
-    MongoDB -->> UserModel: return user
-    deactivate MongoDB
-    UserModel -->> UserService: return user
-    deactivate UserModel
-    UserService -->> JwtAuthMiddleware: return user
-    deactivate UserService
-
-    alt unverified account
-        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(403))
-        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 403 Forbidden
-        deactivate ErrorMiddleware
-    end
-end
-
-break
-break
-
-' Step 3
-group Authorization Flow
-    JwtAuthMiddleware -> UserService: checkUserHasPermissionService(userId, method, endpoint)
-    activate UserService
-    UserService -> UserModel: findById(id).populate(role).populate(permissions)
-    activate UserModel
-    UserModel -> MongoDB: query select
-    activate MongoDB
-
-    alt User doesn't have permissions 
-        MongoDB -->> UserModel: return empty permissions
-        UserModel -->> UserService: return empty permissions
-        UserService -->> JwtAuthMiddleware: return false
-        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 403 Forbidden
-        deactivate ErrorMiddleware
-    end
-
-    MongoDB -->> UserModel: return permissions
-    deactivate MongoDB
-    UserModel -->> UserService: return permissions
-    deactivate UserModel
-    UserService -->> JwtAuthMiddleware: return true
-    deactivate UserService
-end
-
-break
-break
+    Client -> OrdersController: POST /api/orders/create-orders
+    activate OrdersController
 
 ' Step 4
 group Validation Flow
-    JwtAuthMiddleware -> RequestValidation: validateSchema(createOrderDto)
-    deactivate JwtAuthMiddleware
-    activate RequestValidation
+    OrdersController -> RequestValidation: validateSchema(createOrderDto)
+     activate RequestValidation
     
     alt validation error
-        RequestValidation ->> RequestValidation: next(HttpException(400))
-        RequestValidation ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
+        RequestValidation --x RequestValidation: throw HttpException(400)
+        RequestValidation --x OrdersController: throw HttpException(400)
+        OrdersController -->> Client: HTTP 400 Bad Request
     end
+
+    RequestValidation -> OrdersController: return valid data
+    deactivate RequestValidation
 end
 
 break
@@ -175,21 +41,8 @@ break
 
 ' Step 5
 group Business Logic Flow
-    RequestValidation -> OrdersController: createOrderController
-    deactivate RequestValidation
-    activate OrdersController
     OrdersController -> UsersService: getUserByIdService(customerId)
     activate UsersService
-
-    alt customerId not provided
-        UsersService -->> OrdersController: return null
-        OrdersController --x OrdersController: throw(HttpException(400))
-        OrdersController --x AsyncHandler: catch HttpException and next(HttpException(400))
-        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
-    end
 
     UsersService -> UserModel: findOne(filters)
     activate UserModel
@@ -200,22 +53,14 @@ group Business Logic Flow
         MongoDB --x UserModel: throw Error
         UserModel --x UsersService: throw Error
         UsersService --x OrdersController: throw Error
-        OrdersController --x AsyncHandler: catch Error and next(Error)
-        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
+        OrdersController -->> Client: HTTP 500 Internal Server Error
 
     else user not found
         MongoDB -->> UserModel: return null
         UserModel -->> UsersService: return null
         UsersService -->> OrdersController: return null
         OrdersController --x OrdersController: throw(HttpException(404))
-        OrdersController --x AsyncHandler: catch HttpException and next(HttpException(404))
-        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 404 Not Found
-        deactivate ErrorMiddleware
+        OrdersController -->> Client: HTTP 404 Not Found
     end
 
     MongoDB -->> UserModel: return customer
@@ -233,11 +78,7 @@ group Business Logic Flow
         GhnAPI -->> GhnService: return null
         GhnService -->> OrdersController: return null
         OrdersController --x OrdersController: throw(HttpException(404))
-        OrdersController ->> AsyncHandler: catch HttpException and next(HttpException(404))
-        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 404 Not Found
-        deactivate ErrorMiddleware
+        OrdersController -->> Client: HTTP 404 Not Found
     end
 
     GhnAPI -->> GhnService: return province
@@ -253,11 +94,7 @@ group Business Logic Flow
         GhnAPI -->> GhnService: return null
         GhnService -->> OrdersController: return null
         OrdersController --x OrdersController: throw(HttpException(404))
-        OrdersController ->> AsyncHandler: catch HttpException and next(HttpException(404))
-        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 404 Not Found
-        deactivate ErrorMiddleware
+        OrdersController -->> Client: HTTP 404 Not Found
     end
 
     GhnAPI -->> GhnService: return district
@@ -273,11 +110,7 @@ group Business Logic Flow
         GhnAPI -->> GhnService: return null
         GhnService -->> OrdersController: return null
         OrdersController --x OrdersController: throw(HttpException(404))
-        OrdersController ->> AsyncHandler: catch HttpException and next(HttpException(404))
-        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 404 Not Found
-        deactivate ErrorMiddleware
+        OrdersController -->> Client: HTTP 404 Not Found
     end
 
     GhnAPI -->> GhnService: return ward
@@ -290,11 +123,7 @@ group Business Logic Flow
     alt Invalid fullAddress
         GeoapifyService -->> OrdersController: return false
         OrdersController --x OrdersController: throw(HttpException(404))
-        OrdersController ->> AsyncHandler: catch HttpException and next(HttpException(404))
-        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 404 Not Found
-        deactivate ErrorMiddleware
+        OrdersController -->> Client: HTTP 404 Not Found
     end
 
     GeoapifyService -->> OrdersController: return true
@@ -304,11 +133,7 @@ group Business Logic Flow
 
     alt create fail
         OrdersWorker --x OrdersController: throw Error
-        OrdersController --x AsyncHandler: catch Error and next(Error)
-        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
+        OrdersController -->> Client: HTTP 500 Internal Server Error
     end
 
     OrdersWorker -->> OrdersController: return job
@@ -323,16 +148,6 @@ break
 group Transform data response
     OrdersController -> OrdersService: getOrderByIdService(id)
     activate OrdersService
-    
-    alt id not provided
-        OrdersService -->> OrdersController: return null
-        OrdersController --x OrdersController: throw(HttpException(400))
-        OrdersController ->> AsyncHandler: catch HttpException and next(HttpException(400))
-        AsyncHandler -->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
-    end
 
     OrdersService -> OrderModel: findOne(filters)
     activate OrderModel
@@ -343,11 +158,7 @@ group Transform data response
         MongoDB --x OrderModel: throw Error
         OrderModel --x OrdersService: throw Error
         OrdersService --x OrdersController: throw Error
-        OrdersController --x AsyncHandler: catch Error and next(Error)
-        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
+        OrdersController -->> Client: HTTP 500 Internal Server Error
     end
 
     MongoDB -->> OrderModel: return orderDetail
@@ -357,21 +168,13 @@ group Transform data response
     OrdersService -->> OrdersController: return orderDetail
     deactivate OrdersService
     
-    OrdersController -> ModelDto: new(OrderDto, orderDetail)
+    OrdersController -> ModelDto: new(OrderDto)
     activate ModelDto
-    ModelDto -->> OrdersController: return OrderDto instance
+    ModelDto -->> OrdersController: return OrderDto 
     deactivate ModelDto
 
-    OrdersController -> ApiResponse: success(OrderDto)
-    activate ApiResponse
-    ApiResponse -->> OrdersController: return ApiResponse instance
-    deactivate ApiResponse 
-end
-
-OrdersController -->> AsyncHandler: return ApiResponse instance
+OrdersController --> Client: HTTP 200 Success
 deactivate OrdersController
-AsyncHandler --> Client: HTTP 200 Success
-deactivate AsyncHandler
-deactivate OrdersRouter
+end
 
 @enduml

@@ -4,14 +4,13 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC14.2: Search product
+title UC13.2: Search product
 
 |User|
 start
 note left
     User is logged in  
     User must have permission
-    In UC14.1
 end note
 
 |User|

@@ -4,14 +4,13 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC14.5: Update product
+title UC13.5: Update product
 
 |User|
 start
 note left
     User is logged in  
     User must have permission
-    In UC14.4
 end note
 
 repeat
@@ -40,7 +39,7 @@ repeat while(Product name exists?) is(no) not(yes)
 :Display a success message;
 stop
 note right
-    Go to UC14.4
+    Go to UC13.4
 end note
 
 @enduml

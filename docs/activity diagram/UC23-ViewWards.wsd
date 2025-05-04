@@ -4,7 +4,7 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC22: View wards
+title UC21: View wards
 
 |User|
 start

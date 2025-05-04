@@ -4,7 +4,7 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC15.9: Create shipping order
+title UC14.8: Create shipping order
 
 |User|
 start

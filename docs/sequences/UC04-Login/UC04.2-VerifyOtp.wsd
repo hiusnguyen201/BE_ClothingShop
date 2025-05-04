@@ -2,19 +2,10 @@
 
 actor Client
 
-box "Application Layer"
-participant AuthRouter 
-participant ErrorMiddleware 
-participant AsyncHandler 
-end box
 
-box "Validation"
-participant RequestValidation
-end box
-
-box "Business Logic"
 participant AuthController
-participant ApiResponse
+participant ModelDto
+participant RequestValidation
 participant AuthService
 participant UsersService
 participant Jsonwebtoken
@@ -22,59 +13,36 @@ participant UserOtpModel
 participant MailerService
 participant CookieUtil
 participant UserModel
-participant ModelDto
-end box
 
 database MongoDB
 
 ' Step 1
-group Request Initialization
-    Client -> AuthRouter: POST /api/auth/verify-otp
     activate Client
-    activate AuthRouter
-    AuthRouter -> AsyncHandler: asyncHandler(verifyOtpController)
-    activate AsyncHandler
-end
+    Client -> AuthController: POST /api/auth/verify-otp
+    activate AuthController
 
-break
-break
 
 
 ' Step 2
 group Validation Flow
-    AsyncHandler -> RequestValidation: validateSchema(VerifyOtpDto)
+    AuthController -> RequestValidation: validateSchema(VerifyOtpDto)
     activate RequestValidation
     alt validation error
-        RequestValidation ->> RequestValidation: next(HttpException(400))
-        RequestValidation ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
+        RequestValidation --x RequestValidation: throw HttpException(400)
+        RequestValidation --x AuthController: throw HttpException(400)
+        AuthController -->> Client: HTTP 400 Bad Request
     end
+    RequestValidation -->> AuthController: return valid data
+    deactivate RequestValidation
     
 end
 
-break
-break
 
 
 ' step 3
 group Business Logic Flow
-    RequestValidation -> AuthController: verifyOtpController
-    deactivate RequestValidation
-    activate AuthController
     AuthController -> UsersService: getUserByIdService(userId)
     activate UsersService
-
-    alt userId not provided
-        UsersService -->> AuthController: return null
-        AuthController --x AuthController: throw(HttpException(400))
-        AuthController --x AsyncHandler: catch Error and next(HttpException(400))
-        AsyncHandler ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
-    end
 
     UsersService -> UserModel: findOne(filters)
     activate UserModel
@@ -85,22 +53,14 @@ group Business Logic Flow
         MongoDB --x UserModel: throw Error
         UserModel --x UsersService: throw Error
         UsersService --x AuthController: throw Error
-        AuthController --x AsyncHandler: catch Error and next(Error)
-        AsyncHandler ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
+        AuthController -->> Client: HTTP 500 Internal Server Error
 
     else user not found
         MongoDB -->> UserModel: return null
         UserModel -->> UsersService: return null
         UsersService -->> AuthController: return null
         AuthController --x AuthController: throw(HttpException(404))
-        AuthController --x AsyncHandler: catch HttpException and next(HttpException(404))
-        AsyncHandler ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 404 Not Found
-        deactivate ErrorMiddleware
+        AuthController -->> Client: HTTP 404 Not Found
     end
 
     MongoDB -->> UserModel: return user
@@ -120,22 +80,14 @@ group Business Logic Flow
         MongoDB --x UserOtpModel: throw Error
         UserOtpModel --x AuthService: throw Error
         AuthService --x AuthController: throw Error
-        AuthController --x AsyncHandler: catch Error and next(Error)
-        AsyncHandler ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
+        AuthController -->> Client: HTTP 500 Internal Server Error
 
     else user not found
         MongoDB -->> UserOtpModel: return null
         UserOtpModel -->> AuthService: return null
         AuthService -->> AuthController: return null
         AuthController --x AuthController: throw(HttpException(404))
-        AuthController --x AsyncHandler: catch HttpException and next(HttpException(404))
-        AsyncHandler ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 404 Not Found
-        deactivate ErrorMiddleware
+        AuthController -->> Client: HTTP 404 Not Found
     end
 
     MongoDB -->> UserOtpModel: return userOtp
@@ -155,11 +107,7 @@ group Business Logic Flow
         MongoDB --x UserModel: throw error
         UserModel --x UsersService: throw error
         UsersService --x AuthController: throw error
-        AuthController --x AsyncHandler: catch error and next(error)
-        AsyncHandler ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
+        AuthController -->> Client: HTTP 500 Internal Server Error
     end
 
     MongoDB -->> UserModel: return user
@@ -176,11 +124,7 @@ group Business Logic Flow
     alt send mail fail
         MailerService --x MailerService: throw error
         MailerService --x AuthController: throw error
-        AuthController --x AsyncHandler: catch error and next(error)
-        AsyncHandler ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
+        AuthController -->> Client: HTTP 500 Internal Server Error
     end
     
     MailerService -->> AuthController: return void
@@ -196,11 +140,7 @@ group Business Logic Flow
         MongoDB --x UserOtpModel: throw error
         UserOtpModel --x AuthService: throw error
         AuthService --x AuthController: throw error
-        AuthController --x AsyncHandler: catch error and next(error)
-        AsyncHandler ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
+        AuthController -->> Client: HTTP 500 Internal Server Error
     end
 
     MongoDB -->> UserOtpModel: return userOtps
@@ -228,11 +168,7 @@ group Business Logic Flow
         MongoDB --x UserModel: throw error
         UserModel --x AuthService: throw error
         AuthService --x AuthController: throw error
-        AuthController --x AsyncHandler: catch error and next(error)
-        AsyncHandler ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
+        AuthController -->> Client: HTTP 500 Internal Server Error
     end
 
     MongoDB -->> UserModel: return accessToken, refreshToken
@@ -247,26 +183,16 @@ group Business Logic Flow
     deactivate CookieUtil
 
        
-end   
-break 
-break
+end    
 
 group Transform data response
-    AuthController -> ModelDto: new(UserDto, user)
+    AuthController -> ModelDto: new(UserDto)
     activate ModelDto
-    ModelDto -->> AuthController: return UserDto instance
+    ModelDto -->> AuthController: return UserDto 
     deactivate ModelDto
-
-    AuthController -> ApiResponse: success(UserDto, success message)
-    activate ApiResponse
-    ApiResponse -->> AuthController: return ApiResponse instance
-    deactivate ApiResponse 
-end
-AuthController -->> AsyncHandler: return ApiResponse instance
+AuthController --> Client: HTTP 200 Success
 deactivate AuthController
-AsyncHandler --> Client: HTTP 200 Success
-deactivate AsyncHandler
-deactivate AuthRouter
+end
 
 
 @enduml

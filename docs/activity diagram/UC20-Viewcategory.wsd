@@ -4,7 +4,7 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC19: View categories
+title UC18: View categories
 
 |User|
 start

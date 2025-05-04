@@ -1,0 +1,109 @@
+@startuml Details Order
+
+actor Client
+
+participant OrdersController
+participant RequestValidation
+participant TransactionalServiceWrapper
+participant OrdersService
+participant ProductVariantsService
+participant ProductVariantModel
+participant OrderModel
+
+database MongoDB
+
+' Step 1
+    activate Client
+    Client -> OrdersController: DELETE /api/orders/remove-order-by-id/:orderId
+    activate OrdersController
+
+' Step 4
+group Validation Flow
+    OrdersController -> RequestValidation: validateSchema(GetOrderDto)
+    activate RequestValidation
+    
+    alt validation error
+        RequestValidation --x RequestValidation: throw HttpException(400)
+        RequestValidation --x OrdersController: throw HttpException(400)
+        OrdersController -->> Client: HTTP 400 Bad Request
+    end
+
+    RequestValidation -> OrdersController: return valid data
+    deactivate RequestValidation
+end
+
+break
+break
+
+
+' Step 5
+group Business Logic Flow
+    OrdersController -> OrdersService: getOrderByIdService(orderId)
+    activate OrdersService
+    OrdersService -> OrderModel: findOne(filters)
+    activate OrderModel
+    OrderModel -> MongoDB: query select 
+    activate MongoDB
+
+    alt select fail
+        MongoDB --x OrderModel:throw Error
+        OrderModel --x OrdersService:throw Error
+        OrdersService --x OrdersController: throw Error
+        OrdersController -->> Client: HTTP 500  Server Error
+
+    else order not found
+        MongoDB -->> OrderModel: return null
+        OrderModel -->> OrdersService: return null
+        OrdersService -->> OrdersController: return null
+        OrdersController --x OrdersController: throw(HttpException(404))
+        OrdersController -->> Client: HTTP 404 not found
+    end
+
+    MongoDB -->> OrderModel: return order
+    deactivate MongoDB
+    OrderModel -->> OrdersService: return order
+    deactivate OrderModel
+    OrdersService -->> OrdersController: return order
+    deactivate OrdersService
+
+    OrdersController -> TransactionalServiceWrapper:execute()
+    activate TransactionalServiceWrapper
+    TransactionalServiceWrapper -> ProductVariantsService: increaseProductVariantsQuantityByOrderService()
+    activate ProductVariantsService
+    ProductVariantsService -> ProductVariantModel: bulkWrite()
+    activate ProductVariantModel
+    ProductVariantModel -->> ProductVariantsService:return true
+    deactivate ProductVariantModel
+    ProductVariantsService -->> TransactionalServiceWrapper: return true
+    deactivate ProductVariantsService
+    TransactionalServiceWrapper -> OrdersService: removeOrderByIdService()
+    activate OrdersService
+    OrdersService -> OrderModel: deleteOne()
+    activate OrderModel
+    OrderModel -> MongoDB: query delete
+    activate MongoDB
+    
+    alt delete fail 
+    MongoDB --x OrderModel:throw Error
+    OrderModel --x OrdersService:throw Error
+    OrdersService --x TransactionalServiceWrapper: throw Error
+    TransactionalServiceWrapper --x OrdersController: throw Error
+    OrdersController -->> Client: HTTP 500  Server Error
+    end 
+
+    MongoDB -->> OrderModel: return true
+    deactivate MongoDB 
+    OrderModel -->> OrdersService: return true
+    deactivate OrderModel
+    OrdersService -->> TransactionalServiceWrapper: return true
+    deactivate OrdersService
+    TransactionalServiceWrapper --> OrdersController: return true
+    deactivate TransactionalServiceWrapper
+
+end
+
+OrdersController --> Client: HTTP 200 Success
+deactivate OrdersController
+end
+
+@enduml

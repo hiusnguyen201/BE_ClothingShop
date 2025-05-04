@@ -1,0 +1,135 @@
+@startuml Details Order
+
+actor Client
+
+participant OrdersController
+participant ModelDto
+participant RequestValidation
+participant OrdersService
+participant OrderModel
+
+database MongoDB
+
+' Step 1
+    activate Client
+    Client -> OrdersController: POST /api/orders/confirm-order
+    activate OrdersController
+
+' Step 4
+group Validation Flow
+    OrdersController -> RequestValidation: validateSchema(GetOrderDto)
+    activate RequestValidation
+    
+    alt validation error
+        RequestValidation --x RequestValidation: throw HttpException(400)
+        RequestValidation --x OrdersController: throw HttpException(400)
+        OrdersController -->> Client: HTTP 400 Bad Request
+    end
+
+    RequestValidation -> OrdersController: return valid data
+    deactivate RequestValidation
+end
+
+break
+break
+
+
+' Step 5
+group Business Logic Flow
+    OrdersController -> OrdersService: getOrderByIdService(orderId)
+    activate OrdersService
+    OrdersService -> OrderModel: findOne(filters)
+    activate OrderModel
+    OrderModel -> MongoDB: query select 
+    activate MongoDB
+
+    alt select false
+        MongoDB --x OrderModel:throw Error
+        OrderModel --x OrdersService:throw Error
+        OrdersService --x OrdersController: throw Error
+        OrdersController -->> Client: HTTP 500  Server Error
+
+    else order not found
+        MongoDB -->> OrderModel: return null
+        OrderModel -->> OrdersService: return null
+        OrdersService -->> OrdersController: return null
+        OrdersController --x OrdersController: throw(HttpException(404))
+        OrdersController -->> Client: HTTP 404 not found
+    end
+
+    MongoDB -->> OrderModel: return order
+    deactivate MongoDB
+    OrderModel -->> OrdersService: return order
+    deactivate OrderModel
+    OrdersService -->> OrdersController: return order
+    deactivate OrdersService
+
+    alt Invalid order status
+        OrdersController --x OrdersController: throw(HttpException(400))
+        OrdersController -->> Client: HTTP 400 bad request
+    end 
+
+    OrdersController -> OrdersService: addOrderStatusHistoryByIdService()
+    activate OrdersService
+    OrdersService -> OrderModel: updateOne()
+    activate OrderModel
+    OrderModel -> MongoDB: query update
+    activate MongoDB
+
+    alt update fail 
+        MongoDB --x OrderModel:throw Error
+        OrderModel --x OrdersService:throw Error
+        OrdersService --x OrdersController: throw Error
+        OrdersController -->> Client: HTTP 500  Server Error
+    end
+
+    MongoDB -->> OrderModel: return true
+    deactivate MongoDB
+    OrderModel -->> OrdersService: return true
+    deactivate OrderModel
+    OrdersService -->> OrdersController: return true
+    deactivate OrdersService
+
+     OrdersController -> OrdersService: getOrderByIdService(orderId)
+    activate OrdersService
+    OrdersService -> OrderModel: findOne(filters)
+    activate OrderModel
+    OrderModel -> MongoDB: query select 
+    activate MongoDB
+
+    alt select false
+        MongoDB --x OrderModel:throw Error
+        OrderModel --x OrdersService:throw Error
+        OrdersService --x OrdersController: throw Error
+        OrdersController -->> Client: HTTP 500  Server Error
+
+    else order not found
+        MongoDB -->> OrderModel: return null
+        OrderModel -->> OrdersService: return null
+        OrdersService -->> OrdersController: return null
+        OrdersController --x OrdersController: throw(HttpException(404))
+        OrdersController -->> Client: HTTP 404 not found
+    end
+
+    MongoDB -->> OrderModel: return order
+    deactivate MongoDB
+    OrderModel -->> OrdersService: return order
+    deactivate OrderModel
+    OrdersService -->> OrdersController: return order
+    deactivate OrdersService
+
+
+
+end
+
+group Transform data response
+    OrdersController -> ModelDto: new(OrderDto)
+    activate ModelDto
+    ModelDto -->> OrdersController: return OrderDto 
+    deactivate ModelDto
+
+OrdersController --> Client: HTTP 200 Success
+deactivate OrdersController
+end
+
+@enduml

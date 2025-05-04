@@ -4,14 +4,13 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC16.5: Update category
+title UC15.5: Update category
 
 |User|
 start
 note left
     User is logged in  
     User must have permission
-    In UC16.4
 end note
 
 repeat 
@@ -41,7 +40,7 @@ repeat while(Exist category name?) is(yes) not(no)
 :Display a success message;
 stop
 note right
-    Go to UC16.4
+    Go to UC15.4
 end note
 
 @enduml

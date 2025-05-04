@@ -1,40 +1,23 @@
 @startuml View list Disctricts
 
 actor Client
-
-box "Application Layer"
-participant DivisionsRouter 
-participant ErrorMiddleware 
-participant AsyncHandler 
-end box
-
-
-box "Business Logic"
 participant DivisionsController
-participant ApiResponse
+participant ModelDto
 participant GhnService 
 participant GhnAPI
-participant ModelDto
-end box
 
 database MongoDB
 
 ' Step 1
-group Request Initialization
-    Client -> DivisionsRouter: GET /api/divisions/get-wards-by-district-code/:districtCode
     activate Client
-    activate DivisionsRouter
-    DivisionsRouter -> AsyncHandler: asyncHandler(getAllWardsByDistrictCodeController)
-    activate AsyncHandler
-end
+    Client -> DivisionsController: GET /api/divisions/get-wards-by-district-code/:districtCode
+    activate DivisionsController
 
 break
 break
 
 ' step 2
 group Business Logic Flow
-    AsyncHandler -> DivisionsController: getAllWardsByDistrictCodeController
-    activate DivisionsController
     DivisionsController -> GhnService: getWardsByDistrictIdService(districtCode)
     activate GhnService
     GhnService -> GhnAPI: GET /master-data/ward
@@ -44,11 +27,7 @@ group Business Logic Flow
         GhnAPI -->> GhnService: return null
         GhnService -->> DivisionsController: return null
         DivisionsController --x DivisionsController: throw(HttpException(404))
-        DivisionsController ->> AsyncHandler: catch HttpException and next(HttpException(404))
-        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 404 Not Found
-        deactivate ErrorMiddleware
+        DivisionsController -->> Client: HTTP 404 Not Found
     end
 
     GhnAPI -->> GhnService: return ward
@@ -62,21 +41,13 @@ break
 break
 
 group Transform data response
-    DivisionsController -> ModelDto: newList(WardDto, wards)
+    DivisionsController -> ModelDto: newList(WardDto)
     activate ModelDto
-    ModelDto -->> DivisionsController: return WardDto instance
+    ModelDto -->> DivisionsController: return WardDto 
     deactivate ModelDto
-
-    DivisionsController -> ApiResponse: success(WardDto, success message)
-    activate ApiResponse
-    ApiResponse -->> DivisionsController: return ApiResponse instance
-    deactivate ApiResponse 
-end
-DivisionsController -->> AsyncHandler: return ApiResponse instance
+DivisionsController --> Client: HTTP 200 Success
 deactivate DivisionsController
-AsyncHandler --> Client: HTTP 200 Success
-deactivate AsyncHandler
-deactivate DivisionsRouter
+end
 
 
 

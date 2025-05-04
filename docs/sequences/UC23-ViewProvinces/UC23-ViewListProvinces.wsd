@@ -2,52 +2,33 @@
 
 actor Client
 
-box "Application Layer"
-participant DivisionsRouter 
-participant ErrorMiddleware 
-participant AsyncHandler 
-end box
-
-
-box "Business Logic"
 participant DivisionsController
-participant ApiResponse
+participant ModelDto
 participant GhnService
 participant GhnAPI 
-participant ModelDto
-end box
 
 database MongoDB
 
 ' Step 1
-group Request Initialization
-    Client -> DivisionsRouter: GET /api/divisions/get-provinces
     activate Client
-    activate DivisionsRouter
-    DivisionsRouter -> AsyncHandler: asyncHandler(getAllProvincesController)
-    activate AsyncHandler
-end
+    Client -> DivisionsController: GET /api/divisions/get-provinces
+    activate DivisionsController
 
 break
 break
 
 ' step 2
 group Business Logic Flow
-    AsyncHandler -> DivisionsController: getAllProvincesController
-    activate DivisionsController
     DivisionsController -> GhnService: getAllProvincesService()
     activate GhnService
     GhnService -> GhnAPI: GET /master-data/province
+    activate GhnAPI
 
     alt get fail
         GhnAPI -->> GhnService: return null
         GhnService -->> DivisionsController: return null
         DivisionsController --x DivisionsController: throw(HttpException(404))
-        DivisionsController ->> AsyncHandler: catch HttpException and next(HttpException(404))
-        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 404 Not Found
-        deactivate ErrorMiddleware
+        DivisionsController -->> Client: HTTP 404 Not Found
     end
 
     GhnAPI -->> GhnService: return province
@@ -63,21 +44,15 @@ break
 break
 
 group Transform data response
-    DivisionsController -> ModelDto: newList(ProvinceDto, provinces)
+    DivisionsController -> ModelDto: newList(ProvinceDto)
     activate ModelDto
-    ModelDto -->> DivisionsController: return ProvinceDto instance
+    ModelDto -->> DivisionsController: return ProvinceDto 
     deactivate ModelDto
+    
+    DivisionsController --> Client: HTTP 200 Success
+    deactivate DivisionsController
 
-    DivisionsController -> ApiResponse: success(ProvinceDto, success message)
-    activate ApiResponse
-    ApiResponse -->> DivisionsController: return ApiResponse instance
-    deactivate ApiResponse 
 end
-DivisionsController -->> AsyncHandler: return ApiResponse instance
-deactivate DivisionsController
-AsyncHandler --> Client: HTTP 200 Success
-deactivate AsyncHandler
-deactivate DivisionsRouter
 
 
 

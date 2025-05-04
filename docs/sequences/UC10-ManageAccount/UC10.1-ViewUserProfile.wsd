@@ -3,7 +3,6 @@
 actor Client
 participant AccountController
 participant ModelDto
-participant RequestValidation
 participant AuthService
 participant UserModel
 database MongoDB

@@ -2,32 +2,11 @@
 
 actor Client
 
-box "Application Layer"
-participant ProductRouter 
-participant ErrorMiddleware 
-participant AsyncHandler 
-end box
 
-box "Authentication"
-participant JwtAuthMiddleware 
-participant CookieUtil
-participant AuthService
-participant jsonwebtoken
-end box
 
-box "Authorization"
-participant UserService 
-participant UserModel
-end box
-
-box "Validation"
-participant RequestValidation
-end box
-
-box "Business Logic"
 participant ProductsController
 participant ModelDto
-participant ApiResponse
+participant RequestValidation
 participant ProductsService
 participant TransactionalServiceWrapper
 participant ProductVariantsService
@@ -36,170 +15,42 @@ participant ObjectUtil
 participant OptionModel
 participant CategoryModel
 participant ProductModel
-end box
 
 database MongoDB
 
 ' Step 1
-group Request Initialization
-    Client -> ProductRouter: PUT /api/products/update-product-variants/:productId
     activate Client
-    activate ProductRouter
-    ProductRouter -> AsyncHandler: asyncHandler(updateProductVariantsController)
-    activate AsyncHandler
-end
+    Client -> ProductsController: PUT /api/products/update-product-variants/:productId
+    activate ProductsController
 
 break
 break
 
-' Step 2
-group Authentication Flow
-    AsyncHandler -> JwtAuthMiddleware: isAuthorizedAndHasPermission
-    activate JwtAuthMiddleware
-
-    JwtAuthMiddleware -> JwtAuthMiddleware: extract token
-    alt token not provided
-        JwtAuthMiddleware -> CookieUtil: clearSession(res)
-        activate CookieUtil
-        CookieUtil -->> JwtAuthMiddleware: return void
-        deactivate CookieUtil
-        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
-        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
-        deactivate ErrorMiddleware
-    end 
-
-    JwtAuthMiddleware -> AuthService: verifyTokenService(token)
-    activate AuthService
-    AuthService -> jsonwebtoken: verify(token, SECRET)
-    activate jsonwebtoken
-    alt token invalid
-        jsonwebtoken --x AuthService: throw Error
-        AuthService -->> JwtAuthMiddleware: catch Error and return null
-        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
-        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
-        deactivate ErrorMiddleware
-    end
-
-    jsonwebtoken -->> AuthService: return data decoded
-    deactivate jsonwebtoken
-    AuthService -->> JwtAuthMiddleware: return data decoded
-    deactivate AuthService
-    JwtAuthMiddleware -> UserService: getUserByIdService(decoded.id)
-    activate UserService
-    UserService -> UserModel: findOne(filters)
-    activate UserModel
-    UserModel -> MongoDB: query select
-    activate MongoDB
-
-    alt user not found
-        MongoDB -->> UserModel: return null
-        UserModel -->> UserService: return null
-        UserService -->> JwtAuthMiddleware: return null
-        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
-        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
-        deactivate ErrorMiddleware
-    end
-
-    MongoDB -->> UserModel: return user
-    deactivate MongoDB
-    UserModel -->> UserService: return user
-    deactivate UserModel
-    UserService -->> JwtAuthMiddleware: return user
-    deactivate UserService
-
-    alt unverified account
-        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(403))
-        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 403 Forbidden
-        deactivate ErrorMiddleware
-    end
-end
-
-break
-break
-
-' Step 3
-group Authorization Flow
-    JwtAuthMiddleware -> UserService: checkUserHasPermissionService(userId, method, endpoint)
-    activate UserService
-    UserService -> UserModel: findById(id).populate(role).populate(permissions)
-    activate UserModel
-    UserModel -> MongoDB: query select
-    activate MongoDB
-
-    alt User doesn't have permissions 
-        MongoDB -->> UserModel: return empty permissions
-        UserModel -->> UserService: return empty permissions
-        UserService -->> JwtAuthMiddleware: return false
-        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 403 Forbidden
-        deactivate ErrorMiddleware
-    end
-
-    MongoDB -->> UserModel: return permissions
-    deactivate MongoDB
-    UserModel -->> UserService: return permissions
-    deactivate UserModel
-    UserService -->> JwtAuthMiddleware: return true
-    deactivate UserService
-end
-
-break
-break
 
 ' Step 4
 group Validation Flow
-    UploadUtil -> RequestValidation: validateSchema(GetProductDto)
-    deactivate UploadUtil
+    ProductsController -> RequestValidation: validateSchema(GetProductDto)
     activate RequestValidation
-    alt validation error
-        RequestValidation ->> RequestValidation: next(HttpException(400))
-        RequestValidation ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
+        alt validation error
+        RequestValidation --x RequestValidation: throw HttpException(400)
+        RequestValidation --x ProductsController: throw HttpException(400)
+        ProductsController -->> Client: HTTP 400 Bad Request
     end
-    RequestValidation -> RequestValidation: validateSchema(updateProductVariantsDto)
-    alt validation error
-        RequestValidation ->> RequestValidation: next(HttpException(400))
-        RequestValidation ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
+    RequestValidation -> RequestValidation: validateSchema(updateProductInfoDto)
+     alt validation error
+        RequestValidation --x RequestValidation: throw HttpException(400)
+        RequestValidation --x ProductsController: throw HttpException(400)
+        ProductsController -->> Client: HTTP 400 Bad Request
     end
-
+    RequestValidation -->> ProductsController: return valid data
+    deactivate RequestValidation
 end
-
-break
-break
 
 
 ' Step 5
 group Business Logic Flow
-    RequestValidation -> ProductsController: updateProductVariantsController
-    deactivate RequestValidation
-    activate ProductsController
     ProductsController -> ProductsService: getProductByIdService(productId)
     activate ProductsService
-
-    alt productId not provided
-        ProductsService -->> ProductsController: return null
-        ProductsController --x ProductsController: throw(HttpException(400))
-        ProductsController --x AsyncHandler: catch HttpException and next(HttpException(400))
-        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
-    end
-    
     ProductsService -> ProductModel: findOne(filter)
     activate ProductModel
     ProductModel -> MongoDB: query select
@@ -209,21 +60,13 @@ group Business Logic Flow
         MongoDB --x ProductModel: throw Error
         ProductModel --x ProductsService: throw Error
         ProductsService --x ProductsController: throw Error
-        ProductsController --x AsyncHandler: catch Error and next(Error)
-        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
+        ProductsController -->> Client: HTTP 500 Internal Server Error
     else product not found
         MongoDB -->> ProductModel: return null
         ProductModel -->> ProductsService: return null
         ProductsService -->> ProductsController: return null
         ProductsController --x ProductsController: throw(HttpException(404))
-        ProductsController --x AsyncHandler: catch HttpException and next(HttpException(404))
-        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 404 Not Found
-        deactivate ErrorMiddleware
+        ProductsController -->> Client: HTTP 404 Not Found
     end
 
     MongoDB -->> ProductModel: return product
@@ -240,17 +83,6 @@ group Business Logic Flow
     deactivate ProductsService
     TransactionalServiceWrapper -> OptionsService: getOptionByIdService()
     activate OptionsService        
-
-    alt id not provided
-        OptionsService -->> TransactionalServiceWrapper: return null
-        TransactionalServiceWrapper --x TransactionalServiceWrapper: throw(HttpException(400))
-        TransactionalServiceWrapper --x AsyncHandler: catch HttpException and next(HttpException(400))
-        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
-    end
-
     OptionsService -> OptionModel: findOne(filter)
     activate OptionModel
     OptionModel -> MongoDB: query select
@@ -260,21 +92,13 @@ group Business Logic Flow
         MongoDB --x OptionModel: throw Error
         OptionModel --x OptionsService: throw Error
         OptionsService --x TransactionalServiceWrapper: throw Error
-        TransactionalServiceWrapper --x AsyncHandler: catch Error and next(Error)
-        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
+        ProductsController -->> Client: HTTP 500 Internal Server Error
     else option not found
         MongoDB -->> OptionModel: return null
         OptionModel -->> OptionsService: return null
         OptionsService -->> TransactionalServiceWrapper: return null
         TransactionalServiceWrapper --x TransactionalServiceWrapper: throw(HttpException(404))
-        TransactionalServiceWrapper --x AsyncHandler: catch HttpException and next(HttpException(404))
-        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 404 Not Found
-        deactivate ErrorMiddleware
+        ProductsController -->> Client: HTTP 404 Not Found
     end
 
     MongoDB -->> OptionModel: return option
@@ -289,22 +113,12 @@ group Business Logic Flow
     activate ObjectUtil
     ObjectUtil -->> ProductsController: return uniqueProductVariants
     deactivate ObjectUtil
-    TransactionalServiceWrapper -> ProductVariantsService: newProductVariantsService({...})
+    ProductsController -> ProductVariantsService: newProductVariantsService({...})
     activate ProductVariantsService
     ProductVariantsService -->> ProductsController: return productVariantInstance
     deactivate ProductVariantsService
     ProductsController -> OptionsService: getOptionByIdService()
     activate OptionsService
-
-     alt id not provided
-        OptionsService -->> ProductsController: return null
-        ProductsController --x ProductsController: throw(HttpException(400))
-        ProductsController --x AsyncHandler: catch HttpException and next(HttpException(400))
-        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
-    end
 
     OptionsService -> OptionModel: findOne(filter)
     activate OptionModel
@@ -315,21 +129,13 @@ group Business Logic Flow
         MongoDB --x OptionModel: throw Error
         OptionModel --x OptionsService: throw Error
         OptionsService --x ProductsController: throw Error
-        ProductsController --x AsyncHandler: catch Error and next(Error)
-        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
+        ProductsController -->> Client: HTTP 500 Internal Server Error
     else option not found
         MongoDB -->> OptionModel: return null
         OptionModel -->> OptionsService: return null
         OptionsService -->> ProductsController: return null
         ProductsController --x ProductsController: throw(HttpException(404))
-        ProductsController --x AsyncHandler: catch HttpException and next(HttpException(404))
-        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 404 Not Found
-        deactivate ErrorMiddleware
+        ProductsController -->> Client: HTTP 404 Not Found
     end
 
     MongoDB -->> OptionModel: return option
@@ -353,11 +159,7 @@ group Business Logic Flow
         MongoDB --x ProductModel: throw Error
         ProductModel --x ProductsService: throw Error
         ProductsService --x ProductsController: throw Error
-        ProductsController --x AsyncHandler: catch Error and next(Error)
-        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
+        ProductsController -->> Client: HTTP 500 Internal Server Error
     end
 
     MongoDB -->> ProductModel: return updatedProduct
@@ -367,23 +169,11 @@ group Business Logic Flow
     ProductsService -->> ProductsController: return updatedProduct
     deactivate ProductsService
 
-
-   
-
 end
 
 group Transform data response
     ProductsController -> ProductsService: getProductByIdService(productId)
     activate ProductsService
-    alt productId not provided
-        ProductsService -->> ProductsController: return null
-        ProductsController --x ProductsController: throw(HttpException(400))
-        ProductsController --x AsyncHandler: catch HttpException and next(HttpException(400))
-        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
-    end
     ProductsService -> ProductModel: findOne(filter)
     activate ProductModel
     ProductModel -> MongoDB: query select
@@ -393,22 +183,13 @@ group Transform data response
         MongoDB --x ProductModel: throw Error
         ProductModel --x ProductsService: throw Error
         ProductsService --x ProductsController: throw Error
-        ProductsController --x AsyncHandler: catch Error and next(Error)
-        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
+        ProductsController -->> Client: HTTP 500 Internal Server Error
     else product not found
         MongoDB -->> ProductModel: return null
         ProductModel -->> ProductsService: return null
         ProductsService -->> ProductsController: return null
         ProductsController --x ProductsController: throw(HttpException(404))
-        ProductsController --x AsyncHandler: catch HttpException and next(HttpException(404))
-        AsyncHandler ->> ErrorMiddleware: handleError(Error)
-        ProductsController ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 404 Not Found
-        deactivate ErrorMiddleware
+        ProductsController -->> Client: HTTP 404 Not Found
     end
 
     MongoDB -->> ProductModel: return product
@@ -417,21 +198,14 @@ group Transform data response
     deactivate ProductModel
     ProductsService -->> ProductsController: return product
     deactivate ProductsService
-    ProductsController -> ModelDto: new(ProductDto, product)
+    ProductsController -> ModelDto: new(ProductDto)
     activate ModelDto
-    ModelDto -->> ProductsController: return ProductDto instance
+    ModelDto -->> ProductsController: return ProductDto 
     deactivate ModelDto
-
-    ProductsController -> ApiResponse: success(ProductDto)
-    activate ApiResponse
-    ApiResponse -->> ProductsController: return ApiResponse instance
-    deactivate ApiResponse 
+    ProductsController --> Client: HTTP 200 Success
+deactivate ProductsController
 end
 
-ProductsController -->> AsyncHandler: return ApiResponse instance
-deactivate ProductsController
-AsyncHandler --> Client: HTTP 200 Success
-deactivate AsyncHandler
-deactivate ProductRouter
+
 
 @enduml

@@ -131,6 +131,7 @@ group Validation Flow
     end
 
     RequestValidation -> RolesController: return valid data
+    deactivate RequestValidation
 end
 
 break
@@ -139,8 +140,6 @@ break
 ' Step 5
 group Business Logic Flow
     ' RequestValidation -> RolesController: createRoleController
-    ' deactivate RequestValidation
-    activate RolesController
     RolesController -> RolesService: checkExistRoleNameService(name)
     activate RolesService
     RolesService -> RoleModel: fineOne(filters)

@@ -2,17 +2,9 @@
 
 actor Client
 
-box "Application Layer"
-participant PaymentsRouter 
-participant ErrorMiddleware 
-participant AsyncHandler 
-end box
-
-
-box "Business Logic"
 participant PaymentsController
-participant ApiResponse
 participant TransactionalServiceWrapper 
+participant ModelDto
 participant PaymentsService
 participant OrdersService
 participant HandleCreateOrder
@@ -20,41 +12,20 @@ participant OrderStatusHistoryService
 participant OrderModel
 participant PaymentModel
 participant OrderStatusHistoryModel
-participant ModelDto
-end box
 
 database MongoDB
 
 ' Step 1
-group Request Initialization
-    Client -> PaymentsRouter: GET /api/payments/return-payment-momo
     activate Client
-    activate PaymentsRouter
-    PaymentsRouter -> AsyncHandler: asyncHandler(returnPaymentMoMoController)
-    activate AsyncHandler
-end
-
-break
-break
+    Client -> PaymentsController: GET /api/payments/return-payment-momo
+    activate PaymentsController
 
 ' step 2
 group Business Logic Flow
-    AsyncHandler -> PaymentsController: returnPaymentMoMoController
-    activate PaymentsController
     PaymentsController -> TransactionalServiceWrapper: execute()
     activate TransactionalServiceWrapper
     TransactionalServiceWrapper -> OrdersService: getOrderByIdService(orderId)
     activate OrdersService
-
-    alt orderId not provided 
-        OrdersService -> TransactionalServiceWrapper: return null
-        TransactionalServiceWrapper --x TransactionalServiceWrapper: throw(HttpException(400))
-        TransactionalServiceWrapper --x AsyncHandler: catch HttpException and next(HttpException(400))
-        AsyncHandler -->> ErrorMiddleware: handleError(error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
-    end
     
     OrdersService -> OrderModel: findOne(filters)
     OrderModel -> MongoDB: quere select 
@@ -64,21 +35,15 @@ group Business Logic Flow
         MongoDB --x OrderModel: throw Error
         OrderModel --x OrdersService: throw Error
         OrdersService --x TransactionalServiceWrapper: throw Error
-        TransactionalServiceWrapper --x AsyncHandler: catch Error and next(HttpException(500))
-        AsyncHandler -->> ErrorMiddleware: handleError(error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
+        TransactionalServiceWrapper --x PaymentsController: throw Error
+        PaymentsController -->> Client: HTTP 500 Internal Server Error
     else order not found
         MongoDB -->> OrderModel: return null
         OrderModel -->> OrdersService: return null
         OrdersService -->> TransactionalServiceWrapper: return null
         TransactionalServiceWrapper --x TransactionalServiceWrapper: throw(HttpException(404))
-        TransactionalServiceWrapper --x AsyncHandler: catch HttpException and next(HttpException(404))
-        AsyncHandler -->> ErrorMiddleware: handleError(error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 404 Not Found
-        deactivate ErrorMiddleware
+        TransactionalServiceWrapper --x PaymentsController: throw(HttpException(404))
+        PaymentsController -->> Client: HTTP 404 Not Found
     end
 
     MongoDB -->> OrderModel: return order
@@ -111,11 +76,8 @@ group Business Logic Flow
             OrderModel --x OrdersService: throw Error
             OrdersService --x HandleCreateOrder: throw Error
             HandleCreateOrder --x TransactionalServiceWrapper: throw Error
-            TransactionalServiceWrapper --x AsyncHandler: catch Error and next(Error)
-            AsyncHandler -->> ErrorMiddleware: handleError(error) 
-            activate ErrorMiddleware
-            ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-            deactivate ErrorMiddleware
+            TransactionalServiceWrapper --x PaymentsController: throw Error
+            PaymentsController -->> Client: HTTP 500 Internal Server Error
         end
 
         MongoDB -->> OrderModel: return order
@@ -127,10 +89,8 @@ group Business Logic Flow
         HandleCreateOrder -->> TransactionalServiceWrapper: return order
         deactivate HandleCreateOrder
         TransactionalServiceWrapper --x TransactionalServiceWrapper: throw(HttpException(400))
-        TransactionalServiceWrapper -->> ErrorMiddleware: handleError(error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
+        TransactionalServiceWrapper --x PaymentsController: throw(HttpException(400))
+        PaymentsController -->> Client: HTTP 400 Bad Request
     end
 
     TransactionalServiceWrapper -> PaymentsService: updatePaymentByIdService()
@@ -144,11 +104,8 @@ group Business Logic Flow
         MongoDB --x PaymentModel: throw Error
         PaymentModel --x PaymentsService: throw Error
         PaymentsService --x TransactionalServiceWrapper: throw Error
-        TransactionalServiceWrapper --x AsyncHandler: catch Error and next(Error)
-        AsyncHandler -->> ErrorMiddleware: handleError(error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
+        TransactionalServiceWrapper --x PaymentsController: throw Error
+        PaymentsController -->> Client: HTTP 500 Internal Server Error
     end
 
     MongoDB -->> PaymentModel: return payment
@@ -177,11 +134,8 @@ group Business Logic Flow
         MongoDB --x OrderModel: throw Error
         OrderModel --x OrdersService: throw Error
         OrdersService --x TransactionalServiceWrapper: throw Error
-        TransactionalServiceWrapper --x AsyncHandler: catch Error and next(Error)
-        AsyncHandler -->> ErrorMiddleware: handleError(error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
+        TransactionalServiceWrapper --x PaymentsController: throw Error
+        PaymentsController -->> Client: HTTP 500 Internal Server Error
     end
 
     MongoDB -->> OrderModel: return order
@@ -192,27 +146,15 @@ group Business Logic Flow
     deactivate OrdersService
 
 end
-break
-break
 
 group Transform data response
-    TransactionalServiceWrapper -> ModelDto: new(PaymentDto, updatedPayment)
+    TransactionalServiceWrapper -> ModelDto: new(PaymentDto)
     activate ModelDto
-    ModelDto -->> TransactionalServiceWrapper: return PaymentDto instance
+    ModelDto -->> TransactionalServiceWrapper: return PaymentDto
     deactivate ModelDto
-
-    TransactionalServiceWrapper -> ApiResponse: success(PaymentDto)
-    activate ApiResponse
-    ApiResponse -->> TransactionalServiceWrapper: return ApiResponse instance
-    deactivate ApiResponse 
-end
-TransactionalServiceWrapper -->> PaymentsController: return ApiResponse instance
-deactivate TransactionalServiceWrapper
-PaymentsController -->> AsyncHandler: return ApiResponse instance
+PaymentsController --> Client: HTTP 200 Success
 deactivate PaymentsController
-AsyncHandler --> Client: HTTP 200 Success
-deactivate AsyncHandler
-deactivate PaymentsRouter
+end
 
 
 

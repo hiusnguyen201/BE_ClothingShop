@@ -4,14 +4,13 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC14.6: Remove product
+title UC13.7: Remove product
 
 |User|
 start
 note left
     User is logged in  
     User must have permission
-    In UC14.4
 end note
 
 
@@ -37,7 +36,7 @@ if(Exist product?) then(yes)
         :Display success message;
         stop
         note right
-            Go to UC14.1
+            Go to UC13.1
         end note
     else(no)
         :Display error message;

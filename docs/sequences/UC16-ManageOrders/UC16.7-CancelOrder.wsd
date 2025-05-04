@@ -1,0 +1,224 @@
+@startuml Details Order
+
+actor Client
+
+participant OrdersController
+participant ModelDto
+participant RequestValidation
+participant TransactionalServiceWrapper
+participant ProductVariantsService
+participant PaymentsService
+participant GhnService
+participant MomoService
+participant OrdersService
+participant OrderModel
+participant ProductVariantModel
+participant PaymentModel
+participant GhnAPI
+
+database MongoDB
+
+' Step 1
+    activate Client
+    Client -> OrdersController: POST /api/orders/confirm-order
+    activate OrdersController
+
+' Step 4
+group Validation Flow
+    OrdersController -> RequestValidation: validateSchema(GetOrderDto)
+    activate RequestValidation
+    
+    alt validation error
+        RequestValidation --x RequestValidation: throw HttpException(400)
+        RequestValidation --x OrdersController: throw HttpException(400)
+        OrdersController -->> Client: HTTP 400 Bad Request
+    end
+
+    RequestValidation -> OrdersController: return valid data
+    deactivate RequestValidation
+end
+
+break
+break
+
+
+' Step 5
+group Business Logic Flow
+    OrdersController -> OrdersService: getOrderByIdService(orderId)
+    activate OrdersService
+    OrdersService -> OrderModel: findOne(filters)
+    activate OrderModel
+    OrderModel -> MongoDB: query select 
+    activate MongoDB
+
+    alt select false
+        MongoDB --x OrderModel:throw Error
+        OrderModel --x OrdersService:throw Error
+        OrdersService --x OrdersController: throw Error
+        OrdersController -->> Client: HTTP 500  Server Error
+
+    else order not found
+        MongoDB -->> OrderModel: return null
+        OrderModel -->> OrdersService: return null
+        OrdersService -->> OrdersController: return null
+        OrdersController --x OrdersController: throw(HttpException(404))
+        OrdersController -->> Client: HTTP 404 not found
+    end
+
+    MongoDB -->> OrderModel: return order
+    deactivate MongoDB
+    OrderModel -->> OrdersService: return order
+    deactivate OrderModel
+    OrdersService -->> OrdersController: return order
+    deactivate OrdersService
+
+    alt Invalid order status
+        OrdersController --x OrdersController: throw(HttpException(400))
+        OrdersController -->> Client: HTTP 400 bad request
+    end 
+
+    OrdersController -> TransactionalServiceWrapper: execute()
+    activate TransactionalServiceWrapper
+    TransactionalServiceWrapper -> ProductVariantsService: increaseProductVariantsQuantityByOrderService()
+    activate ProductVariantsService
+    ProductVariantsService -> ProductVariantModel: bulkWrite()
+    activate ProductVariantModel
+    ProductVariantModel -->> ProductVariantsService:return true
+    deactivate ProductVariantModel
+    ProductVariantsService -->> TransactionalServiceWrapper: return true
+    deactivate ProductVariantsService
+
+    alt status is paid
+        TransactionalServiceWrapper -> MomoService: refundMomoPaymentService()
+        activate MomoService
+        alt refund fail 
+            MomoService -->> TransactionalServiceWrapper: return false
+            TransactionalServiceWrapper --x TransactionalServiceWrapper: throw(HttpException(503))
+            TransactionalServiceWrapper --> Client: HTTP 503 Service Unavailable
+        end 
+        MomoService -->> TransactionalServiceWrapper: return true
+        deactivate MomoService
+        TransactionalServiceWrapper -> PaymentsService: updatePaymentByIdService()
+        activate PaymentsService
+        PaymentsService -> PaymentModel: findByIdAndUpdate()
+        activate PaymentModel
+        PaymentModel -> MongoDB: query update
+        activate MongoDB
+
+        alt Update fail 
+            MongoDB --x PaymentModel: throw Error
+            PaymentModel --x PaymentsService: throw Error
+            PaymentsService --x TransactionalServiceWrapper: throw Error
+            TransactionalServiceWrapper -->> Client: HTTP 500  Server Error
+        end 
+        
+        MongoDB -->> PaymentModel: return order
+        deactivate MongoDB
+        PaymentModel -->> PaymentsService: return order
+        deactivate PaymentModel
+        PaymentsService -->> TransactionalServiceWrapper: return order
+        deactivate PaymentsService
+    
+    else status is not paid 
+        TransactionalServiceWrapper -> PaymentsService: updatePaymentByIdService()
+        activate PaymentsService
+        PaymentsService -> PaymentModel: findByIdAndUpdate()
+        activate PaymentModel
+        PaymentModel -> MongoDB: query update
+        activate MongoDB
+
+        alt Update fail 
+            MongoDB --x PaymentModel: throw Error
+            PaymentModel --x PaymentsService: throw Error
+            PaymentsService --x TransactionalServiceWrapper: throw Error
+            TransactionalServiceWrapper -->> Client: HTTP 500  Server Error
+        end 
+        
+        MongoDB -->> PaymentModel: return order
+        deactivate MongoDB
+        PaymentModel -->> PaymentsService: return order
+        deactivate PaymentModel
+        PaymentsService -->> TransactionalServiceWrapper: return order
+        deactivate PaymentsService
+    end
+    TransactionalServiceWrapper -> GhnService: cancelGHNOrderService()
+    activate GhnService
+    GhnService -> GhnAPI: POST /v2/switch-status/cancel
+    activate GhnAPI
+    
+    alt cancel fail 
+        GhnAPI -->> GhnService: return null
+        GhnService -->> TransactionalServiceWrapper: return null
+        TransactionalServiceWrapper --x TransactionalServiceWrapper: throw(HttpException(503))
+        TransactionalServiceWrapper -->> Client: HTTP 503 Service Unavailable
+    end 
+
+    GhnAPI -->> GhnService: return result
+    deactivate GhnAPI
+    GhnService -->> TransactionalServiceWrapper: return result
+    deactivate GhnService
+
+    TransactionalServiceWrapper -> OrdersService: addOrderStatusHistoryByIdService()
+    activate OrdersService
+    OrdersService -> OrderModel: updateOne()
+    activate OrderModel
+    OrderModel -> MongoDB: query update
+    activate MongoDB
+
+    alt update fail 
+        MongoDB --x OrderModel:throw Error
+        OrderModel --x OrdersService:throw Error
+        OrdersService --x TransactionalServiceWrapper: throw Error
+        TransactionalServiceWrapper -->> Client: HTTP 500  Server Error
+    end
+
+    MongoDB -->> OrderModel: return true
+    deactivate MongoDB
+    OrderModel -->> OrdersService: return true
+    deactivate OrderModel
+    OrdersService -->> TransactionalServiceWrapper: return true
+    deactivate OrdersService
+    TransactionalServiceWrapper -->> OrdersController: return true
+    deactivate TransactionalServiceWrapper
+    OrdersController -> OrdersService: getOrderByIdService(orderId)
+    activate OrdersService
+    OrdersService -> OrderModel: findOne(filters)
+    activate OrderModel
+    OrderModel -> MongoDB: query select 
+    activate MongoDB
+
+    alt select false
+        MongoDB --x OrderModel:throw Error
+        OrderModel --x OrdersService:throw Error
+        OrdersService --x OrdersController: throw Error
+        OrdersController -->> Client: HTTP 500  Server Error
+
+    else order not found
+        MongoDB -->> OrderModel: return null
+        OrderModel -->> OrdersService: return null
+        OrdersService -->> OrdersController: return null
+        OrdersController --x OrdersController: throw(HttpException(404))
+        OrdersController -->> Client: HTTP 404 not found
+    end
+
+    MongoDB -->> OrderModel: return order
+    deactivate MongoDB
+    OrderModel -->> OrdersService: return order
+    deactivate OrderModel
+    OrdersService -->> OrdersController: return order
+    deactivate OrdersService 
+
+
+end
+
+group Transform data response
+    OrdersController -> ModelDto: new(OrderDto)
+    activate ModelDto
+    ModelDto -->> OrdersController: return OrderDto 
+    deactivate ModelDto
+
+OrdersController --> Client: HTTP 200 Success
+deactivate OrdersController
+end
+
+@enduml

@@ -2,171 +2,42 @@
 
 actor Client
 
-box "Application Layer"
-participant CustomersRouter 
-participant ErrorMiddleware 
-participant AsyncHandler 
-end box
-
-box "Authentication"
-participant JwtAuthMiddleware 
-participant CookieUtil
-participant AuthService
-participant jsonwebtoken
-end box
-
-
-box "Validation"
-participant RequestValidation
-end box
-
-box "Business Logic"
 participant CustomersController
-participant ApiResponse
+participant ModelDto
+participant RequestValidation
 participant UserService 
 participant UserModel
-participant ModelDto
-end box
 
 database MongoDB
 
 ' Step 1
-group Request Initialization
-    Client -> CustomersRouter: PUT /api/customers/update-customer-by-id/:customerId
     activate Client
-    activate CustomersRouter
-    CustomersRouter -> AsyncHandler: asyncHandler(updateCustomerByIdController)
-    activate AsyncHandler
-end
+    Client -> CustomersController: PUT /api/customers/update-customer-by-id/:customerId
+    activate CustomersController
 
 break
 break
 
-' Step 2
-group Authentication Flow
-    AsyncHandler -> JwtAuthMiddleware: isAuthorizedAndHasPermission
-    activate JwtAuthMiddleware
-
-    JwtAuthMiddleware -> JwtAuthMiddleware: extract token
-    alt token not provided
-        JwtAuthMiddleware -> CookieUtil: clearSession(res)
-        activate CookieUtil
-        CookieUtil -->> JwtAuthMiddleware: return void
-        deactivate CookieUtil
-        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
-        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
-        deactivate ErrorMiddleware
-    end 
-
-    JwtAuthMiddleware -> AuthService: verifyTokenService(token)
-    activate AuthService
-    AuthService -> jsonwebtoken: verify(token, SECRET)
-    activate jsonwebtoken
-    alt token invalid
-        jsonwebtoken --x AuthService: throw Error
-        AuthService -->> JwtAuthMiddleware: catch Error and return null
-        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
-        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
-        deactivate ErrorMiddleware
-    end
-
-    jsonwebtoken -->> AuthService: return data decoded
-    deactivate jsonwebtoken
-    AuthService -->> JwtAuthMiddleware: return data decoded
-    deactivate AuthService
-    JwtAuthMiddleware -> UserService: getUserByIdService(decoded.id)
-    activate UserService
-    UserService -> UserModel: findOne(filters)
-    activate UserModel
-    UserModel -> MongoDB: query select
-    activate MongoDB
-
-    alt user not found
-        MongoDB -->> UserModel: return null
-        UserModel -->> UserService: return null
-        UserService -->> JwtAuthMiddleware: return null
-        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
-        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
-        deactivate ErrorMiddleware
-    end
-
-    MongoDB -->> UserModel: return user
-    deactivate MongoDB
-    UserModel -->> UserService: return user
-    deactivate UserModel
-    UserService -->> JwtAuthMiddleware: return user
-    deactivate UserService
-
-    alt unverified account
-        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(403))
-        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 403 Forbidden
-        deactivate ErrorMiddleware
-    end
-end
-
-break
-break
-
-' Step 3
-group Authorization Flow
-    JwtAuthMiddleware -> UserService: checkUserHasPermissionService(userId, method, endpoint)
-    activate UserService
-    UserService -> UserModel: findById(id).populate(role).populate(permissions)
-    activate UserModel
-    UserModel -> MongoDB: query select
-    activate MongoDB
-
-    alt User doesn't have permissions 
-        MongoDB -->> UserModel: return empty permissions
-        UserModel -->> UserService: return empty permissions
-        UserService -->> JwtAuthMiddleware: return false
-        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 403 Forbidden
-        deactivate ErrorMiddleware
-    end
-
-    MongoDB -->> UserModel: return permissions
-    deactivate MongoDB
-    UserModel -->> UserService: return permissions
-    deactivate UserModel
-    UserService -->> JwtAuthMiddleware: return true
-    deactivate UserService
-end
-
-break
-break
 
 ' Step 4
 group Validation Flow
-    JwtAuthMiddleware -> RequestValidation: validateSchema(GetCustomerDto)
-    deactivate JwtAuthMiddleware
+    CustomersController -> RequestValidation: validateSchema(GetCustomerDto)
     activate RequestValidation
     alt validation error
-        RequestValidation ->> RequestValidation: next(HttpException(400))
-        RequestValidation ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
+        RequestValidation --x RequestValidation: throw HttpException(400)
+        RequestValidation --x CustomersController: throw HttpException(400)
+        CustomersController -->> Client: HTTP 400 Bad Request
     end
     
     RequestValidation -> RequestValidation: validateSchema(UpdateCustomerDto)
     
     alt validation error
-        RequestValidation ->> RequestValidation: next(HttpException(400))
-        RequestValidation ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
+        RequestValidation --x RequestValidation: throw HttpException(400)
+        RequestValidation --x CustomersController: throw HttpException(400)
+        CustomersController -->> Client: HTTP 400 Bad Request
     end
+    RequestValidation -->> CustomersController: return valid data
+    deactivate RequestValidation
 end
 
 break
@@ -174,21 +45,8 @@ break
 
 ' Step 5
 group Business Logic Flow
-    RequestValidation -> CustomersController: updateCustomerByIdController
-    deactivate RequestValidation
-    activate CustomersController
     CustomersController -> UserService: getUserByIdService(customerId)
     activate UserService
-    
-    alt customerId not provided
-        UserService -->> CustomersController: return null
-        CustomersController --x CustomersController: throw(HttpException(400))
-        CustomersController --x AsyncHandler: catch HttpException and next(HttpException(400))
-        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
-    end
 
     UserService -> UserModel: findOne(filters)
     activate UserModel
@@ -200,21 +58,13 @@ group Business Logic Flow
         UserModel -->> UserService: return null
         UserService -->> CustomersController: return null
         CustomersController --x CustomersController: throw(HttpException(404))
-        CustomersController --x AsyncHandler: catch HttpException and next(HttpException(404))
-        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 404 Not Found
-        deactivate ErrorMiddleware
+        CustomersController -->> Client: HTTP 404 Not Found
 
         else select fail
         MongoDB --x UserModel: throw error
         UserModel --x UserService: throw error
         UserService --x CustomersController: throw error
-        CustomersController --x AsyncHandler: catch error and next(error)
-        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
+        CustomersController -->> Client: HTTP 500 Internal Server Error
     end
 
     MongoDB -->> UserModel: return user
@@ -235,22 +85,13 @@ group Business Logic Flow
         UserModel -->> UserService: return user
         UserService -->> CustomersController: return user
         CustomersController --x CustomersController: throw(HttpException(400))
-        CustomersController --x AsyncHandler: catch HttpException and next(HttpException(400))
-        AsyncHandler -->> ErrorMiddleware: handleError(Error)
-        CustomersController ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
+        CustomersController -->> Client: HTTP 400 Bad Request
 
         else select fail
         MongoDB --x UserModel: throw error
         UserModel --x UserService: throw error
         UserService --x CustomersController: throw error
-        CustomersController --x AsyncHandler: catch error and next(error)
-        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
+        CustomersController -->> Client: HTTP 500 Internal Server Error
     end
 
     MongoDB -->> UserModel: return null
@@ -271,11 +112,7 @@ group Business Logic Flow
         MongoDB --x UserModel: throw error
         UserModel --x UserService: throw error
         UserService --x CustomersController: throw error
-        CustomersController --x AsyncHandler: catch error and next(error)
-        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
+        CustomersController -->> Client: HTTP 500 Internal Server Error
 
     end
     MongoDB -->> UserModel: return user
@@ -291,21 +128,14 @@ break
 break
 
 group Transform data response
-    CustomersController -> ModelDto: new(CustomerDto, customer)
+    CustomersController -> ModelDto: new(CustomerDto)
     activate ModelDto
-    ModelDto -->> CustomersController: return CustomerDto instance
+    ModelDto -->> CustomersController: return CustomerDto 
     deactivate ModelDto
-
-    CustomersController -> ApiResponse: success(CustomerDto, success message)
-    activate ApiResponse
-    ApiResponse -->> CustomersController: return ApiResponse instance
-    deactivate ApiResponse 
-end
-CustomersController -->> AsyncHandler: return ApiResponse instance
-deactivate CustomersController
-AsyncHandler --> Client: HTTP 200 Success
-deactivate AsyncHandler
+    
+CustomersController --> Client: HTTP 200 Success
 deactivate CustomersRouter
+end
 
 
 @enduml

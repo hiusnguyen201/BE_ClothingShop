@@ -2,222 +2,46 @@
 
 actor Client
 
-box "Application Layer"
-participant CategoriesRouter 
-participant ErrorMiddleware 
-participant AsyncHandler 
-end box
 
-box "Authentication"
-participant JwtAuthMiddleware 
-participant CookieUtil
-participant AuthService
-participant jsonwebtoken
-end box
-
-box "Authorization"
-participant UserService 
-participant UserModel
-end box
-
-box "Upload Image"
-participant UploadUtil
-participant multer
-end box
-
-box "Validation"
-participant RequestValidation
-end box
-
-box "Business Logic"
 participant CategoriesController
 participant ModelDto
-participant ApiResponse
+participant RequestValidation
 participant CategoriesService
 participant CloudinaryService
-participant QueryUtil
 participant CategoryModel
-end box
 
 database MongoDB
 database Cloudinary
 
 ' Step 1
-group Request Initialization
-    Client -> CategoriesRouter: PUT /api/categories/update-category-by-id/:categoryId
     activate Client
-    activate CategoriesRouter
-    CategoriesRouter -> AsyncHandler: asyncHandler(updateCategoryByIdController)
-    activate AsyncHandler
-end
+    Client -> CategoriesController: PUT /api/categories/update-category-by-id/:categoryId
+    activate CategoriesController
 
 break
 break
 
-' Step 2
-group Authentication Flow
-    AsyncHandler -> JwtAuthMiddleware: isAuthorizedAndHasPermission
-    activate JwtAuthMiddleware
 
-    JwtAuthMiddleware -> JwtAuthMiddleware: extract token
-    alt token not provided
-        JwtAuthMiddleware -> CookieUtil: clearSession(res)
-        activate CookieUtil
-        CookieUtil -->> JwtAuthMiddleware: return void
-        deactivate CookieUtil
-        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
-        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
-        deactivate ErrorMiddleware
-    end 
-
-    JwtAuthMiddleware -> AuthService: verifyTokenService(token)
-    activate AuthService
-    AuthService -> jsonwebtoken: verify(token, SECRET)
-    activate jsonwebtoken
-    alt token invalid
-        jsonwebtoken --x AuthService: throw Error
-        AuthService -->> JwtAuthMiddleware: catch Error and return null
-        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
-        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
-        deactivate ErrorMiddleware
-    end
-
-    jsonwebtoken -->> AuthService: return data decoded
-    deactivate jsonwebtoken
-    AuthService -->> JwtAuthMiddleware: return data decoded
-    deactivate AuthService
-    JwtAuthMiddleware -> UserService: getUserByIdService(decoded.id)
-    activate UserService
-    UserService -> UserModel: findOne(filters)
-    activate UserModel
-    UserModel -> MongoDB: query select
-    activate MongoDB
-
-    alt user not found
-        MongoDB -->> UserModel: return null
-        UserModel -->> UserService: return null
-        UserService -->> JwtAuthMiddleware: return null
-        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(401))
-        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 401 Unauthorized
-        deactivate ErrorMiddleware
-    end
-
-    MongoDB -->> UserModel: return user
-    deactivate MongoDB
-    UserModel -->> UserService: return user
-    deactivate UserModel
-    UserService -->> JwtAuthMiddleware: return user
-    deactivate UserService
-
-    alt unverified account
-        JwtAuthMiddleware ->> JwtAuthMiddleware: next(HttpException(403))
-        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 403 Forbidden
-        deactivate ErrorMiddleware
-    end
-end
-
-break
-break
-
-' Step 3
-group Authorization Flow
-    JwtAuthMiddleware -> UserService: checkUserHasPermissionService(userId, method, endpoint)
-    activate UserService
-    UserService -> UserModel: findById(id).populate(role).populate(permissions)
-    activate UserModel
-    UserModel -> MongoDB: query select
-    activate MongoDB
-
-    alt User doesn't have permissions 
-        MongoDB -->> UserModel: return empty permissions
-        UserModel -->> UserService: return empty permissions
-        UserService -->> JwtAuthMiddleware: return false
-        JwtAuthMiddleware ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 403 Forbidden
-        deactivate ErrorMiddleware
-    end
-
-    MongoDB -->> UserModel: return permissions
-    deactivate MongoDB
-    UserModel -->> UserService: return permissions
-    deactivate UserModel
-    UserService -->> JwtAuthMiddleware: return true
-    deactivate UserService
-end
-
-break
-break
-
-' Step 4
-group Upload Image Flow
-    JwtAuthMiddleware -> UploadUtil: single({ field: 'image' })
-    deactivate JwtAuthMiddleware
-    activate UploadUtil
-    UploadUtil -> multer: multerUpload()
-    activate multer
-
-    alt invalid file type
-        multer --x UploadUtil: return Error
-        UploadUtil --x AsyncHandler: catch Error and next(Error)
-        AsyncHandler ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
-
-    else Limit file size
-        multer --x UploadUtil: return Error
-        UploadUtil --x AsyncHandler: catch Error and next(Error)
-        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
-
-    else Limit file count
-        multer --x UploadUtil: return Error
-        UploadUtil --x AsyncHandler: catch Error and next(Error)
-        AsyncHandler ->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
-    end 
-
-    multer -->> UploadUtil: return next()
-    deactivate multer   
-
-end
-
-break 
-break
 
 ' Step 5
 group Validation Flow
-    UploadUtil -> RequestValidation: validateSchema(GetCategoryDto)
-    deactivate UploadUtil
+    CategoriesController -> RequestValidation: validateSchema(GetCategoryDto)
     activate RequestValidation
     alt validation error
-        RequestValidation ->> RequestValidation: next(HttpException(400))
-        RequestValidation ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
+        RequestValidation --x RequestValidation: throw HttpException(400)
+        RequestValidation --x CategoriesController: throw HttpException(400)
+        CategoriesController -->> Client: HTTP 400 Bad Request
     end
+    deactivate RequestValidation
     RequestValidation -> RequestValidation: validateSchema(UpdateCategoryDto)
+     activate RequestValidation
     alt validation error
-        RequestValidation ->> RequestValidation: next(HttpException(400))
-        RequestValidation ->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
+        RequestValidation --x RequestValidation: throw HttpException(400)
+        RequestValidation --x CategoriesController: throw HttpException(400)
+        CategoriesController -->> Client: HTTP 400 Bad Request
     end
+    RequestValidation -->> CategoriesController: return valid data
+    deactivate RequestValidation
 end
 
 break
@@ -226,21 +50,8 @@ break
 
 ' Step 6
 group Business Logic Flow
-    RequestValidation -> CategoriesController: updateCategoryByIdController
-    deactivate RequestValidation
-    activate CategoriesController
     CategoriesController -> CategoriesService: getCategoryByIdService(categoryId)
     activate CategoriesService
-
-    alt categoryId not provided
-        CategoriesService -->> CategoriesController: return null
-        CategoriesController --x CategoriesController: throw(HttpException(400))
-        CategoriesController --x AsyncHandler: catch HttpException and next(HttpException(400))
-        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
-    end
 
     CategoriesService -> CategoryModel: findOne(filters)
     activate CategoryModel
@@ -251,20 +62,13 @@ group Business Logic Flow
         MongoDB --x CategoryModel: throw Error
         CategoryModel --x CategoriesService: throw Error
         CategoriesService --x CategoriesController: throw Error
-        CategoriesController --x AsyncHandler: catch Error and next(Error)
-        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
+        CategoriesController -->> Client: HTTP 500 Internal Server Error
     else category not found
         MongoDB -->> CategoryModel: return null
         CategoryModel -->> CategoriesService: return null
         CategoriesService -->> CategoriesController: return null
         CategoriesController --x CategoriesController: throw(HttpException(404))
-        CategoriesController -->> ErrorMiddleware: handleError(Error)
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 404 Not Found
-        deactivate ErrorMiddleware
+        CategoriesController -->> Client: HTTP 404 Not Found
     end
 
     MongoDB -->> CategoryModel: return category
@@ -284,22 +88,14 @@ group Business Logic Flow
         MongoDB --x CategoryModel: throw Error
         CategoryModel --x CategoriesService: throw Error
         CategoriesService --x CategoriesController: throw Error
-        CategoriesController --x AsyncHandler: catch Error and next(Error)
-        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
+        CategoriesController -->> Client: HTTP 500 Internal Server Error
 
     else name category already exists
         MongoDB -->> CategoryModel: return true
         CategoryModel -->> CategoriesService: return true
         CategoriesService -->> CategoriesController: return true
         CategoriesController --x CategoriesController: throw(HttpException(400))
-        CategoriesController --x AsyncHandler: catch HttpException and next(HttpException(400))
-        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 400 Bad Request
-        deactivate ErrorMiddleware
+        CategoriesController -->> Client: HTTP 400 Bad Request
     end
     
     MongoDB -->> CategoryModel: return false
@@ -317,11 +113,7 @@ group Business Logic Flow
     alt upload fail
         Cloudinary --x CloudinaryService: throw Error
         CloudinaryService --x CategoriesController: throw Error
-        CategoriesController --x AsyncHandler: catch Error and next(Error)
-        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
+        CategoriesController -->> Client: HTTP 500 Internal Server Error
     end
 
     Cloudinary -->> CloudinaryService: return imageUrl
@@ -339,11 +131,7 @@ group Business Logic Flow
         MongoDB --x CategoryModel: throw Error
         CategoryModel --x CategoriesService: throw Error
         CategoriesService --x CategoriesController: throw Error
-        CategoriesController --x AsyncHandler: catch Error and next(Error)
-        AsyncHandler -->> ErrorMiddleware: handleError(Error) 
-        activate ErrorMiddleware
-        ErrorMiddleware -->> Client: HTTP 500 Internal Server Error
-        deactivate ErrorMiddleware
+        CategoriesController -->> Client: HTTP 500 Internal Server Error
     end
 
     MongoDB -->> CategoryModel: return category
@@ -357,21 +145,14 @@ group Business Logic Flow
 end
 
 group Transform data response
-    CategoriesController -> ModelDto: new(CategoryDto, category)
+    CategoriesController -> ModelDto: new(CategoryDto)
     activate ModelDto
-    ModelDto -->> CategoriesController: return CategoryDto instance
+    ModelDto -->> CategoriesController: return CategoryDto 
     deactivate ModelDto
+    CategoriesController --> Client: HTTP 200 Success
+deactivate CategoriesController
 
-    CategoriesController -> ApiResponse: success(TotalCount, CategoryDto, success message)
-    activate ApiResponse
-    ApiResponse -->> CategoriesController: return ApiResponse instance
-    deactivate ApiResponse 
 end
 
-CategoriesController -->> AsyncHandler: return ApiResponse instance
-deactivate CategoriesController
-AsyncHandler --> Client: HTTP 200 Success
-deactivate AsyncHandler
-deactivate CategoriesRouter
 
 @enduml

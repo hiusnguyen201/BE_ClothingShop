@@ -4,14 +4,13 @@ skinparam ActivityBackgroundColor LightYellow
 skinparam ActivityBorderColor DarkOrange
 skinparam ArrowColor Maroon
 
-title UC16.6: Remove category
+title UC15.6: Remove category
 
 |User|
 start
 note left
     User is logged in  
     User must have permission
-    In UC16.4
 end note
 
 
@@ -35,7 +34,7 @@ if(Exist category?) then(yes)
         :Display success message;
         stop
         note right
-            Go to UC16.1
+            Go to UC15.1
         end note
 else(no)
     :Display error message;
