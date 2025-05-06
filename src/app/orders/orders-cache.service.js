@@ -12,7 +12,7 @@ export async function getOrderFromCache(orderId) {
 export async function getTotalCountAndListOrderFromCache(filters) {
   const key = CacheKey.newPaginationKey(ORDER_CACHE_KEY_PREFIX.LIST_ORDER, filters);
   const cached = await redisClient.get(key);
-  return cached ? cached : [0, []];
+  return cached ?? [0, []];
 }
 
 export async function setOrderToCache(orderId, orderData) {

@@ -10,6 +10,7 @@ class PermissionFactory {
       module: faker.internet.username(),
       method: faker.internet.httpMethod(),
       endpoint: faker.internet.url(),
+      description: faker.lorem.sentence(),
     };
   }
 

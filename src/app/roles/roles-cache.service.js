@@ -12,7 +12,7 @@ export async function getRoleFromCache(roleId) {
 export async function getTotalCountAndListRoleFromCache(filters) {
   const key = CacheKey.newPaginationKey(ROLE_CACHE_KEY_PREFIX.LIST_ROLE, filters);
   const cached = await redisClient.get(key);
-  return cached ? cached : [0, []];
+  return cached ?? [0, []];
 }
 
 export async function setRoleToCache(roleId, roleData) {

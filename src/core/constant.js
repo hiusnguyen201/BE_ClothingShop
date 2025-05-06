@@ -19,4 +19,5 @@ export const REGEX_PATTERNS = {
   COMMA_SEPARATED_LIST: /^[a-zA-Z0-9,]+$/,
   IMAGE_URL: /\.(jpg|jpeg|png)$/i,
   STRING_NUMBER: /^\d+$/,
+  HASH_STRING: /^\$2[aby]\$.{56}$/,
 };

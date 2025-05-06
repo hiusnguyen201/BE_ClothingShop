@@ -6,12 +6,22 @@ const config = {
   clearMocks: true,
 
   transform: {
+    '^.+\\.tsx?$': ['ts-jest', { useESM: true }],
     '^.+\\.jsx?$': 'babel-jest',
-    '^.+\\.tsx?$': 'babel-jest',
   },
 
+  transformIgnorePatterns: ['<rootDir>/node_modules/(?!escape-string-regexp)'],
+
+  extensionsToTreatAsEsm: ['.ts', '.tsx'],
+
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+  },
+
+  forceExit: true,
+
   // Indicates whether the coverage information should be collected while executing the test
-  collectCoverage: true,
+  collectCoverage: false,
 
   // The directory where Jest should output its coverage files
   coverageDirectory: 'coverage',

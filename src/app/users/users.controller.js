@@ -77,15 +77,16 @@ export const getAllUsersController = async (req) => {
     $or: USER_SEARCH_FIELDS.map((field) => ({
       [field]: { $regex: adapter.keyword, $options: 'i' },
     })),
-    ...(adapter.gender ? { gender: adapter.gender } : {}),
-    ...(adapter.roleId ? { role: adapter.roleId } : {}),
+    ...(adapter.gender && { gender: adapter.gender }),
+    ...(adapter.roleId && { role: adapter.roleId }),
   };
 
-  let [totalCountCached, usersCached] = await getTotalCountAndListUserFromCache(adapter);
-
-  if (usersCached.length === 0) {
+  let totalCount = 0;
+  let users = [];
+  const cached = await getTotalCountAndListUserFromCache(adapter);
+  if (cached && Array.isArray(cached) && cached.length === 2) {
     const skip = (adapter.page - 1) * adapter.limit;
-    const [totalCount, users] = await getAndCountUsersService(
+    [totalCount, users] = await getAndCountUsersService(
       filters,
       skip,
       adapter.limit,
@@ -94,13 +95,10 @@ export const getAllUsersController = async (req) => {
     );
 
     await setTotalCountAndListUserToCache(adapter, totalCount, users);
-
-    totalCountCached = totalCount;
-    usersCached = users;
   }
 
-  const usersDto = ModelDto.newList(UserDto, usersCached);
-  return ApiResponse.success({ totalCount: totalCountCached, list: usersDto }, 'Get list role successful');
+  const usersDto = ModelDto.newList(UserDto, users);
+  return ApiResponse.success({ totalCount: totalCount, list: usersDto }, 'Get list user successful');
 };
 
 export const getUserByIdController = async (req) => {
@@ -117,6 +115,7 @@ export const getUserByIdController = async (req) => {
   }
 
   const userDto = ModelDto.new(UserDto, user);
+
   return ApiResponse.success(userDto, 'Get one user successful');
 };
 

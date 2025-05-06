@@ -6,7 +6,6 @@ import { USER_SELECTED_FIELDS, USER_TYPE } from '#src/app/users/users.constant';
 import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
 import { PERMISSION_SELECTED_FIELDS } from '#src/app/permissions/permissions.constant';
 import { ROLE_SELECTED_FIELDS } from '#src/app/roles/roles.constant';
-import { UserNotificationModel } from '#src/app/notifications/models/user-notification.model';
 
 /**
  * New user service
@@ -139,12 +138,10 @@ export async function getProfileByIdService(id) {
  * @param {*} extras
  * @returns
  */
-export async function getUserByEmailService(email, extras = {}) {
+export async function getUserByEmailService(email, selectedFields = USER_SELECTED_FIELDS) {
   if (!email) return null;
 
-  const filters = {
-    ...extras,
-  };
+  const filters = {};
 
   if (email.match(REGEX_PATTERNS.EMAIL)) {
     filters.email = email;
@@ -152,7 +149,7 @@ export async function getUserByEmailService(email, extras = {}) {
     return null;
   }
 
-  return UserModel.findOne(filters).select(USER_SELECTED_FIELDS).lean();
+  return UserModel.findOne(filters).select(selectedFields).lean();
 }
 
 /**

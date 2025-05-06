@@ -20,7 +20,7 @@ export async function setUserToCache(userId, userData) {
   await redisClient.set(key, userData);
 }
 
-export async function setTotalCountAndListUserToCache(filters, totalCount, listData) {
+export async function setTotalCountAndListUserToCache(filters, totalCount = 0, listData = []) {
   const key = CacheKey.newPaginationKey(USER_CACHE_KEY_PREFIX.LIST_USER, { ...filters, type: USER_TYPE.USER });
   await redisClient.set(key, [totalCount, listData]);
 }

@@ -23,5 +23,3 @@ Joi.phoneNumber = function (code, overrideMessage) {
     return value;
   });
 };
-
-export default Joi;

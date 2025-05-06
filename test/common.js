@@ -8,15 +8,21 @@ import { ACCESS_TOKEN_KEY } from '#src/utils/cookie.util';
  * Usage: https://jestjs.io/docs/api#testeachtablename-fn-timeout
  */
 
-export const testEndpoint = (method, endpoint, data = null) => {
+export const testEndpoint = (method, endpoint) => {
   return async (options = {}) => {
-    const { accessToken, headers = {}, queryParams = {} } = options;
+    const { accessToken, headers = {}, query = {}, params = {}, body = {} } = options;
 
-    let req = request(app)[method.toLowerCase()](endpoint);
+    // Replace URL parameters
+    const parsedEndpoint = Object.entries(params).reduce(
+      (path, [key, value]) => path.replace(`:${key}`, value),
+      endpoint,
+    );
 
-    // Add query parameters if provided
-    if (Object.keys(queryParams).length > 0) {
-      req = req.query(queryParams);
+    let req = request(app)[method.toLowerCase()](parsedEndpoint);
+
+    // Add query if provided
+    if (Object.keys(query).length > 0) {
+      req = req.query(query);
     }
 
     // Add access token if provided
@@ -30,8 +36,8 @@ export const testEndpoint = (method, endpoint, data = null) => {
     });
 
     // Send data if provided
-    if (data && ['post', 'put', 'patch'].includes(method.toLowerCase())) {
-      req = req.send(options.data || data);
+    if (body && ['post', 'put', 'patch'].includes(method.toLowerCase())) {
+      req = req.send(options.body || body);
     }
 
     return req;
@@ -59,15 +65,19 @@ export const expectValidationError = (response, paths) => {
   });
 };
 
-export const expectUserData = (userData) => {
-  expect(userData).toMatchObject({
-    id: expect.any(String),
-    avatar: expect.toBeOneOf([expect.any(String), null]),
-    name: expect.any(String),
-    email: expect.any(String),
-    phone: expect.any(String),
-    gender: expect.any(String),
-    verifiedAt: expect.toBeOneOf([expect.any(String), null]),
-    lastLoginAt: expect.toBeOneOf([expect.any(String), null]),
+export const expectSuccess = (response) => {
+  expect(response.status).toBe(HttpStatus.OK);
+  expect(response.body).toMatchObject({
+    code: HttpStatus.OK,
+    codeMessage: Code.SUCCESS.codeMessage,
+    message: expect.any(String),
+    data: expect.toBeOneOf([
+      expect.any(String),
+      expect.any(Number),
+      expect.any(Object),
+      expect.any(Array),
+      expect.any(Boolean),
+      null,
+    ]),
   });
 };

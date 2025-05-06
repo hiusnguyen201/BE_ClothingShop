@@ -4,7 +4,10 @@ import escapeStringRegexp from 'escape-string-regexp';
 import Joi from 'joi';
 
 export const GetListOrderDto = Joi.object({
-  page: Joi.number().min(1).default(1),
+  page: Joi.number()
+    .min(1)
+    .default(1)
+    .custom((value) => +value),
   keyword: Joi.string()
     .default('')
     .allow('')

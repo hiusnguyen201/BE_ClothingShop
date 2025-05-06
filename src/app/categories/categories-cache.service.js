@@ -13,7 +13,7 @@ export async function getCategoryFromCache(categoryId) {
 export async function getTotalCountAndListCategoryFromCache(filters) {
   const key = CacheKey.newPaginationKey(CATEGORY_CACHE_KEY_PREFIX.LIST_CATEGORY, filters);
   const cached = await redisClient.get(key);
-  return cached ? cached : [0, []];
+  return cached ?? [0, []];
 }
 
 export async function setCategoryToCache(categoryId, userData) {

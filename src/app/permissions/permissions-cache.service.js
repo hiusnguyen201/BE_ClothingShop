@@ -12,7 +12,7 @@ export async function getPermissionFromCache(permissionId) {
 export async function getTotalCountAndListPermissionFromCache(filters) {
   const key = CacheKey.newPaginationKey(PERMISSION_CACHE_KEY_PREFIX.LIST_PERMISSION, filters);
   const cached = await redisClient.get(key);
-  return cached ? cached : [0, []];
+  return cached ?? [0, []];
 }
 
 export async function setPermissionToCache(permissionId, permissionData) {

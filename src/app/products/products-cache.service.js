@@ -12,7 +12,7 @@ export async function getProductFromCache(productId) {
 export async function getTotalCountAndListProductFromCache(filters) {
   const key = CacheKey.newPaginationKey(PRODUCT_CACHE_KEY_PREFIX.LIST_PRODUCT, filters);
   const cached = await redisClient.get(key);
-  return cached ? cached : [0, []];
+  return cached ?? [0, []];
 }
 
 export async function setProductToCache(productId, productData) {

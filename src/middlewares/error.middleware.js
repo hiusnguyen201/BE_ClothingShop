@@ -16,6 +16,10 @@ export const handleError = (err, req, res, _) => {
     console.log({ ...apiResponse, stack: err.stack });
   }
 
+  if (process.env.NODE_ENV === 'test') {
+    apiResponse.stack = err.stack;
+  }
+
   if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
     DiscordService.sendError({
       ...apiResponse,

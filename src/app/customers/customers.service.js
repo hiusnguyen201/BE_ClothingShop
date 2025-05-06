@@ -84,6 +84,28 @@ export async function getCustomerByIdService(id) {
 }
 
 /**
+ * Get customer forgot password by email
+ * @param {string} email
+ * @param {*} extras
+ * @returns
+ */
+export async function getCustomerForgotPasswordByEmailService(email) {
+  if (!email) return null;
+
+  const filters = {
+    type: USER_TYPE.CUSTOMER,
+  };
+
+  if (email.match(REGEX_PATTERNS.EMAIL)) {
+    filters.email = email;
+  } else {
+    return null;
+  }
+
+  return UserModel.findOne(filters).select(USER_SELECTED_FIELDS).lean();
+}
+
+/**
  * Get and count customers
  * @param {object} filters
  * @param {number} skip

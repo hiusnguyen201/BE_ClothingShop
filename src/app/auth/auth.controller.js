@@ -39,6 +39,7 @@ import { VerifyOtpDto, SendOtpViaEmailDto } from '#src/app/auth/dtos/two-factor.
 import { ForgotPasswordDto, ResetPasswordDto } from '#src/app/auth/dtos/forgot-password.dto';
 import { deleteUserFromCache } from '#src/app/users/users-cache.service';
 import { notifyClientsOfNewCustomer } from '#src/app/notifications/notifications.service';
+import { getCustomerForgotPasswordByEmailService } from '#src/app/customers/customers.service';
 
 export const logoutController = async (req, res) => {
   const userId = req.user.id;
@@ -180,7 +181,7 @@ export const registerController = async (req) => {
 export const forgotPasswordController = async (req) => {
   const adapter = await validateSchema(ForgotPasswordDto, req.body);
 
-  const user = await getUserByEmailService(adapter.email, { type: USER_TYPE.CUSTOMER });
+  const user = await getCustomerForgotPasswordByEmailService(adapter.email);
   if (!user) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Email is not exist' });
   }
