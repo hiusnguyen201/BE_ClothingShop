@@ -33,7 +33,7 @@ import {
 import { newPaymentService, savePaymentService, updatePaymentByIdService } from '#src/app/payments/payments.service';
 import { createMomoPaymentService, refundMomoPaymentService } from '#src/modules/online-banking/momo/momo.service';
 import { USER_TYPE } from '#src/app/users/users.constant';
-import { createOrderJob, orderQueueEVent } from '#src/app/orders/orders.worker';
+import { createOrderJob, orderQueueEvent } from '#src/app/orders/orders.worker';
 import { uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
 import { generateQRCodeBuffer } from '#src/utils/qrcode.util';
 import { checkValidAddressService } from '#src/modules/geoapify/geoapify.service';
@@ -70,17 +70,17 @@ export async function createOrderController(req) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Customer not found' });
   }
 
-  const province = await getProvinceService(adapter.provinceCode);
+  const province = await getProvinceService(adapter.provinceId);
   if (!province) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Province not found' });
   }
 
-  const district = await getDistrictService(adapter.districtCode, adapter.provinceCode);
+  const district = await getDistrictService(adapter.districtId, adapter.provinceId);
   if (!district) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'District not found' });
   }
 
-  const ward = await getWardService(adapter.wardCode, adapter.districtCode);
+  const ward = await getWardService(adapter.wardCode, adapter.districtId);
   if (!ward) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Ward not found' });
   }
@@ -107,7 +107,7 @@ export async function createOrderController(req) {
     baseUrl: req.protocol + '://' + req.get('host'),
   });
 
-  const newOrder = await job.waitUntilFinished(orderQueueEVent);
+  const newOrder = await job.waitUntilFinished(orderQueueEvent);
 
   // Clear cache
   await deleteOrderFromCache(newOrder._id);

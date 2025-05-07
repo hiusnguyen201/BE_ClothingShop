@@ -14,6 +14,10 @@ export const paymentSchema = new Schema(
       type: String,
       default: null,
     },
+    order: {
+      type: String,
+      required: true,
+    },
     paymentMethod: {
       type: String,
       required: true,

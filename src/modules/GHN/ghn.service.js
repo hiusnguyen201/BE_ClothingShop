@@ -100,22 +100,36 @@ export const getTrackingDetailsService = async (trackingNumber) => {
   }
 };
 
-// get provinces
+// Get provinces
 export const getAllProvincesService = async () => {
-  const response = await ghnAPI.get('/master-data/province');
-  return response.data.data;
+  try {
+    const response = await ghnAPI.get('/master-data/province');
+    return response.data.data ?? [];
+  } catch (err) {
+    console.error('Get Provinces:', err.response.data);
+  }
 };
 
-// get districts
+// Get districts
 export const getDistrictsByProvinceIdService = async (provinceId) => {
-  const response = await ghnAPI.get('/master-data/district', { params: { province_id: provinceId } });
-  return response.data.data;
+  try {
+    const response = await ghnAPI.post('/master-data/district', {
+      province_id: +provinceId,
+    });
+    return response.data.data ?? [];
+  } catch (err) {
+    console.error('Get Districts:', err.response.data);
+  }
 };
 
 // get wards
 export const getWardsByDistrictIdService = async (districtId) => {
-  const response = await ghnAPI.get('/master-data/ward', { params: { district_id: districtId } });
-  return response.data.data;
+  try {
+    const response = await ghnAPI.post('/master-data/ward', { district_id: +districtId });
+    return response.data.data ?? [];
+  } catch (err) {
+    console.error('Get Wards:', err.response.data);
+  }
 };
 
 export const getProvinceService = async (provinceId) => {

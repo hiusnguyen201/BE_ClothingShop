@@ -18,7 +18,6 @@ import { insertOrdersService } from '#src/app/orders/orders.service';
 import { orderDetails, orders, payments } from '#src/database/data/orders-data';
 import { insertOrderDetailsService } from '#src/app/order-details/order-details.service';
 import { insertPaymentService } from '#src/app/payments/payments.service';
-import { retryBulkWrite } from '#src/utils/bulk.util';
 
 /**
  * Need fix MongoServerError: Transaction numbers are only allowed on a replica set member or mongos

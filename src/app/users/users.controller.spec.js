@@ -725,7 +725,7 @@ describe('User API Endpoints', () => {
       });
     });
     describe('Business Logic', () => {
-      test('Reset password user successful', async () => {
+      test('Reset user successful', async () => {
         // Mock user
         const user = await userFactory.createUser();
         const { accessToken } = await userFactory.createUserAuthorizedAndHasPermission(method, endpoint);

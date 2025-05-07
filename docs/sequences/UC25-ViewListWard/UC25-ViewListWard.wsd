@@ -20,10 +20,10 @@ database MongoDB
 
 ' Step 1
 group Request Initialization
-    Client -> DivisionsRouter: GET /api/divisions/get-wards-by-district-code/:districtCode
+    Client -> DivisionsRouter: GET /api/divisions/get-wards-by-district-code/:districtId
     activate Client
     activate DivisionsRouter
-    DivisionsRouter -> AsyncHandler: asyncHandler(getAllWardsByDistrictCodeController)
+    DivisionsRouter -> AsyncHandler: asyncHandler(getAllWardsBydistrictIdController)
     activate AsyncHandler
 end
 
@@ -32,11 +32,11 @@ break
 
 ' step 2
 group Business Logic Flow
-    AsyncHandler -> DivisionsController: getAllWardsByDistrictCodeController
+    AsyncHandler -> DivisionsController: getAllWardsBydistrictIdController
     activate DivisionsController
-    DivisionsController -> DivisionsService: getDistrictByCodeService(districtCode)
+    DivisionsController -> DivisionsService: getDistrictByCodeService(districtId)
     activate DivisionsService
-    alt provinceCode is not found
+    alt provinceId is not found
         DivisionsService --> DivisionsController: return null
         DivisionsController --x DivisionsController: throw(HttpException(404))
         DivisionsController --x AsyncHandler: catch HttpException and next(HttpException(404))
@@ -47,7 +47,7 @@ group Business Logic Flow
     end
     DivisionsService --> DivisionsController: return district
     deactivate DivisionsService
-    DivisionsController -> DivisionsService: getAllWardsByDistrictCodeService(districtCode)
+    DivisionsController -> DivisionsService: getAllWardsBydistrictIdService(districtId)
     activate DivisionsService
     DivisionsService --> DivisionsController: return districts
     deactivate DivisionsService 

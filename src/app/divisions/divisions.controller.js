@@ -13,15 +13,16 @@ import { CheckValidAddressDto } from '#src/app/divisions/dtos/check-valid-addres
 
 /**
  * Get all provinces
- * @param {*} req
  * @returns
  */
-export const getAllProvincesController = async (req) => {
+export const getAllProvincesController = async () => {
   const provinces = await getAllProvincesService();
 
   const provincesDto = ModelDto.newList(
     ProvinceDto,
-    provinces.filter((item) => item.IsEnable === 1),
+    provinces.filter(
+      (item) => item.IsEnable === 1 && item.UpdatedSource === 'online--stream--master-data.RawData--UpdateMasterData',
+    ),
   );
 
   return ApiResponse.success({ totalCount: provinces.length, list: provincesDto }, 'Get all provinces successfully');
@@ -32,14 +33,16 @@ export const getAllProvincesController = async (req) => {
  * @param {*} req
  * @returns
  */
-export const getAllDistrictsByProvinceCodeController = async (req) => {
-  const { provinceCode } = req.params;
+export const getAllDistrictsByprovinceIdController = async (req) => {
+  const { provinceId } = req.params;
 
-  const districts = await getDistrictsByProvinceIdService(provinceCode);
+  const districts = await getDistrictsByProvinceIdService(provinceId);
 
   const districtsDto = ModelDto.newList(
     DistrictDto,
-    districts.filter((item) => item.IsEnable === 1),
+    districts.filter(
+      (item) => item.IsEnable === 1 && item.UpdatedSource === 'online--stream--master-data.RawData--UpdateMasterData',
+    ),
   );
 
   return ApiResponse.success({ totalCount: districts.length, list: districtsDto }, 'Get all districts successfully');
@@ -50,13 +53,15 @@ export const getAllDistrictsByProvinceCodeController = async (req) => {
  * @param {*} req
  * @returns
  */
-export const getAllWardsByDistrictCodeController = async (req) => {
-  const { districtCode } = req.params;
-  const wards = await getWardsByDistrictIdService(districtCode);
+export const getAllWardsBydistrictIdController = async (req) => {
+  const { districtId } = req.params;
+  const wards = await getWardsByDistrictIdService(districtId);
 
   const wardsDto = ModelDto.newList(
     WardDto,
-    wards.filter((item) => item.IsEnable === 1),
+    wards.filter(
+      (item) => item.IsEnable === 1 && item.UpdatedSource === 'online--stream--master-data.RawData--UpdateMasterData',
+    ),
   );
 
   return ApiResponse.success({ totalCount: wards.length, list: wardsDto }, 'Get all wards successfully');

@@ -7,8 +7,8 @@ export const CreateShippingAddressDto = Joi.object({
     .min(3)
     .max(100)
     .custom((value) => replaceMultiSpacesToSingleSpace(value)),
-  provinceCode: Joi.string().required(),
-  districtCode: Joi.string().required(),
+  provinceId: Joi.number().required(),
+  districtId: Joi.number().required(),
   wardCode: Joi.string().required(),
   isDefault: Joi.bool().required(),
 });

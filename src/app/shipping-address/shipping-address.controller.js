@@ -42,17 +42,17 @@ export const createShippingAddressController = async (req) => {
     adapter.isDefault = true;
   }
 
-  const province = await getProvinceService(adapter.provinceCode);
+  const province = await getProvinceService(adapter.provinceId);
   if (!province) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Province not found' });
   }
 
-  const district = await getDistrictService(adapter.districtCode, adapter.provinceCode);
+  const district = await getDistrictService(adapter.districtId, adapter.provinceId);
   if (!district) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'District not found' });
   }
 
-  const ward = await getWardService(adapter.wardCode, adapter.districtCode);
+  const ward = await getWardService(adapter.wardCode, adapter.districtId);
   if (!ward) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Ward not found' });
   }
@@ -131,17 +131,17 @@ export const updateShippingAddressByIdController = async (req) => {
     await unsetDefaultCurrentShippingAddressService(req.user.id);
   }
 
-  const province = await getProvinceService(adapter.provinceCode);
+  const province = await getProvinceService(adapter.provinceId);
   if (!province) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Province not found' });
   }
 
-  const district = await getDistrictService(adapter.districtCode, adapter.provinceCode);
+  const district = await getDistrictService(adapter.districtId, adapter.provinceId);
   if (!district) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'District not found' });
   }
 
-  const ward = await getWardService(adapter.wardCode, adapter.districtCode);
+  const ward = await getWardService(adapter.wardCode, adapter.districtId);
   if (!ward) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Ward not found' });
   }

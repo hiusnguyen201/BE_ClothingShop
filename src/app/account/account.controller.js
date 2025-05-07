@@ -24,7 +24,7 @@ import { UserNotificationDto } from '#src/app/account/dtos/user-notifications.dt
 import { MarkAsReadNotificationDto } from '#src/app/account/dtos/mark-as-read-notification.dto';
 import { GetListNotificationInUserDto } from '#src/app/account/dtos/get-list-notification-in-user.dto';
 import { CreateOrderCustomerDto } from '#src/app/account/dtos/create-order-customer.';
-import { createOrderJob } from '#src/app/orders/orders.worker';
+import { createOrderJob, orderQueueEvent } from '#src/app/orders/orders.worker';
 import { getOrderByIdService } from '#src/app/orders/orders.service';
 import { OrderDto } from '#src/app/orders/dtos/order.dto';
 import { notifyClientsOfNewOrder } from '#src/app/notifications/notifications.service';
@@ -36,6 +36,9 @@ import {
   setCustomerToCache,
 } from '#src/app/customers/customers-cache.service';
 import { deleteOrderFromCache } from '#src/app/orders/orders-cache.service';
+import { getCustomerByIdService } from '#src/app/customers/customers.service';
+import { getDistrictService, getProvinceService, getWardService } from '#src/modules/GHN/ghn.service';
+import { clearCartService } from '#src/app/carts/carts.service';
 
 export const getProfileController = async (req) => {
   const { id, type } = req.user;
@@ -99,17 +102,17 @@ export async function createOrderByCustomerController(req) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Customer not found' });
   }
 
-  const province = await getProvinceService(adapter.provinceCode);
+  const province = await getProvinceService(adapter.provinceId);
   if (!province) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Province not found' });
   }
 
-  const district = await getDistrictService(adapter.districtCode, adapter.provinceCode);
+  const district = await getDistrictService(adapter.districtId, adapter.provinceId);
   if (!district) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'District not found' });
   }
 
-  const ward = await getWardService(adapter.wardCode, adapter.districtCode);
+  const ward = await getWardService(adapter.wardCode, adapter.districtId);
   if (!ward) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Ward not found' });
   }
@@ -135,7 +138,9 @@ export async function createOrderByCustomerController(req) {
     paymentMethod: adapter.paymentMethod,
     baseUrl: req.protocol + '://' + req.get('host'),
   });
-  const newOrder = await job.waitUntilFinished(orderQueueEVent);
+  const newOrder = await job.waitUntilFinished(orderQueueEvent);
+
+  await clearCartService(customer._id);
 
   // Clear cache
   await deleteOrderFromCache(newOrder._id);

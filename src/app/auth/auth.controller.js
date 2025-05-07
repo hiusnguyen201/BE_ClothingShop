@@ -4,6 +4,7 @@ import {
   checkExistEmailService,
   updateUserVerifiedByIdService,
   getUserByEmailService,
+  getProfileByIdService,
 } from '#src/app/users/users.service';
 import {
   authenticateUserService,
@@ -235,7 +236,7 @@ export const sendOtpViaEmailController = async (req) => {
 export const verifyOtpController = async (req, res) => {
   const adapter = await validateSchema(VerifyOtpDto, req.body);
 
-  const user = await getUserByIdService(adapter.userId);
+  const user = await getProfileByIdService(adapter.userId);
   if (!user) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'User not found' });
   }

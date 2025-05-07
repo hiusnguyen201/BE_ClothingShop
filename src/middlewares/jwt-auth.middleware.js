@@ -1,9 +1,10 @@
 import { HttpException } from '#src/core/exception/http-exception';
-import { checkUserHasPermissionService, getUserByIdService } from '#src/app/users/users.service';
+import { checkUserHasPermissionService, getProfileByIdService, getUserByIdService } from '#src/app/users/users.service';
 import { USER_TYPE } from '#src/app/users/users.constant';
 import { verifyTokenService } from '#src/app/auth/auth.service';
 import { Code } from '#src/core/code/Code';
 import { ACCESS_TOKEN_KEY } from '#src/utils/cookie.util';
+import { getCustomerByIdService } from '#src/app/customers/customers.service';
 
 async function authorized(req, res, next) {
   const accessToken = req.cookies[ACCESS_TOKEN_KEY];
@@ -16,7 +17,7 @@ async function authorized(req, res, next) {
     return next(HttpException.new({ code: Code.INVALID_TOKEN }));
   }
 
-  const user = await getUserByIdService(decoded?.id);
+  const user = await getProfileByIdService(decoded?.id);
   if (!user) {
     return next(HttpException.new({ code: Code.INVALID_TOKEN }));
   }

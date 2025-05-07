@@ -5,7 +5,7 @@ import { createOrderControllerLogic } from '#src/app/orders/orders.controller';
 export const ORDER_QUEUE_NAME = 'ORDER_QUEUE';
 
 const orderQueue = createQueue(ORDER_QUEUE_NAME);
-export const orderQueueEVent = createQueueEvents(ORDER_QUEUE_NAME);
+export const orderQueueEvent = createQueueEvents(ORDER_QUEUE_NAME);
 
 export async function createOrderJob(data) {
   return await orderQueue.add(ORDER_QUEUE_NAME, data, {
