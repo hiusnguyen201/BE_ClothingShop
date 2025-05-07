@@ -88,7 +88,7 @@ export const getAllCategoriesController = async (req) => {
     })),
   };
 
-  let [totalCountCached, categoriesCached] = await getTotalCountAndListCategoryFromCache(adapter);
+  let [totalCountCached, categoriesCached] = await getTotalCountAndListCategoryFromCache({ ...adapter, ...filters });
   if (categoriesCached.length === 0) {
     const skip = (adapter.page - 1) * adapter.limit;
     const [totalCount, categories] = await getAndCountCategoriesService(

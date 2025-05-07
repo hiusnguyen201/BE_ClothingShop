@@ -83,7 +83,7 @@ export const getAllUsersController = async (req) => {
 
   let totalCount = 0;
   let users = [];
-  const cached = await getTotalCountAndListUserFromCache(adapter);
+  const cached = await getTotalCountAndListUserFromCache({ ...adapter, ...filters });
   if (cached && Array.isArray(cached) && cached.length === 2) {
     const skip = (adapter.page - 1) * adapter.limit;
     [totalCount, users] = await getAndCountUsersService(

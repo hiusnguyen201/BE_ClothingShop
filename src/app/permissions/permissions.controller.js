@@ -19,7 +19,7 @@ export const getAllPermissionsController = async (req) => {
     })),
   };
 
-  let [totalCountCached, permissionsCached] = await getTotalCountAndListPermissionFromCache(adapter);
+  let [totalCountCached, permissionsCached] = await getTotalCountAndListPermissionFromCache({ ...adapter, ...filters });
 
   if (permissionsCached.length === 0) {
     const skip = (adapter.page - 1) * adapter.limit;

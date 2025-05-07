@@ -75,7 +75,7 @@ export const getAllRolesController = async (req) => {
     })),
   };
 
-  let [totalCountCached, rolesCached] = await getTotalCountAndListRoleFromCache(adapter);
+  let [totalCountCached, rolesCached] = await getTotalCountAndListRoleFromCache({ ...adapter, ...filters });
 
   if (rolesCached.length === 0) {
     const skip = (adapter.page - 1) * adapter.limit;

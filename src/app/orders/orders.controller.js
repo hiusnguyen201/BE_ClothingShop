@@ -135,7 +135,7 @@ export async function getAllOrdersController(req) {
     keyword: adapter.keyword,
   };
 
-  let [totalCountCached, ordersCached] = await getTotalCountAndListOrderFromCache(adapter);
+  let [totalCountCached, ordersCached] = await getTotalCountAndListOrderFromCache({ ...adapter, ...filters });
 
   if (ordersCached.length === 0) {
     const skip = (adapter.page - 1) * adapter.limit;

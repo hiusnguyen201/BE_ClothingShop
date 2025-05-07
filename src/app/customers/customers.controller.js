@@ -70,7 +70,7 @@ export const getAllCustomersController = async (req) => {
     ...(adapter.gender ? { gender: adapter.gender } : {}),
   };
 
-  let [totalCountCached, customersCached] = await getTotalCountAndListCustomerFromCache(adapter);
+  let [totalCountCached, customersCached] = await getTotalCountAndListCustomerFromCache({ ...adapter, ...filters });
 
   if (customersCached.length === 0) {
     const skip = (adapter.page - 1) * adapter.limit;

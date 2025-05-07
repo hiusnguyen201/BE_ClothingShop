@@ -80,7 +80,10 @@ export const getAllShippingAddressController = async (req) => {
     customer: req.user.id,
   };
 
-  let [totalCountCached, listShippingAddressCached] = await getTotalCountAndListShippingAddressFromCache(adapter);
+  let [totalCountCached, listShippingAddressCached] = await getTotalCountAndListShippingAddressFromCache({
+    ...adapter,
+    ...filters,
+  });
 
   if (listShippingAddressCached.length === 0) {
     const skip = (adapter.page - 1) * adapter.limit;

@@ -89,7 +89,7 @@ export const getAllProductsController = async (req) => {
     ...(adapter.category ? { category: adapter.category } : {}),
   };
 
-  let [totalCountCached, productsCached] = await getTotalCountAndListProductFromCache(adapter);
+  let [totalCountCached, productsCached] = await getTotalCountAndListProductFromCache({ ...adapter, ...filters });
 
   if (productsCached.length === 0) {
     const skip = (adapter.page - 1) * adapter.limit;
