@@ -3,14 +3,14 @@ const router = express.Router();
 
 import {
   checkValidAddressController,
-  getAllDistrictsByprovinceIdController,
+  getAllDistrictsByProvinceIdController,
   getAllProvincesController,
-  getAllWardsBydistrictIdController,
+  getAllWardsByDistrictIdController,
 } from '#src/app/divisions/divisions.controller';
 
 router.get('/get-provinces', getAllProvincesController);
-router.get('/get-districts-by-province-code/:provinceId', getAllDistrictsByprovinceIdController);
-router.get('/get-wards-by-district-code/:districtId', getAllWardsBydistrictIdController);
+router.get('/get-districts-by-province-code/:provinceId', getAllDistrictsByProvinceIdController);
+router.get('/get-wards-by-district-code/:districtId', getAllWardsByDistrictIdController);
 router.post('/check-valid-address', checkValidAddressController);
 
 export default router;

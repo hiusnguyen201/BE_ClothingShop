@@ -23,7 +23,7 @@ group Request Initialization
     Client -> DivisionsRouter: GET /api/divisions/get-districts-by-province-code/:provinceId
     activate Client
     activate DivisionsRouter
-    DivisionsRouter -> AsyncHandler: asyncHandler(getAllDistrictsByprovinceIdController)
+    DivisionsRouter -> AsyncHandler: asyncHandler(getAllDistrictsByProvinceIdController)
     activate AsyncHandler
 end
 
@@ -32,7 +32,7 @@ break
 
 ' step 2
 group Business Logic Flow
-    AsyncHandler -> DivisionsController: getAllDistrictsByprovinceIdController
+    AsyncHandler -> DivisionsController: getAllDistrictsByProvinceIdController
     activate DivisionsController
     DivisionsController -> DivisionsService: getProvinceByCodeService(provinceId)
     activate DivisionsService

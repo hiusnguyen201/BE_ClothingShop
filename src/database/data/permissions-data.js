@@ -2,334 +2,245 @@
 
 import { newPermissionService } from '#src/app/permissions/permissions.service';
 
-const USERS_PERMISSIONS = [
-  {
+export const USERS_PERMISSIONS = {
+  GET_USERS: {
     name: 'read:users',
     description: 'View list user',
     module: 'users',
-    endpoint: '/api/users/get-users',
-    method: 'GET',
   },
-  {
+  GET_USER_DETAILS: {
     name: 'read:details:user',
     description: 'View details user',
     module: 'users',
-    endpoint: '/api/users/get-user-by-id/:userId',
-    method: 'GET',
   },
-  {
+  CREATE_USER: {
     name: 'create:user',
     description: 'Create user',
     module: 'users',
-    endpoint: '/api/users/create-user',
-    method: 'POST',
   },
-  {
+  EDIT_USER: {
     name: 'edit:user',
     description: 'Edit user',
     module: 'users',
-    endpoint: '/api/users/update-user-by-id/:userId',
-    method: 'PUT',
   },
-  {
+  REMOVE_USER: {
     name: 'remove:user',
     description: 'Remove user',
     module: 'users',
-    endpoint: '/api/users/remove-user-by-id/:userId',
-    method: 'DELETE',
   },
-  {
+  RESET_PASSWORD_USER: {
     name: 'reset-password:user',
     description: 'Reset password user',
     module: 'users',
-    endpoint: '/api/users/:userId/reset-password',
-    method: 'PUT',
   },
-];
+};
 
-export const userPermissions = USERS_PERMISSIONS.map((per) => newPermissionService(per));
+export const userPermissions = Object.values(USERS_PERMISSIONS).map((per) => newPermissionService(per));
 
-const ROLES_PERMISSIONS = [
-  {
+export const ROLES_PERMISSIONS = {
+  GET_ROLES: {
     name: 'read:roles',
     description: 'View list role',
     module: 'roles',
-    endpoint: '/api/roles/get-roles',
-    method: 'GET',
   },
-  {
+  GET_ROLE_DETAILS: {
     name: 'read:details:role',
     description: 'View details role',
     module: 'roles',
-    endpoint: '/api/roles/get-role-by-id/:roleId',
-    method: 'GET',
   },
-  {
+  CREATE_ROLE: {
     name: 'create:role',
     description: 'Create role',
     module: 'roles',
-    endpoint: '/api/roles/create-role',
-    method: 'POST',
   },
-  {
+  EDIT_ROLE: {
     name: 'edit:role',
     description: 'Edit role',
     module: 'roles',
-    endpoint: '/api/roles/update-role-by-id/:roleId',
-    method: 'PUT',
   },
-  {
+  REMOVE_ROLE: {
     name: 'remove:role',
     description: 'Remove role',
     module: 'roles',
-    endpoint: '/api/roles/remove-role-by-id/:roleId',
-    method: 'DELETE',
   },
-  {
+  GET_ASSIGNED_ROLE_PERMISSIONS: {
     name: 'read:assigned_role_permissions',
     description: 'View list assigned role permissions',
     module: 'roles',
-    endpoint: '/api/roles/:roleId/assigned-permissions',
-    method: 'GET',
   },
-  {
+  GET_UNASSIGNED_ROLE_PERMISSIONS: {
     name: 'read:unassigned_role_permissions',
     description: 'View list unassigned role permissions',
     module: 'roles',
-    endpoint: '/api/roles/:roleId/unassigned-permissions',
-    method: 'GET',
   },
-  {
+  ADD_ROLE_PERMISSIONS: {
     name: 'add:role_permissions',
     description: 'Add role permission',
     module: 'roles',
-    endpoint: '/api/roles/:roleId/permissions',
-    method: 'PATCH',
   },
-  {
+  REMOVE_ROLE_PERMISSIONS: {
     name: 'remove:role_permissions',
     description: 'Remove role permission',
     module: 'roles',
-    endpoint: '/api/roles/:roleId/permissions/:permissionId',
-    method: 'DELETE',
   },
-];
+};
 
-export const rolePermissions = ROLES_PERMISSIONS.map((per) => newPermissionService(per));
+export const rolePermissions = Object.values(ROLES_PERMISSIONS).map((per) => newPermissionService(per));
 
-const PERMISSIONS_PERMISSIONS = [
-  {
+export const PERMISSIONS_PERMISSIONS = {
+  GET_PERMISSIONS: {
     name: 'read:permissions',
     description: 'View list permission',
     module: 'permissions',
-    endpoint: '/api/permissions/get-permissions',
-    method: 'GET',
   },
-];
+};
 
-export const permissionPermissions = PERMISSIONS_PERMISSIONS.map((per) => newPermissionService(per));
+export const permissionPermissions = Object.values(PERMISSIONS_PERMISSIONS).map((per) => newPermissionService(per));
 
-const CATEGORIES_PERMISSIONS = [
-  {
+export const CATEGORIES_PERMISSIONS = {
+  GET_CATEGORIES: {
     name: 'read:categories',
     description: 'View list category',
     module: 'categories',
-    endpoint: '/api/categories/get-categories',
-    method: 'GET',
   },
-  {
+  GET_CATEGORY_DETAILS: {
     name: 'read:details:category',
     description: 'View details category',
     module: 'categories',
-    endpoint: '/api/categories/get-category-by-id/:categoryId',
-    method: 'GET',
   },
-  {
+  CREATE_CATEGORY: {
     name: 'create:category',
     description: 'Create category',
     module: 'categories',
-    endpoint: '/api/categories/create-category',
-    method: 'POST',
   },
-  {
+  EDIT_CATEGORY: {
     name: 'edit:category',
     description: 'Edit category',
     module: 'categories',
-    endpoint: '/api/categories/update-category-by-id/:categoryId',
-    method: 'PUT',
   },
-  {
+  REMOVE_CATEGORY: {
     name: 'remove:category',
     description: 'Remove category',
     module: 'categories',
-    endpoint: '/api/categories/remove-category-by-id/:categoryId',
-    method: 'DELETE',
   },
-  {
-    name: 'get:sub_categories',
+  GET_SUB_CATEGORIES: {
+    name: 'read:sub_categories',
     description: 'Get list subcategories',
     module: 'categories',
-    endpoint: '/api/categories/:categoryId/subcategories',
-    method: 'GET',
   },
-];
+};
 
-export const categoryPermissions = CATEGORIES_PERMISSIONS.map((per) => newPermissionService(per));
+export const categoryPermissions = Object.values(CATEGORIES_PERMISSIONS).map((per) => newPermissionService(per));
 
-const CUSTOMERS_PERMISSIONS = [
-  {
+export const CUSTOMERS_PERMISSIONS = {
+  GET_CUSTOMERS: {
     name: 'read:customers',
     description: 'View list customer',
     module: 'customers',
-    endpoint: '/api/customers/get-customers',
-    method: 'GET',
   },
-  {
+  GET_DETAILS_CUSTOMER: {
     name: 'read:details:customer',
     description: 'View details customer',
     module: 'customers',
-    endpoint: '/api/customers/get-customer-by-id/:customerId',
-    method: 'GET',
   },
-  {
+  CREATE_CUSTOMER: {
     name: 'create:customer',
     description: 'Create customer',
     module: 'customers',
-    endpoint: '/api/customers/create-customer',
-    method: 'POST',
   },
-  {
+  EDIT_CUSTOMER: {
     name: 'edit:customer',
     description: 'Edit customer',
     module: 'customers',
-    endpoint: '/api/customers/update-customer-by-id/:customerId',
-    method: 'PUT',
   },
-  {
+  REMOVE_CUSTOMER: {
     name: 'remove:customer',
     description: 'Remove customer',
     module: 'customers',
-    endpoint: '/api/customers/remove-customer-by-id/:customerId',
-    method: 'DELETE',
   },
-];
+};
 
-export const customerPermissions = CUSTOMERS_PERMISSIONS.map((per) => newPermissionService(per));
+export const customerPermissions = Object.values(CUSTOMERS_PERMISSIONS).map((per) => newPermissionService(per));
 
-const PRODUCTS_PERMISSIONS = [
-  {
+export const PRODUCTS_PERMISSIONS = {
+  GET_PRODUCTS: {
     name: 'read:products',
     description: 'View list product',
     module: 'products',
-    endpoint: '/api/products/get-products',
-    method: 'GET',
   },
-  {
+  GET_DETAILS_PRODUCT: {
     name: 'read:details:product',
     description: 'View details product',
     module: 'products',
-    endpoint: '/api/products/get-product-by-id/:productId',
-    method: 'GET',
   },
-  {
+  CREATE_PRODUCT: {
     name: 'create:product',
     description: 'Create product',
     module: 'products',
-    endpoint: '/api/products/create-product',
-    method: 'POST',
   },
-  {
+  EDIT_PRODUCT_INFO: {
     name: 'edit:product_info',
     description: 'Edit product info',
     module: 'products',
-    endpoint: '/api/products/update-product-info/:productId',
-    method: 'PUT',
   },
-  {
+  EDIT_PRODUCT_VARIANTS: {
     name: 'edit:product_variants',
     description: 'Edit product variants',
     module: 'products',
-    endpoint: '/api/products/update-product-variants/:productId',
-    method: 'PUT',
   },
-  {
+  REMOVE_PRODUCT: {
     name: 'remove:product',
     description: 'Remove product',
     module: 'products',
-    endpoint: '/api/products/remove-product-by-id/:productId',
-    method: 'DELETE',
   },
-];
+};
 
-export const productPermissions = PRODUCTS_PERMISSIONS.map((per) => newPermissionService(per));
+export const productPermissions = Object.values(PRODUCTS_PERMISSIONS).map((per) => newPermissionService(per));
 
-const ORDER_PERMISSIONS = [
-  {
+export const ORDER_PERMISSIONS = {
+  GET_ORDERS: {
     name: 'read:orders',
     description: 'View list order',
     module: 'orders',
-    endpoint: '/api/orders/get-orders',
-    method: 'GET',
   },
-  {
+  GET_DETAILS_ORDER: {
     name: 'read:details:order',
     description: 'View details order',
     module: 'orders',
-    endpoint: '/api/orders/get-order-by-id/:orderId',
-    method: 'GET',
   },
-  {
+  CREATE_ORDER: {
     name: 'create:order',
     description: 'Create order',
     module: 'orders',
-    endpoint: '/api/orders/create-order',
-    method: 'POST',
   },
-  // {
-  //   name: 'edit:order_info',
-  //   description: 'Edit order info',
-  //   module: 'orders',
-  //   endpoint: '/api/orders/update-order-info/:orderId',
-  //   method: 'PUT',
-  // },
-  {
+  REMOVE_ORDER: {
     name: 'remove:order',
     description: 'Remove order',
     module: 'orders',
-    endpoint: '/api/orders/remove-order-by-id/:orderId',
-    method: 'DELETE',
   },
-  {
+  CONFIRM_ORDER: {
     name: 'confirm:order',
     description: 'Confirm order',
     module: 'orders',
-    endpoint: '/api/orders/confirm-order',
-    method: 'POST',
   },
-  {
+  CANCEL_ORDER: {
     name: 'cancel:order',
     description: 'Cancel order',
     module: 'orders',
-    endpoint: '/api/orders/cancel-order',
-    method: 'POST',
   },
-  {
+  PROCESSING_ORDER: {
     name: 'processing:order',
     description: 'Start processing order',
     module: 'orders',
-    endpoint: '/api/orders/processing-order',
-    method: 'POST',
   },
-  {
+  CREATE_SHIP_ORDER: {
     name: 'create-ship:order',
     description: 'Create ship order',
     module: 'orders',
-    endpoint: '/api/orders/create-ship-order',
-    method: 'POST',
   },
-];
+};
 
-export const orderPermissions = ORDER_PERMISSIONS.map((per) => newPermissionService(per));
+export const orderPermissions = Object.values(ORDER_PERMISSIONS).map((per) => newPermissionService(per));
 
 export const NOTIFICATION_PERMISSIONS = {
   NEW_CUSTOMER: {

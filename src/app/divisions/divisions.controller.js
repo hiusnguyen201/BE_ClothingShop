@@ -33,7 +33,7 @@ export const getAllProvincesController = async () => {
  * @param {*} req
  * @returns
  */
-export const getAllDistrictsByprovinceIdController = async (req) => {
+export const getAllDistrictsByProvinceIdController = async (req) => {
   const { provinceId } = req.params;
 
   const districts = await getDistrictsByProvinceIdService(provinceId);
@@ -53,7 +53,7 @@ export const getAllDistrictsByprovinceIdController = async (req) => {
  * @param {*} req
  * @returns
  */
-export const getAllWardsBydistrictIdController = async (req) => {
+export const getAllWardsByDistrictIdController = async (req) => {
   const { districtId } = req.params;
   const wards = await getWardsByDistrictIdService(districtId);
 

@@ -226,11 +226,10 @@ export async function checkExistEmailService(email, skipId) {
 /**
  * Check user has permissions
  * @param {string} id
- * @param {string} method
- * @param {string} endpoint
+ * @param {string[]} permissions
  * @returns
  */
-export async function checkUserHasPermissionService(id, method, endpoint) {
+export async function checkUserHasPermissionService(id, permissions) {
   const user = await UserModel.findById(id)
     .select('role permissions')
     .populate({
@@ -239,16 +238,18 @@ export async function checkUserHasPermissionService(id, method, endpoint) {
       populate: {
         path: 'permissions',
         match: {
-          method,
-          endpoint,
+          name: {
+            $in: permissions,
+          },
         },
       },
     })
     .populate({
       path: 'permissions',
       match: {
-        method,
-        endpoint,
+        name: {
+          $in: permissions,
+        },
       },
     })
     .lean();

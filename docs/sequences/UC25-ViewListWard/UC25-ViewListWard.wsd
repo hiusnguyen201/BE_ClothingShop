@@ -23,7 +23,7 @@ group Request Initialization
     Client -> DivisionsRouter: GET /api/divisions/get-wards-by-district-code/:districtId
     activate Client
     activate DivisionsRouter
-    DivisionsRouter -> AsyncHandler: asyncHandler(getAllWardsBydistrictIdController)
+    DivisionsRouter -> AsyncHandler: asyncHandler(getAllWardsByDistrictIdController)
     activate AsyncHandler
 end
 
@@ -32,7 +32,7 @@ break
 
 ' step 2
 group Business Logic Flow
-    AsyncHandler -> DivisionsController: getAllWardsBydistrictIdController
+    AsyncHandler -> DivisionsController: getAllWardsByDistrictIdController
     activate DivisionsController
     DivisionsController -> DivisionsService: getDistrictByCodeService(districtId)
     activate DivisionsService

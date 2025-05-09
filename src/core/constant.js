@@ -1,5 +1,3 @@
-export const ALLOW_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD'];
-
 export const ALLOW_IMAGE_MIME_TYPES = [
   'image/jpeg', // .jpeg .jpg - JPEG images
   'image/png', // ..png      - Portable Network Graphics

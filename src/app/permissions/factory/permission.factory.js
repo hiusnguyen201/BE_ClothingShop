@@ -8,8 +8,6 @@ class PermissionFactory {
     this.default = {
       name: faker.internet.username(),
       module: faker.internet.username(),
-      method: faker.internet.httpMethod(),
-      endpoint: faker.internet.url(),
       description: faker.lorem.sentence(),
     };
   }

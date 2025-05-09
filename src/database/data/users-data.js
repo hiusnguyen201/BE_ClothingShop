@@ -43,7 +43,7 @@ const USER_DATA = [
     verifiedAt: new Date(),
     gender: GENDER.MALE,
     type: USER_TYPE.USER,
-    permissions: permissions.filter((p) => ['GET'].includes(p.method)).map((p) => p._id),
+    permissions: permissions.filter((p) => ['read'].some((item) => p.name.includes(item))).map((p) => p._id),
   },
   {
     name: 'Customer',

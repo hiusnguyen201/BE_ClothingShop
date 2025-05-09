@@ -13,19 +13,45 @@ import {
   removeRolePermissionController,
   getUnassignedRolePermissionsController,
 } from '#src/app/roles/roles.controller';
-import { isAuthorizedAndHasPermission } from '#src/middlewares/jwt-auth.middleware';
+import { isAuthorized, can } from '#src/middlewares/jwt-auth.middleware';
+import { ROLES_PERMISSIONS } from '#src/database/data/permissions-data';
 
 router.post('/is-exist-role-name', isExistRoleNameController);
 
 router
-  .post('/create-role', isAuthorizedAndHasPermission, createRoleController)
-  .get('/get-roles', isAuthorizedAndHasPermission, getAllRolesController)
-  .get('/get-role-by-id/:roleId', isAuthorizedAndHasPermission, getRoleByIdController)
-  .put('/update-role-by-id/:roleId', isAuthorizedAndHasPermission, updateRoleByIdController)
-  .delete('/remove-role-by-id/:roleId', isAuthorizedAndHasPermission, removeRoleByIdController)
-  .get('/:roleId/assigned-permissions', isAuthorizedAndHasPermission, getAssignedRolePermissionsController)
-  .get('/:roleId/unassigned-permissions', isAuthorizedAndHasPermission, getUnassignedRolePermissionsController)
-  .patch('/:roleId/permissions', isAuthorizedAndHasPermission, addRolePermissionsController)
-  .delete('/:roleId/permissions/:permissionId', isAuthorizedAndHasPermission, removeRolePermissionController);
+  .post('/create-role', isAuthorized, can([ROLES_PERMISSIONS.CREATE_ROLE.name]), createRoleController)
+  .get('/get-roles', isAuthorized, can([ROLES_PERMISSIONS.GET_ROLES.name]), getAllRolesController)
+  .get('/get-role-by-id/:roleId', isAuthorized, can([ROLES_PERMISSIONS.GET_ROLE_DETAILS.name]), getRoleByIdController)
+  .put('/update-role-by-id/:roleId', isAuthorized, can([ROLES_PERMISSIONS.EDIT_ROLE.name]), updateRoleByIdController)
+  .delete(
+    '/remove-role-by-id/:roleId',
+    isAuthorized,
+    can([ROLES_PERMISSIONS.REMOVE_ROLE.name]),
+    removeRoleByIdController,
+  )
+  .get(
+    '/:roleId/assigned-permissions',
+    isAuthorized,
+    can([ROLES_PERMISSIONS.GET_ASSIGNED_ROLE_PERMISSIONS.name]),
+    getAssignedRolePermissionsController,
+  )
+  .get(
+    '/:roleId/unassigned-permissions',
+    isAuthorized,
+    can([ROLES_PERMISSIONS.GET_UNASSIGNED_ROLE_PERMISSIONS.name]),
+    getUnassignedRolePermissionsController,
+  )
+  .patch(
+    '/:roleId/permissions',
+    isAuthorized,
+    can([ROLES_PERMISSIONS.ADD_ROLE_PERMISSIONS.name]),
+    addRolePermissionsController,
+  )
+  .delete(
+    '/:roleId/permissions/:permissionId',
+    isAuthorized,
+    can([ROLES_PERMISSIONS.REMOVE_ROLE_PERMISSIONS.name]),
+    removeRolePermissionController,
+  );
 
 export default router;

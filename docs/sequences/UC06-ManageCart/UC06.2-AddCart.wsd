@@ -50,7 +50,7 @@ break
 
 ' Step 2
 group Authentication Flow
-    AsyncHandler -> JwtAuthMiddleware: isAuthorizedAndHasPermission
+    AsyncHandler -> JwtAuthMiddleware: isAuthorized
     activate JwtAuthMiddleware
 
     JwtAuthMiddleware -> JwtAuthMiddleware: extract token

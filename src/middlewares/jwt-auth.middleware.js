@@ -4,9 +4,8 @@ import { USER_TYPE } from '#src/app/users/users.constant';
 import { verifyTokenService } from '#src/app/auth/auth.service';
 import { Code } from '#src/core/code/Code';
 import { ACCESS_TOKEN_KEY } from '#src/utils/cookie.util';
-import { getCustomerByIdService } from '#src/app/customers/customers.service';
 
-async function authorized(req, res, next) {
+export async function authorized(req, res, next) {
   const accessToken = req.cookies[ACCESS_TOKEN_KEY];
   if (!accessToken) {
     return next(HttpException.new({ code: Code.TOKEN_REQUIRED }));
@@ -30,23 +29,21 @@ async function authorized(req, res, next) {
   next();
 }
 
-async function checkPermission(req, res, next) {
-  if (!req.user || req.user.type === USER_TYPE.CUSTOMER) {
-    return next(HttpException.new({ code: Code.ACCESS_DENIED }));
-  }
+/**
+ * Check Permissions
+ * @param {string[]} permissions
+ * @returns
+ */
+export function can(permissions = []) {
+  return async (req, res, next) => {
+    if (!req.user || req.user.type === USER_TYPE.CUSTOMER) {
+      return next(HttpException.new({ code: Code.ACCESS_DENIED }));
+    }
 
-  // Convert to dynamic path
-  let endpoint = req.originalUrl;
-  Object.entries(req.params).map(([key, value]) => {
-    endpoint = endpoint.replace(value, `:${key}`);
-  });
-  if (endpoint.includes('?')) {
-    endpoint = endpoint.split('?')[0];
-  }
+    const hasPermission = await checkUserHasPermissionService(req.user.id, permissions);
 
-  const hasPermission = await checkUserHasPermissionService(req.user.id, req.method, endpoint);
-
-  return hasPermission ? next() : next(HttpException.new({ code: Code.ACCESS_DENIED }));
+    return hasPermission ? next() : next(HttpException.new({ code: Code.ACCESS_DENIED }));
+  };
 }
 
 async function checkCustomer(req, res, next) {
@@ -60,4 +57,3 @@ async function checkUser(req, res, next) {
 export const isAuthorized = [authorized];
 export const isAuthorizedAndIsCustomer = [authorized, checkCustomer];
 export const isAuthorizedAndIsUser = [authorized, checkUser];
-export const isAuthorizedAndHasPermission = [authorized, checkPermission];

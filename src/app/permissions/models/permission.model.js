@@ -1,6 +1,5 @@
 import SoftDelete from '#src/core/plugins/soft-delete.plugin';
 import mongoose from 'mongoose';
-import { ALLOW_METHODS } from '#src/core/constant';
 const { Schema } = mongoose;
 
 export const PERMISSION_MODEL = 'permissions';
@@ -22,17 +21,6 @@ export const PermissionSchema = new Schema(
       type: String,
       required: true,
       length: 50,
-    },
-    endpoint: {
-      type: String,
-      required: false,
-      length: 255,
-    },
-    method: {
-      type: String,
-      length: 10,
-      required: false,
-      enum: ALLOW_METHODS,
     },
   },
   {

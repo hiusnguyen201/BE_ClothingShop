@@ -42,7 +42,7 @@ group Request Initialization
 end
 
 group Authentication Flow
-    AsyncHandler -> AuthMiddleware: isAuthorizedAndHasPermission
+    AsyncHandler -> AuthMiddleware: isAuthorized
     activate AuthMiddleware
     
     group Token Validation
