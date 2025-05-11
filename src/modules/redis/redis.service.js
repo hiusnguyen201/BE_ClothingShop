@@ -20,7 +20,7 @@ redisClient.on('error', (err) => {
 
 export async function get(key) {
   const cached = await redisClient.get(key);
-  return JSON.parse(cached);
+  return cached ? JSON.parse(cached) : null;
 }
 
 export async function set(key, data) {

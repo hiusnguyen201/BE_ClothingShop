@@ -16,6 +16,6 @@ export const GetAssignedRolePermissionsDto = Joi.object({
     .max(100)
     .default(5)
     .custom((value) => +value),
-  sortBy: Joi.string().valid('name', 'createdAt').default('createdAt'),
+  sortBy: Joi.string().valid('name', 'description', 'createdAt').default('createdAt'),
   sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
 });

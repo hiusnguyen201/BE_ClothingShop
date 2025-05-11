@@ -13,10 +13,11 @@ export const GetListOrderDto = Joi.object({
     .allow('')
     .custom((val) => escapeStringRegexp(replaceMultiSpacesToSingleSpace(val))),
   limit: Joi.number().min(10).max(500).default(10),
-  sortBy: Joi.string().valid('createdAt').default('createdAt'),
+  sortBy: Joi.string().valid('code', 'orderDate', 'total', 'createdAt').default('createdAt'),
   sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
   status: Joi.string()
     .valid(...Object.values(ORDER_STATUS))
     .optional(),
-  customerId: Joi.string(),
+  minTotal: Joi.number().min(0),
+  maxTotal: Joi.number().min(0),
 });

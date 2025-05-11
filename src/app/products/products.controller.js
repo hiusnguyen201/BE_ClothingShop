@@ -84,28 +84,32 @@ export const getAllProductsController = async (req) => {
   const adapter = await validateSchema(GetListProductDto, req.query);
 
   const filters = {
-    $or: [{ name: { $regex: adapter.keyword, $options: 'i' } }],
-    ...(adapter.status ? { status: adapter.status } : {}),
-    ...(adapter.category ? { category: adapter.category } : {}),
+    $or: [{ name: { $regex: adapter.keyword || '', $options: 'i' } }],
+    ...(adapter.status && { status: adapter.status }),
+    ...(adapter.categoryIds && {
+      category: {
+        $in: adapter.categoryIds,
+      },
+    }),
   };
 
   let [totalCountCached, productsCached] = await getTotalCountAndListProductFromCache({ ...adapter, ...filters });
 
-  if (productsCached.length === 0) {
-    const skip = (adapter.page - 1) * adapter.limit;
-    const [totalCount, products] = await getAndCountProductsService(
-      filters,
-      skip,
-      adapter.limit,
-      adapter.sortBy,
-      adapter.sortOrder,
-    );
+  // if (productsCached.length === 0) {
+  const skip = (adapter.page - 1) * adapter.limit;
+  const [totalCount, products] = await getAndCountProductsService(
+    filters,
+    skip,
+    adapter.limit,
+    adapter.sortBy,
+    adapter.sortOrder,
+  );
 
-    await setTotalCountAndListProductToCache(adapter, totalCount, products);
+  await setTotalCountAndListProductToCache(adapter, totalCount, products);
 
-    totalCountCached = totalCount;
-    productsCached = products;
-  }
+  totalCountCached = totalCount;
+  productsCached = products;
+  // }
 
   const productsDto = ModelDto.newList(ProductDto, productsCached);
   return ApiResponse.success({ totalCount: totalCountCached, list: productsDto });

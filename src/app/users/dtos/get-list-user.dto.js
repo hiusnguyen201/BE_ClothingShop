@@ -17,8 +17,9 @@ export const GetListUserDto = Joi.object({
     .max(100)
     .default(5)
     .custom((value) => +value),
-  sortBy: Joi.string().valid('name', 'email', 'createdAt').default('createdAt'),
+  sortBy: Joi.string().valid('name', 'email', 'lastLoginAt', 'gender', 'verifiedAt', 'createdAt').default('createdAt'),
   sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
   gender: Joi.string().valid(...Object.values(GENDER)),
+  status: Joi.string().valid('active', 'inactive'),
   roleId: Joi.string(),
 });

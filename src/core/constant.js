@@ -15,6 +15,7 @@ export const REGEX_PATTERNS = {
   },
   BEARER_TOKEN: /^Bearer ((?:\.?(?:[A-Za-z0-9-_]+)){3})$/,
   COMMA_SEPARATED_LIST: /^[a-zA-Z0-9,]+$/,
+  COMMA_SEPARATED_OBJECT_IDS: /^([a-f\d]{24})(,([a-f\d]{24}))*$/i,
   IMAGE_URL: /\.(jpg|jpeg|png)$/i,
   STRING_NUMBER: /^\d+$/,
   HASH_STRING: /^\$2[aby]\$.{56}$/,

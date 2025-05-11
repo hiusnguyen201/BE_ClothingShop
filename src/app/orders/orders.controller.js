@@ -20,7 +20,7 @@ import {
 } from '#src/modules/GHN/ghn.service';
 import { Code } from '#src/core/code/Code';
 import { ONLINE_PAYMENT_METHOD, PAYMENT_STATUS } from '#src/app/payments/payments.constant';
-import { LOW_STOCK_WARNING_LEVEL, ORDER_SEARCH_FIELDS, ORDER_STATUS } from '#src/app/orders/orders.constant';
+import { LOW_STOCK_WARNING_LEVEL, ORDER_STATUS } from '#src/app/orders/orders.constant';
 import { newOrderDetailService, saveOrderItemsService } from '#src/app/order-details/order-details.service';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { ApiResponse } from '#src/core/api/ApiResponse';
@@ -130,28 +130,44 @@ export async function getAllOrdersController(req) {
   const adapter = await validateSchema(GetListOrderDto, req.query);
 
   const filters = {
-    ...(adapter.customerId ? { customerId: adapter.customerId } : {}),
-    ...(adapter.status ? { status: adapter.status } : {}),
-    keyword: adapter.keyword,
+    ...(adapter.customerId && { customerId: adapter.customerId }),
+    ...(adapter.status && { status: adapter.status }),
+    ...((adapter.minTotal || adapter.maxTotal) && {
+      total: {
+        ...(adapter.minTotal && { $gte: adapter.minTotal }),
+        ...(adapter.maxTotal && { $lte: adapter.maxTotal }),
+      },
+    }),
+    ...(adapter.keyword === ''
+      ? { code: { $ne: null } }
+      : {
+          $expr: {
+            $regexMatch: {
+              input: { $toString: '$code' },
+              regex: adapter.keyword,
+              options: 'i',
+            },
+          },
+        }),
   };
 
   let [totalCountCached, ordersCached] = await getTotalCountAndListOrderFromCache({ ...adapter, ...filters });
 
-  if (ordersCached.length === 0) {
-    const skip = (adapter.page - 1) * adapter.limit;
-    const [totalCount, orders] = await getAndCountOrdersService(
-      filters,
-      skip,
-      adapter.limit,
-      adapter.sortBy,
-      adapter.sortOrder,
-    );
+  // if (ordersCached.length === 0) {
+  const skip = (adapter.page - 1) * adapter.limit;
+  const [totalCount, orders] = await getAndCountOrdersService(
+    filters,
+    skip,
+    adapter.limit,
+    adapter.sortBy,
+    adapter.sortOrder,
+  );
 
-    await setTotalCountAndListOrderToCache(adapter, totalCount, orders);
+  await setTotalCountAndListOrderToCache(adapter, totalCount, orders);
 
-    totalCountCached = totalCount;
-    ordersCached = orders;
-  }
+  totalCountCached = totalCount;
+  ordersCached = orders;
+  // }
 
   const ordersDto = ModelDto.newList(OrderDto, ordersCached);
   return ApiResponse.success({ totalCount: totalCountCached, list: ordersDto });

@@ -79,6 +79,11 @@ export const getAllUsersController = async (req) => {
     })),
     ...(adapter.gender && { gender: adapter.gender }),
     ...(adapter.roleId && { role: adapter.roleId }),
+    ...(adapter.status && {
+      verifiedAt: {
+        ...(adapter.status === 'active' ? { $ne: null } : { $eq: null }),
+      },
+    }),
   };
 
   let totalCount = 0;

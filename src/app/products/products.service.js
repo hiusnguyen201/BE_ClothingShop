@@ -69,23 +69,14 @@ export async function getAndCountProductsService(filters, skip, limit, sortBy, s
     })
     .populate({
       path: 'productOptions',
-      populate: [
-        { path: 'option', options: { lean: true }, select: '_id name' },
-        { path: 'optionValues', options: { lean: true }, select: '_id valueName' },
-      ],
+      populate: [{ path: 'option' }, { path: 'optionValues' }],
     })
     .populate({
       path: 'productVariants',
       populate: {
         path: 'variantValues',
-        populate: [
-          { path: 'option', options: { lean: true }, select: '_id name' },
-          { path: 'optionValue', options: { lean: true }, select: '_id valueName' },
-        ],
-        options: { lean: true },
-        select: '_id option optionValue',
+        populate: [{ path: 'option' }, { path: 'optionValue' }],
       },
-      select: '_id price product quantity sku variantValues',
     })
     .lean();
 

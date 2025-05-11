@@ -67,7 +67,12 @@ export const getAllCustomersController = async (req) => {
     $or: CUSTOMER_SEARCH_FIELDS.map((field) => ({
       [field]: { $regex: adapter.keyword, $options: 'i' },
     })),
-    ...(adapter.gender ? { gender: adapter.gender } : {}),
+    ...(adapter.gender && { gender: adapter.gender }),
+    ...(adapter.status && {
+      verifiedAt: {
+        ...(adapter.status === 'active' ? { $ne: null } : { $eq: null }),
+      },
+    }),
   };
 
   let [totalCountCached, customersCached] = await getTotalCountAndListCustomerFromCache({ ...adapter, ...filters });

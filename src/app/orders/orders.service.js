@@ -112,19 +112,6 @@ export async function countAllOrdersService(filters) {
  * @returns
  */
 export async function getAndCountOrdersService(filters, skip, limit, sortBy, sortOrder) {
-  const matchStage =
-    filters.keyword === ''
-      ? { code: { $ne: null } }
-      : {
-        $expr: {
-          $regexMatch: {
-            input: { $toString: '$code' },
-            regex: filters.keyword,
-            options: 'i',
-          },
-        },
-      };
-
   const totalCountResult = await OrderModel.aggregate([
     {
       $addFields: {
@@ -133,12 +120,12 @@ export async function getAndCountOrdersService(filters, skip, limit, sortBy, sor
     },
     ...(filters.status
       ? [
-        {
-          $match: {
-            'lastStatus.status': filters.status,
+          {
+            $match: {
+              'lastStatus.status': filters.status,
+            },
           },
-        },
-      ]
+        ]
       : []),
     {
       $count: 'totalCount',
@@ -147,7 +134,7 @@ export async function getAndCountOrdersService(filters, skip, limit, sortBy, sor
 
   const orders = await OrderModel.aggregate([
     {
-      $match: matchStage,
+      $match: filters,
     },
     {
       $lookup: {
@@ -182,12 +169,12 @@ export async function getAndCountOrdersService(filters, skip, limit, sortBy, sor
     },
     ...(filters.status
       ? [
-        {
-          $match: {
-            'lastStatus.status': filters.status,
+          {
+            $match: {
+              'lastStatus.status': filters.status,
+            },
           },
-        },
-      ]
+        ]
       : []),
     {
       $unwind: {
@@ -233,12 +220,12 @@ export async function getAndCountOrdersByCustomerService(filters, skip, limit, s
       select: ORDER_DETAILS_SELECTED_FIELDS,
       populate: [
         {
-          path: "product",
+          path: 'product',
           select: PRODUCT_SELECT_FIELDS,
         },
         {
-          path: "variant",
-          select: "variantValues",
+          path: 'variant',
+          select: 'variantValues',
           populate: {
             path: 'variantValues',
             populate: [
@@ -254,8 +241,8 @@ export async function getAndCountOrdersByCustomerService(filters, skip, limit, s
               },
             ],
           },
-        }
-      ]
+        },
+      ],
     })
     .lean();
 
