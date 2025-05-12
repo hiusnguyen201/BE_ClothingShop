@@ -37,6 +37,7 @@ import {
   setProductToCache,
   setTotalCountAndListProductToCache,
 } from '#src/app/products/products-cache.service';
+import { generateProductExcelBufferService } from '#src/modules/file-handler/excel/product-excel.service';
 
 export const isExistProductNameController = async (req) => {
   const adapter = await validateSchema(CheckExistProductNameDto, req.body);
@@ -95,9 +96,41 @@ export const getAllProductsController = async (req) => {
 
   let [totalCountCached, productsCached] = await getTotalCountAndListProductFromCache({ ...adapter, ...filters });
 
-  // if (productsCached.length === 0) {
+  if (productsCached.length === 0) {
+    const skip = (adapter.page - 1) * adapter.limit;
+    const [totalCount, products] = await getAndCountProductsService(
+      filters,
+      skip,
+      adapter.limit,
+      adapter.sortBy,
+      adapter.sortOrder,
+    );
+
+    await setTotalCountAndListProductToCache(adapter, totalCount, products);
+
+    totalCountCached = totalCount;
+    productsCached = products;
+  }
+
+  const productsDto = ModelDto.newList(ProductDto, productsCached);
+  return ApiResponse.success({ totalCount: totalCountCached, list: productsDto });
+};
+
+export const exportProductsController = async (req, res) => {
+  const adapter = await validateSchema(GetListProductDto, req.query);
+
+  const filters = {
+    $or: [{ name: { $regex: adapter.keyword || '', $options: 'i' } }],
+    ...(adapter.status && { status: adapter.status }),
+    ...(adapter.categoryIds && {
+      category: {
+        $in: adapter.categoryIds,
+      },
+    }),
+  };
+
   const skip = (adapter.page - 1) * adapter.limit;
-  const [totalCount, products] = await getAndCountProductsService(
+  const [_, products] = await getAndCountProductsService(
     filters,
     skip,
     adapter.limit,
@@ -105,14 +138,11 @@ export const getAllProductsController = async (req) => {
     adapter.sortOrder,
   );
 
-  await setTotalCountAndListProductToCache(adapter, totalCount, products);
+  const { buffer, fileName, contentType } = await generateProductExcelBufferService(products);
 
-  totalCountCached = totalCount;
-  productsCached = products;
-  // }
-
-  const productsDto = ModelDto.newList(ProductDto, productsCached);
-  return ApiResponse.success({ totalCount: totalCountCached, list: productsDto });
+  res.setHeader('Content-Type', contentType);
+  res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+  res.send(buffer);
 };
 
 // ??

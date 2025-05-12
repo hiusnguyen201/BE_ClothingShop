@@ -1,23 +1,24 @@
 import Database from '#src/modules/database/init.database';
 import LogUtils from '#src/utils/log.util';
-import { insertUsersService } from '#src/app/users/users.service';
 import { saveListPermissionsService } from '#src/app/permissions/permissions.service';
-import { insertRolesService } from '#src/app/roles/roles.service';
-import { insertOptionsService, insertOptionValuesService } from '#src/app/options/options.service';
-import { insertCategoriesService } from '#src/app/categories/categories.service';
 import { TransactionalServiceWrapper } from '#src/core/transaction/TransactionalServiceWrapper';
 import { permissions } from '#src/database/data/permissions-data';
-import { options, optionValues } from '#src/database/data/options-data';
-import { categories } from '#src/database/data/categories-data';
+import { insertRolesService } from '#src/app/roles/roles.service';
 import { roles } from '#src/database/data/roles-data';
-import { users } from '#src/database/data/users-data';
-import { products, variants } from '#src/database/data/products-data';
+import { insertUsersService } from '#src/app/users/users.service';
+import { customers, users } from '#src/database/data/users-data';
+import { insertOptionsService, insertOptionValuesService } from '#src/app/options/options.service';
+import { options, optionValues } from '#src/database/data/options-data';
+import { insertCategoriesService } from '#src/app/categories/categories.service';
+import { categories } from '#src/database/data/categories-data';
 import { insertProductsService } from '#src/app/products/products.service';
 import { insertProductVariantsService } from '#src/app/product-variants/product-variants.service';
+import { products, variants } from '#src/database/data/products-data';
 import { insertOrdersService } from '#src/app/orders/orders.service';
 import { orderDetails, orders, payments } from '#src/database/data/orders-data';
 import { insertOrderDetailsService } from '#src/app/order-details/order-details.service';
 import { insertPaymentService } from '#src/app/payments/payments.service';
+import { insertCustomersService } from '#src/app/customers/customers.service';
 
 /**
  * Need fix MongoServerError: Transaction numbers are only allowed on a replica set member or mongos
@@ -58,6 +59,13 @@ async function runSeed() {
       LogUtils.info('USER', 'Start insert users');
       await insertUsersService(users, session);
       LogUtils.success('USER', 'Insert users done');
+    });
+
+    // Customers
+    await TransactionalServiceWrapper.execute(async (session) => {
+      LogUtils.info('CUSTOMER', 'Start insert customers');
+      await insertCustomersService(customers, session);
+      LogUtils.success('CUSTOMER', 'Insert customers done');
     });
 
     // Option Values

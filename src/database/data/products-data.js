@@ -36,6 +36,8 @@ Array.from({ length: 50 }).map(() => {
     status: status,
     category: category._id,
     subCategory: subCategory?._id ?? null,
+    createdAt: faker.date.past(),
+    updatedAt: faker.date.past(),
   });
 
   const numOptions = faker.number.int({ min: 2, max: 2 });

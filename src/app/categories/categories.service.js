@@ -5,42 +5,18 @@ import { makeSlug } from '#src/utils/string.util';
 import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
 import { CATEGORY_SELECTED_FIELDS } from '#src/app/categories/categories.constant';
 
-/**
- * New category instance
- * @param {object} data
- * @returns
- */
 export function newCategoryService(data) {
   return new CategoryModel({ ...data, slug: makeSlug(data.name) });
 }
 
-/**
- * Save category
- * @param {CategoryModel} categoryDoc
- * @returns
- */
 export async function saveCategoryService(categoryDoc) {
   return categoryDoc.save();
 }
 
-/**
- * Insert list category
- * @param {object} data
- * @returns
- */
 export async function insertCategoriesService(data = [], session) {
   return await CategoryModel.bulkSave(data, { session, ordered: true });
 }
 
-/**
- * Get and count categories
- * @param {object} filters
- * @param {number} skip
- * @param {number} limit
- * @param {string} sortBy
- * @param {string} sortOrder
- * @returns
- */
 export async function getAndCountCategoriesService(parentId = null, filters, skip, limit, sortBy, sortOrder) {
   const queryOptions = {
     ...extendQueryOptionsWithPagination(skip, limit),
@@ -49,7 +25,7 @@ export async function getAndCountCategoriesService(parentId = null, filters, ski
 
   // Get List
   const list = await CategoryModel.aggregate([
-    { $match: { parent: parentId } },
+    ...(parentId !== undefined ? [{ $match: { parent: parentId } }] : []),
     {
       $lookup: {
         from: 'categories',
@@ -68,7 +44,7 @@ export async function getAndCountCategoriesService(parentId = null, filters, ski
 
   // Count
   const category = await CategoryModel.aggregate([
-    { $match: { parent: parentId } },
+    ...(parentId !== undefined ? [{ $match: { parent: parentId } }] : []),
     {
       $lookup: {
         from: 'categories',
@@ -85,20 +61,10 @@ export async function getAndCountCategoriesService(parentId = null, filters, ski
   return [category.length > 0 ? category[0]?.totalCount : 0, list];
 }
 
-/**
- * Count subcategories in parent
- * @param {*} parentId
- * @returns
- */
 export async function countSubcategoriesService(parentId) {
   return CategoryModel.countDocuments({ parent: parentId });
 }
 
-/**
- * Get one category by id
- * @param {string} id
- * @returns
- */
 export async function getCategoryByIdService(id) {
   if (!id) return null;
   const filter = {};
@@ -114,12 +80,6 @@ export async function getCategoryByIdService(id) {
   return CategoryModel.findOne(filter).select(CATEGORY_SELECTED_FIELDS).lean();
 }
 
-/**
- * Update info category by id
- * @param {*} id
- * @param {*} data
- * @returns
- */
 export async function updateCategoryInfoByIdService(id, data) {
   if (data.name) {
     data.slug = makeSlug(data.name);
@@ -132,21 +92,10 @@ export async function updateCategoryInfoByIdService(id, data) {
     .lean();
 }
 
-/**
- * Remove category by id
- * @param {*} id
- * @returns
- */
 export async function removeCategoryByIdService(id) {
   return CategoryModel.findByIdAndSoftDelete(id).select('_id').lean();
 }
 
-/**
- * Check is exist category name
- * @param {*} name
- * @param {*} skipId
- * @returns
- */
 export async function checkExistCategoryNameService(name, skipId) {
   const filters = {
     $or: [

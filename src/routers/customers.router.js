@@ -6,13 +6,15 @@ import {
   getCustomerByIdController,
   updateCustomerByIdController,
   removeCustomerByIdController,
+  exportCustomersController,
 } from '#src/app/customers/customers.controller';
 import { can, isAuthorized } from '#src/middlewares/jwt-auth.middleware';
-import { CUSTOMERS_PERMISSIONS } from '#src/database/data/permissions-data';
+import { CUSTOMERS_PERMISSIONS, EXPORT_PERMISSIONS } from '#src/database/data/permissions-data';
 
 router
   .post('/create-customer', isAuthorized, can([CUSTOMERS_PERMISSIONS.CREATE_CUSTOMER.name]), createCustomerController)
   .get('/get-customers', isAuthorized, can([CUSTOMERS_PERMISSIONS.GET_CUSTOMERS.name]), getAllCustomersController)
+  .get('/export-excel', isAuthorized, can([EXPORT_PERMISSIONS.CUSTOMER_EXCEL.name]), exportCustomersController)
   .get(
     '/get-customer-by-id/:customerId',
     isAuthorized,

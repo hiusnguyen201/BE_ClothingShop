@@ -1,6 +1,7 @@
 /** @type {import('#src/app/permissions/models/permission.model')} */
 
 import { newPermissionService } from '#src/app/permissions/permissions.service';
+import { faker } from '@faker-js/faker';
 
 export const USERS_PERMISSIONS = {
   GET_USERS: {
@@ -35,7 +36,9 @@ export const USERS_PERMISSIONS = {
   },
 };
 
-export const userPermissions = Object.values(USERS_PERMISSIONS).map((per) => newPermissionService(per));
+export const userPermissions = Object.values(USERS_PERMISSIONS).map((per) =>
+  newPermissionService({ ...per, createdAt: faker.date.past(), updatedAt: faker.date.past() }),
+);
 
 export const ROLES_PERMISSIONS = {
   GET_ROLES: {
@@ -85,7 +88,9 @@ export const ROLES_PERMISSIONS = {
   },
 };
 
-export const rolePermissions = Object.values(ROLES_PERMISSIONS).map((per) => newPermissionService(per));
+export const rolePermissions = Object.values(ROLES_PERMISSIONS).map((per) =>
+  newPermissionService({ ...per, createdAt: faker.date.past(), updatedAt: faker.date.past() }),
+);
 
 export const PERMISSIONS_PERMISSIONS = {
   GET_PERMISSIONS: {
@@ -95,7 +100,9 @@ export const PERMISSIONS_PERMISSIONS = {
   },
 };
 
-export const permissionPermissions = Object.values(PERMISSIONS_PERMISSIONS).map((per) => newPermissionService(per));
+export const permissionPermissions = Object.values(PERMISSIONS_PERMISSIONS).map((per) =>
+  newPermissionService({ ...per, createdAt: faker.date.past(), updatedAt: faker.date.past() }),
+);
 
 export const CATEGORIES_PERMISSIONS = {
   GET_CATEGORIES: {
@@ -130,7 +137,9 @@ export const CATEGORIES_PERMISSIONS = {
   },
 };
 
-export const categoryPermissions = Object.values(CATEGORIES_PERMISSIONS).map((per) => newPermissionService(per));
+export const categoryPermissions = Object.values(CATEGORIES_PERMISSIONS).map((per) =>
+  newPermissionService({ ...per, createdAt: faker.date.past(), updatedAt: faker.date.past() }),
+);
 
 export const CUSTOMERS_PERMISSIONS = {
   GET_CUSTOMERS: {
@@ -160,7 +169,9 @@ export const CUSTOMERS_PERMISSIONS = {
   },
 };
 
-export const customerPermissions = Object.values(CUSTOMERS_PERMISSIONS).map((per) => newPermissionService(per));
+export const customerPermissions = Object.values(CUSTOMERS_PERMISSIONS).map((per) =>
+  newPermissionService({ ...per, createdAt: faker.date.past(), updatedAt: faker.date.past() }),
+);
 
 export const PRODUCTS_PERMISSIONS = {
   GET_PRODUCTS: {
@@ -195,7 +206,9 @@ export const PRODUCTS_PERMISSIONS = {
   },
 };
 
-export const productPermissions = Object.values(PRODUCTS_PERMISSIONS).map((per) => newPermissionService(per));
+export const productPermissions = Object.values(PRODUCTS_PERMISSIONS).map((per) =>
+  newPermissionService({ ...per, createdAt: faker.date.past(), updatedAt: faker.date.past() }),
+);
 
 export const ORDER_PERMISSIONS = {
   GET_ORDERS: {
@@ -240,7 +253,9 @@ export const ORDER_PERMISSIONS = {
   },
 };
 
-export const orderPermissions = Object.values(ORDER_PERMISSIONS).map((per) => newPermissionService(per));
+export const orderPermissions = Object.values(ORDER_PERMISSIONS).map((per) =>
+  newPermissionService({ ...per, createdAt: faker.date.past(), updatedAt: faker.date.past() }),
+);
 
 export const NOTIFICATION_PERMISSIONS = {
   NEW_CUSTOMER: {
@@ -290,7 +305,86 @@ export const NOTIFICATION_PERMISSIONS = {
   },
 };
 
-export const notificationPermissions = Object.values(NOTIFICATION_PERMISSIONS).map((per) => newPermissionService(per));
+export const notificationPermissions = Object.values(NOTIFICATION_PERMISSIONS).map((per) =>
+  newPermissionService({ ...per, createdAt: faker.date.past(), updatedAt: faker.date.past() }),
+);
+
+export const EXPORT_PERMISSIONS = {
+  USER_EXCEL: {
+    name: 'export:users:excel',
+    description: 'Export user data to Excel',
+    module: 'users',
+  },
+  USER_PDF: {
+    name: 'export:users:pdf',
+    description: 'Export user data to PDF',
+    module: 'users',
+  },
+  ROLE_EXCEL: {
+    name: 'export:roles:excel',
+    description: 'Export role data to Excel',
+    module: 'roles',
+  },
+  ROLE_PDF: {
+    name: 'export:roles:pdf',
+    description: 'Export role data to PDF',
+    module: 'roles',
+  },
+  PERMISSION_EXCEL: {
+    name: 'export:permissions:excel',
+    description: 'Export permission data to Excel',
+    module: 'permissions',
+  },
+  PERMISSION_PDF: {
+    name: 'export:permissions:pdf',
+    description: 'Export permission data to PDF',
+    module: 'permissions',
+  },
+  CATEGORY_EXCEL: {
+    name: 'export:categories:excel',
+    description: 'Export category data to Excel',
+    module: 'categories',
+  },
+  CATEGORY_PDF: {
+    name: 'export:categories:pdf',
+    description: 'Export category data to PDF',
+    module: 'categories',
+  },
+  CUSTOMER_EXCEL: {
+    name: 'export:customers:excel',
+    description: 'Export customer data to Excel',
+    module: 'customers',
+  },
+  CUSTOMER_PDF: {
+    name: 'export:customers:pdf',
+    description: 'Export customer data to PDF',
+    module: 'customers',
+  },
+  PRODUCT_EXCEL: {
+    name: 'export:products:excel',
+    description: 'Export product data to Excel',
+    module: 'products',
+  },
+  PRODUCT_PDF: {
+    name: 'export:products:pdf',
+    description: 'Export product data to PDF',
+    module: 'products',
+  },
+  ORDER_EXCEL: {
+    name: 'export:orders:excel',
+    description: 'Export order data to Excel',
+    module: 'orders',
+  },
+  ORDER_PDF: {
+    name: 'export:orders:pdf',
+    description: 'Export order data to PDF',
+    module: 'orders',
+  },
+};
+
+export const exportPermissions = Object.values(EXPORT_PERMISSIONS).map((per) =>
+  newPermissionService({ ...per, createdAt: faker.date.past(), updatedAt: faker.date.past() }),
+);
 
 export const permissions = [
   ...userPermissions,
@@ -301,4 +395,5 @@ export const permissions = [
   ...productPermissions,
   ...orderPermissions,
   ...notificationPermissions,
+  ...exportPermissions,
 ];

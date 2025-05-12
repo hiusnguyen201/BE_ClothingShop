@@ -9,10 +9,11 @@ import {
   removeCategoryByIdController,
   isExistCategoryNameController,
   getAllSubcategoriesController,
+  exportCategoriesController,
 } from '#src/app/categories/categories.controller';
 import { UploadUtils } from '#src/utils/upload.util';
 import { isAuthorized, can } from '#src/middlewares/jwt-auth.middleware';
-import { CATEGORIES_PERMISSIONS } from '#src/database/data/permissions-data';
+import { CATEGORIES_PERMISSIONS, EXPORT_PERMISSIONS } from '#src/database/data/permissions-data';
 
 router.post('/is-exist-category-name', isExistCategoryNameController);
 
@@ -25,6 +26,7 @@ router
     createCategoryController,
   )
   .get('/get-categories', isAuthorized, can([CATEGORIES_PERMISSIONS.GET_CATEGORIES.name]), getAllCategoriesController)
+  .get('/export-excel', isAuthorized, can([EXPORT_PERMISSIONS.CATEGORY_EXCEL.name]), exportCategoriesController)
   .get(
     '/get-category-by-id/:categoryId',
     isAuthorized,

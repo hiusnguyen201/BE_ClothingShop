@@ -123,11 +123,12 @@ Array.from({ length: totalOrders }).map((_, index) => {
     customer: faker.helpers.arrayElement(customers)._id,
     orderDate: orderDate,
     createdAt: orderDate,
+    updatedAt: faker.date.past(),
   });
 
   const payment = newPaymentService({
     paymentUrl: isPaid ? faker.internet.url() : null,
-    qrCodeUrl: isPaid ? faker.image.urlPlaceholder() : null,
+    qrCodeUrl: isPaid ? faker.image.url() : null,
     paymentMethod: faker.helpers.arrayElement(Object.values(ONLINE_PAYMENT_METHOD)),
     amountPaid: null,
     paidDate: isPaid ? faker.date.recent({ days: 5 }) : null,

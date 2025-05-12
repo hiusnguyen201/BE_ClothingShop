@@ -9,10 +9,11 @@ import {
   removeProductByIdController,
   isExistProductNameController,
   updateProductInfoController,
+  exportProductsController,
 } from '#src/app/products/products.controller';
 import { isAuthorized, can } from '#src/middlewares/jwt-auth.middleware';
 import { UploadUtils } from '#src/utils/upload.util';
-import { PRODUCTS_PERMISSIONS } from '#src/database/data/permissions-data';
+import { EXPORT_PERMISSIONS, PRODUCTS_PERMISSIONS } from '#src/database/data/permissions-data';
 
 router.post('/is-exist-product-name', isExistProductNameController);
 
@@ -25,6 +26,7 @@ router
     createProductController,
   )
   .get('/get-products', isAuthorized, can([PRODUCTS_PERMISSIONS.GET_PRODUCTS.name]), getAllProductsController)
+  .get('/export-excel', isAuthorized, can([EXPORT_PERMISSIONS.PRODUCT_EXCEL.name]), exportProductsController)
   .get(
     '/get-product-by-id/:productId',
     isAuthorized,

@@ -9,15 +9,17 @@ import {
   removeUserByIdController,
   checkExistEmailController,
   resetPasswordUserController,
+  exportUsersController,
 } from '#src/app/users/users.controller';
 import { isAuthorized, can } from '#src/middlewares/jwt-auth.middleware';
-import { USERS_PERMISSIONS } from '#src/database/data/permissions-data';
+import { EXPORT_PERMISSIONS, USERS_PERMISSIONS } from '#src/database/data/permissions-data';
 
 router.post('/is-exist-email', checkExistEmailController);
 
 router
   .post('/create-user', isAuthorized, can([USERS_PERMISSIONS.CREATE_USER.name]), createUserController)
   .get('/get-users', isAuthorized, can([USERS_PERMISSIONS.GET_USERS.name]), getAllUsersController)
+  .get('/export-excel', isAuthorized, can([EXPORT_PERMISSIONS.USER_EXCEL.name]), exportUsersController)
   .get('/get-user-by-id/:userId', isAuthorized, can([USERS_PERMISSIONS.GET_USER_DETAILS.name]), getUserByIdController)
   .put('/update-user-by-id/:userId', isAuthorized, can([USERS_PERMISSIONS.EDIT_USER.name]), updateUserByIdController)
   .delete(

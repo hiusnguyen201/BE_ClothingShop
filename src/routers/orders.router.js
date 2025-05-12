@@ -10,15 +10,17 @@ import {
   removeOrderController,
   processingOrderController,
   webHookUpdateOrder,
+  exportOrdersController,
 } from '#src/app/orders/orders.controller';
 import { isAuthorized, can } from '#src/middlewares/jwt-auth.middleware';
-import { ORDER_PERMISSIONS } from '#src/database/data/permissions-data';
+import { EXPORT_PERMISSIONS, ORDER_PERMISSIONS } from '#src/database/data/permissions-data';
 
 const router = express.Router();
 
 router
   .post('/create-order', isAuthorized, can([ORDER_PERMISSIONS.CREATE_ORDER.name]), createOrderController)
   .get('/get-orders', isAuthorized, can([ORDER_PERMISSIONS.GET_ORDERS.name]), getAllOrdersController)
+  .get('/export-excel', isAuthorized, can([EXPORT_PERMISSIONS.ORDER_EXCEL.name]), exportOrdersController)
   .get(
     '/get-order-by-id/:orderId',
     isAuthorized,

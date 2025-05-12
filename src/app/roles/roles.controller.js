@@ -40,6 +40,7 @@ import {
 } from '#src/app/roles/roles-cache.service';
 import { ROLE_SEARCH_FIELDS } from '#src/app/roles/roles.constant';
 import { PERMISSION_SEARCH_FIELDS } from '#src/app/permissions/permissions.constant';
+import { generateRoleExcelBufferService } from '#src/modules/file-handler/excel/role-excel.service';
 
 export const isExistRoleNameController = async (req) => {
   const adapter = await validateSchema(CheckExistRoleNameDto, req.body);
@@ -95,6 +96,24 @@ export const getAllRolesController = async (req) => {
 
   const rolesDto = ModelDto.newList(RoleDto, rolesCached);
   return ApiResponse.success({ totalCount: totalCountCached, list: rolesDto }, 'Get all roles successful');
+};
+
+export const exportRolesController = async (req, res) => {
+  const adapter = await validateSchema(GetListRoleDto, req.query);
+
+  const filters = {
+    $or: ROLE_SEARCH_FIELDS.map((field) => ({
+      [field]: { $regex: adapter.keyword, $options: 'i' },
+    })),
+  };
+  const skip = (adapter.page - 1) * adapter.limit;
+  const [_, roles] = await getAndCountRolesService(filters, skip, adapter.limit, adapter.sortBy, adapter.sortOrder);
+
+  const { buffer, fileName, contentType } = await generateRoleExcelBufferService(roles);
+
+  res.setHeader('Content-Type', contentType);
+  res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+  res.send(buffer);
 };
 
 export const getRoleByIdController = async (req) => {

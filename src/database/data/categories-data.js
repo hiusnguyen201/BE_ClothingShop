@@ -53,10 +53,15 @@ const CATEGORIES_DATA = [
 
 const categories = [];
 CATEGORIES_DATA.map((parent) => {
-  const newParent = newCategoryService(parent);
+  const newParent = newCategoryService({ ...parent, createdAt: faker.date.past(), updatedAt: faker.date.past() });
   categories.push(newParent);
   parent.subcategories.map((child) => {
-    const newChild = newCategoryService({ ...child, parent: newParent._id });
+    const newChild = newCategoryService({
+      ...child,
+      parent: newParent._id,
+      createdAt: faker.date.past(),
+      updatedAt: faker.date.past(),
+    });
     categories.push(newChild);
   });
 });

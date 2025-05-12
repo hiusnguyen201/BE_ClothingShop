@@ -27,6 +27,7 @@ import {
   setTotalCountAndListCustomerToCache,
 } from '#src/app/customers/customers-cache.service';
 import { CUSTOMER_SEARCH_FIELDS } from '#src/app/customers/customers.constant';
+import { generateCustomerExcelBufferService } from '#src/modules/file-handler/excel/customer-excel.service';
 
 export const createCustomerController = async (req) => {
   const adapter = await validateSchema(CreateCustomerDto, req.body);
@@ -95,6 +96,37 @@ export const getAllCustomersController = async (req) => {
 
   const customersDto = ModelDto.newList(CustomerDto, customersCached);
   return ApiResponse.success({ totalCount: totalCountCached, list: customersDto }, 'Get all customers successful');
+};
+
+export const exportCustomersController = async (req, res) => {
+  const adapter = await validateSchema(GetListCustomerDto, req.query);
+
+  const filters = {
+    $or: CUSTOMER_SEARCH_FIELDS.map((field) => ({
+      [field]: { $regex: adapter.keyword, $options: 'i' },
+    })),
+    ...(adapter.gender && { gender: adapter.gender }),
+    ...(adapter.status && {
+      verifiedAt: {
+        ...(adapter.status === 'active' ? { $ne: null } : { $eq: null }),
+      },
+    }),
+  };
+
+  const skip = (adapter.page - 1) * adapter.limit;
+  const [_, customers] = await getAndCountCustomersService(
+    filters,
+    skip,
+    adapter.limit,
+    adapter.sortBy,
+    adapter.sortOrder,
+  );
+
+  const { buffer, fileName, contentType } = await generateCustomerExcelBufferService(customers);
+
+  res.setHeader('Content-Type', contentType);
+  res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+  res.send(buffer);
 };
 
 export const getCustomerByIdController = async (req) => {

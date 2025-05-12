@@ -9,6 +9,7 @@ import {
   getTotalCountAndListPermissionFromCache,
   setTotalCountAndListPermissionToCache,
 } from '#src/app/permissions/permissions-cache.service';
+import { generatePermissionExcelBufferService } from '#src/modules/file-handler/excel/permission-excel.service';
 
 export const getAllPermissionsController = async (req) => {
   const adapter = await validateSchema(GetListPermissionDto, req.query);
@@ -39,4 +40,29 @@ export const getAllPermissionsController = async (req) => {
 
   const permissionDto = ModelDto.newList(PermissionDto, permissionsCached);
   return ApiResponse.success({ totalCount: totalCountCached, list: permissionDto }, 'Get all permissions successful');
+};
+
+export const exportPermissionsController = async (req, res) => {
+  const adapter = await validateSchema(GetListPermissionDto, req.query);
+
+  const filters = {
+    $or: PERMISSION_SEARCH_FIELDS.map((field) => ({
+      [field]: { $regex: adapter.keyword, $options: 'i' },
+    })),
+  };
+
+  const skip = (adapter.page - 1) * adapter.limit;
+  const [_, permissions] = await getAndCountPermissionsService(
+    filters,
+    skip,
+    adapter.limit,
+    adapter.sortBy,
+    adapter.sortOrder,
+  );
+
+  const { buffer, fileName, contentType } = await generatePermissionExcelBufferService(permissions);
+
+  res.setHeader('Content-Type', contentType);
+  res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+  res.send(buffer);
 };

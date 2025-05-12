@@ -29,6 +29,7 @@ import {
   getTotalCountAndListUserFromCache,
   setTotalCountAndListUserToCache,
 } from '#src/app/users/users-cache.service';
+import { generateUserExcelBufferService } from '#src/modules/file-handler/excel/user-excel.service';
 
 export const checkExistEmailController = async (req) => {
   const adapter = await validateSchema(CheckExistEmailDto, req.body);
@@ -104,6 +105,32 @@ export const getAllUsersController = async (req) => {
 
   const usersDto = ModelDto.newList(UserDto, users);
   return ApiResponse.success({ totalCount: totalCount, list: usersDto }, 'Get list user successful');
+};
+
+export const exportUsersController = async (req, res) => {
+  const adapter = await validateSchema(GetListUserDto, req.query);
+
+  const filters = {
+    $or: USER_SEARCH_FIELDS.map((field) => ({
+      [field]: { $regex: adapter.keyword, $options: 'i' },
+    })),
+    ...(adapter.gender && { gender: adapter.gender }),
+    ...(adapter.roleId && { role: adapter.roleId }),
+    ...(adapter.status && {
+      verifiedAt: {
+        ...(adapter.status === 'active' ? { $ne: null } : { $eq: null }),
+      },
+    }),
+  };
+
+  const skip = (adapter.page - 1) * adapter.limit;
+  const [_, users] = await getAndCountUsersService(filters, skip, adapter.limit, adapter.sortBy, adapter.sortOrder);
+
+  const { buffer, fileName, contentType } = await generateUserExcelBufferService(users);
+
+  res.setHeader('Content-Type', contentType);
+  res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+  res.send(buffer);
 };
 
 export const getUserByIdController = async (req) => {

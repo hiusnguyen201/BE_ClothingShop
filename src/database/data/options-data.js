@@ -2,6 +2,7 @@
 /** @type {import('#src/app/options/models/option-value.model')} */
 
 import { newOptionService, newOptionValueService } from '#src/app/options/options.service';
+import { faker } from '@faker-js/faker';
 
 const colors = [
   'Red',
@@ -21,12 +22,20 @@ const colors = [
 const sizes = ['S', 'M', 'L', 'XL', 'XXL'];
 
 export const colorValuesInstance = colors.map((item) => {
-  const newValue = newOptionValueService({ valueName: item });
+  const newValue = newOptionValueService({
+    valueName: item,
+    createdAt: faker.date.past(),
+    updatedAt: faker.date.past(),
+  });
   return newValue;
 });
 
 export const sizeValuesInstance = sizes.map((item) => {
-  const newValue = newOptionValueService({ valueName: item });
+  const newValue = newOptionValueService({
+    valueName: item,
+    createdAt: faker.date.past(),
+    updatedAt: faker.date.past(),
+  });
   return newValue;
 });
 
@@ -43,7 +52,7 @@ const OPTIONS_DATA = [
 
 const optionValues = [...colorValuesInstance, ...sizeValuesInstance];
 const options = OPTIONS_DATA.map((opt) => {
-  const newOption = newOptionService(opt);
+  const newOption = newOptionService({ ...opt, createdAt: faker.date.past(), updatedAt: faker.date.past() });
   return newOption;
 });
 

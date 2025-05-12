@@ -29,6 +29,7 @@ import {
   setCategoryToCache,
   setTotalCountAndListCategoryToCache,
 } from '#src/app/categories/categories-cache.service';
+import { generateCategoryExcelBufferService } from '#src/modules/file-handler/excel/category-excel.service';
 
 export const isExistCategoryNameController = async (req) => {
   const adapter = await validateSchema(CheckExistCategoryNameDto, req.body);
@@ -108,6 +109,35 @@ export const getAllCategoriesController = async (req) => {
 
   const categoriesDto = ModelDto.newList(CategoryDto, categoriesCached);
   return ApiResponse.success({ totalCount: totalCountCached, list: categoriesDto }, 'Get all categories successful');
+};
+
+export const exportCategoriesController = async (req, res) => {
+  const adapter = await validateSchema(GetListCategoryDto, req.query);
+
+  const filters = {
+    $or: CATEGORY_SEARCH_FIELDS.map((field) => ({
+      [field]: { $regex: adapter.keyword, $options: 'i' },
+    })),
+  };
+
+  const skip = (adapter.page - 1) * adapter.limit;
+  const [_, categories] = await getAndCountCategoriesService(
+    undefined,
+    filters,
+    skip,
+    adapter.limit,
+    adapter.sortBy,
+    adapter.sortOrder,
+  );
+
+  const { buffer, fileName, contentType } = await generateCategoryExcelBufferService([
+    ...categories,
+    ...categories.flatMap((item) => item.children),
+  ]);
+
+  res.setHeader('Content-Type', contentType);
+  res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+  res.send(buffer);
 };
 
 export const getCategoryByIdController = async (req) => {

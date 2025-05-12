@@ -16,12 +16,12 @@ import paymentsRouter from '#src/routers/payments.router';
 import shippingAddressRouter from '#src/routers/shipping-address.router';
 import cartsRouter from '#src/routers/carts.router';
 import divisionsRouter from '#src/routers/divisions.router';
+import { isAuthorizedAndIsCustomer } from '#src/middlewares/jwt-auth.middleware';
 import { getAllProductsByCustomerController, getProductByIdController } from '#src/app/products/products.controller';
 import {
   getAllCategoriesByCustomerController,
   getCategoryByIdController,
 } from '#src/app/categories/categories.controller';
-import { isAuthorizedAndIsCustomer } from '#src/middlewares/jwt-auth.middleware';
 import { getAllOrdersByCustomerController, getOrderByIdController } from '#src/app/orders/orders.controller';
 import {
   changePasswordController,

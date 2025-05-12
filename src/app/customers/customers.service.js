@@ -3,6 +3,7 @@ import { UserModel } from '#src/app/users/models/user.model';
 import { USER_SELECTED_FIELDS, USER_TYPE } from '#src/app/users/users.constant';
 import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
 import { isValidObjectId } from 'mongoose';
+import { genSaltSync, hashSync } from 'bcrypt';
 
 export async function getTodayCustomerReportService() {
   const startOfToday = moment().startOf('day').toDate();
@@ -62,6 +63,38 @@ export async function getTodayCustomerReportService() {
     yesterdayTotalNewCustomers: yesterdayStats[0]?.totalNew || 0,
     percentage: totalNewPercentage.toFixed(1),
   };
+}
+
+/**
+ * New customer service
+ * @param {*} data
+ * @returns
+ */
+export function newCustomerService(data) {
+  const salt = genSaltSync();
+  data.password = hashSync(data.password, salt);
+  return new UserModel(data);
+}
+
+/**
+ * Create customer
+ * @param {*} data
+ * @returns
+ */
+export async function createCustomerService(data) {
+  const salt = genSaltSync();
+  data.password = hashSync(data.password, salt);
+  const customer = await UserModel.create(data);
+  return customer.toJSON();
+}
+
+/**
+ * Insert customers service
+ * @param {*} data
+ * @returns
+ */
+export async function insertCustomersService(data = [], session) {
+  return await UserModel.bulkSave(data, { session, ordered: true });
 }
 
 /**

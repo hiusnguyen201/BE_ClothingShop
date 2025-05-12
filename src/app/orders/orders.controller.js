@@ -60,6 +60,7 @@ import {
   setOrderToCache,
   setTotalCountAndListOrderToCache,
 } from '#src/app/orders/orders-cache.service';
+import { generateOrderExcelBufferService } from '#src/modules/file-handler/excel/order-excel.service';
 
 export async function createOrderController(req) {
   const adapter = await validateSchema(CreateOrderDto, req.body);
@@ -151,25 +152,58 @@ export async function getAllOrdersController(req) {
 
   let [totalCountCached, ordersCached] = await getTotalCountAndListOrderFromCache({ ...adapter, ...filters });
 
-  // if (ordersCached.length === 0) {
-  const skip = (adapter.page - 1) * adapter.limit;
-  const [totalCount, orders] = await getAndCountOrdersService(
-    filters,
-    skip,
-    adapter.limit,
-    adapter.sortBy,
-    adapter.sortOrder,
-  );
+  if (ordersCached.length === 0) {
+    const skip = (adapter.page - 1) * adapter.limit;
+    const [totalCount, orders] = await getAndCountOrdersService(
+      filters,
+      skip,
+      adapter.limit,
+      adapter.sortBy,
+      adapter.sortOrder,
+    );
 
-  await setTotalCountAndListOrderToCache(adapter, totalCount, orders);
+    await setTotalCountAndListOrderToCache(adapter, totalCount, orders);
 
-  totalCountCached = totalCount;
-  ordersCached = orders;
-  // }
+    totalCountCached = totalCount;
+    ordersCached = orders;
+  }
 
   const ordersDto = ModelDto.newList(OrderDto, ordersCached);
   return ApiResponse.success({ totalCount: totalCountCached, list: ordersDto });
 }
+
+export const exportOrdersController = async (req, res) => {
+  const adapter = await validateSchema(GetListOrderDto, req.query);
+
+  const filters = {
+    ...(adapter.customerId && { customerId: adapter.customerId }),
+    ...(adapter.status && { status: adapter.status }),
+    ...((adapter.minTotal || adapter.maxTotal) && {
+      total: {
+        ...(adapter.minTotal && { $gte: adapter.minTotal }),
+        ...(adapter.maxTotal && { $lte: adapter.maxTotal }),
+      },
+    }),
+    ...(adapter.keyword && {
+      $expr: {
+        $regexMatch: {
+          input: { $toString: '$code' },
+          regex: adapter.keyword,
+          options: 'i',
+        },
+      },
+    }),
+  };
+
+  const skip = (adapter.page - 1) * adapter.limit;
+  const [_, orders] = await getAndCountOrdersService(filters, skip, adapter.limit, adapter.sortBy, adapter.sortOrder);
+
+  const { buffer, fileName, contentType } = await generateOrderExcelBufferService(orders);
+
+  res.setHeader('Content-Type', contentType);
+  res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+  res.send(buffer);
+};
 
 // ??
 export async function getAllOrdersByCustomerController(req) {

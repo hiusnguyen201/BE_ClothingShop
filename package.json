@@ -27,7 +27,7 @@
     "refresh-db:prod": "npm run drop-db:prod && npm run initialize-db:prod && npm run seed-db:prod"
   },
   "dependencies": {
-    "@faker-js/faker": "^9.3.0",
+    "@faker-js/faker": "^9.7.0",
     "@types/express": "^5.0.1",
     "@types/node": "^22.15.3",
     "axios": "^1.8.3",
@@ -42,6 +42,7 @@
     "dotenv": "^16.4.5",
     "envalid": "^8.0.0",
     "escape-string-regexp": "^4.0.0",
+    "exceljs": "^4.4.0",
     "express": "^4.21.1",
     "express-rate-limit": "^7.4.1",
     "helmet": "^8.0.0",

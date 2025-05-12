@@ -12,15 +12,17 @@ import {
   addRolePermissionsController,
   removeRolePermissionController,
   getUnassignedRolePermissionsController,
+  exportRolesController,
 } from '#src/app/roles/roles.controller';
 import { isAuthorized, can } from '#src/middlewares/jwt-auth.middleware';
-import { ROLES_PERMISSIONS } from '#src/database/data/permissions-data';
+import { EXPORT_PERMISSIONS, ROLES_PERMISSIONS } from '#src/database/data/permissions-data';
 
 router.post('/is-exist-role-name', isExistRoleNameController);
 
 router
   .post('/create-role', isAuthorized, can([ROLES_PERMISSIONS.CREATE_ROLE.name]), createRoleController)
   .get('/get-roles', isAuthorized, can([ROLES_PERMISSIONS.GET_ROLES.name]), getAllRolesController)
+  .get('/export-excel', isAuthorized, can([EXPORT_PERMISSIONS.ROLE_EXCEL.name]), exportRolesController)
   .get('/get-role-by-id/:roleId', isAuthorized, can([ROLES_PERMISSIONS.GET_ROLE_DETAILS.name]), getRoleByIdController)
   .put('/update-role-by-id/:roleId', isAuthorized, can([ROLES_PERMISSIONS.EDIT_ROLE.name]), updateRoleByIdController)
   .delete(
