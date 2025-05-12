@@ -138,17 +138,15 @@ export async function getAllOrdersController(req) {
         ...(adapter.maxTotal && { $lte: adapter.maxTotal }),
       },
     }),
-    ...(adapter.keyword === ''
-      ? { code: { $ne: null } }
-      : {
-          $expr: {
-            $regexMatch: {
-              input: { $toString: '$code' },
-              regex: adapter.keyword,
-              options: 'i',
-            },
-          },
-        }),
+    ...(adapter.keyword && {
+      $expr: {
+        $regexMatch: {
+          input: { $toString: '$code' },
+          regex: adapter.keyword,
+          options: 'i',
+        },
+      },
+    }),
   };
 
   let [totalCountCached, ordersCached] = await getTotalCountAndListOrderFromCache({ ...adapter, ...filters });

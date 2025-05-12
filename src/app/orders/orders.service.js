@@ -112,17 +112,23 @@ export async function countAllOrdersService(filters) {
  * @returns
  */
 export async function getAndCountOrdersService(filters, skip, limit, sortBy, sortOrder) {
+  const statusStage = filters.status;
+  delete filters.status;
+
   const totalCountResult = await OrderModel.aggregate([
+    {
+      $match: filters,
+    },
     {
       $addFields: {
         lastStatus: { $arrayElemAt: ['$orderStatusHistory', -1] },
       },
     },
-    ...(filters.status
+    ...(statusStage
       ? [
           {
             $match: {
-              'lastStatus.status': filters.status,
+              'lastStatus.status': statusStage,
             },
           },
         ]
@@ -167,11 +173,11 @@ export async function getAndCountOrdersService(filters, skip, limit, sortBy, sor
         lastStatus: { $arrayElemAt: ['$orderStatusHistory', -1] },
       },
     },
-    ...(filters.status
+    ...(statusStage
       ? [
           {
             $match: {
-              'lastStatus.status': filters.status,
+              'lastStatus.status': statusStage,
             },
           },
         ]
