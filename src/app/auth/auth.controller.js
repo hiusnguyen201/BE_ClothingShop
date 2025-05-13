@@ -41,6 +41,7 @@ import { ForgotPasswordDto, ResetPasswordDto } from '#src/app/auth/dtos/forgot-p
 import { deleteUserFromCache } from '#src/app/users/users-cache.service';
 import { notifyClientsOfNewCustomer } from '#src/app/notifications/notifications.service';
 import { getCustomerForgotPasswordByEmailService } from '#src/app/customers/customers.service';
+import { DiscordService } from '#src/modules/discord/discord.service';
 
 export const logoutController = async (req, res) => {
   const userId = req.user.id;
@@ -93,6 +94,12 @@ export const loginAdminController = async (req, res) => {
     });
 
     setSession(res, { accessToken, refreshToken });
+
+    await DiscordService.sendActivityTestAccount({
+      ip: req.ipv4,
+      userAgent: req.headers['user-agent'],
+      timestamp: new Date(),
+    });
 
     const userDto = ModelDto.new(UserDto, user);
     return ApiResponse.success(
