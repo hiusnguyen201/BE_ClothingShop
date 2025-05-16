@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createRoleService } from '#src/app/roles/roles.service';
+import { createRoleService } from '#src/app/roles/roles.repository';
 
 /** @type {import('#src/app/roles/models/role.model')} */
 

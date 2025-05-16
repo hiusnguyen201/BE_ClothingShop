@@ -5,7 +5,7 @@ import { OrderDetailModel } from '#src/app/order-details/models/order-details.mo
  * @param {*} data
  * @returns
  */
-export function newOrderDetailService(data) {
+export function newOrderDetailRepository(data) {
   return new OrderDetailModel(data);
 }
 
@@ -14,7 +14,7 @@ export function newOrderDetailService(data) {
  * @param {object} data
  * @returns
  */
-export async function insertOrderDetailsService(data, session) {
+export async function insertOrderDetailsRepository(data, session) {
   return await OrderDetailModel.bulkSave(data, { session, ordered: true });
 }
 
@@ -23,7 +23,7 @@ export async function insertOrderDetailsService(data, session) {
  * @param {*} data
  * @returns
  */
-export const createOrderDetailService = async (data) => {
+export const createOrderDetailRepository = async (data) => {
   return await OrderDetailModel.create(data);
 };
 
@@ -32,7 +32,7 @@ export const createOrderDetailService = async (data) => {
  * @param {*} data
  * @returns
  */
-export const saveOrderItemsService = async (data, session) => {
+export const saveOrderItemsRepository = async (data, session) => {
   return await OrderDetailModel.insertMany(data, { session, ordered: true });
 };
 
@@ -41,7 +41,7 @@ export const saveOrderItemsService = async (data, session) => {
  * @param {*} order
  * @returns
  */
-export const getListOrderDetailsByOrderIdService = async (orderId) => {
+export const getListOrderDetailsByOrderIdRepository = async (orderId) => {
   return await OrderDetailModel.find({ order: orderId })
     .populate({
       path: 'variant',
@@ -64,7 +64,7 @@ export const getListOrderDetailsByOrderIdService = async (orderId) => {
  * @param {*} order
  * @returns
  */
-export const getOrderDetailsByOrderIdService = async (orderId) => {
+export const getOrderDetailsByOrderIdRepository = async (orderId) => {
   return await OrderDetailModel.find({ order: orderId }).populate({
     path: 'variant',
     model: 'Product_Variant',
@@ -77,7 +77,7 @@ export const getOrderDetailsByOrderIdService = async (orderId) => {
  * @param {*} session
  * @returns
  */
-export const removeOrderDetailByOrderIdService = async (orderId, session) => {
+export const removeOrderDetailByOrderIdRepository = async (orderId, session) => {
   return await OrderDetailModel.deleteMany(
     {
       order: orderId,

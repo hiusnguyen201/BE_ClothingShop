@@ -1,9 +1,8 @@
 import { HttpException } from '#src/core/exception/http-exception';
-import { checkUserHasPermissionService, getProfileByIdService, getUserByIdService } from '#src/app/users/users.service';
+import { checkUserHasPermissionRepository, getProfileByIdRepository } from '#src/app/users/users.repository';
 import { USER_TYPE } from '#src/app/users/users.constant';
-import { verifyTokenService } from '#src/app/auth/auth.service';
 import { Code } from '#src/core/code/Code';
-import { ACCESS_TOKEN_KEY } from '#src/utils/cookie.util';
+import { ACCESS_TOKEN_KEY, verifyToken } from '#src/utils/session.util';
 
 export async function authorized(req, res, next) {
   const accessToken = req.cookies[ACCESS_TOKEN_KEY];
@@ -11,12 +10,12 @@ export async function authorized(req, res, next) {
     return next(HttpException.new({ code: Code.TOKEN_REQUIRED }));
   }
 
-  const decoded = await verifyTokenService(accessToken);
+  const decoded = await verifyToken(accessToken);
   if (!decoded) {
     return next(HttpException.new({ code: Code.INVALID_TOKEN }));
   }
 
-  const user = await getProfileByIdService(decoded?.id);
+  const user = await getProfileByIdRepository(decoded?.id);
   if (!user) {
     return next(HttpException.new({ code: Code.INVALID_TOKEN }));
   }
@@ -40,7 +39,7 @@ export function can(permissions = []) {
       return next(HttpException.new({ code: Code.ACCESS_DENIED }));
     }
 
-    const hasPermission = await checkUserHasPermissionService(req.user.id, permissions);
+    const hasPermission = await checkUserHasPermissionRepository(req.user.id, permissions);
 
     return hasPermission ? next() : next(HttpException.new({ code: Code.ACCESS_DENIED }));
   };

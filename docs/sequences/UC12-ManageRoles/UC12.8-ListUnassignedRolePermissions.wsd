@@ -30,7 +30,7 @@ break
 break
 
 group Business Logic Flow
-    RolesController -> RolesService: getRoleByIdService(roleId)
+    RolesController -> RolesService: getRoleByIdOrFailService(roleId)
     activate RolesService
     
     RolesService -> RoleModel: findOne(filter)
@@ -58,7 +58,7 @@ group Business Logic Flow
     RolesService -->> RolesController: return role
     deactivate RolesService
 
-    RolesController -> RolesService: getUnassignedRolePermissionsService(roleId, filters)
+    RolesController -> RolesService: getAvailablePermissionsForRoleService(roleId, filters)
     activate RolesService
     RolesService -> RoleModel: aggregate
     activate RoleModel

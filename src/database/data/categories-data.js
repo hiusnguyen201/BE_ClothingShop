@@ -1,6 +1,6 @@
 /** @type {import('#src/app/categories/models/category.model')} */
 
-import { newCategoryService } from '#src/app/categories/categories.service';
+import { newCategoryRepository } from '#src/app/categories/categories.repository';
 import { faker } from '@faker-js/faker';
 
 const CATEGORIES_DATA = [
@@ -53,10 +53,10 @@ const CATEGORIES_DATA = [
 
 const categories = [];
 CATEGORIES_DATA.map((parent) => {
-  const newParent = newCategoryService({ ...parent, createdAt: faker.date.past(), updatedAt: faker.date.past() });
+  const newParent = newCategoryRepository({ ...parent, createdAt: faker.date.past(), updatedAt: faker.date.past() });
   categories.push(newParent);
   parent.subcategories.map((child) => {
-    const newChild = newCategoryService({
+    const newChild = newCategoryRepository({
       ...child,
       parent: newParent._id,
       createdAt: faker.date.past(),

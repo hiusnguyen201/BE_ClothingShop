@@ -1,91 +1,40 @@
-import { isValidObjectId } from 'mongoose';
-import { PermissionModel } from '#src/app/permissions/models/permission.model';
-import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
-import { PERMISSION_SELECTED_FIELDS } from '#src/app/permissions/permissions.constant';
+import { getAndCountPermissionsRepository } from '#src/app/permissions/permissions.repository';
+import { PERMISSION_SEARCH_FIELDS } from '#src/app/permissions/permissions.constant';
+import { getPermissionsFromCache, setPermissionsToCache } from '#src/app/permissions/permissions.cache';
 
 /**
- * New permission instance
- * @param {*} data
- * @returns
+ * @typedef {import("#src/app/permissions/models/permission.model").PermissionModel} PermissionModel
+ * @typedef {import("#src/app/permissions/dtos/get-list-permission.dto").GetListPermissionDto} GetListPermissionPort
  */
-export function newPermissionService(data) {
-  return new PermissionModel(data);
-}
-
-/**
- * Save list permission
- * @param {*} data
- * @returns
- */
-export async function saveListPermissionsService(data = [], session) {
-  return await PermissionModel.bulkSave(data, { session, ordered: true });
-}
-
-/**
- * Get and count permissions
- * @param {object} filters
- * @param {number} skip
- * @param {number} limit
- * @param {string} sortBy
- * @param {string} sortOrder
- * @returns
- */
-export async function getAndCountPermissionsService(filters, skip, limit, sortBy, sortOrder) {
-  const totalCount = await PermissionModel.countDocuments(filters);
-
-  const queryOptions = {
-    ...extendQueryOptionsWithPagination(skip, limit),
-    ...extendQueryOptionsWithSort(sortBy, sortOrder),
-  };
-
-  const list = await PermissionModel.find(filters, PERMISSION_SELECTED_FIELDS, queryOptions).lean();
-
-  return [totalCount, list];
-}
 
 /**
  * Get permissions
- * @param {object} filters
- * @param {number} skip
- * @param {number} limit
- * @param {string} sortBy
- * @param {string} sortOrder
- * @returns
+ * @param {GetListPermissionPort} payload
+ * @returns {Promise<[number, PermissionModel[]]>}
  */
-export async function getPermissionsService(filters, skip, limit, sortBy, sortOrder) {
-  const queryOptions = {
-    ...extendQueryOptionsWithPagination(skip, limit),
-    ...extendQueryOptionsWithSort(sortBy, sortOrder),
+export const getAllPermissionsService = async (payload) => {
+  const filters = {
+    $or: PERMISSION_SEARCH_FIELDS.map((field) => ({
+      [field]: { $regex: payload.keyword, $options: 'i' },
+    })),
   };
 
-  const list = await PermissionModel.find(filters, PERMISSION_SELECTED_FIELDS, queryOptions).lean();
+  const cached = await getPermissionsFromCache(payload);
 
-  return list;
-}
-
-/**
- * Get permission by id
- * @param {*} id
- * @returns
- */
-export async function getPermissionByIdService(id) {
-  if (!id) return null;
-  const filter = {};
-
-  if (isValidObjectId(id)) {
-    filter._id = id;
-  } else {
-    filter.name = id;
+  if (cached && Array.isArray(cached) && cached.length === 2 && cached[0] > 0) {
+    return cached;
   }
 
-  return PermissionModel.findOne(filter).lean();
-}
+  const skip = (payload.page - 1) * payload.limit;
+  const [totalCount, permissions] = await getAndCountPermissionsRepository(
+    filters,
+    skip,
+    payload.limit,
+    payload.sortBy,
+    payload.sortOrder,
+  );
 
-/**
- * Create permission
- * @param {*} id
- * @returns
- */
-export async function createPermissionService(data) {
-  return PermissionModel.create(data);
-}
+  await setPermissionsToCache(payload, totalCount, permissions);
+
+  return [totalCount, permissions];
+};

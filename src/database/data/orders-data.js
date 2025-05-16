@@ -3,13 +3,13 @@
 /** @type {import('#src/app/payments/models/payments.model')} */
 
 import pkg from 'vietnam-provinces';
-import { newOrderService } from '#src/app/orders/orders.service';
+import { newOrderRepository } from '#src/app/orders/orders.repository';
 import { faker } from '@faker-js/faker';
 import { ORDER_STATUS } from '#src/app/orders/orders.constant';
 import { generateVietnamPhoneNumber, customers } from '#src/database/data/users-data';
 import { variants } from '#src/database/data/products-data';
-import { newOrderDetailService } from '#src/app/order-details/order-details.service';
-import { newPaymentService } from '#src/app/payments/payments.service';
+import { newOrderDetailRepository } from '#src/app/order-details/order-details.repository';
+import { newPaymentRepository } from '#src/app/payments/payments.repository';
 import { ONLINE_PAYMENT_METHOD, PAYMENT_STATUS } from '#src/app/payments/payments.constant';
 const { provinces, getDistricts, getWards } = pkg;
 
@@ -110,7 +110,7 @@ Array.from({ length: totalOrders }).map((_, index) => {
   const ward = faker.helpers.arrayElement(getWards(district.district_code));
   const orderDate = faker.date.recent({ days: 10 });
 
-  const order = newOrderService({
+  const order = newOrderRepository({
     provinceName: province.name,
     districtName: district.name,
     wardName: ward.name,
@@ -126,7 +126,7 @@ Array.from({ length: totalOrders }).map((_, index) => {
     updatedAt: faker.date.past(),
   });
 
-  const payment = newPaymentService({
+  const payment = newPaymentRepository({
     paymentUrl: isPaid ? faker.internet.url() : null,
     qrCodeUrl: isPaid ? faker.image.url() : null,
     paymentMethod: faker.helpers.arrayElement(Object.values(ONLINE_PAYMENT_METHOD)),
@@ -142,7 +142,7 @@ Array.from({ length: totalOrders }).map((_, index) => {
   const orderItems = Array.from({ length: Math.ceil(Math.random() * 2) }).map((_, index) => {
     const quantity = faker.number.int({ min: 1, max: 2 });
     const randomVariant = faker.helpers.arrayElement(variants);
-    const newDetail = newOrderDetailService({
+    const newDetail = newOrderDetailRepository({
       quantity,
       unitPrice: randomVariant.price,
       totalPrice: quantity * randomVariant.price,

@@ -2,6 +2,14 @@ import Joi from 'joi';
 import { replaceMultiSpacesToSingleSpace } from '#src/utils/string.util';
 import escapeStringRegexp from 'escape-string-regexp';
 
+/**
+ * @typedef {Object} GetListRoleDto
+ * @property {string} [keyword]
+ * @property {number} [page]
+ * @property {number} [limit]
+ * @property {string} [sortBy]
+ * @property {string} [sortOrder]
+ */
 export const GetListRoleDto = Joi.object({
   keyword: Joi.string()
     .default('')

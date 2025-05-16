@@ -1,166 +1,185 @@
-import moment from 'moment-timezone';
-import { UserModel } from '#src/app/users/models/user.model';
-import { USER_SELECTED_FIELDS, USER_TYPE } from '#src/app/users/users.constant';
-import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
-import { isValidObjectId } from 'mongoose';
-import { genSaltSync, hashSync } from 'bcrypt';
+import {
+  countAllCustomersRepository,
+  countNewCustomerByDateRangeRepository,
+  createCustomerRepository,
+  getAndCountCustomersRepository,
+  getCustomerByIdRepository,
+  removeCustomerByIdRepository,
+  updateCustomerInfoByIdRepository,
+} from '#src/app/customers/customers.repository';
+import { Assert } from '#src/core/assert/Assert';
+import { HttpException } from '#src/core/exception/http-exception';
+import { getDateComparisonRange } from '#src/app/report/report.util';
+import { checkExistEmailRepository } from '#src/app/users/users.repository';
+import { randomStr } from '#src/utils/string.util';
+import { sendPasswordService } from '#src/modules/mailer/mailer.service';
+import {
+  deleteCustomerFromCache,
+  getCustomersFromCache,
+  setCustomersToCache,
+  getCustomerFromCache,
+  setCustomerToCache,
+} from '#src/app/customers/customers.cache';
+import { CUSTOMER_SEARCH_FIELDS } from '#src/app/customers/customers.constant';
+import { Code } from '#src/core/code/Code';
+import { notifyClientsOfNewCustomer } from '#src/app/notifications/notifications.service';
 
-export async function getTodayCustomerReportService() {
-  const startOfToday = moment().startOf('day').toDate();
-  const endOfToday = moment().endOf('day').toDate();
+/**
+ * @typedef {import ("#src/app/report/dtos/get-customer-report.dto").GetCustomerReportDto} GetCustomerReportPort
+ * @typedef {import ("#src/app/customers/dtos/create-customer.dto").CreateCustomerDto} CreateCustomerPort
+ * @typedef {import ("#src/app/customers/dtos/get-list-customer.dto").GetListCustomerDto} GetListCustomerPort
+ * @typedef {import ("#src/app/customers/dtos/get-customer.dto").GetCustomerDto} GetCustomerPort
+ * @typedef {import ("#src/app/customers/dtos/update-customer.dto").UpdateCustomerDto} UpdateCustomerPort
+ */
 
-  const startOfYesterday = moment().subtract(1, 'day').startOf('day').toDate();
-  const endOfYesterday = moment().subtract(1, 'day').endOf('day').toDate();
+/**
+ * Create customer
+ * @param {CreateCustomerPort} payload
+ * @returns {Promise<UserModel>}
+ */
+export const createCustomerService = async (payload) => {
+  const isExistEmail = await checkExistEmailRepository(payload.email);
+  Assert.isFalse(
+    isExistEmail,
+    HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Email already exist' }),
+  );
 
-  const todayStats = await UserModel.aggregate([
-    {
-      $match: {
-        type: USER_TYPE.CUSTOMER,
-        createdAt: {
-          $gte: startOfToday,
-          $lt: endOfToday,
-        },
-      },
-    },
-    {
-      $group: {
-        _id: null,
-        totalNew: { $sum: 1 },
-      },
-    },
-  ]);
-
-  const yesterdayStats = await UserModel.aggregate([
-    {
-      $match: {
-        type: USER_TYPE.CUSTOMER,
-        createdAt: {
-          $gte: startOfYesterday,
-          $lt: endOfYesterday,
-        },
-      },
-    },
-    {
-      $group: {
-        _id: null,
-        totalNew: { $sum: 1 },
-      },
-    },
-  ]);
-
-  const totalCustomerOverall = await UserModel.countDocuments({
-    type: USER_TYPE.CUSTOMER,
+  const password = randomStr(32);
+  const customer = await createCustomerRepository({
+    ...payload,
+    password,
   });
 
-  const totalNewPercentage =
-    todayStats[0]?.totalNew && yesterdayStats[0]?.totalNew
-      ? ((todayStats[0].totalNew - yesterdayStats[0].totalNew) / yesterdayStats[0].totalNew) * 100
+  sendPasswordService(payload.email, password);
+
+  // Clear cache
+  await deleteCustomerFromCache(customer._id);
+
+  // Notify to client
+  await notifyClientsOfNewCustomer({
+    customerId: customer._id,
+    name: customer.name,
+    email: customer.email,
+  });
+
+  return customer;
+};
+
+/**
+ * Get all customers
+ * @param {GetListCustomerPort} payload
+ * @returns
+ */
+export const getAllCustomersService = async (payload) => {
+  const filters = {
+    $or: CUSTOMER_SEARCH_FIELDS.map((field) => ({
+      [field]: { $regex: payload.keyword, $options: 'i' },
+    })),
+    ...(payload.gender && { gender: payload.gender }),
+    ...(payload.status && {
+      verifiedAt: {
+        ...(payload.status === 'active' ? { $ne: null } : { $eq: null }),
+      },
+    }),
+  };
+
+  const cached = await getCustomersFromCache(payload);
+  if (cached && Array.isArray(cached) && cached.length === 2 && cached[0] > 0) {
+    return cached;
+  }
+
+  const skip = (payload.page - 1) * payload.limit;
+  const [totalCount, customers] = await getAndCountCustomersRepository(
+    filters,
+    skip,
+    payload.limit,
+    payload.sortBy,
+    payload.sortOrder,
+  );
+
+  await setCustomersToCache(payload, totalCount, customers);
+
+  return [totalCount, customers];
+};
+
+/**
+ * Get customer
+ * @param {GetCustomerPort} payload
+ * @returns {Promise<UserModel>}
+ */
+export const getCustomerByIdOrFailService = async (payload) => {
+  const cached = await getCustomerFromCache(payload.customerId);
+  if (cached) return cached;
+
+  const customer = await getCustomerByIdRepository(payload.customerId);
+  Assert.isTrue(customer, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Customer not found' }));
+
+  await setCustomerToCache(payload.customerId, customer);
+
+  return customer;
+};
+
+/**
+ * Update customer by id
+ * @param {UpdateCustomerPort} payload
+ * @returns {Promise<UserModel>}
+ */
+export const updateCustomerByIdOrFailService = async (payload) => {
+  const customer = await getCustomerByIdRepository(payload.customerId);
+  Assert.isTrue(customer, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Customer not found' }));
+
+  const isExistEmail = await checkExistEmailRepository(payload.email, customer._id);
+  Assert.isFalse(
+    isExistEmail,
+    HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Email already exist' }),
+  );
+
+  const updatedCustomer = await updateCustomerInfoByIdRepository(customer._id, { ...payload, role: payload.roleId });
+
+  // Clear cache
+  await deleteCustomerFromCache(customer._id);
+
+  return updatedCustomer;
+};
+
+/**
+ * Remove customer
+ * @param {GetCustomerPort} payload
+ * @returns {Promise<{id: string}>}
+ */
+export const removeCustomerByIdOrFailService = async (payload) => {
+  const customer = await getCustomerByIdRepository(payload.customerId);
+  Assert.isTrue(customer, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Customer not found' }));
+
+  await removeCustomerByIdRepository(customer._id);
+
+  // Clear cache
+  await deleteCustomerFromCache(customer._id);
+
+  return { id: customer._id };
+};
+
+/**
+ * Get customer report by date range
+ * @param {GetCustomerReportDto} payload
+ * @returns
+ */
+export async function getCustomerReportByDateRangeService(payload) {
+  const { current, previous } = getDateComparisonRange(payload.compareTo);
+
+  const currentCountNewCustomer = await countNewCustomerByDateRangeRepository(current.start, current.end);
+  const previousCountNewCustomer = await countNewCustomerByDateRangeRepository(previous.start, previous.end);
+  const totalCustomerOverall = await countAllCustomersRepository();
+
+  const percentage =
+    currentCountNewCustomer && previousCountNewCustomer
+      ? ((currentCountNewCustomer - previousCountNewCustomer) / previousCountNewCustomer) * 100
       : 0;
 
   return {
     totalCustomerOverall,
-    todayTotalNewCustomers: todayStats[0]?.totalNew || 0,
-    yesterdayTotalNewCustomers: yesterdayStats[0]?.totalNew || 0,
-    percentage: totalNewPercentage.toFixed(1),
+    currentCountNewCustomer,
+    previousCountNewCustomer,
+    percentage: percentage.toFixed(1),
   };
-}
-
-/**
- * New customer service
- * @param {*} data
- * @returns
- */
-export function newCustomerService(data) {
-  const salt = genSaltSync();
-  data.password = hashSync(data.password, salt);
-  return new UserModel(data);
-}
-
-/**
- * Create customer
- * @param {*} data
- * @returns
- */
-export async function createCustomerService(data) {
-  const salt = genSaltSync();
-  data.password = hashSync(data.password, salt);
-  const customer = await UserModel.create(data);
-  return customer.toJSON();
-}
-
-/**
- * Insert customers service
- * @param {*} data
- * @returns
- */
-export async function insertCustomersService(data = [], session) {
-  return await UserModel.bulkSave(data, { session, ordered: true });
-}
-
-/**
- * Get customer by id
- * @param {string} id
- * @returns
- */
-export async function getCustomerByIdService(id) {
-  const filters = {
-    type: USER_TYPE.CUSTOMER,
-  };
-
-  if (isValidObjectId(id)) {
-    filters._id = id;
-  } else {
-    return null;
-  }
-
-  return UserModel.findOne(filters).select(USER_SELECTED_FIELDS).lean();
-}
-
-/**
- * Get customer forgot password by email
- * @param {string} email
- * @param {*} extras
- * @returns
- */
-export async function getCustomerForgotPasswordByEmailService(email) {
-  if (!email) return null;
-
-  const filters = {
-    type: USER_TYPE.CUSTOMER,
-  };
-
-  if (email.match(REGEX_PATTERNS.EMAIL)) {
-    filters.email = email;
-  } else {
-    return null;
-  }
-
-  return UserModel.findOne(filters).select(USER_SELECTED_FIELDS).lean();
-}
-
-/**
- * Get and count customers
- * @param {object} filters
- * @param {number} skip
- * @param {number} limit
- * @param {string} sortBy
- * @param {string} sortOrder
- * @returns
- */
-export async function getAndCountCustomersService(filters, skip, limit, sortBy, sortOrder) {
-  const extraFilters = {
-    ...filters,
-    type: USER_TYPE.CUSTOMER,
-  };
-
-  const totalCount = await UserModel.countDocuments(extraFilters);
-
-  const queryOptions = {
-    ...extendQueryOptionsWithPagination(skip, limit),
-    ...extendQueryOptionsWithSort(sortBy, sortOrder),
-  };
-
-  const list = await UserModel.find(extraFilters, USER_SELECTED_FIELDS, queryOptions).lean();
-
-  return [totalCount, list];
 }

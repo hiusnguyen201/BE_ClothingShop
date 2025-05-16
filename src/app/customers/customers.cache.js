@@ -10,8 +10,11 @@ export async function getCustomerFromCache(customerId) {
   return cached ? cached : null;
 }
 
-export async function getTotalCountAndListCustomerFromCache(filters) {
-  const key = CacheKey.newPaginationKey(CUSTOMER_CACHE_KEY_PREFIX.LIST_CUSTOMER, filters);
+export async function getCustomersFromCache(filters) {
+  const key = CacheKey.newPaginationKey(CUSTOMER_CACHE_KEY_PREFIX.LIST_CUSTOMER, {
+    ...filters,
+    type: USER_TYPE.CUSTOMER,
+  });
   const cached = await redisClient.get(key);
   return cached ?? [0, []];
 }
@@ -21,7 +24,7 @@ export async function setCustomerToCache(customerId, userData) {
   await redisClient.set(key, userData);
 }
 
-export async function setTotalCountAndListCustomerToCache(filters, totalCount, listData) {
+export async function setCustomersToCache(filters, totalCount, listData) {
   const key = CacheKey.newPaginationKey(CUSTOMER_CACHE_KEY_PREFIX.LIST_CUSTOMER, {
     ...filters,
     type: USER_TYPE.CUSTOMER,

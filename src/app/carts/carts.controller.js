@@ -7,7 +7,7 @@ import {
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { HttpException } from '#src/core/exception/http-exception';
-import { getProductVariantByIdService } from '#src/app/product-variants/product-variants.service';
+import { getProductVariantByIdRepository } from '#src/app/product-variants/product-variants.repository';
 import { Code } from '#src/core/code/Code';
 import { CartDto } from '#src/app/carts/dtos/cart.dto';
 import { validateSchema } from '#src/core/validations/request.validation';
@@ -17,7 +17,7 @@ import { RemoveFromCartDto } from '#src/app/carts/dtos/remove-from-cart.dto';
 export const addToCartController = async (req) => {
   const adapter = await validateSchema(AddToCartDto, req.body);
 
-  const productVariant = await getProductVariantByIdService(adapter.productVariantId);
+  const productVariant = await getProductVariantByIdRepository(adapter.productVariantId);
   if (!productVariant) {
     throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product variant not found' });
   }
@@ -44,7 +44,10 @@ export const getCartController = async (req) => {
   const carts = await getCartService(req.user.id);
   const cartPopulate = await Promise.all(
     carts.map(async (cart) => {
-      const productVariant = await getProductVariantByIdService(cart.productVariantId, "price product quantity sku sold variantValues");
+      const productVariant = await getProductVariantByIdRepository(
+        cart.productVariantId,
+        'price product quantity sku sold variantValues',
+      );
       return {
         productVariant: productVariant,
         quantity: cart.quantity,

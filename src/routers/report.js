@@ -1,17 +1,19 @@
 import express from 'express';
 const router = express.Router();
 import {
-  getTodayCustomerReportController,
-  getTodayOrderReportController,
-  getTodayRevenueReportController,
-  getTodaySalesController,
+  getCustomerReportController,
+  getOrderReportController,
+  getRevenueReportController,
   getTopProductVariantsController,
+  getSalesReportController,
+  getRecentOrdersController,
 } from '#src/app/report/report.controller';
 
-router.get('/customers/today', getTodayCustomerReportController);
-router.get('/orders/today', getTodayOrderReportController);
-router.get('/revenue/today', getTodayRevenueReportController);
+router.get('/customers', getCustomerReportController);
+router.get('/orders', getOrderReportController);
+router.get('/orders/recent', getRecentOrdersController);
+router.get('/revenue', getRevenueReportController);
 router.get('/products/top-sale', getTopProductVariantsController);
-router.get('/sales/today', getTodaySalesController);
+router.get('/sales', getSalesReportController);
 
 export default router;

@@ -1,6 +1,12 @@
 import Joi from 'joi';
 import { replaceMultiSpacesToSingleSpace } from '#src/utils/string.util';
 
+/**
+ * @typedef {Object} UpdateRoleDto
+ * @property {string} roleId
+ * @property {string} name
+ * @property {string} description
+ */
 export const UpdateRoleDto = Joi.object({
   roleId: Joi.string().required(),
   name: Joi.string()

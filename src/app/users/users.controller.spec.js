@@ -10,8 +10,8 @@ import {
   getUserFromCache,
   setTotalCountAndListUserToCache,
   setUserToCache,
-} from '#src/app/users/users-cache.service';
-import { getUserByEmailService } from '#src/app/users/users.service';
+} from '#src/app/users/users.cache';
+import { getUserByEmailRepository } from '#src/app/users/users.repository';
 import { REGEX_PATTERNS } from '#src/core/constant';
 
 export const expectUserData = (data) => {
@@ -217,7 +217,7 @@ describe('User API Endpoints', () => {
         expectSuccess(response);
         expectUserData(response.body.data);
         // Verify user was saved in database with hashed password
-        const savedUser = await getUserByEmailService(dataCreateUser.email, 'password');
+        const savedUser = await getUserByEmailRepository(dataCreateUser.email, 'password');
         expect(savedUser).not.toBeNull();
         expect(savedUser.password).toMatch(REGEX_PATTERNS.HASH_STRING);
         // Verify email service was called to send password
@@ -236,7 +236,7 @@ describe('User API Endpoints', () => {
         expectSuccess(response);
         expectUserData(response.body.data);
         // Verify user was saved in database with hashed password
-        const savedUser = await getUserByEmailService(dataCreateUser.email, 'password role');
+        const savedUser = await getUserByEmailRepository(dataCreateUser.email, 'password role');
         expect(savedUser).not.toBeNull();
         expect(savedUser.password).toMatch(REGEX_PATTERNS.HASH_STRING);
         expect(savedUser.role).toEqual(user.role);

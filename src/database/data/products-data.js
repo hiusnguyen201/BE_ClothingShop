@@ -2,10 +2,10 @@
 
 import { faker } from '@faker-js/faker';
 import { categories } from '#src/database/data/categories-data';
-import { options, optionValues } from '#src/database/data/options-data';
+import { options } from '#src/database/data/options-data';
 import { PRODUCT_STATUS } from '#src/app/products/products.constant';
-import { newProductVariantsService } from '#src/app/product-variants/product-variants.service';
-import { newProductService } from '#src/app/products/products.service';
+import { newProductVariantsRepository } from '#src/app/product-variants/product-variants.repository';
+import { newProductRepository } from '#src/app/products/products.repository';
 
 const cartesianProduct = (arrays) => {
   return arrays.reduce(
@@ -29,7 +29,7 @@ Array.from({ length: 50 }).map(() => {
   const subCategory = subCategoryOptions.length > 0 ? faker.helpers.arrayElement(subCategoryOptions) : null;
   const status = faker.helpers.arrayElement(Object.values(PRODUCT_STATUS));
 
-  const newProduct = newProductService({
+  const newProduct = newProductRepository({
     thumbnail: faker.image.urlPicsumPhotos(),
     name: name.slice(0, 150),
     description: generateHtmlDescription(),
@@ -68,7 +68,7 @@ Array.from({ length: 50 }).map(() => {
     const sku = faker.string.alphanumeric(10).toUpperCase();
     const quantity = faker.number.int({ min: 0, max: 100 });
 
-    const newVariant = newProductVariantsService({
+    const newVariant = newProductVariantsRepository({
       sku,
       price: price * 1000,
       quantity,

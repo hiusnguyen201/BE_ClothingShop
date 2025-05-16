@@ -34,7 +34,7 @@ break
 
 group Business Logic Flow
     activate RolesController
-    RolesController -> RolesService: getRoleByIdService(roleId)
+    RolesController -> RolesService: getRoleByIdOrFailService(roleId)
     activate RolesService
 
     RolesService -> RoleModel: findOne(filter)

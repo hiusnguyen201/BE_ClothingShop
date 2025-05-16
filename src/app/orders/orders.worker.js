@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { createWorker, createQueue, createQueueEvents } from '#src/modules/bullmq/queue-manager';
-import { createOrderControllerLogic } from '#src/app/orders/orders.controller';
+import { createOrderLogicService } from '#src/app/orders/orders.service';
 
 export const ORDER_QUEUE_NAME = 'ORDER_QUEUE';
 
@@ -17,4 +17,4 @@ export async function createOrderJob(data) {
   });
 }
 
-createWorker(ORDER_QUEUE_NAME, createOrderControllerLogic);
+createWorker(ORDER_QUEUE_NAME, createOrderLogicService);

@@ -1,21 +1,27 @@
 import { Redis } from 'ioredis';
-import { DiscordService } from '#src/modules/discord/discord.service';
 
 const redisClient = new Redis({
   host: process.env.REDIS_HOST,
   port: process.env.REDIS_PORT,
   username: process.env.REDIS_USERNAME,
   password: process.env.REDIS_PASSWORD,
-  keepAlive: 10000,
+  lazyConnect: true,
+  enableReadyCheck: true,
+  maxRetriesPerRequest: null,
+  retryStrategy: (retries) => Math.min(retries * 100, 2000),
+  reconnectOnError: (err) => {
+    const targetError = 'READONLY';
+    if (err.message.includes(targetError)) {
+      return true;
+    }
+    return false;
+  },
 });
 
 redisClient.on('connect', () => console.log('Connected to Redis'));
 
-redisClient.on('error', (err) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.log(err);
-  }
-  DiscordService.sendError(err);
+redisClient.on('error', async (err) => {
+  console.log('Closed Redis connection');
 });
 
 export async function get(key) {
@@ -23,8 +29,8 @@ export async function get(key) {
   return cached ? JSON.parse(cached) : null;
 }
 
-export async function set(key, data) {
-  await redisClient.set(key, JSON.stringify(data));
+export async function set(key, data, ttlInSeconds = 300) {
+  await redisClient.set(key, JSON.stringify(data), 'EX', ttlInSeconds);
 }
 
 export async function del(keysOrPatterns = []) {

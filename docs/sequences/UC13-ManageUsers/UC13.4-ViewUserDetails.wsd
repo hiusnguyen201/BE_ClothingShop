@@ -79,7 +79,7 @@ group Authentication Flow
     deactivate jsonwebtoken
     AuthService -->> JwtAuthMiddleware: return data decoded
     deactivate AuthService
-    JwtAuthMiddleware -> UsersService: getUserByIdService(decoded.id)
+    JwtAuthMiddleware -> UsersService: getUserByIdOrFailService(decoded.id)
     activate UsersService
     UsersService -> UserModel: findOne(filters)
     activate UserModel
@@ -170,7 +170,7 @@ group Business Logic Flow
     RequestValidation -> UsersController: getUserByIdController
     deactivate RequestValidation
     activate UsersController
-    UsersController -> UsersService: getUserByIdService(userId)
+    UsersController -> UsersService: getUserByIdOrFailService(userId)
     activate UsersService
 
     alt userId not provided
@@ -269,7 +269,7 @@ group Validation Flow
 end
 
 group Business Logic Flow
-    UsersController -> UsersService: getUserByIdService(userId)
+    UsersController -> UsersService: getUserByIdOrFailService(userId)
     activate UsersService
 
     UsersService -> UserModel: findById(userId)

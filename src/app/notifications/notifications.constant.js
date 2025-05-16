@@ -28,3 +28,5 @@ export const USER_NOTIFICATION_SELECTED_FIELDS = {
   createdAt: true,
   updatedAt: true,
 };
+
+export const NOTIFICATION_CHANNEL = 'notification';

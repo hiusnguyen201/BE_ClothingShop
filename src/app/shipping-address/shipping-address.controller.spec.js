@@ -9,7 +9,7 @@ import {
   setShippingAddressToCache,
   setTotalCountAndListShippingAddressToCache,
   deleteShippingAddressFromCache,
-} from '#src/app/shipping-address/shipping-address-cache.service';
+} from '#src/app/shipping-address/shipping-address.cache';
 
 export const expectShippingAddressData = (data) => {
   expect(data).toMatchObject({

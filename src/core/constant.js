@@ -20,3 +20,5 @@ export const REGEX_PATTERNS = {
   STRING_NUMBER: /^\d+$/,
   HASH_STRING: /^\$2[aby]\$.{56}$/,
 };
+
+export const SORT_ORDER_VALUES = ['desc', 'asc'];

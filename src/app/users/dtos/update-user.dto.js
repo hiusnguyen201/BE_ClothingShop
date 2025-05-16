@@ -2,6 +2,15 @@ import Joi from 'joi';
 import { GENDER } from '#src/app/users/users.constant';
 import { replaceMultiSpacesToSingleSpace } from '#src/utils/string.util';
 
+/**
+ * @typedef {Object} UpdateUserDto
+ * @property {string} userId
+ * @property {string} name
+ * @property {string} email
+ * @property {string} gender
+ * @property {string} phone
+ * @property {string | null} [roleId]
+ */
 export const UpdateUserDto = Joi.object({
   userId: Joi.objectId().required(),
   name: Joi.string()

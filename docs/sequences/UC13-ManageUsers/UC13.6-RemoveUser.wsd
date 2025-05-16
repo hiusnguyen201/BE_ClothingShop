@@ -28,7 +28,7 @@ group Validation Flow
 end
 
 group Business Logic Flow
-    UsersController -> UsersService: getUserByIdService(userId)
+    UsersController -> UsersService: getUserByIdOrFailService(userId)
     activate UsersService
 
     UsersService -> UserModel: findById(userId)

@@ -70,6 +70,9 @@ export class ModelDto {
     if (!Array.isArray(data)) {
       throw HttpException.new({ code: Code.ENTITY_VALIDATION_FAILED, overrideMessage: 'Invalid parameter' });
     }
+
+    if (data.length === 0) return data;
+
     return data.map((item) => this.new(schema, item));
   }
 }

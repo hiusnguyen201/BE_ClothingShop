@@ -1,46 +1,24 @@
 import {
-  createUserService,
-  getUserByIdService,
-  checkExistEmailService,
-  updateUserVerifiedByIdService,
-  getUserByEmailService,
-  getProfileByIdService,
-} from '#src/app/users/users.service';
-import {
-  authenticateUserService,
-  createResetPasswordTokenService,
-  verifyTokenService,
-  changePasswordByIdService,
-  createUserOtpService,
-  getValidUserOtpInUserService,
-  removeUserOtpsInUserService,
   revokeTokenByUserIdService,
-  getUserByRefreshTokenService,
-  authenticateCustomerService,
+  refreshTokenService,
+  loginUserService,
+  loginCustomerService,
+  registerService,
+  forgotPasswordService,
+  resetPasswordService,
+  sendOtpViaEmailService,
+  verifyOtpService,
 } from '#src/app/auth/auth.service';
-import { HttpException } from '#src/core/exception/http-exception';
-import {
-  sendOtpCodeService,
-  sendResetPasswordRequestService,
-  sendResetPasswordSuccessService,
-  sendWelcomeEmailService,
-} from '#src/modules/mailer/mailer.service';
 import { ApiResponse } from '#src/core/api/ApiResponse';
-import { USER_TYPE } from '#src/app/users/users.constant';
-import { generateTokensService } from '#src/app/auth/auth.service';
-import { Code } from '#src/core/code/Code';
 import { UserDto } from '#src/app/users/dtos/user.dto';
 import { ModelDto } from '#src/core/dto/ModelDto';
-import { clearSession, REFRESH_TOKEN_KEY, setSession } from '#src/utils/cookie.util';
+import { clearSession, REFRESH_TOKEN_KEY, setSession } from '#src/utils/session.util';
 import { CustomerDto } from '#src/app/customers/dtos/customer.dto';
 import { validateSchema } from '#src/core/validations/request.validation';
 import { RegisterDto } from '#src/app/auth/dtos/register.dto';
 import { LoginDto } from '#src/app/auth/dtos/login.dto';
 import { VerifyOtpDto, SendOtpViaEmailDto } from '#src/app/auth/dtos/two-factor.dto';
 import { ForgotPasswordDto, ResetPasswordDto } from '#src/app/auth/dtos/forgot-password.dto';
-import { deleteUserFromCache } from '#src/app/users/users-cache.service';
-import { notifyClientsOfNewCustomer } from '#src/app/notifications/notifications.service';
-import { getCustomerForgotPasswordByEmailService } from '#src/app/customers/customers.service';
 import { DiscordService } from '#src/modules/discord/discord.service';
 
 export const logoutController = async (req, res) => {
@@ -50,72 +28,39 @@ export const logoutController = async (req, res) => {
 
   clearSession(res);
 
-  return ApiResponse.success(null);
+  return ApiResponse.success(null, 'Logout successful');
 };
 
 export const refreshTokenController = async (req, res) => {
   const currentRefreshToken = req.cookies[REFRESH_TOKEN_KEY];
 
-  if (!currentRefreshToken) {
-    throw HttpException.new({ code: Code.REFRESH_TOKEN_FAILED, message: 'No refresh token provided' });
-  }
-
-  const user = await getUserByRefreshTokenService(currentRefreshToken);
-  if (!user) {
-    throw HttpException.new({ code: Code.REFRESH_TOKEN_FAILED, message: 'Invalid refresh token' });
-  }
-
-  const { accessToken, refreshToken } = await generateTokensService(user._id, {
-    id: user._id,
-    type: user.type,
-  });
+  const { accessToken, refreshToken } = await refreshTokenService(currentRefreshToken);
 
   setSession(res, { accessToken, refreshToken });
 
-  const userDto = ModelDto.new(UserDto, user);
-  return ApiResponse.success(userDto, 'Refresh token successful');
+  return ApiResponse.success(null, 'Refresh token successful');
 };
 
 export const loginAdminController = async (req, res) => {
   const adapter = await validateSchema(LoginDto, req.body);
 
-  const user = await authenticateUserService(adapter.email, adapter.password);
-  if (!user) {
-    throw HttpException.new({ code: Code.UNAUTHORIZED, overrideMessage: 'Invalid Credentials' });
-  }
+  const { isAuthenticated, is2FactorRequired, tokens, user } = await loginUserService(adapter.email, adapter.password);
 
-  const userDto = ModelDto.new(UserDto, user);
-
-  // Skip verify if account is test
-  if (user.email === 'test@gmail.com') {
-    const { accessToken, refreshToken } = await generateTokensService(user._id, {
-      id: user._id,
-      type: user.type,
-    });
-
-    setSession(res, { accessToken, refreshToken });
+  if (tokens) {
+    setSession(res, tokens);
 
     await DiscordService.sendActivityTestAccount({
       ip: req.ipv4,
       userAgent: req.headers['user-agent'],
       timestamp: new Date(),
     });
-
-    const userDto = ModelDto.new(UserDto, user);
-    return ApiResponse.success(
-      {
-        isAuthenticated: true,
-        is2FactorRequired: false,
-        user: userDto,
-      },
-      'Login successful',
-    );
   }
 
+  const userDto = ModelDto.new(UserDto, user);
   return ApiResponse.success(
     {
-      isAuthenticated: false,
-      is2FactorRequired: true,
+      isAuthenticated,
+      is2FactorRequired,
       user: userDto,
     },
     'Login successful',
@@ -125,32 +70,20 @@ export const loginAdminController = async (req, res) => {
 export const loginCustomerController = async (req, res) => {
   const adapter = await validateSchema(LoginDto, req.body);
 
-  const customer = await authenticateCustomerService(adapter.email, adapter.password);
-  if (!customer) {
-    throw HttpException.new({ code: Code.UNAUTHORIZED, overrideMessage: 'Invalid Credentials' });
+  const { isAuthenticated, is2FactorRequired, tokens, customer } = await loginCustomerService(
+    adapter.email,
+    adapter.password,
+  );
+
+  if (tokens) {
+    setSession(res, tokens);
   }
 
   const customerDto = ModelDto.new(CustomerDto, customer);
-  const isNeed2Fa = !customer.verifiedAt;
-  if (isNeed2Fa) {
-    return ApiResponse.success({
-      isAuthenticated: false,
-      is2FactorRequired: true,
-      user: customerDto,
-    });
-  }
-
-  const { accessToken, refreshToken } = await generateTokensService(customer._id, {
-    id: customer._id,
-    type: customer.type,
-  });
-
-  setSession(res, { accessToken, refreshToken });
-
   return ApiResponse.success(
     {
-      isAuthenticated: true,
-      is2FactorRequired: false,
+      isAuthenticated,
+      is2FactorRequired,
       user: customerDto,
     },
     'Login successful',
@@ -160,28 +93,12 @@ export const loginCustomerController = async (req, res) => {
 export const registerController = async (req) => {
   const adapter = await validateSchema(RegisterDto, req.body);
 
-  const isExistEmail = await checkExistEmailService(adapter.email);
-  if (isExistEmail) {
-    throw HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Email already exist' });
-  }
-
-  const customer = await createUserService({
-    ...adapter,
-    type: USER_TYPE.CUSTOMER,
-  });
+  const { isAuthenticated, is2FactorRequired, customer } = await registerService(adapter);
 
   const customerDto = ModelDto.new(CustomerDto, customer);
-
-  // Notify to client
-  await notifyClientsOfNewCustomer({
-    customerId: customerDto.id,
-    name: customerDto.name,
-    email: customerDto.email,
-  });
-
   return ApiResponse.success({
-    isAuthenticated: false,
-    is2FactorRequired: true,
+    isAuthenticated,
+    is2FactorRequired,
     user: customerDto,
   });
 };
@@ -189,18 +106,7 @@ export const registerController = async (req) => {
 export const forgotPasswordController = async (req) => {
   const adapter = await validateSchema(ForgotPasswordDto, req.body);
 
-  const user = await getCustomerForgotPasswordByEmailService(adapter.email);
-  if (!user) {
-    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Email is not exist' });
-  }
-
-  const token = createResetPasswordTokenService({ id: user._id });
-
-  const resetURL = adapter.callbackUrl + '/' + token;
-  const result = await sendResetPasswordRequestService(user.email, resetURL);
-  if (!result) {
-    throw HttpException.new({ code: Code.SEND_MAIL_ERROR, overrideMessage: 'Send link reset password failed' });
-  }
+  await forgotPasswordService(adapter);
 
   return ApiResponse.success(null, 'Required Forgot Password Success');
 };
@@ -208,14 +114,7 @@ export const forgotPasswordController = async (req) => {
 export const resetPasswordController = async (req) => {
   const adapter = await validateSchema(ResetPasswordDto, req.params);
 
-  const decoded = await verifyTokenService(adapter.token);
-  if (!decoded) {
-    throw HttpException.new({ code: Code.UNAUTHORIZED, overrideMessage: 'Invalid or expired token' });
-  }
-
-  const updatedUser = await changePasswordByIdService(decoded.id, adapter.password);
-
-  sendResetPasswordSuccessService(updatedUser.email);
+  await resetPasswordService(adapter);
 
   return ApiResponse.success(null, 'Reset password successful');
 };
@@ -223,19 +122,7 @@ export const resetPasswordController = async (req) => {
 export const sendOtpViaEmailController = async (req) => {
   const adapter = await validateSchema(SendOtpViaEmailDto, req.body);
 
-  const user = await getUserByEmailService(adapter.email);
-  if (!user) {
-    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'User not found' });
-  }
-
-  // Remove all otp in user
-  await removeUserOtpsInUserService(user._id);
-
-  const userOtp = await createUserOtpService(user._id);
-  const result = await sendOtpCodeService(user.email, userOtp.otp);
-  if (!result) {
-    throw HttpException.new({ code: Code.SEND_MAIL_ERROR, overrideMessage: 'Send OTP failed' });
-  }
+  await sendOtpViaEmailService(adapter);
 
   return ApiResponse.success(null, 'Send otp via email successful');
 };
@@ -243,40 +130,15 @@ export const sendOtpViaEmailController = async (req) => {
 export const verifyOtpController = async (req, res) => {
   const adapter = await validateSchema(VerifyOtpDto, req.body);
 
-  const user = await getProfileByIdService(adapter.userId);
-  if (!user) {
-    throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'User not found' });
-  }
+  const { isAuthenticated, is2FactorRequired, user, tokens } = await verifyOtpService(adapter);
 
-  const userOtp = await getValidUserOtpInUserService(user._id, adapter.otp);
-  if (!userOtp) {
-    throw HttpException.new({ code: Code.UNAUTHORIZED, overrideMessage: 'Invalid or expired otp' });
-  }
-
-  if (!user.verifiedAt) {
-    await updateUserVerifiedByIdService(user._id);
-
-    // Clear cache
-    await deleteUserFromCache(user._id);
-
-    sendWelcomeEmailService(user.email, user.name);
-  }
-
-  // Otp valid then remove it
-  await removeUserOtpsInUserService(user._id);
-
-  const { accessToken, refreshToken } = await generateTokensService(user._id, {
-    id: user._id,
-    type: user.type,
-  });
-
-  setSession(res, { accessToken, refreshToken });
+  setSession(res, tokens);
 
   const userDto = ModelDto.new(UserDto, user);
   return ApiResponse.success(
     {
-      isAuthenticated: true,
-      is2FactorRequired: false,
+      isAuthenticated,
+      is2FactorRequired,
       user: userDto,
     },
     'Verify otp successful',

@@ -41,3 +41,22 @@ export const ORDER_CACHE_KEY_PREFIX = {
 };
 
 export const ORDER_SEARCH_FIELDS = ['code'];
+
+export const VALID_ORDER_STATUS_WEBHOOK = [
+  'picking',
+  'money_collect_picking',
+  'picked',
+  'storing',
+  'transporting',
+  'lost',
+  'damage',
+  'delivering',
+  'money_collect_delivering',
+  'delivered',
+  'cancel',
+  'delivery_fail',
+  'return',
+  'return_fail',
+  'returned',
+  'exception',
+];

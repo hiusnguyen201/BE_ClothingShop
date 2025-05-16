@@ -10,7 +10,7 @@ export async function getCategoryFromCache(categoryId) {
   return cached ? cached : null;
 }
 
-export async function getTotalCountAndListCategoryFromCache(filters) {
+export async function getCategoriesFromCache(filters) {
   const key = CacheKey.newPaginationKey(CATEGORY_CACHE_KEY_PREFIX.LIST_CATEGORY, filters);
   const cached = await redisClient.get(key);
   return cached ?? [0, []];
@@ -21,7 +21,7 @@ export async function setCategoryToCache(categoryId, userData) {
   await redisClient.set(key, userData);
 }
 
-export async function setTotalCountAndListCategoryToCache(filters, totalCount, listData) {
+export async function setCategoriesToCache(filters, totalCount, listData) {
   const key = CacheKey.newPaginationKey(CATEGORY_CACHE_KEY_PREFIX.LIST_CATEGORY, {
     ...filters,
     type: USER_TYPE.CATEGORY,

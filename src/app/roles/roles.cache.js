@@ -9,7 +9,7 @@ export async function getRoleFromCache(roleId) {
   return cached ? cached : null;
 }
 
-export async function getTotalCountAndListRoleFromCache(filters) {
+export async function getRolesFromCache(filters) {
   const key = CacheKey.newPaginationKey(ROLE_CACHE_KEY_PREFIX.LIST_ROLE, filters);
   const cached = await redisClient.get(key);
   return cached ?? [0, []];
@@ -20,7 +20,7 @@ export async function setRoleToCache(roleId, roleData) {
   await redisClient.set(key, roleData);
 }
 
-export async function setTotalCountAndListRoleToCache(filters, totalCount, listData) {
+export async function setRolesToCache(filters, totalCount, listData) {
   const key = CacheKey.newPaginationKey(ROLE_CACHE_KEY_PREFIX.LIST_ROLE, filters);
   await redisClient.set(key, [totalCount, listData]);
 }

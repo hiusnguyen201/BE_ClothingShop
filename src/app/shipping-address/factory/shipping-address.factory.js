@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createShippingAddressService } from '#src/app/shipping-address/shipping-address.service';
+import { createShippingAddressRepository } from '#src/app/shipping-address/shipping-address.repository';
 
 /** @type {import('#src/app/shipping-address/models/shipping-address.model')} */
 
@@ -25,7 +25,7 @@ class ShippingAddressFactory {
   }
 
   async createShippingAddress() {
-    return createShippingAddressService(this.default);
+    return createShippingAddressRepository(this.default);
   }
 }
 

@@ -1,6 +1,6 @@
 import Database from '#src/modules/database/init.database';
 import LogUtils from '#src/utils/log.util';
-import { getPermissionsService, saveListPermissionsService } from '#src/app/permissions/permissions.service';
+import { getPermissionsService, saveListPermissionsService } from '#src/app/permissions/permissions.repository';
 import { TransactionalServiceWrapper } from '#src/core/transaction/TransactionalServiceWrapper';
 import { permissions } from '#src/database/data/permissions-data';
 

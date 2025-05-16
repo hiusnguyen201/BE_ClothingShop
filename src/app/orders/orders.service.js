@@ -1,306 +1,112 @@
-import { OrderModel } from '#src/app/orders/models/orders.model';
-import { isValidObjectId } from 'mongoose';
-import { ORDER_SELECTED_FIELDS, ORDER_STATUS } from '#src/app/orders/orders.constant';
-import { USER_SELECTED_FIELDS } from '#src/app/users/users.constant';
-import { USER_MODEL } from '#src/app/users/models/user.model';
-import { PAYMENT_MODEL } from '#src/app/payments/models/payments.model';
-import { PAYMENT_SELECTED_FIELDS } from '#src/app/payments/payments.constant';
-import { ORDER_DETAIL_MODEL } from '#src/app/order-details/models/order-details.model';
-import { PRODUCT_SELECT_FIELDS } from '#src/app/products/products.constant';
-import moment from 'moment-timezone';
-import { newDate } from '#src/utils/string.util';
-import { ORDER_DETAILS_SELECTED_FIELDS } from '#src/app/order-details/order-details.constant';
+import {
+  newOrderRepository,
+  addOrderStatusHistoryByIdRepository,
+  getAndCountOrdersRepository,
+  removeOrderByIdRepository,
+  saveOrderRepository,
+  getOrderByIdRepository,
+  calculateTotalRevenueByDateRangeRepository,
+  calculateTotalRevenueRepository,
+  getSalesByDateRangeRepository,
+  countNewOrderByDateRangeRepository,
+  countAllOrdersRepository,
+} from '#src/app/orders/orders.repository';
+import { HttpException } from '#src/core/exception/http-exception';
+import { TransactionalServiceWrapper } from '#src/core/transaction/TransactionalServiceWrapper';
+import {
+  cancelGHNOrderService,
+  createGHNOrderService,
+  getDistrictService,
+  getProvinceService,
+  getWardService,
+} from '#src/modules/GHN/ghn.service';
+import { Code } from '#src/core/code/Code';
+import { ONLINE_PAYMENT_METHOD, PAYMENT_STATUS } from '#src/app/payments/payments.constant';
+import { LOW_STOCK_WARNING_LEVEL, ORDER_STATUS } from '#src/app/orders/orders.constant';
+import { newOrderDetailRepository, saveOrderItemsRepository } from '#src/app/order-details/order-details.repository';
+import {
+  decreaseProductVariantsQuantityByOrderRepository,
+  getProductVariantByIdRepository,
+  increaseProductVariantsQuantityByOrderRepository,
+} from '#src/app/product-variants/product-variants.repository';
+import {
+  newPaymentRepository,
+  savePaymentRepository,
+  updatePaymentByIdRepository,
+} from '#src/app/payments/payments.repository';
+import { createMomoPaymentService } from '#src/modules/online-banking/momo/momo.service';
+import { USER_TYPE } from '#src/app/users/users.constant';
+import { createOrderJob, orderQueueEvent } from '#src/app/orders/orders.worker';
+import { uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
+import { generateQRCodeBuffer } from '#src/utils/qrcode.util';
+import { checkValidAddressService } from '#src/modules/geoapify/geoapify.service';
+import {
+  notifyClientsOfCancelOrder,
+  notifyClientsOfCompleteOrder,
+  notifyClientsOfConfirmOrder,
+  notifyClientsOfLowStock,
+  notifyClientsOfNewOrder,
+  notifyClientsOfProcessingOrder,
+  notifyClientsOfReadyForPickupOrder,
+  notifyClientsOfShippingOrder,
+} from '#src/app/notifications/notifications.service';
+import { Assert } from '#src/core/assert/Assert';
+import { getCustomerByIdRepository } from '#src/app/customers/customers.repository';
+import { getDateComparisonRange, getSaleRangeByType } from '#src/app/report/report.util';
 
 /**
- * New order
- * @param {*} data
- * @returns
+ * @typedef {import("#src/app/orders/models/order.model").OrderModel} OrderModel
+ * @typedef {import("#src/app/orders/dtos/create-order.dto").CreateOrderDto} CreateOrderPort
+ * @typedef {import("#src/app/orders/dtos/get-list-order.dto").GetListOrderDto} GetListOrderPort
+ * @typedef {import("#src/app/orders/dtos/get-order.dto").GetOrderDto} GetOrderPort
  */
-export function newOrderService(data) {
-  return new OrderModel(data);
-}
-
-/**
- * Insert list order
- * @param {object} data
- * @returns
- */
-export async function insertOrdersService(data, session) {
-  return await OrderModel.bulkSave(data, { session, ordered: true });
-}
-
-/**
- * Save order
- * @param {*} data
- * @returns
- */
-export async function saveOrderService(order, session) {
-  return await order.save({ session, ordered: true });
-}
 
 /**
  * Create order
- * @param {*} data
+ * @param {CreateOrderPort} payload
  * @returns
  */
-export async function createOrdersService(data, session) {
-  return OrderModel.create(data, { session });
-}
+export async function createOrderService(payload) {
+  const customer = await getCustomerByIdRepository(payload.customerId, { type: USER_TYPE.CUSTOMER });
+  Assert.isTrue(customer, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Customer not found' }));
 
-/**
- * Find one order by id
- * @param {*} id
- * @returns
- */
-export async function getOrderByIdService(id, selectedFields = ORDER_SELECTED_FIELDS) {
-  if (!id) return null;
-  const filters = {};
+  const province = await getProvinceService(payload.provinceId);
+  Assert.isTrue(province, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Province not found' }));
 
-  if (isValidObjectId(id)) {
-    filters._id = id;
-  } else {
-    filters.code = +id;
-  }
+  const district = await getDistrictService(payload.districtId, payload.provinceId);
+  Assert.isTrue(district, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'District not found' }));
 
-  const order = await OrderModel.findOne(filters)
-    .populate({ path: 'payment', select: PAYMENT_SELECTED_FIELDS })
-    .populate({
-      path: 'orderDetails',
-      populate: [
-        {
-          path: 'variant',
-          populate: {
-            path: 'variantValues',
-            populate: [
-              { path: 'option', options: { lean: true }, select: '_id name' },
-              { path: 'optionValue', options: { lean: true }, select: '_id valueName' },
-            ],
-          },
-        },
-        ,
-        { path: 'product', select: PRODUCT_SELECT_FIELDS },
-      ],
-    })
-    .populate({ path: 'customer', select: USER_SELECTED_FIELDS })
-    .select(selectedFields)
-    .lean();
+  const ward = await getWardService(payload.wardCode, payload.districtId);
+  Assert.isTrue(ward, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Ward not found' }));
 
-  if (order) {
-    order.orderStatusHistory.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-    return order;
-  } else {
-    return null;
-  }
-}
+  const fullAddress = `${payload.address}, ${ward.WardName}, ${district.DistrictName}, ${province.ProvinceName}`;
+  const validAddress = await checkValidAddressService(fullAddress);
+  Assert.isTrue(validAddress, HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Invalid address' }));
 
-/**
- * Count all orders
- * @param {*} filters
- * @returns
- */
-export async function countAllOrdersService(filters) {
-  return OrderModel.countDocuments(filters);
-}
+  // Logic (CREATE ORDER PENDING)
+  const job = await createOrderJob({
+    customerId: customer._id,
+    customerName: payload.customerName,
+    customerEmail: payload.customerEmail,
+    customerPhone: payload.customerPhone,
+    provinceName: province.ProvinceName,
+    districtName: district.DistrictName,
+    wardName: ward.WardName,
+    address: payload.address,
+    productVariants: payload.productVariants,
+    paymentMethod: payload.paymentMethod,
+    baseUrl: payload.baseUrl,
+  });
 
-/**
- * Get and count orders
- * @param {object} filters
- * @param {number} skip
- * @param {number} limit
- * @param {string} sortBy
- * @param {string} sortOrder
- * @returns
- */
-export async function getAndCountOrdersService(filters, skip, limit, sortBy, sortOrder) {
-  const statusStage = filters.status;
-  delete filters.status;
+  const order = await job.waitUntilFinished(orderQueueEvent);
 
-  const totalCountResult = await OrderModel.aggregate([
-    {
-      $match: filters,
-    },
-    {
-      $addFields: {
-        lastStatus: { $arrayElemAt: ['$orderStatusHistory', -1] },
-      },
-    },
-    ...(statusStage
-      ? [
-          {
-            $match: {
-              'lastStatus.status': statusStage,
-            },
-          },
-        ]
-      : []),
-    {
-      $count: 'totalCount',
-    },
-  ]);
-
-  const orders = await OrderModel.aggregate([
-    {
-      $match: filters,
-    },
-    {
-      $lookup: {
-        from: ORDER_DETAIL_MODEL,
-        localField: 'orderDetails',
-        foreignField: '_id',
-        as: 'orderDetails',
-      },
-    },
-    {
-      $lookup: {
-        from: USER_MODEL,
-        localField: 'customer',
-        foreignField: '_id',
-        as: 'customer',
-        pipeline: [{ $project: USER_SELECTED_FIELDS }],
-      },
-    },
-    {
-      $lookup: {
-        from: PAYMENT_MODEL,
-        localField: 'payment',
-        foreignField: '_id',
-        as: 'payment',
-        pipeline: [{ $project: PAYMENT_SELECTED_FIELDS }],
-      },
-    },
-    {
-      $addFields: {
-        lastStatus: { $arrayElemAt: ['$orderStatusHistory', -1] },
-      },
-    },
-    ...(statusStage
-      ? [
-          {
-            $match: {
-              'lastStatus.status': statusStage,
-            },
-          },
-        ]
-      : []),
-    {
-      $unwind: {
-        path: '$customer',
-        preserveNullAndEmptyArrays: true,
-      },
-    },
-    {
-      $unwind: {
-        path: '$payment',
-        preserveNullAndEmptyArrays: true,
-      },
-    },
-    {
-      $project: ORDER_SELECTED_FIELDS,
-    },
-  ])
-    .sort({ [sortBy]: sortOrder })
-    .skip(skip)
-    .limit(limit);
-
-  return [totalCountResult[0]?.totalCount || 0, orders];
-}
-
-/**
- * Get and count orders
- * @param {object} filters
- * @param {number} skip
- * @param {number} limit
- * @param {string} sortBy
- * @param {string} sortOrder
- * @returns
- */
-export async function getAndCountOrdersByCustomerService(filters, skip, limit, sortBy, sortOrder) {
-  const count = await OrderModel.countDocuments(filters);
-
-  const orders = await OrderModel.find(filters)
-    .skip(skip)
-    .limit(limit)
-    .sort({ [sortBy]: sortOrder })
-    .populate({
-      path: 'orderDetails',
-      select: ORDER_DETAILS_SELECTED_FIELDS,
-      populate: [
-        {
-          path: 'product',
-          select: PRODUCT_SELECT_FIELDS,
-        },
-        {
-          path: 'variant',
-          select: 'variantValues',
-          populate: {
-            path: 'variantValues',
-            populate: [
-              {
-                path: 'option',
-                select: 'name',
-                options: { lean: true },
-              },
-              {
-                path: 'optionValue',
-                select: 'valueName',
-                options: { lean: true },
-              },
-            ],
-          },
-        },
-      ],
-    })
-    .lean();
-
-  return [count, orders];
-}
-
-/**
- * Add order status
- * @param {*} order
- * @param {*} newOrderStatus
- * @param {*} orderStatusHistoryId
- * @param {*} session
- * @returns
- */
-export async function addOrderStatusHistoryByIdService(orderId, status, extraUpdateData = {}, session) {
-  return OrderModel.updateOne(
-    { _id: orderId },
-    {
-      ...extraUpdateData,
-      $push: { orderStatusHistory: { status, updatedAt: new Date() } },
-    },
-    {
-      session,
-      ordered: true,
-    },
-  );
-}
-
-/**
- * Update order
- * @param {*} order
- * @param {*} data
- * @param {*} session
- * @returns
- */
-export async function updateOrderByIdService(id, data, session) {
-  return await OrderModel.updateOne({ _id: id }, data, { session });
-}
-
-/**
- * Remove order by id
- * @param {*} id
- * @returns
- */
-export async function removeOrderByIdService(id, session) {
-  return await OrderModel.findByIdAndSoftDelete(id, { session }).select('_id');
+  return order;
 }
 
 /**
  * Calculate order
- * @param {*} data
- * @returns
+ * @param {Array<{quantity: number, totalPrice: number}>} orderItems
+ * @returns {{totalQuantity: number, subTotal: number}}
  */
 export const calculateOrderService = (orderItems) => {
   const result = orderItems.reduce(
@@ -318,227 +124,508 @@ export const calculateOrderService = (orderItems) => {
 };
 
 /**
- * Get Today Order Report Service
- * @param {*} data
+ * Get all orders
+ * @param {GetListOrderPort} payload
+ * @returns {Promise<[number, OrderModel[]]>}
+ */
+export async function getAllOrdersService(payload) {
+  const filters = {
+    ...(payload.customerId && { customerId: payload.customerId }),
+    ...(payload.status && { status: payload.status }),
+    ...((payload.minTotal || payload.maxTotal) && {
+      total: {
+        ...(payload.minTotal && { $gte: payload.minTotal }),
+        ...(payload.maxTotal && { $lte: payload.maxTotal }),
+      },
+    }),
+    ...(payload.keyword && {
+      $expr: {
+        $regexMatch: {
+          input: { $toString: '$code' },
+          regex: payload.keyword,
+          options: 'i',
+        },
+      },
+    }),
+  };
+
+  const skip = (payload.page - 1) * payload.limit;
+  const [totalCount, orders] = await getAndCountOrdersRepository(
+    filters,
+    skip,
+    payload.limit,
+    payload.sortBy,
+    payload.sortOrder,
+  );
+
+  return [totalCount, orders];
+}
+
+/**
+ * Get recent orders
+ * @param {GetRecentOrdersPort} payload
+ * @returns {Promise<[number, OrderModel[]]>}
+ */
+export async function getRecentOrdersService(payload) {
+  return await getAndCountOrdersRepository({}, 0, payload.limit, 'createdAt', 'desc');
+}
+
+/**
+ * Get order
+ * @param {GetOrderPort} payload
+ * @returns {Promise<OrderModel>}
+ */
+export async function getOrderByIdService(payload) {
+  const order = await getOrderByIdRepository(payload.orderId);
+
+  Assert.isTrue(order, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' }));
+
+  return order;
+}
+
+export async function createOrderLogicService(data) {
+  const warningLowStockProductVariants = [];
+
+  const result = await TransactionalServiceWrapper.execute(async (session) => {
+    const {
+      customerId,
+      customerName,
+      customerEmail,
+      customerPhone,
+      provinceName,
+      districtName,
+      wardName,
+      address,
+      productVariants,
+      paymentMethod,
+      baseUrl,
+      paymentRedirectUrl = '',
+    } = data;
+
+    // Create order instance (PENDING)
+    const newOrder = newOrderRepository({
+      customerName,
+      customerEmail,
+      customerPhone,
+      provinceName,
+      districtName,
+      wardName,
+      address: address,
+      shippingFee: 0,
+      customer: customerId,
+      orderDate: new Date(),
+      orderStatusHistory: [{ status: ORDER_STATUS.PENDING }],
+    });
+
+    // Create order items instance
+    const orderItems = await Promise.all(
+      productVariants.map(async (variant) => {
+        const variantExisted = await getProductVariantByIdRepository(variant.id);
+        if (!variantExisted) {
+          throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Product variant not found' });
+        }
+
+        if (variantExisted.quantity <= LOW_STOCK_WARNING_LEVEL) {
+          warningLowStockProductVariants.push({
+            productId: variantExisted.product._id,
+            productName: variantExisted.product.name,
+            thumbnail: variantExisted.product.thumbnail,
+            variantId: variantExisted._id,
+            quantity: variantExisted.quantity - variant.quantity,
+            variantValues: variantExisted.variantValues.map((item) => ({
+              optionName: item.option.name,
+              optionValue: item.optionValue.valueName,
+            })),
+          });
+        }
+
+        if (variant.quantity > variantExisted.quantity) {
+          throw HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Product variant quantity not enough' });
+        }
+
+        const orderDetail = newOrderDetailRepository({
+          quantity: variant.quantity,
+          order: newOrder._id,
+          product: variantExisted.product,
+          variant: variantExisted._id,
+          unitPrice: variantExisted.price,
+          totalPrice: variantExisted.price * variant.quantity,
+        });
+
+        return orderDetail;
+      }),
+    );
+
+    // Decrease quantity of product variants
+    await decreaseProductVariantsQuantityByOrderRepository(
+      orderItems.map((item) => ({ variantId: item.variant, quantity: item.quantity })),
+      session,
+    );
+
+    // Save order items
+    await saveOrderItemsRepository(orderItems, session);
+    newOrder.orderDetails = orderItems.map((item) => item._id);
+
+    // Calculate order
+    const calculation = calculateOrderService(orderItems);
+    newOrder.quantity = calculation.totalQuantity;
+    newOrder.subTotal = calculation.subTotal;
+    newOrder.total = calculation.totalPrice;
+
+    // Create payment instance
+    const newPayment = newPaymentRepository({
+      order: newOrder._id,
+      paymentMethod,
+      status: PAYMENT_STATUS.PENDING,
+    });
+    newOrder.payment = newPayment._id;
+
+    // Save order
+    const insertResult = await saveOrderRepository(newOrder, session);
+
+    // Handle payment method
+    if (paymentMethod === ONLINE_PAYMENT_METHOD.MOMO) {
+      const momoResponse = await createMomoPaymentService(
+        baseUrl,
+        paymentRedirectUrl,
+        insertResult._id,
+        newOrder.total,
+      );
+
+      const buffer = await generateQRCodeBuffer(momoResponse.qrCodeUrl);
+      const result = await uploadImageBufferService({ buffer, folderName: 'payment-qrcode' });
+      newPayment.paymentUrl = momoResponse.payUrl;
+      newPayment.qrCodeUrl = result.url;
+    }
+
+    await savePaymentRepository(newPayment, session);
+
+    return insertResult;
+  });
+
+  await Promise.all(warningLowStockProductVariants.map(notifyClientsOfLowStock));
+
+  // Notify
+  await notifyClientsOfNewOrder({
+    orderId: result._id,
+    code: result.code,
+    total: result.total,
+  });
+
+  return result;
+}
+
+export async function confirmOrderService(payload) {
+  const orderExisted = await getOrderByIdRepository(payload.orderId);
+  Assert.isTrue(orderExisted, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' }));
+
+  const currentStatus = orderExisted.orderStatusHistory[0].status;
+  Assert.isTrue(
+    currentStatus === ORDER_STATUS.PENDING,
+    HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Invalid order status' }),
+  );
+
+  await addOrderStatusHistoryByIdRepository(orderExisted._id, ORDER_STATUS.CONFIRMED);
+
+  // Notify
+  await notifyClientsOfConfirmOrder({
+    orderId: orderExisted._id,
+    code: orderExisted.code,
+    customerName: orderExisted.customer.name,
+    total: orderExisted.total,
+  });
+
+  return await getOrderByIdRepository(orderExisted._id);
+}
+
+export async function processingOrderService(payload) {
+  const orderExisted = await getOrderByIdRepository(payload.orderId);
+  Assert.isTrue(orderExisted, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' }));
+
+  const currentStatus = orderExisted.orderStatusHistory[0].status;
+  Assert.isTrue(
+    currentStatus === ORDER_STATUS.CONFIRMED,
+    HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Invalid order status' }),
+  );
+
+  await addOrderStatusHistoryByIdRepository(orderExisted._id, ORDER_STATUS.PROCESSING);
+
+  // Notify
+  await notifyClientsOfProcessingOrder({
+    orderId: orderExisted._id,
+    code: orderExisted.code,
+    customerName: orderExisted.customer.name,
+    total: orderExisted.total,
+  });
+
+  return await getOrderByIdRepository(orderExisted._id);
+}
+
+export async function cancelOrderService(payload) {
+  const orderExisted = await getOrderByIdRepository(payload.orderId);
+  Assert.isTrue(orderExisted, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' }));
+
+  const currentStatus = orderExisted.orderStatusHistory[0].status;
+  Assert.isFalse(
+    [ORDER_STATUS.SHIPPING, ORDER_STATUS.COMPLETED, PAYMENT_STATUS.PAID].includes(currentStatus),
+    HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Invalid order status' }),
+  );
+
+  await TransactionalServiceWrapper.execute(async (session) => {
+    // Increase quantity of product variants
+    await increaseProductVariantsQuantityByOrderRepository(
+      orderExisted.orderDetails.map((item) => ({ quantity: item.quantity, variantId: item.variant._id })),
+      session,
+    );
+
+    // refund
+    // if (orderExisted.payment.status === PAYMENT_STATUS.PAID) {
+    // const result = await refundMomoPaymentService(orderExisted._id, orderExisted.payment);
+    // if (!result) {
+    //   throw HttpException.new({ code: Code.SERVICE_UNAVAILABLE, overrideMessage: 'Refund payment failed' });
+    // }
+    // await updatePaymentByIdService(orderExisted.payment._id, { status: PAYMENT_STATUS.REFUND }, session);
+    // } else {
+    await updatePaymentByIdRepository(orderExisted.payment._id, { status: PAYMENT_STATUS.CANCELLED }, session);
+    // }
+
+    // Remove shipping order
+    if (orderExisted.trackingNumber) {
+      const result = await cancelGHNOrderService(orderExisted.trackingNumber);
+      if (!result) {
+        throw HttpException.new({ code: Code.SERVICE_UNAVAILABLE, overrideMessage: 'Cancel shipping order failed' });
+      }
+    }
+
+    await addOrderStatusHistoryByIdRepository(orderExisted._id, ORDER_STATUS.CANCELLED);
+  });
+
+  // Notify
+  await notifyClientsOfCancelOrder({
+    orderId: orderExisted._id,
+    code: orderExisted.code,
+    customerName: orderExisted.customer.name,
+    total: orderExisted.total,
+  });
+
+  return await getOrderByIdRepository(orderExisted._id);
+}
+
+export async function createShippingOrderService(payload) {
+  const orderExisted = await getOrderByIdRepository(payload.orderId);
+  Assert.isTrue(orderExisted, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' }));
+
+  const currentStatus = orderExisted.orderStatusHistory[0].status;
+  Assert.isTrue(
+    currentStatus === ORDER_STATUS.PROCESSING,
+    HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Invalid order status' }),
+  );
+
+  const newOrderGhn = await createGHNOrderService(orderExisted);
+  Assert.isTrue(
+    newOrderGhn && newOrderGhn.code == 200,
+    HttpException.new({ code: Code.SERVICE_UNAVAILABLE, overrideMessage: 'Create order ship failed' }),
+  );
+
+  await addOrderStatusHistoryByIdRepository(orderExisted._id, ORDER_STATUS.READY_TO_PICK, {
+    trackingNumber: newOrderGhn.data.order_code,
+    estimatedDeliveryAt: newOrderGhn.data.expected_delivery_time,
+  });
+
+  // Notify
+  await notifyClientsOfReadyForPickupOrder({
+    orderId: orderExisted._id,
+    code: orderExisted.code,
+    customerName: orderExisted.customer.name,
+    total: orderExisted.total,
+  });
+
+  return await getOrderByIdRepository(orderExisted._id);
+}
+
+export async function removeOrderByIdService(payload) {
+  const orderExisted = await getOrderByIdRepository(payload.orderId);
+  Assert.isTrue(orderExisted, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' }));
+
+  const currentStatus = orderExisted.orderStatusHistory[0].status;
+  Assert.isTrue(
+    currentStatus === ORDER_STATUS.PENDING,
+    HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Invalid order status' }),
+  );
+
+  await TransactionalServiceWrapper.execute(async (session) => {
+    await increaseProductVariantsQuantityByOrderRepository(
+      orderExisted.orderDetails.map((item) => ({ quantity: item.quantity, variantId: item.variant._id })),
+      session,
+    );
+    await removeOrderByIdRepository(orderExisted._id, session);
+  });
+
+  return { id: orderExisted._id };
+}
+
+/**
+ * Webhook order status
+ * @param {WebHookOrderStatusDto} payload
+ * @returns {Promise<void>}
+ */
+export async function webHookUpdateOrderService(payload) {
+  const orderExisted = await getOrderByIdRepository(payload.orderId);
+  Assert.isTrue(orderExisted, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' }));
+
+  const currentStatus = orderExisted.orderStatusHistory[0].status;
+  Assert.isTrue(
+    currentStatus !== ORDER_STATUS.CANCELLED && currentStatus !== ORDER_STATUS.COMPLETED,
+    HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Can not update status any more' }),
+  );
+
+  switch (payload.status) {
+    case 'picking':
+    case 'money_collect_picking':
+    case 'picked':
+    case 'storing':
+    case 'transporting':
+    case 'sorting':
+    case 'delivering':
+    case 'money_collect_delivering':
+      Assert.isTrue(
+        currentStatus === ORDER_STATUS.READY_TO_PICK,
+        HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Invalid current order status' }),
+      );
+
+      await addOrderStatusHistoryByIdRepository(orderExisted._id, ORDER_STATUS.SHIPPING);
+
+      // Notify client
+      await notifyClientsOfShippingOrder({
+        orderId: orderExisted._id,
+        code: orderExisted.code,
+        customerName: orderExisted.customer.name,
+        total: orderExisted.total,
+        trackingNumber: orderExisted.trackingNumber,
+        estimatedDeliveryAt: orderExisted.estimatedDeliveryAt,
+      });
+      break;
+
+    case 'delivered':
+      Assert.isTrue(
+        currentStatus === ORDER_STATUS.SHIPPING,
+        HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Invalid current order status' }),
+      );
+
+      await addOrderStatusHistoryByIdRepository(orderExisted._id, ORDER_STATUS.COMPLETED);
+      await updatePaymentByIdRepository(orderExisted.payment._id, { status: PAYMENT_STATUS.PAID });
+
+      // Notify client
+      await notifyClientsOfCompleteOrder({
+        orderId: orderExisted._id,
+        code: orderExisted.code,
+        customerName: orderExisted.customer.name,
+        total: orderExisted.total,
+      });
+      break;
+
+    case 'cancel':
+    case 'delivery_fail':
+    case 'return':
+    case 'returning':
+    case 'return_fail':
+    case 'returned':
+    case 'exception':
+    case 'damage':
+    case 'lost':
+      Assert.isTrue(
+        currentStatus === ORDER_STATUS.COMPLETED,
+        HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Invalid current order status' }),
+      );
+
+      await addOrderStatusHistoryByIdRepository(orderExisted._id, ORDER_STATUS.CANCELLED);
+      await updatePaymentByIdRepository(orderExisted.payment._id, { status: PAYMENT_STATUS.CANCELLED });
+
+      // Notify client
+      await notifyClientsOfCancelOrder({
+        orderId: orderExisted._id,
+        code: orderExisted.code,
+        customerName: orderExisted.customer.name,
+        total: orderExisted.total,
+      });
+      break;
+  }
+}
+
+export async function getAllOrdersInCustomerService(payload) {
+  const filters = {
+    customer: payload.customerId,
+    ...(payload.status ? { status: payload.status } : {}),
+  };
+
+  const skip = (payload.page - 1) * payload.limit;
+  const [totalCount, orders] = await getAndCountOrdersRepository(
+    filters,
+    skip,
+    payload.limit,
+    payload.sortBy,
+    payload.sortOrder,
+  );
+
+  return [totalCount, orders];
+}
+
+/**
+ * Get order report by date range
+ * @param {GetCustomerReportDto} payload
  * @returns
  */
-export async function getTodayOrderReportService() {
-  const startOfToday = moment().startOf('day').toDate();
-  const endOfToday = moment().endOf('day').toDate();
+export async function getOrderReportByDateRangeService(payload) {
+  const { current, previous } = getDateComparisonRange(payload.compareTo);
 
-  const startOfYesterday = moment().subtract(1, 'day').startOf('day').toDate();
-  const endOfYesterday = moment().subtract(1, 'day').endOf('day').toDate();
+  const currentCountNewOrder = await countNewOrderByDateRangeRepository(current.start, current.end);
+  const previousCountNewOrder = await countNewOrderByDateRangeRepository(previous.start, previous.end);
+  const totalOrderOverall = await countAllOrdersRepository();
 
-  const todayStats = await OrderModel.aggregate([
-    {
-      $match: {
-        createdAt: {
-          $gte: startOfToday,
-          $lt: endOfToday,
-        },
-      },
-    },
-    {
-      $group: {
-        _id: null,
-        totalNew: { $sum: 1 },
-      },
-    },
-  ]);
-
-  const yesterdayStats = await OrderModel.aggregate([
-    {
-      $match: {
-        createdAt: {
-          $gte: startOfYesterday,
-          $lt: endOfYesterday,
-        },
-      },
-    },
-    {
-      $group: {
-        _id: null,
-        totalNew: { $sum: 1 },
-      },
-    },
-  ]);
-
-  const totalOrderOverall = await OrderModel.countDocuments();
-
-  const totalNewPercentage =
-    todayStats[0]?.totalNew && yesterdayStats[0]?.totalNew
-      ? ((todayStats[0].totalNew - yesterdayStats[0].totalNew) / yesterdayStats[0].totalNew) * 100
+  const percentage =
+    currentCountNewOrder && previousCountNewOrder
+      ? ((currentCountNewOrder - previousCountNewOrder) / previousCountNewOrder) * 100
       : 0;
 
   return {
     totalOrderOverall,
-    todayTotalNewOrders: todayStats[0]?.totalNew || 0,
-    yesterdayTotalNewOrders: yesterdayStats[0]?.totalNew || 0,
-    percentage: totalNewPercentage.toFixed(1),
+    currentCountNewOrder,
+    previousCountNewOrder,
+    percentage: percentage.toFixed(1),
   };
 }
 
 /**
- * Get Revenue Report Service
- * @param {*} data
+ * Get revenue report by date range
+ * @param {GetRevenueReportDto} payload
  * @returns
  */
-export async function getTodayRevenueReportService() {
-  const startOfToday = newDate().startOf('day').toDate();
-  const endOfToday = newDate().endOf('day').toDate();
+export async function getRevenueReportByDateRangeService(payload) {
+  const { current, previous } = getDateComparisonRange(payload.compareTo);
 
-  const startOfYesterday = newDate().subtract(1, 'day').startOf('day').toDate();
-  const endOfYesterday = newDate().subtract(1, 'day').endOf('day').toDate();
+  const currentTotalRevenue = await calculateTotalRevenueByDateRangeRepository(current.start, current.end);
+  const previousTotalRevenue = await calculateTotalRevenueByDateRangeRepository(previous.start, previous.end);
+  const totalRevenueOverall = await calculateTotalRevenueRepository();
 
-  const todayStats = await OrderModel.aggregate([
-    {
-      $match: {
-        createdAt: {
-          $gte: startOfToday,
-          $lt: endOfToday,
-        },
-      },
-    },
-    {
-      $project: {
-        total: 1,
-        lastStatus: {
-          $arrayElemAt: ['$orderStatusHistory.status', -1],
-        },
-      },
-    },
-    { $match: { lastStatus: ORDER_STATUS.COMPLETED } },
-    {
-      $group: {
-        _id: null,
-        totalRevenue: { $sum: '$total' },
-      },
-    },
-  ]);
-
-  const yesterdayStats = await OrderModel.aggregate([
-    {
-      $match: {
-        createdAt: {
-          $gte: startOfYesterday,
-          $lt: endOfYesterday,
-        },
-      },
-    },
-    {
-      $project: {
-        total: 1,
-        lastStatus: {
-          $arrayElemAt: ['$orderStatusHistory.status', -1],
-        },
-      },
-    },
-    { $match: { lastStatus: ORDER_STATUS.COMPLETED } },
-    {
-      $group: {
-        _id: null,
-        totalRevenue: { $sum: '$total' },
-      },
-    },
-  ]);
-
-  const revenue = await OrderModel.aggregate([
-    {
-      $project: {
-        total: 1,
-        lastStatus: {
-          $arrayElemAt: ['$orderStatusHistory.status', -1],
-        },
-      },
-    },
-    { $match: { lastStatus: ORDER_STATUS.COMPLETED } },
-    {
-      $group: {
-        _id: null,
-        totalRevenue: { $sum: '$total' },
-      },
-    },
-  ]);
-
-  const totalRevenuePercentage =
-    todayStats[0]?.totalNew && yesterdayStats[0]?.totalNew
-      ? ((todayStats[0].totalNew - yesterdayStats[0].totalNew) / yesterdayStats[0].totalNew) * 100
+  const percentage =
+    currentTotalRevenue && previousTotalRevenue
+      ? ((currentTotalRevenue - previousTotalRevenue) / previousTotalRevenue) * 100
       : 0;
 
   return {
-    totalRevenueOverall: revenue[0]?.totalRevenue || 0,
-    todayTotalRevenue: todayStats[0]?.totalRevenue || 0,
-    yesterdayTotalRevenue: yesterdayStats[0]?.totalRevenue || 0,
-    percentage: totalRevenuePercentage.toFixed(1),
+    totalRevenueOverall,
+    currentTotalRevenue,
+    previousTotalRevenue,
+    percentage: percentage.toFixed(1),
   };
 }
 
 /**
- * Get Today Sales Service
- * @param {*} data
- * @returns
+ * Get sales report by date range
+ * @param {GetSalesReportDto} payload
+ * @returns {Promise<Array<{ timestamp: string, sales: number }>>}
  */
-export async function getTodaySalesService() {
-  const startOfToday = newDate().startOf('day').add(1, 'hour');
-  const endOfToday = newDate().endOf('day').add(1, 'hour');
-
-  const salesData = await OrderModel.aggregate([
-    {
-      $match: {
-        createdAt: {
-          $gte: startOfToday.toDate(),
-          $lt: endOfToday.toDate(),
-        },
-      },
-    },
-    {
-      $project: {
-        total: 1,
-        lastStatus: {
-          $arrayElemAt: ['$orderStatusHistory.status', -1],
-        },
-      },
-    },
-    { $match: { lastStatus: ORDER_STATUS.COMPLETED } },
-    {
-      $group: {
-        _id: {
-          $dateTrunc: {
-            date: '$createdAt',
-            unit: 'hour',
-          },
-        },
-        sales: { $sum: '$total' },
-      },
-    },
-    {
-      $sort: { _id: 1 },
-    },
-    {
-      $project: {
-        timestamp: '$_id',
-        sales: 1,
-        _id: 0,
-      },
-    },
-  ]);
-
-  const result = [];
-  let currentTime = newDate(startOfToday);
-  currentTime.startOf('hour');
-
-  while (currentTime <= endOfToday) {
-    const found = salesData.find((item) => {
-      return newDate(item.timestamp).isSame(currentTime, 'hour');
-    });
-
-    result.push({
-      timestamp: currentTime.toISOString(),
-      sales: found ? found.sales : 0,
-    });
-
-    currentTime = newDate(currentTime).add(1, 'hour');
-  }
-
-  return result;
+export async function getSalesReportByDateRangeService(payload) {
+  const { start, end, unit } = getSaleRangeByType(payload.type);
+  return await getSalesByDateRangeRepository(start, end, unit);
 }

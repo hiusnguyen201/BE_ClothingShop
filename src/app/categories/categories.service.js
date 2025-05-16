@@ -1,118 +1,177 @@
-import { isValidObjectId } from 'mongoose';
-import { CategoryModel } from '#src/app/categories/models/category.model';
-import { REGEX_PATTERNS } from '#src/core/constant';
-import { makeSlug } from '#src/utils/string.util';
-import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
-import { CATEGORY_SELECTED_FIELDS } from '#src/app/categories/categories.constant';
+import { HttpException } from '#src/core/exception/http-exception';
+import {
+  getCategoryByIdRepository,
+  updateCategoryInfoByIdRepository,
+  removeCategoryByIdRepository,
+  checkExistCategoryNameRepository,
+  getAndCountCategoriesRepository,
+  newCategoryRepository,
+  saveCategoryRepository,
+  countSubcategoriesRepository,
+} from '#src/app/categories/categories.repository';
+import { uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
+import { Code } from '#src/core/code/Code';
+import { CATEGORY_SEARCH_FIELDS, MAXIMUM_CHILDREN_CATEGORY_LEVEL } from '#src/app/categories/categories.constant';
+import {
+  deleteCategoryFromCache,
+  getCategoryFromCache,
+  getCategoriesFromCache,
+  setCategoryToCache,
+  setCategoriesToCache,
+} from '#src/app/categories/categories.cache';
+import { Assert } from '#src/core/assert/Assert';
 
-export function newCategoryService(data) {
-  return new CategoryModel({ ...data, slug: makeSlug(data.name) });
-}
+export const checkExistCategoryNameService = async (payload) => {
+  return await checkExistCategoryNameRepository(payload.name);
+};
 
-export async function saveCategoryService(categoryDoc) {
-  return categoryDoc.save();
-}
+export const createCategoryService = async (payload) => {
+  const isExistName = await checkExistCategoryNameRepository(payload.name);
+  Assert.isFalse(
+    isExistName,
+    HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Category name already exists' }),
+  );
 
-export async function insertCategoriesService(data = [], session) {
-  return await CategoryModel.bulkSave(data, { session, ordered: true });
-}
+  const category = newCategoryRepository({ ...payload, level: 1 });
+  if (payload.parentId) {
+    const existParent = await getCategoryByIdRepository(payload.parentId);
+    Assert.isTrue(
+      existParent,
+      HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Parent category not found' }),
+    );
+    category.parent = existParent._id;
 
-export async function getAndCountCategoriesService(parentId = null, filters, skip, limit, sortBy, sortOrder) {
-  const queryOptions = {
-    ...extendQueryOptionsWithPagination(skip, limit),
-    ...extendQueryOptionsWithSort(sortBy, sortOrder),
-  };
-
-  // Get List
-  const list = await CategoryModel.aggregate([
-    ...(parentId !== undefined ? [{ $match: { parent: parentId } }] : []),
-    {
-      $lookup: {
-        from: 'categories',
-        localField: '_id',
-        foreignField: 'parent',
-        as: 'children',
-        pipeline: [{ $match: filters }],
-      },
-    },
-    { $match: { $or: [filters, { 'children.0': { $exists: true } }] } },
-    { $project: { ...CATEGORY_SELECTED_FIELDS, children: CATEGORY_SELECTED_FIELDS } },
-  ])
-    .skip(queryOptions.skip)
-    .limit(queryOptions.limit)
-    .sort(queryOptions.sort);
-
-  // Count
-  const category = await CategoryModel.aggregate([
-    ...(parentId !== undefined ? [{ $match: { parent: parentId } }] : []),
-    {
-      $lookup: {
-        from: 'categories',
-        localField: '_id',
-        foreignField: 'parent',
-        as: 'children',
-        pipeline: [{ $match: filters }],
-      },
-    },
-    { $match: { $or: [filters, { 'children.0': { $exists: true } }] } },
-    { $count: 'totalCount' },
-  ]);
-
-  return [category.length > 0 ? category[0]?.totalCount : 0, list];
-}
-
-export async function countSubcategoriesService(parentId) {
-  return CategoryModel.countDocuments({ parent: parentId });
-}
-
-export async function getCategoryByIdService(id) {
-  if (!id) return null;
-  const filter = {};
-
-  if (isValidObjectId(id)) {
-    filter._id = id;
-  } else if (id.match(REGEX_PATTERNS.SLUG)) {
-    filter.slug = id;
-  } else {
-    filter.name = id;
+    const nextCategoryLevel = existParent.level + 1;
+    Assert.isFalse(
+      nextCategoryLevel > MAXIMUM_CHILDREN_CATEGORY_LEVEL,
+      HttpException.new({
+        code: Code.BAD_REQUEST,
+        overrideMessage: `Parent category has a maximum ${MAXIMUM_CHILDREN_CATEGORY_LEVEL} levels only`,
+      }),
+    );
+    category.level = nextCategoryLevel;
   }
 
-  return CategoryModel.findOne(filter).select(CATEGORY_SELECTED_FIELDS).lean();
-}
-
-export async function updateCategoryInfoByIdService(id, data) {
-  if (data.name) {
-    data.slug = makeSlug(data.name);
+  if (payload.image) {
+    const result = await uploadImageBufferService({ buffer: payload.image, folderName: 'categories-image' });
+    category.image = result.url;
   }
 
-  return CategoryModel.findByIdAndUpdate(id, data, {
-    new: true,
-  })
-    .select(CATEGORY_SELECTED_FIELDS)
-    .lean();
-}
+  await saveCategoryRepository(category);
 
-export async function removeCategoryByIdService(id) {
-  return CategoryModel.findByIdAndSoftDelete(id).select('_id').lean();
-}
+  // Clear cache
+  await deleteCategoryFromCache(category._id);
 
-export async function checkExistCategoryNameService(name, skipId) {
+  return category;
+};
+
+export const getAllCategoriesService = async (payload) => {
   const filters = {
-    $or: [
-      {
-        name,
-      },
-      {
-        slug: makeSlug(name),
-      },
-    ],
+    $or: CATEGORY_SEARCH_FIELDS.map((field) => ({
+      [field]: { $regex: payload.keyword, $options: 'i' },
+    })),
   };
 
-  if (skipId) {
-    const key = isValidObjectId(skipId) ? '_id' : skipId.match(REGEX_PATTERNS.SLUG) ? 'slug' : null;
-    if (key) filters[key] = { $ne: skipId };
+  const cached = await getCategoriesFromCache({ ...payload, ...filters });
+  if (cached && Array.isArray(cached) && cached.length === 2 && cached[0] > 0) return cached;
+
+  const skip = (payload.page - 1) * payload.limit;
+  const [totalCount, categories] = await getAndCountCategoriesRepository(
+    null,
+    filters,
+    skip,
+    payload.limit,
+    payload.sortBy,
+    payload.sortOrder,
+  );
+
+  await setCategoriesToCache(payload, totalCount, categories);
+
+  return [totalCount, categories];
+};
+
+export const getCategoryByIdService = async (payload) => {
+  const cached = await getCategoryFromCache(payload.categoryId);
+  if (cached) return cached;
+
+  const category = await getCategoryByIdRepository(payload.categoryId);
+  Assert.isTrue(category, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Category not found' }));
+
+  await setCategoryToCache(payload.categoryId, category);
+
+  return category;
+};
+
+export const updateCategoryByIdService = async (payload) => {
+  const existCategory = await getCategoryByIdRepository(payload.categoryId);
+  Assert.isTrue(
+    existCategory,
+    HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Category not found' }),
+  );
+
+  const isExistName = await checkExistCategoryNameRepository(payload.name, existCategory._id);
+  Assert.isFalse(
+    isExistName,
+    HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Category name already exist' }),
+  );
+
+  if (payload.image instanceof Buffer) {
+    const result = await uploadImageBufferService({ buffer: payload.image, folderName: 'categories-image' });
+    payload.image = result.url;
   }
 
-  const result = await CategoryModel.findOne(filters, '_id', { withRemoved: true }).lean();
-  return !!result;
-}
+  const updatedCategory = await updateCategoryInfoByIdRepository(existCategory._id, payload);
+
+  // Clear cache
+  await deleteCategoryFromCache(existCategory._id);
+
+  return updatedCategory;
+};
+
+export const removeCategoryByIdService = async (payload) => {
+  const existCategory = await getCategoryByIdRepository(payload.categoryId);
+  Assert.isTrue(
+    existCategory,
+    HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Category not found' }),
+  );
+
+  const subcategoryCount = await countSubcategoriesRepository(existCategory._id);
+  Assert.isFalse(
+    subcategoryCount > 0,
+    HttpException.new({ code: Code.CONFLICT, overrideMessage: 'Category includes subcategories' }),
+  );
+
+  await removeCategoryByIdRepository(existCategory._id);
+
+  // Clear cache
+  await deleteCategoryFromCache(existCategory._id);
+
+  return { id: existCategory._id };
+};
+
+// Uncache
+export const getAllSubcategoriesService = async (payload) => {
+  const existCategory = await getCategoryByIdRepository(payload.categoryId);
+  Assert.isTrue(
+    existCategory,
+    HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Category not found' }),
+  );
+
+  const filters = {
+    $or: CATEGORY_SEARCH_FIELDS.map((field) => ({
+      [field]: { $regex: payload.keyword, $options: 'i' },
+    })),
+  };
+
+  const skip = (payload.page - 1) * payload.limit;
+  const [totalCount, categories] = await getAndCountCategoriesRepository(
+    existCategory._id,
+    filters,
+    skip,
+    payload.limit,
+    payload.sortBy,
+    payload.sortOrder,
+  );
+
+  return [totalCount, categories];
+};

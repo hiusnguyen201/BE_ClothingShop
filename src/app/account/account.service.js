@@ -1,163 +1,92 @@
-import { compare } from 'bcrypt';
-import { UserModel } from '#src/app/users/models/user.model';
-import { UserNotificationModel } from '#src/app/notifications/models/user-notification.model';
-import { USER_NOTIFICATION_SELECTED_FIELDS } from '#src/app/notifications/notifications.constant';
-import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
+import {
+  comparePasswordRepository,
+  countListUnreadNotificationInUserRepository,
+  getAllUnreadNotificationInUserRepository,
+  getAndCountListNotificationInUserRepository,
+  getListPermissionNameInUserRepository,
+  getListUserNotificationRepository,
+  markAllAsReadNotificationInUserRepository,
+  markAsReadNotificationInUserRepository,
+} from '#src/app/account/account.repository';
+import { deleteCustomerFromCache } from '#src/app/customers/customers.cache';
+import { deleteUserFromCache } from '#src/app/users/users.cache';
+import { USER_TYPE } from '#src/app/users/users.constant';
+import {
+  checkExistEmailRepository,
+  updatePasswordByIdService,
+  updateUserInfoByIdRepository,
+} from '#src/app/users/users.repository';
+import { Assert } from '#src/core/assert/Assert';
+import { Code } from '#src/core/code/Code';
+import { HttpException } from '#src/core/exception/http-exception';
+import { uploadImageBufferService } from '#src/modules/cloudinary/cloudinary.service';
 
-export async function comparePasswordService(userId, password) {
-  const user = await UserModel.findById(userId).select({ password: true }).lean();
-  return compare(password, user.password);
-}
-
-/**
- * Get list notification in user
- * @param {string} userId
- * @param {number} skip
- * @param {number} limit
- * @param {string} sortBy
- * @param {string} sortOrder
- * @returns
- */
-export async function getListNotificationInUserService(userId, skip, limit, sortBy, sortOrder) {
-  const queryOptions = {
-    ...extendQueryOptionsWithPagination(skip, limit),
-    ...extendQueryOptionsWithSort(sortBy, sortOrder),
-  };
-
-  return UserNotificationModel.find({ user: userId }, USER_NOTIFICATION_SELECTED_FIELDS, queryOptions)
-    .populate({
-      path: 'notification',
-    })
-    .lean();
-}
-
-/**
- * Get list user notification
- * @param {string} userId
- * @param {number} skip
- * @param {number} limit
- * @param {string} sortBy
- * @param {string} sortOrder
- * @returns
- */
-export async function getListUserNotificationService(filters, skip, limit, sortBy, sortOrder) {
-  const queryOptions = {
-    ...extendQueryOptionsWithPagination(skip, limit),
-    ...extendQueryOptionsWithSort(sortBy, sortOrder),
-  };
-
-  return UserNotificationModel.find(filters, USER_NOTIFICATION_SELECTED_FIELDS, queryOptions)
-    .populate({
-      path: 'notification',
-    })
-    .lean();
-}
-
-/**
- * Count list unread notification in user
- * @param {string} userId
- * @returns
- */
-export async function countListUnreadNotificationInUserService(userId) {
-  return UserNotificationModel.countDocuments({ user: userId, isRead: false });
-}
-
-/**
- * Mark as read notification in user
- * @param {string} userId
- * @param {string} userNotificationId
- * @returns
- */
-export async function markAsReadNotificationInUserService(userId, userNotificationId) {
-  return UserNotificationModel.findOneAndUpdate(
-    {
-      _id: userNotificationId,
-      user: userId,
-    },
-    {
-      isRead: true,
-      readAt: new Date(),
-    },
-    {
-      new: true,
-    },
-  );
-}
-
-/**
- * Get all unread notification in user
- * @param {string} userId
- * @returns
- */
-export async function getAllUnreadNotificationInUserService(userId) {
-  return UserNotificationModel.find({
-    user: userId,
-    isRead: false,
-  });
-}
-
-/**
- * Mark all as read notifications in user
- * @param {string} userId
- * @returns
- */
-export async function markAllAsReadNotificationInUserService(userId) {
-  return UserNotificationModel.updateMany(
-    {
-      user: userId,
-      isRead: false,
-    },
-    {
-      isRead: true,
-      readAt: new Date(),
-    },
-  );
-}
-
-/**
- * Get user permission
- * @param {string} userId
- * @param {string} permissionId
- * @returns
- */
-export async function getUserPermissionService(userId, permissionId) {
-  return UserModel.findById(userId)
-    .populate({
-      path: 'permissions',
-      select: 'method, endpoint',
-      match: { _id: permissionId },
-    })
-    .select('permissions')
-    .lean();
-}
-
-/**
- * Get user permissions
- * @param {string} userId
- * @param {string} permissionId
- * @returns
- */
 export async function getListPermissionNameInUserService(userId) {
-  const user = await UserModel.findById(userId)
-    .populate({
-      path: 'role',
-      select: '_id permissions',
-      populate: {
-        path: 'permissions',
-        select: 'name',
-        options: {
-          lean: true,
-        },
-      },
-      options: {
-        lean: true,
-      },
-    })
-    .populate({
-      path: 'permissions',
-      select: 'name',
-    })
-    .lean();
+  return await getListPermissionNameInUserRepository(userId);
+}
 
-  return [...user.permissions.map((item) => item.name), ...(user?.role?.permissions?.map((item) => item.name) || [])];
+export async function editProfileService(payload) {
+  const isExistEmail = await checkExistEmailRepository(payload.email, payload.userId);
+  Assert.isFalse(
+    isExistEmail,
+    HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Email already exist' }),
+  );
+
+  if (payload.avatar && payload.avatar instanceof Buffer) {
+    const result = await uploadImageBufferService({ buffer: payload.avatar, folderName: 'avatar' });
+    payload.avatar = result.url;
+  }
+
+  const updatedUser = await updateUserInfoByIdRepository(payload.userId, payload);
+
+  const deleteFromCache = payload.type === USER_TYPE.USER ? deleteUserFromCache : deleteCustomerFromCache;
+  await deleteFromCache(payload.userId);
+
+  return updatedUser;
+}
+
+export async function changePasswordService(payload) {
+  const isMatch = await comparePasswordRepository(payload.userId, payload.password);
+
+  Assert.isTrue(isMatch, HttpException.new({ code: Code.UNAUTHORIZED, overrideMessage: 'Password is incorrect' }));
+
+  await updatePasswordByIdService(payload.userId, payload.newPassword);
+}
+
+export async function getListNotificationInUserService(payload) {
+  const skip = (payload.page - 1) * payload.limit;
+  const [totalCount, notifies] = await getAndCountListNotificationInUserRepository(
+    payload.userId,
+    skip,
+    payload.limit,
+    payload.sortBy,
+    payload.sortOrder,
+  );
+  return [totalCount, notifies];
+}
+
+export async function countListUnreadNotificationInUserService(userId) {
+  return await countListUnreadNotificationInUserRepository(userId);
+}
+
+export async function markAsReadNotificationInUserService(payload) {
+  const userNotification = await markAsReadNotificationInUserRepository(payload.userId, payload.userNotificationId);
+  Assert.isTrue(
+    userNotification,
+    HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Notification not found' }),
+  );
+  return userNotification;
+}
+
+export async function markAllAsReadNotificationInUserService(payload) {
+  const [unreadList] = await Promise.all([
+    getAllUnreadNotificationInUserRepository(payload.userId),
+    markAllAsReadNotificationInUserRepository(payload.userId),
+  ]);
+
+  if (unreadList.length === 0) return [];
+
+  return await getListUserNotificationRepository({
+    _id: { $in: unreadList.map((item) => item._id) },
+  });
 }

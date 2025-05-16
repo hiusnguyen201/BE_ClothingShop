@@ -9,8 +9,8 @@ import {
   // updateOrderController,
   removeOrderController,
   processingOrderController,
-  webHookUpdateOrder,
   exportOrdersController,
+  webHookUpdateOrderController,
 } from '#src/app/orders/orders.controller';
 import { isAuthorized, can } from '#src/middlewares/jwt-auth.middleware';
 import { EXPORT_PERMISSIONS, ORDER_PERMISSIONS } from '#src/database/data/permissions-data';
@@ -43,6 +43,6 @@ router
     removeOrderController,
   );
 
-router.post('/webhook/ship-order', webHookUpdateOrder);
+router.post('/webhook/ship-order', webHookUpdateOrderController);
 
 export default router;

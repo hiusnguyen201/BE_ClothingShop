@@ -81,7 +81,7 @@ group Authentication Flow
     jsonwebtoken -->> AuthService: return data decoded
     deactivate jsonwebtoken
     AuthService -->> JwtAuthMiddleware: return data decoded
-    JwtAuthMiddleware -> UserService: getUserByIdService(decoded.id)
+    JwtAuthMiddleware -> UserService: getUserByIdOrFailService(decoded.id)
     activate UserService
     UserService -> UserModel: findOne(filters)
     activate UserModel

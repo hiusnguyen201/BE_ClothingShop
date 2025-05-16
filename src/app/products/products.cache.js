@@ -9,7 +9,7 @@ export async function getProductFromCache(productId) {
   return cached ? cached : null;
 }
 
-export async function getTotalCountAndListProductFromCache(filters) {
+export async function getProductsFromCache(filters) {
   const key = CacheKey.newPaginationKey(PRODUCT_CACHE_KEY_PREFIX.LIST_PRODUCT, filters);
   const cached = await redisClient.get(key);
   return cached ?? [0, []];
@@ -20,7 +20,7 @@ export async function setProductToCache(productId, productData) {
   await redisClient.set(key, productData);
 }
 
-export async function setTotalCountAndListProductToCache(filters, totalCount, listData) {
+export async function setProductsToCache(filters, totalCount, listData) {
   const key = CacheKey.newPaginationKey(PRODUCT_CACHE_KEY_PREFIX.LIST_PRODUCT, filters);
   await redisClient.set(key, [totalCount, listData]);
 }

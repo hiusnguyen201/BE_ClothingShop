@@ -1,241 +1,267 @@
-import { isValidObjectId, Types } from 'mongoose';
-import { RoleModel } from '#src/app/roles/models/role.model';
-import { makeSlug } from '#src/utils/string.util';
-import { REGEX_PATTERNS } from '#src/core/constant';
-import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
-import { ROLE_SELECTED_FIELDS } from '#src/app/roles/roles.constant';
-import { PERMISSION_SELECTED_FIELDS } from '#src/app/permissions/permissions.constant';
+import { HttpException } from '#src/core/exception/http-exception';
+import {
+  checkExistRoleNameRepository,
+  getRoleByIdRepository,
+  updateRoleInfoByIdRepository,
+  createRoleRepository,
+  getAndCountRolesRepository,
+  removeRoleByIdRepository,
+  addRolePermissionsRepository,
+  getRolePermissionRepository,
+  removeRolePermissionRepository,
+} from '#src/app/roles/roles.repository';
+import { Code } from '#src/core/code/Code';
+import {
+  getAndCountPermissionsRepository,
+  getPermissionByIdRepository,
+  getPermissionsRepository,
+} from '#src/app/permissions/permissions.repository';
+import {
+  deleteRoleFromCache,
+  getRoleFromCache,
+  getRolesFromCache,
+  setRoleToCache,
+  setRolesToCache,
+} from '#src/app/roles/roles.cache';
+import { ROLE_SEARCH_FIELDS } from '#src/app/roles/roles.constant';
+import { PERMISSION_SEARCH_FIELDS } from '#src/app/permissions/permissions.constant';
+import { Assert } from '#src/core/assert/Assert';
 
 /**
- * Create a new role instance with a generated slug.
- * @param {RoleModel} data - The data to initialize the role with. Must include a `name` property for slug generation.
- * @returns {RoleModel} - A new, unsaved RoleModel instance.
+ * @typedef {import("#src/app/permissions/models/permission.model").PermissionModel} PermissionModel
+ * @typedef {import("#src/app/roles/models/role.model").RoleModel} RoleModel
+ * @typedef {import("#src/app/roles/dtos/check-exist-role-name.dto").CheckExistRoleNameDto} CheckExistRoleNamePort
+ * @typedef {import("#src/app/roles/dtos/create-role.dto").CreateRoleDto} CreateRolePort
+ * @typedef {import("#src/app/roles/dtos/get-list-role.dto").GetListRoleDto} GetListRolePort
+ * @typedef {import("#src/app/roles/dtos/get-role.dto").GetRoleDto} GetRolePort
+ * @typedef {import("#src/app/roles/dtos/update-role.dto").UpdateRoleDto} UpdateRolePort
+ * @typedef {import("#src/app/roles/dtos/get-assigned-role-permissions.dto").GetAssignedRolePermissionsDto} GetAssignedRolePermissionsPort
+ * @typedef {import("#src/app/roles/dtos/get-unassigned-role-permissions.dto").GetUnassignedRolePermissionsDto} GetUnassignedRolePermissionsPort
+ * @typedef {import("#src/app/roles/dtos/add-role-permissions.dto").AddRolePermissionsDto} AddRolePermissionsPort
+ * @typedef {import("#src/app/roles/dtos/remove-role-permission.dto").RemoveRolePermissionDto} RemoveRolePermissionPort
  */
-export function newRoleService(data) {
-  data.slug = makeSlug(data.name);
-  return new RoleModel(data);
-}
 
 /**
- * Insert a list of role instances into the database.
- * @param {RoleModel[]} data - An array of RoleModel instances to insert. Each should be a valid document.
- * @param {import('mongoose').ClientSession} [session] - Optional Mongoose session for transactional support.
- * @returns {Promise<RoleModel[]>} - The inserted role documents.
+ * Check exist role name
+ * @param {CheckExistRoleNamePort} payload
+ * @returns {Promise<boolean>}
  */
-export async function insertRolesService(data = [], session) {
-  return await RoleModel.bulkSave(data, { session, ordered: true });
-}
+export const checkExistRoleNameService = async (payload) => {
+  return await checkExistRoleNameRepository(payload.name);
+};
 
 /**
- * Create and insert a new role into the database.
- * @param {{name:string, description}} data - Role data. Must include a `name` field for slug generation.
- * @returns {Promise<RoleModel>} - The created role document.
+ * Check exist role name
+ * @param {CreateRolePort} payload
+ * @returns {Promise<RoleModel>}
  */
-export async function createRoleService(data) {
-  return RoleModel.create({ ...data, slug: makeSlug(data.name) });
-}
+export const createRoleService = async (payload) => {
+  const isExistName = await checkExistRoleNameRepository(payload.name);
+  Assert.isFalse(
+    isExistName,
+    HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Role name already exists' }),
+  );
+
+  const role = await createRoleRepository(payload);
+
+  // Clear cache
+  await deleteRoleFromCache(role._id);
+
+  return role;
+};
 
 /**
- * Get and count roles
- * @param {Record<keyof RoleModel, any>} filters - Filters to apply when querying roles.
- * @param {number} skip - Number of documents to skip.
- * @param {number} limit - Maximum number of documents to return.
- * @param {keyof RoleModel} sortBy - Field to sort by.
- * @param {"asc" | "desc"} sortOrder - Sorting order (ascending or descending).
- * @returns {Promise<[total: number, data: RoleModel[]]>} - Total count and array of roles.
+ * Get all roles
+ * @param {GetListRolePort} payload
+ * @returns {Promise<[number, RoleModel[]]>}
  */
-export async function getAndCountRolesService(filters, skip, limit, sortBy, sortOrder) {
-  const totalCount = await RoleModel.countDocuments(filters);
-
-  const queryOptions = {
-    ...extendQueryOptionsWithPagination(skip, limit),
-    ...extendQueryOptionsWithSort(sortBy, sortOrder),
+export const getAllRolesService = async (payload) => {
+  const filters = {
+    $or: ROLE_SEARCH_FIELDS.map((field) => ({
+      [field]: { $regex: payload.keyword, $options: 'i' },
+    })),
   };
 
-  const list = await RoleModel.find(filters, ROLE_SELECTED_FIELDS, queryOptions).lean();
-
-  return [totalCount, list];
-}
-
-/**
- * Retrieve a role by its ID, slug, or name.
- * @param {string} id - Can be a MongoDB ObjectId, slug, or role name.
- * @returns {Promise<RoleModel | null>} - The matching role document, or null if not found.
- */
-export async function getRoleByIdService(id) {
-  if (!id) return null;
-  const filter = {};
-
-  if (isValidObjectId(id)) {
-    filter._id = id;
-  } else if (id.match(REGEX_PATTERNS.SLUG)) {
-    filter.slug = id;
-  } else {
-    filter.name = id;
+  const cached = await getRolesFromCache(payload);
+  if (cached && Array.isArray(cached) && cached.length === 2 && cached[0] > 0) {
+    return cached;
   }
 
-  return RoleModel.findOne(filter).lean();
-}
+  const skip = (payload.page - 1) * payload.limit;
+  const [totalCount, roles] = await getAndCountRolesRepository(
+    filters,
+    skip,
+    payload.limit,
+    payload.sortBy,
+    payload.sortOrder,
+  );
+
+  await setRolesToCache(payload, totalCount, roles);
+
+  return [totalCount, roles];
+};
 
 /**
- * Soft delete a role by its ID.
- * @param {string} id - The MongoDB ObjectId of the role to delete.
- * @returns {Promise<Pick<RoleModel, '_id'> | null>} - The deleted role's ID or null if not found.
+ * Get role
+ * @param {GetRolePort} payload
+ * @returns {Promise<RoleModel>}
  */
-export async function removeRoleByIdService(id) {
-  return RoleModel.findByIdAndSoftDelete(id).select('_id').lean();
-}
+export const getRoleByIdOrFailService = async (payload) => {
+  const cached = await getRoleFromCache(payload.roleId);
+  if (cached) return cached;
+
+  const role = await getRoleByIdRepository(payload.roleId);
+  Assert.isTrue(role, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' }));
+
+  await setRoleToCache(payload.roleId, role);
+
+  return role;
+};
 
 /**
- * Check if a role with the given name or slug already exists, optionally skipping a specific ID.
- * @param {string} name - The name to check for uniqueness.
- * @param {string} [skipId] - An optional ID or slug to exclude from the check.
- * @returns {Promise<boolean>} - `true` if the name or slug exists, otherwise `false`.
+ * Update role
+ * @param {UpdateRolePort} payload
+ * @returns {Promise<RoleModel>}
  */
-export async function checkExistRoleNameService(name, skipId) {
-  const filters = { $or: [{ name }, { slug: makeSlug(name) }] };
+export const updateRoleByIdOrFailService = async (payload) => {
+  const role = await getRoleByIdRepository(payload.roleId);
+  Assert.isTrue(role, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' }));
 
-  if (skipId) {
-    const key = isValidObjectId(skipId) ? '_id' : skipId.match(REGEX_PATTERNS.SLUG) ? 'slug' : null;
-    if (key) filters[key] = { $ne: skipId };
-  }
+  const isExistName = await checkExistRoleNameRepository(payload.name, role._id);
+  Assert.isFalse(
+    isExistName,
+    HttpException.new({ code: Code.ALREADY_EXISTS, overrideMessage: 'Role name already exists' }),
+  );
 
-  const result = await RoleModel.findOne(filters, '_id', { withRemoved: true }).lean();
-  return !!result;
-}
+  const updatedRole = await updateRoleInfoByIdRepository(role._id, payload);
+
+  // Clear cache
+  await deleteRoleFromCache(role._id);
+
+  return updatedRole;
+};
 
 /**
- * Update a role's information by ID.
- *
- * @param {string} id - The MongoDB ObjectId of the role to update.
- * @param {Partial<RoleModel>} data - Partial role data to update. If `name` is provided, `slug` will be regenerated.
- * @returns {Promise<RoleModel | null>} - The updated role document, or null if not found.
+ * Remove role
+ * @param {GetRolePort} payload
+ * @returns {Promise<{id:string}>}
  */
-export async function updateRoleInfoByIdService(id, data) {
-  if (data.name) {
-    data.slug = makeSlug(data.name);
-  }
+export const removeRoleByIdOrFailService = async (payload) => {
+  const role = await getRoleByIdRepository(payload.roleId);
+  Assert.isTrue(role, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' }));
 
-  return RoleModel.findByIdAndUpdate(id, data, {
-    new: true,
-  }).lean();
-}
+  await removeRoleByIdRepository(role._id);
 
+  // Clear cache
+  await deleteRoleFromCache(role._id);
+
+  return { id: role._id };
+};
+
+// Uncache
 /**
- * Get list role permissions
- * @param {string} roleId
- * @param {Record<keyof RoleModel, any>} filters
- * @param {number} skip
- * @param {number} limit
- * @param {string} sortBy
- * @param {string} sortOrder
- * @returns
+ * Get assigned role permissions
+ * @param {GetAssignedRolePermissionsPort} payload
+ * @returns {Promise<[number, PermissionModel[]]>}
  */
-export async function getAndCountRolePermissionsService(roleId, filters, skip, limit, sortBy, sortOrder) {
-  const filterRole = {};
+export const getGrantedPermissionsForRoleService = async (payload) => {
+  const role = await getRoleByIdRepository(payload.roleId);
+  Assert.isTrue(role, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' }));
 
-  if (isValidObjectId(roleId)) {
-    filterRole._id = roleId;
-  } else if (roleId.match(REGEX_PATTERNS.SLUG)) {
-    filterRole.slug = roleId;
-  } else {
-    filterRole.name = roleId;
-  }
-
-  const queryOptions = {
-    ...extendQueryOptionsWithPagination(skip, limit),
-    ...extendQueryOptionsWithSort(sortBy, sortOrder),
+  const filters = {
+    $or: PERMISSION_SEARCH_FIELDS.map((field) => ({
+      [field]: { $regex: payload.keyword, $options: 'i' },
+    })),
+    _id: { $in: role.permissions },
   };
 
-  // Get List
-  const role = await RoleModel.findOne(filterRole)
-    .populate({
-      path: 'permissions',
-      select: PERMISSION_SELECTED_FIELDS,
-      ...(filters ? { match: filters } : {}),
-      options: queryOptions,
-    })
-    .select('permissions')
-    .lean();
+  const skip = (payload.page - 1) * payload.limit;
+  const [totalCount, permissions] = await getAndCountPermissionsRepository(
+    filters,
+    skip,
+    payload.limit,
+    payload.sortBy,
+    payload.sortOrder,
+  );
 
-  // Count
-  const rolePermissions = await RoleModel.aggregate([
-    { $match: { ...filterRole, ...(filterRole?._id ? { _id: new Types.ObjectId(filterRole._id) } : {}) } },
-    {
-      $lookup: {
-        from: 'permissions',
-        localField: 'permissions',
-        foreignField: '_id',
-        as: 'rolePermissions',
-        pipeline: [{ $match: filters }],
-      },
-    },
-    {
-      $project: {
-        _id: true,
-        totalCount: {
-          $size: '$rolePermissions',
-        },
-      },
-    },
-  ]);
-
-  return [rolePermissions.length > 0 ? rolePermissions[0]?.totalCount : 0, role.permissions];
-}
+  return [totalCount, permissions];
+};
 
 /**
- * Get a specific permission assigned to a role.
- * @param {string} roleId - The ID of the role.
- * @param {string} permissionId - The ID of the permission to retrieve.
- * @returns {Promise<{ _id:string, permissions: PermissionModel[] } | null>} - Role with the matching permission, or null if not found.
+ * Get unassigned role permissions
+ * @param {GetUnassignedRolePermissionsPort} payload
+ * @returns {Promise<[number, PermissionModel[]]>}
  */
-export async function getRolePermissionService(roleId, permissionId) {
-  return RoleModel.findById(roleId)
-    .populate({
-      path: 'permissions',
-      select: PERMISSION_SELECTED_FIELDS,
-      match: { _id: permissionId },
-    })
-    .select('permissions')
-    .lean();
-}
+export const getAvailablePermissionsForRoleService = async (payload) => {
+  const role = await getRoleByIdRepository(payload.roleId);
+  Assert.isTrue(role, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' }));
+
+  const filters = {
+    $or: ROLE_SEARCH_FIELDS.map((field) => ({
+      [field]: { $regex: payload.keyword, $options: 'i' },
+    })),
+    _id: { $nin: role.permissions.map((item) => item._id) },
+  };
+
+  const skip = (payload.page - 1) * payload.limit;
+  const [totalCount, permissions] = await getAndCountPermissionsRepository(
+    filters,
+    skip,
+    payload.limit,
+    payload.sortBy,
+    payload.sortOrder,
+  );
+
+  return [totalCount, permissions];
+};
 
 /**
- * Add one or more permissions to a role.
- * @param {string} roleId - The ID of the role to update.
- * @param {string[]} permissionIds - Array of permission IDs to add.
- * @returns {Promise<{ _id:string, permissions: PermissionModel[] } | null>} - Updated role with permissions, or null if not found.
+ * Grant permissions to role
+ * @param {AddRolePermissionsPort} payload
+ * @returns {Promise<PermissionModel[]>}
  */
-export async function addRolePermissionsService(roleId, permissionIds) {
-  return RoleModel.findByIdAndUpdate(
-    roleId,
-    {
-      $addToSet: {
-        permissions: { $each: permissionIds },
-      },
-    },
-    { new: true },
-  )
-    .select('permissions')
-    .lean();
-}
+export const grantPermissionsToRoleService = async (payload) => {
+  const role = await getRoleByIdRepository(payload.roleId);
+  Assert.isTrue(role, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' }));
+
+  const filters = {
+    _id: { $in: payload.permissionIds },
+  };
+
+  const permissions = await getPermissionsRepository(filters);
+
+  await addRolePermissionsRepository(
+    role._id,
+    permissions.filter(Boolean).map((item) => item._id),
+  );
+
+  return permissions;
+};
 
 /**
- * Remove a specific permission from a role.
- * @param {string} roleId - The ID of the role to update.
- * @param {string} permissionId - The ID of the permission to remove.
- * @returns {Promise<{ _id:string, permissions: PermissionModel[] } | null>} - Updated role with permissions, or null if not found.
+ * Revoke role permission
+ * @param {RemoveRolePermissionPort} payload
+ * @returns {Promise<{ id: string }>}
  */
-export async function removeRolePermissionService(roleId, permissionId) {
-  return RoleModel.findByIdAndUpdate(
-    roleId,
-    {
-      $pull: {
-        permissions: permissionId,
-      },
-    },
-    { new: true },
-  )
-    .select('permissions')
-    .lean();
-}
+export const revokeRolePermissionService = async (payload) => {
+  const role = await getRolePermissionRepository(payload.roleId, payload.permissionId);
+  Assert.isTrue(role, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Role not found' }));
+
+  const permission = await getPermissionByIdRepository(payload.permissionId);
+  Assert.isTrue(
+    permission,
+    HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Permission not found' }),
+  );
+
+  Assert.notEmpty(
+    role.permissions,
+    HttpException.new({
+      code: Code.RESOURCE_NOT_FOUND,
+      overrideMessage: 'Permission does not exist in the role',
+    }),
+  );
+
+  await removeRolePermissionRepository(role._id, permission._id);
+
+  return { id: permission._id };
+};

@@ -1,6 +1,6 @@
 /** @type {import('#src/app/permissions/models/permission.model')} */
 
-import { newPermissionService } from '#src/app/permissions/permissions.service';
+import { newPermissionRepository } from '#src/app/permissions/permissions.repository';
 import { faker } from '@faker-js/faker';
 
 export const USERS_PERMISSIONS = {
@@ -37,7 +37,7 @@ export const USERS_PERMISSIONS = {
 };
 
 export const userPermissions = Object.values(USERS_PERMISSIONS).map((per) =>
-  newPermissionService({ ...per, createdAt: faker.date.past(), updatedAt: faker.date.past() }),
+  newPermissionRepository({ ...per, createdAt: faker.date.past(), updatedAt: faker.date.past() }),
 );
 
 export const ROLES_PERMISSIONS = {
@@ -89,7 +89,7 @@ export const ROLES_PERMISSIONS = {
 };
 
 export const rolePermissions = Object.values(ROLES_PERMISSIONS).map((per) =>
-  newPermissionService({ ...per, createdAt: faker.date.past(), updatedAt: faker.date.past() }),
+  newPermissionRepository({ ...per, createdAt: faker.date.past(), updatedAt: faker.date.past() }),
 );
 
 export const PERMISSIONS_PERMISSIONS = {
@@ -101,7 +101,7 @@ export const PERMISSIONS_PERMISSIONS = {
 };
 
 export const permissionPermissions = Object.values(PERMISSIONS_PERMISSIONS).map((per) =>
-  newPermissionService({ ...per, createdAt: faker.date.past(), updatedAt: faker.date.past() }),
+  newPermissionRepository({ ...per, createdAt: faker.date.past(), updatedAt: faker.date.past() }),
 );
 
 export const CATEGORIES_PERMISSIONS = {
@@ -138,7 +138,7 @@ export const CATEGORIES_PERMISSIONS = {
 };
 
 export const categoryPermissions = Object.values(CATEGORIES_PERMISSIONS).map((per) =>
-  newPermissionService({ ...per, createdAt: faker.date.past(), updatedAt: faker.date.past() }),
+  newPermissionRepository({ ...per, createdAt: faker.date.past(), updatedAt: faker.date.past() }),
 );
 
 export const CUSTOMERS_PERMISSIONS = {
@@ -170,7 +170,7 @@ export const CUSTOMERS_PERMISSIONS = {
 };
 
 export const customerPermissions = Object.values(CUSTOMERS_PERMISSIONS).map((per) =>
-  newPermissionService({ ...per, createdAt: faker.date.past(), updatedAt: faker.date.past() }),
+  newPermissionRepository({ ...per, createdAt: faker.date.past(), updatedAt: faker.date.past() }),
 );
 
 export const PRODUCTS_PERMISSIONS = {
@@ -207,7 +207,7 @@ export const PRODUCTS_PERMISSIONS = {
 };
 
 export const productPermissions = Object.values(PRODUCTS_PERMISSIONS).map((per) =>
-  newPermissionService({ ...per, createdAt: faker.date.past(), updatedAt: faker.date.past() }),
+  newPermissionRepository({ ...per, createdAt: faker.date.past(), updatedAt: faker.date.past() }),
 );
 
 export const ORDER_PERMISSIONS = {
@@ -254,7 +254,7 @@ export const ORDER_PERMISSIONS = {
 };
 
 export const orderPermissions = Object.values(ORDER_PERMISSIONS).map((per) =>
-  newPermissionService({ ...per, createdAt: faker.date.past(), updatedAt: faker.date.past() }),
+  newPermissionRepository({ ...per, createdAt: faker.date.past(), updatedAt: faker.date.past() }),
 );
 
 export const NOTIFICATION_PERMISSIONS = {
@@ -303,10 +303,38 @@ export const NOTIFICATION_PERMISSIONS = {
     description: 'Complete order notification',
     module: 'orders',
   },
+
+  PAYMENT_SUCCESS: {
+    name: 'notify:payment_success',
+    description: 'Payment successful notification',
+    module: 'orders',
+  },
+  PAYMENT_FAILED: {
+    name: 'notify:payment_failed',
+    description: 'Payment failed notification',
+    module: 'orders',
+  },
+  NEW_PRODUCT_REVIEW: {
+    name: 'notify:new_product_review',
+    description: 'New product review notification',
+    module: 'products',
+  },
+
+  PERMISSION_GRANTED: {
+    name: 'notify:permission_granted',
+    description: 'New permission granted to role notification',
+    module: 'permissions',
+  },
+
+  PERMISSION_REVOKED: {
+    name: 'notify:permission_revoked',
+    description: 'Permission revoked from role notification',
+    module: 'permissions',
+  },
 };
 
 export const notificationPermissions = Object.values(NOTIFICATION_PERMISSIONS).map((per) =>
-  newPermissionService({ ...per, createdAt: faker.date.past(), updatedAt: faker.date.past() }),
+  newPermissionRepository({ ...per, createdAt: faker.date.past(), updatedAt: faker.date.past() }),
 );
 
 export const EXPORT_PERMISSIONS = {
@@ -383,7 +411,7 @@ export const EXPORT_PERMISSIONS = {
 };
 
 export const exportPermissions = Object.values(EXPORT_PERMISSIONS).map((per) =>
-  newPermissionService({ ...per, createdAt: faker.date.past(), updatedAt: faker.date.past() }),
+  newPermissionRepository({ ...per, createdAt: faker.date.past(), updatedAt: faker.date.past() }),
 );
 
 export const permissions = [

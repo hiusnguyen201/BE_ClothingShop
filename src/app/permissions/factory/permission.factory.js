@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createPermissionService } from '#src/app/permissions/permissions.service';
+import { createPermissionService } from '#src/app/permissions/permissions.repository';
 
 /** @type {import('#src/app/permissions/models/permission.model')} */
 

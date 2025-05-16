@@ -3,7 +3,6 @@ import { HttpException } from '#src/core/exception/http-exception';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { Code } from '#src/core/code/Code';
 import { DiscordService } from '#src/modules/discord/discord.service';
-import { errorIdGenerator } from '#src/utils/generator';
 
 export const handleError = (err, req, res, _) => {
   const status = err.code || HttpStatus.INTERNAL_SERVER_ERROR;
@@ -23,18 +22,18 @@ export const handleError = (err, req, res, _) => {
   if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
     DiscordService.sendError({
       ...apiResponse,
-      errorId: errorIdGenerator.next().value,
       method: req.method,
       url: req.originalUrl,
       userId: req?.user?.id ?? null,
       ip: req.ipv4,
       env: process.env.NODE_ENV,
-      stack: err.stack,
+      error: err.message,
     });
   }
 
   res.set('Content-Type', 'application/json');
   res.status(status).json(apiResponse);
+  res.end();
 };
 
 export const notFound = (req, res, next) => {

@@ -1,7 +1,7 @@
 /** @type {import('#src/app/options/models/option.model')} */
 /** @type {import('#src/app/options/models/option-value.model')} */
 
-import { newOptionService, newOptionValueService } from '#src/app/options/options.service';
+import { newOptionRepository, newOptionValueRepository } from '#src/app/options/options.repository';
 import { faker } from '@faker-js/faker';
 
 const colors = [
@@ -22,7 +22,7 @@ const colors = [
 const sizes = ['S', 'M', 'L', 'XL', 'XXL'];
 
 export const colorValuesInstance = colors.map((item) => {
-  const newValue = newOptionValueService({
+  const newValue = newOptionValueRepository({
     valueName: item,
     createdAt: faker.date.past(),
     updatedAt: faker.date.past(),
@@ -31,7 +31,7 @@ export const colorValuesInstance = colors.map((item) => {
 });
 
 export const sizeValuesInstance = sizes.map((item) => {
-  const newValue = newOptionValueService({
+  const newValue = newOptionValueRepository({
     valueName: item,
     createdAt: faker.date.past(),
     updatedAt: faker.date.past(),
@@ -52,7 +52,7 @@ const OPTIONS_DATA = [
 
 const optionValues = [...colorValuesInstance, ...sizeValuesInstance];
 const options = OPTIONS_DATA.map((opt) => {
-  const newOption = newOptionService({ ...opt, createdAt: faker.date.past(), updatedAt: faker.date.past() });
+  const newOption = newOptionRepository({ ...opt, createdAt: faker.date.past(), updatedAt: faker.date.past() });
   return newOption;
 });
 

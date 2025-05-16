@@ -79,7 +79,7 @@ group Authentication Flow
     deactivate jsonwebtoken
     AuthService -->> JwtAuthMiddleware: return data decoded
     deactivate AuthService
-    JwtAuthMiddleware -> UserService: getUserByIdService(decoded.id)
+    JwtAuthMiddleware -> UserService: getUserByIdOrFailService(decoded.id)
     activate UserService
     UserService -> UserModel: findOne(filters)
     activate UserModel
@@ -152,7 +152,7 @@ group Business Logic Flow
     JwtAuthMiddleware -> ShippingAddressController: getShippingAddressByIdController
     deactivate JwtAuthMiddleware
     activate ShippingAddressController
-    ShippingAddressController -> ShippingAddressService: getShippingAddressByIdService(shippingAddressId)
+    ShippingAddressController -> ShippingAddressService: getUserShippingAddressByIdOrFailService(shippingAddressId)
     activate ShippingAddressService
     
     alt shippingAddressId not provided

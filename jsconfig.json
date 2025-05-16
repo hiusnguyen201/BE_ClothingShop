@@ -1,9 +1,13 @@
 {
   "compilerOptions": {
+    "module": "commonjs",
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
     "baseUrl": "./",
     "paths": {
       "#src/*": ["src/*"],
       "#test/*": ["test/*"]
     }
-  }
+  },
+  "include": ["src/**/*"]
 }

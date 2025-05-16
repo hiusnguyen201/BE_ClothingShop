@@ -1,11 +1,11 @@
 /** @type {import('#src/app/users/models/user.model')} */
 
-import { GENDER, USER_TYPE } from '#src/app/users/users.constant';
-import { newUserService } from '#src/app/users/users.service';
+import { GENDER } from '#src/app/users/users.constant';
+import { newUserRepository } from '#src/app/users/users.repository';
 import { faker } from '@faker-js/faker';
 import { rolePermissions, permissions } from '#src/database/data/permissions-data';
 import { roles } from '#src/database/data/roles-data';
-import { newCustomerService } from '#src/app/customers/customers.service';
+import { newCustomerRepository } from '#src/app/customers/customers.repository';
 
 const VN_PHONE_PREFIXES = ['03', '05', '07', '08', '09'];
 
@@ -23,7 +23,6 @@ const USER_DATA = [
     phone: '0983460012',
     verifiedAt: new Date(),
     gender: GENDER.MALE,
-    type: USER_TYPE.USER,
     permissions: rolePermissions.map((p) => p._id),
     createdAt: faker.date.past(),
     updatedAt: faker.date.past(),
@@ -35,7 +34,6 @@ const USER_DATA = [
     phone: '0983460012',
     verifiedAt: new Date(),
     gender: GENDER.MALE,
-    type: USER_TYPE.USER,
     role: roles[0]._id,
     createdAt: faker.date.past(),
     updatedAt: faker.date.past(),
@@ -47,7 +45,6 @@ const USER_DATA = [
     phone: '0983460012',
     verifiedAt: new Date(),
     gender: GENDER.MALE,
-    type: USER_TYPE.USER,
     permissions: permissions.filter((p) => ['read', 'export'].some((item) => p.name.includes(item))).map((p) => p._id),
     createdAt: faker.date.past(),
     updatedAt: faker.date.past(),
@@ -59,7 +56,6 @@ const USER_DATA = [
     phone: generateVietnamPhoneNumber(),
     verifiedAt: Math.random() > 0.5 ? faker.date.past() : null,
     gender: faker.helpers.arrayElement(Object.values(GENDER)),
-    type: USER_TYPE.USER,
     createdAt: faker.date.past(),
     updatedAt: faker.date.past(),
   })),
@@ -73,7 +69,6 @@ const CUSTOMER_DATA = [
     phone: '0983460012',
     verifiedAt: new Date(),
     gender: GENDER.MALE,
-    type: USER_TYPE.CUSTOMER,
     createdAt: faker.date.past(),
     updatedAt: faker.date.past(),
   },
@@ -83,7 +78,6 @@ const CUSTOMER_DATA = [
     password: '1234',
     phone: '0983460012',
     gender: GENDER.MALE,
-    type: USER_TYPE.CUSTOMER,
     createdAt: faker.date.past(),
     updatedAt: faker.date.past(),
   },
@@ -94,7 +88,6 @@ const CUSTOMER_DATA = [
     phone: generateVietnamPhoneNumber(),
     verifiedAt: Math.random() > 0.5 ? faker.date.past() : null,
     gender: faker.helpers.arrayElement(Object.values(GENDER)),
-    type: USER_TYPE.CUSTOMER,
     createdAt:
       index < 50
         ? Math.random() > 0.5
@@ -109,12 +102,12 @@ const users = [];
 const customers = [];
 
 USER_DATA.map((item) => {
-  const newUser = newUserService(item);
+  const newUser = newUserRepository(item);
   users.push(newUser);
 });
 
 CUSTOMER_DATA.map((item) => {
-  const newCustomer = newCustomerService(item);
+  const newCustomer = newCustomerRepository(item);
   customers.push(newCustomer);
 });
 

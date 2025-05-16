@@ -2,6 +2,26 @@ import { ONLINE_PAYMENT_METHOD } from '#src/app/payments/payments.constant';
 import { replaceMultiSpacesToSingleSpace } from '#src/utils/string.util';
 import Joi from 'joi';
 
+/**
+ * @typedef {Object} CreateOrderDto
+ * @property {string} customerId
+ * @property {string} customerName
+ * @property {string} customerEmail
+ * @property {string} customerPhone
+ * @property {number} districtId
+ * @property {number} provinceId
+ * @property {string} wardCode
+ * @property {string} address
+ * @property {Array<OrderItem>} productVariants
+ * @property {string} paymentMethod
+ * @property {string} [notes]
+ */
+
+/**
+ * @typedef {Object} OrderItem
+ * @property {string} id
+ * @property {number} quantity
+ */
 export const CreateOrderDto = Joi.object({
   customerId: Joi.string().required(),
   customerName: Joi.string().min(3).max(100).required(),

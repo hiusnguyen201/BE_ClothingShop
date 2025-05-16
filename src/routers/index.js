@@ -17,12 +17,8 @@ import shippingAddressRouter from '#src/routers/shipping-address.router';
 import cartsRouter from '#src/routers/carts.router';
 import divisionsRouter from '#src/routers/divisions.router';
 import { isAuthorizedAndIsCustomer } from '#src/middlewares/jwt-auth.middleware';
-import { getAllProductsByCustomerController, getProductByIdController } from '#src/app/products/products.controller';
-import {
-  getAllCategoriesByCustomerController,
-  getCategoryByIdController,
-} from '#src/app/categories/categories.controller';
-import { getAllOrdersByCustomerController, getOrderByIdController } from '#src/app/orders/orders.controller';
+import { getAllProductsController, getProductByIdController } from '#src/app/products/products.controller';
+import { getAllCategoriesController, getCategoryByIdController } from '#src/app/categories/categories.controller';
 import {
   changePasswordController,
   createOrderByCustomerController,
@@ -62,12 +58,11 @@ router.use('/carts', cartsRouter);
 router.use('/report', reportRouter);
 
 router
-  .get('/products/get-products-by-customer', getAllProductsByCustomerController)
+  .get('/products/get-products-by-customer', getAllProductsController)
   .get('/products/get-product-by-customer/:productId', getProductByIdController)
-  .get('/categories/get-categories-by-customer', getAllCategoriesByCustomerController)
+  .get('/categories/get-categories-by-customer', getAllCategoriesController)
   .get('/categories/get-category-by-customer/:categoryId', getCategoryByIdController)
-  .get('/orders/get-orders-by-customer', isAuthorizedAndIsCustomer, getAllOrdersByCustomerController)
-  .get('/orders/get-order-by-customer/:orderId', isAuthorizedAndIsCustomer, getOrderByIdController)
+
   .post('/orders/create-order-by-customer', isAuthorizedAndIsCustomer, createOrderByCustomerController)
   .put('/account/update-profile-by-customer', isAuthorizedAndIsCustomer, editProfileController)
   .put('/account/change-password', isAuthorizedAndIsCustomer, changePasswordController);

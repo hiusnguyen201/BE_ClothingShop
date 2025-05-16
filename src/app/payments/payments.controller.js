@@ -1,53 +1,20 @@
-import { ORDER_STATUS } from '#src/app/orders/orders.constant';
-import { HttpException } from '#src/core/exception/http-exception';
-import { addOrderStatusHistoryByIdService, getOrderByIdService } from '#src/app/orders/orders.service';
-import { updatePaymentByIdService } from '#src/app/payments/payments.service';
-import { Code } from '#src/core/code/Code';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { ModelDto } from '#src/core/dto/ModelDto';
 import { PaymentDto } from '#src/app/payments/dtos/payment.dto';
-import { TransactionalServiceWrapper } from '#src/core/transaction/TransactionalServiceWrapper';
 import { PAYMENT_STATUS } from '#src/app/payments/payments.constant';
-import { increaseProductVariantsQuantityByOrderService } from '#src/app/product-variants/product-variants.service';
+import { returnPaymentMoMoService } from '#src/app/payments/payments.service';
+import { ReturnPaymentMoMoDto } from '#src/app/payments/dtos/return-payment-momo.dto';
 
 export const returnPaymentMoMoController = async (req) => {
-  return TransactionalServiceWrapper.execute(async (session) => {
-    const { orderId, resultCode, amount, transId, responseTime } = req.body;
+  const adapter = await validateSchema(ReturnPaymentMoMoDto, req.body);
 
-    // Validation
-    const orderExisted = await getOrderByIdService(orderId);
-    if (!orderExisted) {
-      throw HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Order not found' });
-    }
+  const payment = await returnPaymentMoMoService(adapter);
 
-    const isSuccess = resultCode == 0;
-    const paymentUpdateData = isSuccess
-      ? { status: PAYMENT_STATUS.PAID, transactionId: transId, amountPaid: amount, paidDate: responseTime }
-      : { status: PAYMENT_STATUS.CANCELLED };
-
-    // Update quantity of product variants
-    if (!isSuccess) {
-      await increaseProductVariantsQuantityByOrderService(
-        orderExisted.orderDetails.map((item) => ({ quantity: item.quantity, variantId: item.variant._id })),
-        session,
-      );
-    }
-
-    await addOrderStatusHistoryByIdService(
-      orderExisted._id,
-      isSuccess ? ORDER_STATUS.CONFIRMED : ORDER_STATUS.CANCELLED,
-      null,
-      session,
-    );
-
-    const updatedPayment = await updatePaymentByIdService(orderExisted.payment._id, paymentUpdateData, session);
-
-    const paymentDto = ModelDto.new(PaymentDto, updatedPayment);
-    return ApiResponse.success(
-      paymentDto,
-      isSuccess ? 'Payment successful' : 'The payment was cancelled by the customer',
-    );
-  });
+  const paymentDto = ModelDto.new(PaymentDto, payment);
+  return ApiResponse.success(
+    paymentDto,
+    payment.status === PAYMENT_STATUS.PAID ? 'Payment successful' : 'The payment was cancelled by the customer',
+  );
 };
 
 // export const returnPaymentVnPayController = async (req) => {

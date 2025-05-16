@@ -2,7 +2,7 @@ import HttpStatus from 'http-status-codes';
 import request from 'supertest';
 import { Code } from '#src/core/code/Code';
 import app from '#src/app';
-import { ACCESS_TOKEN_KEY } from '#src/utils/cookie.util';
+import { ACCESS_TOKEN_KEY } from '#src/utils/session.util';
 
 /**
  * Usage: https://jestjs.io/docs/api#testeachtablename-fn-timeout

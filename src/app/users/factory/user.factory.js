@@ -1,10 +1,10 @@
 import { faker } from '@faker-js/faker';
 import { GENDER, USER_TYPE } from '#src/app/users/users.constant';
-import { createUserService } from '#src/app/users/users.service';
+import { createUserRepository } from '#src/app/users/users.repository';
 import permissionFactory from '#src/app/permissions/factory/permission.factory';
-import { generateTokensService } from '#src/app/auth/auth.service';
 import { UserDto } from '#src/app/users/dtos/user.dto';
 import { ModelDto } from '#src/core/dto/ModelDto';
+import { generateTokens } from '#src/utils/session.util';
 
 /** @type {import('#src/app/users/models/user.model')} */
 
@@ -33,57 +33,69 @@ class UserFactory {
   }
 
   async createUser() {
-    return createUserService(this.default);
+    return createUserRepository(this.default);
   }
 
   async createUserAuthorizedWithoutPayload() {
-    const user = await createUserService(this.default);
+    const user = await createUserRepository(this.default);
 
     const userDto = ModelDto.new(UserDto, user);
 
-    const { accessToken } = await generateTokensService(user._id, {});
+    const { accessToken } = await generateTokens({});
 
     return { user: userDto, accessToken };
   }
 
   async createUserAuthorizedAndUnverified() {
-    const user = await createUserService({ ...this.default, verifiedAt: null });
+    const user = await createUserRepository({ ...this.default, verifiedAt: null });
 
     const userDto = ModelDto.new(UserDto, user);
 
-    const { accessToken } = await generateTokensService(user._id, userDto);
+    const { accessToken } = await generateTokens({
+      id: user._id,
+      type: user.type,
+    });
 
     return { user: userDto, accessToken };
   }
 
   async createUserAuthorized() {
-    const user = await createUserService(this.default);
+    const user = await createUserRepository(this.default);
 
     const userDto = ModelDto.new(UserDto, user);
 
-    const { accessToken } = await generateTokensService(user._id, userDto);
+    const { accessToken } = await generateTokens({
+      id: user._id,
+      type: user.type,
+    });
 
     return { user: userDto, accessToken };
   }
 
   async createCustomerAuthorized() {
-    const user = await createUserService({ ...this.default, type: USER_TYPE.CUSTOMER });
+    const customer = await createUserRepository({ ...this.default, type: USER_TYPE.CUSTOMER });
 
-    const userDto = ModelDto.new(UserDto, user);
+    const customerDto = ModelDto.new(UserDto, customer);
 
-    const { accessToken } = await generateTokensService(user._id, userDto);
+    const { accessToken } = await generateTokens({
+      id: customer._id,
+      type: customer.type,
+    });
 
-    return { user: userDto, accessToken };
+    return { user: customerDto, accessToken };
   }
 
   async createUserAuthorizedAndHasPermission(method, endpoint) {
     const permission = await permissionFactory.createPermission({ method, endpoint });
 
-    const user = await createUserService({ ...this.default, permissions: [permission._id] });
+    const user = await createUserRepository({ ...this.default, permissions: [permission._id] });
 
     const userDto = ModelDto.new(UserDto, user);
 
-    const { accessToken } = await generateTokensService(user._id, userDto);
+    const { accessToken } = await generateTokens({
+      id: user._id,
+      type: user.type,
+    });
 
     return { user: userDto, accessToken };
   }

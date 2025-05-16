@@ -1,6 +1,6 @@
 /** @type {import('#src/app/roles/models/role.model')} */
 
-import { newRoleService } from '#src/app/roles/roles.service';
+import { newRoleRepository } from '#src/app/roles/roles.repository';
 import {
   categoryPermissions,
   customerPermissions,
@@ -8,6 +8,7 @@ import {
   orderPermissions,
   productPermissions,
   userPermissions,
+  permissions,
 } from '#src/database/data/permissions-data';
 import { faker } from '@faker-js/faker';
 
@@ -17,24 +18,7 @@ const ROLE_DATA = [
     description: 'Full system access. Can orders, products, categories, and all system configurations.',
     createdAt: faker.date.past(),
     updatedAt: faker.date.past(),
-    permissions: [
-      ...orderPermissions
-        .filter((p) => ['read', 'edit', 'create', 'remove'].some((item) => p.name.includes(item)))
-        .map((p) => p._id),
-      ...userPermissions.filter((p) => ['read'].some((item) => p.name.includes(item))).map((p) => p._id),
-      ...customerPermissions
-        .filter((p) => ['read', 'edit', 'create', 'remove'].some((item) => p.name.includes(item)))
-        .map((p) => p._id),
-      ...productPermissions
-        .filter((p) => ['read', 'edit', 'create', 'remove'].some((item) => p.name.includes(item)))
-        .map((p) => p._id),
-      ...categoryPermissions
-        .filter((p) => ['read', 'edit', 'create', 'remove'].some((item) => p.name.includes(item)))
-        .map((p) => p._id),
-      ...notificationPermissions
-        .filter((p) => ['read', 'edit', 'create', 'remove'].some((item) => p.name.includes(item)))
-        .map((p) => p._id),
-    ],
+    permissions: permissions.map((p) => p._id),
   },
   {
     name: 'Manager',
@@ -77,4 +61,4 @@ const ROLE_DATA = [
   },
 ];
 
-export const roles = ROLE_DATA.map((item) => newRoleService(item));
+export const roles = ROLE_DATA.map((item) => newRoleRepository(item));

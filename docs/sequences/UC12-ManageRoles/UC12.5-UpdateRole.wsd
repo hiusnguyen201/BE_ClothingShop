@@ -29,7 +29,7 @@ break
 break
 
 group Business Logic Flow
-    RolesController -> RolesService: getRoleByIdService(roleId)
+    RolesController -> RolesService: getRoleByIdOrFailService(roleId)
     activate RolesService
     RolesService -> RoleModel: findById(roleId)
     activate RoleModel

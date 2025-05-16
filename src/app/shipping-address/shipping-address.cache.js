@@ -9,7 +9,7 @@ export async function getShippingAddressFromCache(shippingAddressId) {
   return cached ? cached : null;
 }
 
-export async function getTotalCountAndListShippingAddressFromCache(filters) {
+export async function getListShippingAddressFromCache(filters) {
   const key = CacheKey.newPaginationKey(SHIPPING_ADDRESS_CACHE_KEY_PREFIX.LIST_SHIPPING_ADDRESS, filters);
   const cached = await redisClient.get(key);
   return cached ?? [0, []];
@@ -20,7 +20,7 @@ export async function setShippingAddressToCache(shippingAddressId, shippingAddre
   await redisClient.set(key, shippingAddressData);
 }
 
-export async function setTotalCountAndListShippingAddressToCache(filters, totalCount, listData) {
+export async function setListShippingAddressToCache(filters, totalCount, listData) {
   const key = CacheKey.newPaginationKey(SHIPPING_ADDRESS_CACHE_KEY_PREFIX.LIST_SHIPPING_ADDRESS, filters);
   await redisClient.set(key, [totalCount, listData]);
 }

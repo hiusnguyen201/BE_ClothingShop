@@ -30,3 +30,10 @@ export const USER_CACHE_KEY_PREFIX = {
 };
 
 export const USER_SEARCH_FIELDS = ['name', 'email', 'phone'];
+
+export const USER_SORT_KEYS = ['createdAt', 'name', 'email', 'lastLoginAt', 'gender', 'verifiedAt'];
+
+export const USER_STATUS = {
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+};

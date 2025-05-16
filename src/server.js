@@ -3,9 +3,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { corsConfig } from '#src/config/cors.config';
 
-const HOST = 'localhost';
-const PORT = 3000;
-const protocol = 'http';
+const PORT = process.env.PORT || 3000;
 
 const serverApi = createServer(app);
 
@@ -31,7 +29,7 @@ serverApi.listen(PORT, () => {
     ███████║███████╗██║  ██║ ╚████╔╝ ███████╗██║  ██║    ███████║   ██║   ██║  ██║██║  ██║   ██║██╗██╗██╗
     ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚══════╝╚═╝  ╚═╝    ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝╚═╝╚═╝╚═╝
     `);
-    console.log(`🌍 Server is running on: ${protocol}://${HOST}:${PORT} 🌍`);
+    console.log(`🌍 Server is running on: http://localhost:${PORT} 🌍`);
   }
 });
 

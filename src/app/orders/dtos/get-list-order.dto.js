@@ -3,6 +3,17 @@ import { replaceMultiSpacesToSingleSpace } from '#src/utils/string.util';
 import escapeStringRegexp from 'escape-string-regexp';
 import Joi from 'joi';
 
+/**
+ * @typedef {Object} GetListOrderDto
+ * @property {string} [keyword]
+ * @property {number} [page]
+ * @property {number} [limit]
+ * @property {string} [sortBy]
+ * @property {string} [sortOrder]
+ * @property {string} [status]
+ * @property {number} [minTotal]
+ * @property {number} [maxTotal]
+ */
 export const GetListOrderDto = Joi.object({
   page: Joi.number()
     .min(1)

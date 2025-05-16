@@ -1,6 +1,15 @@
 import Joi from 'joi';
 import { replaceMultiSpacesToSingleSpace } from '#src/utils/string.util';
 
+/**
+ * @typedef {Object} GetUnassignedRolePermissionsDto
+ * @property {string} roleId
+ * @property {string} [keyword]
+ * @property {number} [page]
+ * @property {number} [limit]
+ * @property {string} [sortBy]
+ * @property {string} [sortOrder]
+ */
 export const GetUnassignedRolePermissionsDto = Joi.object({
   roleId: Joi.string().required(),
   keyword: Joi.string()

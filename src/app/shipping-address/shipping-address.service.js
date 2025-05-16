@@ -1,129 +1,210 @@
-import { isValidObjectId } from 'mongoose';
-import { ShippingAddressModel } from '#src/app/shipping-address/models/shipping-address.model';
-import { extendQueryOptionsWithPagination, extendQueryOptionsWithSort } from '#src/utils/query.util';
-import { SHIPPING_ADDRESS_SELECTED_FIELDS } from '#src/app/shipping-address/shipping-address.constant';
+import {
+  createShippingAddressRepository,
+  getShippingAddressByIdRepository,
+  updateShippingAddressByIdRepository,
+  removeShippingAddressByIdRepository,
+  setDefaultShippingAddressByIdRepository,
+  unsetDefaultCurrentShippingAddressRepository,
+  countAllShippingAddressRepository,
+  getAndCountShippingAddressRepository,
+} from '#src/app/shipping-address/shipping-address.repository';
+import { HttpException } from '#src/core/exception/http-exception';
+import { Code } from '#src/core/code/Code';
+import { getDistrictService, getProvinceService, getWardService } from '#src/modules/GHN/ghn.service';
+import {
+  deleteShippingAddressFromCache,
+  getShippingAddressFromCache,
+  getListShippingAddressFromCache,
+  setShippingAddressToCache,
+  setListShippingAddressToCache,
+} from '#src/app/shipping-address/shipping-address.cache';
+import { Assert } from '#src/core/assert/Assert';
+
+/**
+ * @typedef {import("#src/app/shipping-address/models/shipping-address.model").ShippingAddressModel} ShippingAddressModel
+ * @typedef {import("#src/app/shipping-address/dtos/create-shipping-address.dto").CreateShippingAddressDto} CreateShippingAddressPort
+ * @typedef {import("#src/app/shipping-address/dtos/get-list-shipping-address.dto").GetListShippingAddressDto} GetListShippingAddressPort
+ * @typedef {import("#src/app/shipping-address/dtos/get-shipping-address.dto").GetShippingAddressDto} GetShippingAddressPort
+ * @typedef {import("#src/app/shipping-address/dtos/update-shipping-address.dto").UpdateShippingAddressDto} UpdateShippingAddressPort
+ */
 
 /**
  * Create shipping address
- * @param {*} data
- * @returns
+ * @param {CreateShippingAddressPort & {userId: string}} payload
+ * @returns {Promise<ShippingAddressModel>}
  */
-export async function createShippingAddressService(data) {
-  return ShippingAddressModel.create(data);
-}
+export const createUserShippingAddressService = async (payload) => {
+  const totalCount = await countAllShippingAddressRepository({
+    customer: payload.userId,
+    isDefault: true,
+  });
 
-/**
- * Get and count shipping address
- * @param {*} query
- * @returns
- */
-export async function getAndCountShippingAddressService(filters, skip, limit, sortBy, sortOrder) {
-  const totalCount = await ShippingAddressModel.countDocuments(filters);
-
-  const queryOptions = {
-    ...extendQueryOptionsWithPagination(skip, limit),
-    ...extendQueryOptionsWithSort(sortBy, sortOrder),
-  };
-
-  const list = await ShippingAddressModel.find(filters, SHIPPING_ADDRESS_SELECTED_FIELDS, queryOptions).lean();
-
-  return [totalCount, list];
-}
-
-/**
- * Count all shipping addresses
- * @param {*} filters
- * @returns
- */
-export async function countAllShippingAddressService(filters) {
-  return ShippingAddressModel.countDocuments(filters);
-}
-
-/**
- * Get one address by id
- * @param {*} addressId
- * @returns
- */
-export async function getShippingAddressByIdService(addressId, extras = {}) {
-  if (!addressId) return null;
-
-  const filters = {
-    ...extras,
-  };
-
-  if (isValidObjectId(addressId)) {
-    filters._id = addressId;
-  } else {
-    return null;
+  if (totalCount > 0 && payload.isDefault) {
+    await unsetDefaultCurrentShippingAddressRepository(payload.userId);
+  } else if (totalCount === 0) {
+    payload.isDefault = true;
   }
 
-  return ShippingAddressModel.findOne(filters).select(SHIPPING_ADDRESS_SELECTED_FIELDS).lean();
-}
+  const province = await getProvinceService(payload.provinceId);
+  Assert.isTrue(province, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Province not found' }));
+
+  const district = await getDistrictService(payload.districtId, payload.provinceId);
+  Assert.isTrue(district, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'District not found' }));
+
+  const ward = await getWardService(payload.wardCode, payload.districtId);
+  Assert.isTrue(ward, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Ward not found' }));
+
+  const shippingAddress = await createShippingAddressRepository({
+    isDefault: payload.isDefault,
+    address: payload.address,
+    provinceName: province.ProvinceName,
+    districtName: district.DistrictName,
+    wardName: ward.WardName,
+    customer: payload.userId,
+  });
+
+  // Clear cache
+  await deleteShippingAddressFromCache(shippingAddress._id);
+
+  return shippingAddress;
+};
 
 /**
- * Update shipping address by id
- * @param {*} id
- * @param {*} data
- * @returns
+ * Create shipping address
+ * @param {GetListShippingAddressPort & {userId: string}} payload
+ * @returns {Promise<[number, ShippingAddressModel[]]>}
  */
-export async function updateShippingAddressByIdService(id, data) {
-  return ShippingAddressModel.findByIdAndUpdate(id, data, {
-    new: true,
-  })
-    .select(SHIPPING_ADDRESS_SELECTED_FIELDS)
-    .lean();
-}
+export const getAllUserShippingAddressesService = async (payload) => {
+  const filters = {
+    customer: payload.userId,
+  };
+
+  const cached = await getListShippingAddressFromCache({ ...filters, ...payload });
+  if (cached && Array.isArray(cached) && cached.length === 2 && cached[0] > 0) {
+    return cached;
+  }
+
+  const skip = (payload.page - 1) * payload.limit;
+  const [totalCount, listShippingAddress] = await getAndCountShippingAddressRepository(
+    filters,
+    skip,
+    payload.limit,
+    payload.sortBy,
+    payload.sortOrder,
+  );
+
+  await setListShippingAddressToCache({ ...filters, ...payload }, totalCount, listShippingAddress);
+
+  return [totalCount, listShippingAddress];
+};
 
 /**
- * Remove shipping address by id
- * @param {*} id
- * @returns
+ * Get shipping address
+ * @param {GetShippingAddressPort & {userId: string}} payload
+ * @returns {Promise<ShippingAddressModel>}
  */
-export async function removeShippingAddressByIdService(id) {
-  return ShippingAddressModel.findByIdAndDelete(id).select(SHIPPING_ADDRESS_SELECTED_FIELDS).lean();
-}
+export const getUserShippingAddressByIdOrFailService = async (payload) => {
+  const cached = await getShippingAddressFromCache(payload.shippingAddressId);
+  if (cached) {
+    return cached;
+  }
+
+  const shippingAddress = await getShippingAddressByIdRepository(payload.shippingAddressId, {
+    customer: payload.userId,
+  });
+  Assert.isTrue(
+    shippingAddress,
+    HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Shipping address not found' }),
+  );
+
+  await setShippingAddressToCache(payload.shippingAddressId, shippingAddress);
+
+  return shippingAddress;
+};
 
 /**
- * Set default shipping address by id
- * @param {*} addressId
- * @param {*} customerId
- * @returns
+ * Update shipping address
+ * @param {UpdateShippingAddressPort & {userId: string}} payload
+ * @returns {Promise<ShippingAddressModel>}
  */
-export async function setDefaultShippingAddressByIdService(addressId, customerId) {
-  return ShippingAddressModel.updateOne(
-    {
-      _id: addressId,
-      customer: customerId,
-    },
-    {
-      isDefault: true,
-    },
-    {
-      new: true,
-    },
-  )
-    .select(SHIPPING_ADDRESS_SELECTED_FIELDS)
-    .lean();
-}
+export const updateUserShippingAddressByIdOrFailService = async (payload) => {
+  if (payload.isDefault) {
+    await unsetDefaultCurrentShippingAddressRepository(payload.userId);
+  }
+
+  const province = await getProvinceService(payload.provinceId);
+  Assert.isTrue(province, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Province not found' }));
+
+  const district = await getDistrictService(payload.districtId, payload.provinceId);
+  Assert.isTrue(district, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'District not found' }));
+
+  const ward = await getWardService(payload.wardCode, payload.districtId);
+  Assert.isTrue(ward, HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Ward not found' }));
+
+  const updatedShippingAddress = await updateShippingAddressByIdRepository(payload.shippingAddressId, {
+    isDefault: payload.isDefault,
+    provinceName: province.ProvinceName,
+    districtName: district.DistrictName,
+    wardName: ward.WardName,
+  });
+  Assert.isTrue(
+    updatedShippingAddress,
+    HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Shipping address not found' }),
+  );
+
+  // Clear cache
+  await deleteShippingAddressFromCache(updatedShippingAddress._id);
+
+  return updatedShippingAddress;
+};
 
 /**
- * Unset default current shipping address
- * @param {*} customerId
- * @returns
+ * Remove shipping address
+ * @param {GetShippingAddressPort & {userId: string}} payload
+ * @returns {Promise<{id: string}>}
  */
-export async function unsetDefaultCurrentShippingAddressService(customerId) {
-  return ShippingAddressModel.updateOne(
-    {
-      customer: customerId,
-      isDefault: true,
-    },
-    {
-      $set: { isDefault: false },
-    },
-    {
-      new: true,
-    },
-  )
-    .select(SHIPPING_ADDRESS_SELECTED_FIELDS)
-    .lean();
-}
+export const removeUserShippingAddressByIdOrFailService = async (payload) => {
+  const existShippingAddress = await getShippingAddressByIdRepository(payload.shippingAddressId, {
+    customer: payload.userId,
+  });
+  Assert.isTrue(
+    existShippingAddress,
+    HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Shipping address not found' }),
+  );
+
+  await removeShippingAddressByIdRepository(existShippingAddress._id);
+
+  // Clear cache
+  await deleteShippingAddressFromCache(existShippingAddress._id);
+
+  return { id: existShippingAddress._id };
+};
+
+/**
+ * Update default shipping address
+ * @param {GetShippingAddressPort & {userId: string}} payload
+ * @returns {Promise<{id: string}>}
+ */
+export const setDefaultUserShippingAddressByIdOrFailService = async (payload) => {
+  const existShippingAddress = await getShippingAddressByIdRepository(payload.shippingAddressId, {
+    customer: payload.userId,
+  });
+
+  Assert.isTrue(
+    existShippingAddress,
+    HttpException.new({ code: Code.RESOURCE_NOT_FOUND, overrideMessage: 'Shipping address not found' }),
+  );
+
+  Assert.isFalse(
+    existShippingAddress.isDefault,
+    HttpException.new({ code: Code.BAD_REQUEST, overrideMessage: 'Current address is default' }),
+  );
+
+  await unsetDefaultCurrentShippingAddressRepository(payload.userId);
+  await setDefaultShippingAddressByIdRepository(existShippingAddress._id, payload.userId);
+
+  // Clear cache
+  await deleteShippingAddressFromCache(existShippingAddress._id);
+
+  return { id: existShippingAddress._id };
+};
