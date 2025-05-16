@@ -67,7 +67,8 @@
     "slugify": "^1.6.6",
     "socket.io": "^4.8.1",
     "uuid": "^11.0.3",
-    "vietnam-provinces": "^0.0.4"
+    "vietnam-provinces": "^0.0.4",
+    "winston": "^3.17.0"
   },
   "devDependencies": {
     "@babel/core": "^7.27.1",

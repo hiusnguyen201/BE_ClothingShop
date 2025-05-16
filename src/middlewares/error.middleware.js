@@ -4,7 +4,7 @@ import { ApiResponse } from '#src/core/api/ApiResponse';
 import { Code } from '#src/core/code/Code';
 import { DiscordService } from '#src/modules/discord/discord.service';
 
-export const handleError = (err, req, res, _) => {
+export const handleError = async (err, req, res, _) => {
   const status = err.code || HttpStatus.INTERNAL_SERVER_ERROR;
   const message = status >= HttpStatus.INTERNAL_SERVER_ERROR ? HttpStatus.getStatusText(status) : err.message;
   const codeMessage = err.codeMessage || 'SERVER_ERROR';
@@ -20,7 +20,7 @@ export const handleError = (err, req, res, _) => {
   }
 
   if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
-    DiscordService.sendError({
+    await DiscordService.sendError({
       ...apiResponse,
       method: req.method,
       url: req.originalUrl,

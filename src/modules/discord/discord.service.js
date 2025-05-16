@@ -5,10 +5,14 @@ export class DiscordService {
    * @param {any} payload
    */
   static async sendError(payload) {
-    // if (process.env.NODE_ENV === 'development') return;
-    const webhookUrl = process.env.DISCORD_WEBHOOK_ERROR_URL;
-    const message2 = '```json\n' + JSON.stringify(payload, null, 2) + '\n```';
-    await axios.post(webhookUrl, { content: message2 });
+    if (process.env.NODE_ENV === 'development') return;
+    try {
+      const webhookUrl = process.env.DISCORD_WEBHOOK_ERROR_URL;
+      const message2 = '```json\n' + JSON.stringify(payload, null, 2) + '\n```';
+      await axios.post(webhookUrl, { content: message2 });
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   /**
@@ -16,8 +20,12 @@ export class DiscordService {
    */
   static async sendActivityTestAccount(payload) {
     if (process.env.NODE_ENV === 'development') return;
-    const webhookUrl = process.env.DISCORD_WEBHOOK_ACTIVITY_ACCOUNT_TEST_URL;
-    const message2 = '```json\n' + JSON.stringify(payload, null, 2) + '\n```';
-    await axios.post(webhookUrl, { content: message2 });
+    try {
+      const webhookUrl = process.env.DISCORD_WEBHOOK_ACTIVITY_ACCOUNT_TEST_URL;
+      const message2 = '```json\n' + JSON.stringify(payload, null, 2) + '\n```';
+      await axios.post(webhookUrl, { content: message2 });
+    } catch (err) {
+      console.log(err);
+    }
   }
 }
