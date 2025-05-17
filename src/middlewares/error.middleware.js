@@ -38,5 +38,5 @@ export const handleErrorMiddleware = async (err, req, res, _) => {
 };
 
 export const notFoundMiddleware = (req, res, next) => {
-  handleError(HttpException.new({ code: Code.ENDPOINT_NOT_FOUND }), req, res, next);
+  handleErrorMiddleware(HttpException.new({ code: Code.ENDPOINT_NOT_FOUND }), req, res, next);
 };
