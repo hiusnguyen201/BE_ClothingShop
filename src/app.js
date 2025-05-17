@@ -6,24 +6,23 @@ import HttpStatus from 'http-status-codes';
 import helmet from 'helmet';
 import compression from 'compression';
 
+import '#src/cron/backup-logs.cron';
 import '#src/core/validations/index';
 import router from '#src/routers/index';
-import { handleError, notFound } from '#src/middlewares/error.middleware';
+import { handleErrorMiddleware, notFoundMiddleware } from '#src/middlewares/error.middleware';
 import { limiter } from '#src/middlewares/rate-limit.middleware';
 import { enhanceRouter } from '#src/utils/async-handler';
 import Database from '#src/modules/database/init.database';
-import { handleTimeout } from '#src/middlewares/timeout.middleware';
+import { handleTimeoutMiddleware } from '#src/middlewares/timeout.middleware';
 import { corsConfig } from '#src/config/cors.config';
+import { requestContextMiddleware } from '#src/middlewares/request-context.middleware';
 
 // Connect to Database
-Database.getInstance({
-  type: 'mongodb',
-  logging: false,
-  timezone: 'Asia/Ho_Chi_Minh',
-});
+Database.getInstance({ logging: false });
 
 const app = express();
 
+app.disable('etag');
 app.use(helmet());
 app.use(compression());
 app.use(cors(corsConfig));
@@ -35,43 +34,21 @@ app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 app.use(cookieParser());
 
-app.use(handleTimeout);
+// Handle Timeout
+app.use(handleTimeoutMiddleware);
 
-app.use((req, res, next) => {
-  if (process.env.NODE_ENV === 'production') {
-    return next();
-  }
-
-  const startTime = process.hrtime();
-  const originalJson = res.json;
-  res.json = function (body) {
-    const [seconds, nanoseconds] = process.hrtime(startTime);
-    const time = seconds * 1000 + nanoseconds / 1000000;
-
-    if (body && typeof body === 'object') {
-      body.responseTime = time;
-    }
-
-    return originalJson.call(this, body);
-  };
-  next();
-});
-
-// Add ipv4 to req
-app.use((req, res, next) => {
-  req.ipv4 = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-  next();
-});
+// Set request context
+app.use(requestContextMiddleware);
 
 // Ignore favicon request
 app.get('/favicon.ico', (req, res) => res.status(HttpStatus.NO_CONTENT).end());
 
-// Api version 1
 app.use('/api', enhanceRouter(router));
 
 // Catch 404
-app.use(notFound);
+app.use(notFoundMiddleware);
 
-app.use(handleError);
+// Handle error
+app.use(handleErrorMiddleware);
 
 export default app;

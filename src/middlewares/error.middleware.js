@@ -3,8 +3,9 @@ import { HttpException } from '#src/core/exception/http-exception';
 import { ApiResponse } from '#src/core/api/ApiResponse';
 import { Code } from '#src/core/code/Code';
 import { DiscordService } from '#src/modules/discord/discord.service';
+import { requestContext } from '#src/utils/request-context';
 
-export const handleError = async (err, req, res, _) => {
+export const handleErrorMiddleware = async (err, req, res, _) => {
   const status = err.code || HttpStatus.INTERNAL_SERVER_ERROR;
   const message = status >= HttpStatus.INTERNAL_SERVER_ERROR ? HttpStatus.getStatusText(status) : err.message;
   const codeMessage = err.codeMessage || 'SERVER_ERROR';
@@ -20,12 +21,13 @@ export const handleError = async (err, req, res, _) => {
   }
 
   if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+    const context = requestContext.getStore();
     await DiscordService.sendError({
       ...apiResponse,
+      ...context,
       method: req.method,
       url: req.originalUrl,
       userId: req?.user?.id ?? null,
-      ip: req.ipv4,
       env: process.env.NODE_ENV,
       error: err.message,
     });
@@ -33,9 +35,8 @@ export const handleError = async (err, req, res, _) => {
 
   res.set('Content-Type', 'application/json');
   res.status(status).json(apiResponse);
-  res.end();
 };
 
-export const notFound = (req, res, next) => {
+export const notFoundMiddleware = (req, res, next) => {
   handleError(HttpException.new({ code: Code.ENDPOINT_NOT_FOUND }), req, res, next);
 };

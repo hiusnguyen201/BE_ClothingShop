@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
-const USER_OTP_MODEL = 'user_otps';
+export const USER_OTP_MODEL = 'user_otps';
 
 const userOtpSchema = new Schema(
   {

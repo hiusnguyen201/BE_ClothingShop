@@ -20,6 +20,7 @@ import { LoginDto } from '#src/app/auth/dtos/login.dto';
 import { VerifyOtpDto, SendOtpViaEmailDto } from '#src/app/auth/dtos/two-factor.dto';
 import { ForgotPasswordDto, ResetPasswordDto } from '#src/app/auth/dtos/forgot-password.dto';
 import { DiscordService } from '#src/modules/discord/discord.service';
+import { requestContext } from '#src/utils/request-context';
 
 export const logoutController = async (req, res) => {
   const userId = req.user.id;
@@ -47,13 +48,9 @@ export const loginAdminController = async (req, res) => {
   const { isAuthenticated, is2FactorRequired, tokens, user } = await loginUserService(adapter.email, adapter.password);
 
   if (tokens) {
+    const context = requestContext.getStore();
     setSession(res, tokens);
-
-    await DiscordService.sendActivityTestAccount({
-      ip: req.ipv4,
-      userAgent: req.headers['user-agent'],
-      timestamp: new Date(),
-    });
+    await DiscordService.sendActivityTestAccount(context);
   }
 
   const userDto = ModelDto.new(UserDto, user);

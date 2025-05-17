@@ -45,7 +45,9 @@ const USER_DATA = [
     phone: '0983460012',
     verifiedAt: new Date(),
     gender: GENDER.MALE,
-    permissions: permissions.filter((p) => ['read', 'export'].some((item) => p.name.includes(item))).map((p) => p._id),
+    permissions: permissions
+      .filter((p) => ['read', 'export', 'notify'].some((item) => p.name.includes(item)))
+      .map((p) => p._id),
     createdAt: faker.date.past(),
     updatedAt: faker.date.past(),
   },

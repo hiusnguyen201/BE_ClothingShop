@@ -1,11 +1,5 @@
-import moment from 'moment-timezone';
 import { connectToMongoDb } from '#src/modules/database/mongodb.database';
-import { HttpException } from '#src/core/exception/http-exception';
-import { Code } from '#src/core/code/Code';
-
-const databaseStrategies = {
-  mongodb: connectToMongoDb,
-};
+import { startChangeStreamLogger } from '#src/modules/database/change-stream-logger.database';
 
 class Database {
   static instance = null;
@@ -20,24 +14,9 @@ class Database {
   }
 
   static async getInstance(options) {
-    const { type = null, logging = false, timezone = null } = options;
-
-    if (!timezone) {
-      moment.utc().format();
-    } else {
-      moment.tz(timezone).format();
-    }
-
     if (!Database.instance) {
-      const connectStrategy = databaseStrategies[type];
-      if (!connectStrategy) {
-        throw HttpException.new({
-          code: Code.DATABASE_TYPE_NOT_SUPPORT,
-          overrideMessage: `The database "${type}" not found`,
-        });
-      }
-
-      const connection = await connectStrategy(options);
+      const connection = await connectToMongoDb(options);
+      startChangeStreamLogger(connection);
       Database.instance = new Database(connection);
     }
 

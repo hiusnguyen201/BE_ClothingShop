@@ -374,7 +374,12 @@ export async function removeUserPermissionByIdRepository(userId, permissionId) {
  * @returns
  */
 export async function getUsersByPermissionNameRepository(permissionName) {
-  return UserModel.aggregate([
+  const result = await UserModel.aggregate([
+    {
+      $match: {
+        type: USER_TYPE.USER,
+      },
+    },
     {
       $lookup: {
         from: PERMISSION_MODEL,
@@ -407,7 +412,10 @@ export async function getUsersByPermissionNameRepository(permissionName) {
     },
     {
       $match: {
-        $or: [{ 'userPermissions.name': permissionName }, { 'rolePermissions.name': permissionName }],
+        $or: [
+          { userPermissions: { $elemMatch: { name: permissionName } } },
+          { rolePermissions: { $elemMatch: { name: permissionName } } },
+        ],
       },
     },
     {
@@ -416,6 +424,8 @@ export async function getUsersByPermissionNameRepository(permissionName) {
       },
     },
   ]);
+
+  return result;
 }
 
 /**

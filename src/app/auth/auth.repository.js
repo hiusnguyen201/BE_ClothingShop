@@ -1,7 +1,6 @@
 import { generateNumericOTP } from '#src/utils/string.util';
 import { UserOtpModel } from '#src/app/auth/models/user-otp.model';
 import moment from 'moment-timezone';
-
 moment.tz('Asia/Ho_Chi_Minh');
 
 /**

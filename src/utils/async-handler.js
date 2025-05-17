@@ -5,11 +5,15 @@ import HttpStatus from 'http-status-codes';
 const asyncHandler = (fn) => async (req, res, next) => {
   try {
     const result = await fn(req, res, next);
-    if (typeof result === 'object' || result instanceof ApiResponse) {
-      res.set('Content-Type', 'application/json');
-      res.status(result?.code || HttpStatus.OK).json({ ...result, responseTime: req.responseTime });
+    if (res.headersSent) return;
+    if (result === undefined || result === null) return;
+
+    const statusCode = result?.code || HttpStatus.OK;
+    if (result instanceof ApiResponse) {
+      res.status(statusCode).json(result);
+    } else {
+      res.status(statusCode).send(result);
     }
-    res.end();
   } catch (err) {
     next(err);
   }

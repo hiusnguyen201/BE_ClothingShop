@@ -62,7 +62,7 @@ class LogUtils {
 
     const logMessage = `[${
       COLOR_DIM + time + COLOR_RESET
-    }] ${logColor}[${type.toUpperCase()}]${COLOR_RESET} [${tag}] ${message}`;
+    }] ${logColor}[${type.toUpperCase()}] [${tag}]${COLOR_RESET} ${message}`;
 
     if (object) {
       logMethod(logMessage, object);
