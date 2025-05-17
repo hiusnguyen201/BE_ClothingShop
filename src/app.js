@@ -9,7 +9,7 @@ import compression from 'compression';
 import '#src/cron/backup-logs.cron';
 import '#src/core/validations/index';
 import router from '#src/routers/index';
-import { handleErrorMiddleware, notFoundMiddleware } from '#src/middlewares/error.middleware';
+import { handleError, notFound } from '#src/middlewares/error.middleware';
 import { limiter } from '#src/middlewares/rate-limit.middleware';
 import { enhanceRouter } from '#src/utils/async-handler';
 import Database from '#src/modules/database/init.database';
@@ -46,9 +46,9 @@ app.get('/favicon.ico', (req, res) => res.status(HttpStatus.NO_CONTENT).end());
 app.use('/api', enhanceRouter(router));
 
 // Catch 404
-app.use(notFoundMiddleware);
+app.use(notFound);
 
 // Handle error
-app.use(handleErrorMiddleware);
+app.use(handleError);
 
 export default app;

@@ -5,7 +5,7 @@ import { Code } from '#src/core/code/Code';
 import { DiscordService } from '#src/modules/discord/discord.service';
 import { requestContext } from '#src/utils/request-context';
 
-export const handleErrorMiddleware = async (err, req, res, _) => {
+export const handleError = async (err, req, res, _) => {
   const status = err.code || HttpStatus.INTERNAL_SERVER_ERROR;
   const message = status >= HttpStatus.INTERNAL_SERVER_ERROR ? HttpStatus.getStatusText(status) : err.message;
   const codeMessage = err.codeMessage || 'SERVER_ERROR';
@@ -37,6 +37,6 @@ export const handleErrorMiddleware = async (err, req, res, _) => {
   res.status(status).json(apiResponse);
 };
 
-export const notFoundMiddleware = (req, res, next) => {
-  handleErrorMiddleware(HttpException.new({ code: Code.ENDPOINT_NOT_FOUND }), req, res, next);
+export const notFound = (req, res, next) => {
+  handleError(HttpException.new({ code: Code.ENDPOINT_NOT_FOUND }), req, res, next);
 };

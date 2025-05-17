@@ -12,7 +12,6 @@ export const connectToMongoDb = async (options) => {
       serverSelectionTimeoutMS: 30000,
       connectTimeoutMS: 60000,
       minPoolSize: 10,
-      replicaSet: 'rs0',
     });
 
     if (process.env.NODE_ENV === 'development') {

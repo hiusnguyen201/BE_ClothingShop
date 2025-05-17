@@ -20,7 +20,6 @@ export function startChangeStreamLogger(connection) {
 
   changeStream.on('change', async (change) => {
     try {
-      console.log(change);
       await createAuditLogRepository({
         operationType: change.operationType,
         collection: change.ns.coll,
